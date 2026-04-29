@@ -13,9 +13,9 @@
   }
 
   body {
-    font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+    font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
     background-color: #ffffff;
-    color: #0f172a;
+    color: #1f2937;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     overflow-x: hidden;
@@ -31,19 +31,19 @@
     width: 6px;
   }
   ::-webkit-scrollbar-track {
-    background: #f8fafc;
+    background: #f9fafb;
   }
   ::-webkit-scrollbar-thumb {
-    background: linear-gradient(to bottom, #cbd5e1, #94a3b8);
+    background: #c4b5fd;
     border-radius: 3px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(to bottom, #94a3b8, #64748b);
+    background: #7c3aed;
   }
 
   button:focus-visible,
   a:focus-visible {
-    outline: 2px solid #3b82f6;
+    outline: 2px solid #7c3aed;
     outline-offset: 2px;
     border-radius: 4px;
   }
