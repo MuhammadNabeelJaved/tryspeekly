@@ -127,14 +127,14 @@ export default function Features() {
             animate={isInView ? { opacity: 1, x: 0 } : {}}
             transition={{ duration: 0.7, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
           >
-            <span className="inline-flex items-center gap-2 text-violet-600 dark:text-violet-400 text-sm font-semibold mb-5">
+            <span className="inline-flex items-center gap-2 text-violet-600 dark:text-violet-300 text-sm font-semibold mb-5">
               <span className="w-2 h-2 bg-violet-600 dark:bg-violet-400 rounded-full" />
               Start Your Journey
             </span>
 
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-gray-900 dark:text-white leading-[1.15] tracking-tight mb-5">
               Ready to Speak English{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-purple-600 dark:from-violet-400 dark:to-purple-400">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-purple-600 dark:from-violet-300 dark:to-purple-300">
                 Fluently?
               </span>
             </h2>
@@ -172,7 +172,7 @@ export default function Features() {
             {/* CTA */}
             <motion.button
               type="button"
-              whileHover={{ scale: 1.03, y: -2 }}
+              whileHover={{ scale: 1.04 }}
               whileTap={{ scale: 0.97 }}
               className="inline-flex items-center gap-2 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-bold text-base px-7 py-3.5 rounded-xl transition-all shadow-[0_8px_24px_rgba(124,58,237,0.35)] hover:shadow-[0_12px_32px_rgba(124,58,237,0.45)]"
             >

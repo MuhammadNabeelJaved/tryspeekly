@@ -6,7 +6,7 @@ const POSTS = [
   {
     img: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=700&q=80',
     category: 'Learning Tips',
-    categoryColor: 'bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400',
+    categoryColor: 'bg-violet-50 dark:bg-violet-800/40 text-violet-600 dark:text-violet-300',
     title: '10 Proven Techniques to Improve Your English Speaking Confidence',
     date: 'April 15, 2026',
     readTime: '5 min read',
@@ -24,7 +24,7 @@ const POSTS = [
   {
     img: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=700&q=80',
     category: 'Grammar',
-    categoryColor: 'bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400',
+    categoryColor: 'bg-violet-50 dark:bg-violet-800/40 text-violet-600 dark:text-violet-300',
     title: 'Common English Grammar Mistakes and How to Avoid Them',
     date: 'April 5, 2026',
     readTime: '6 min read',
@@ -53,7 +53,7 @@ export default function Blog() {
         {/* Section header */}
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 md:gap-6 mb-12 md:mb-14">
           <div>
-            <span className="inline-flex items-center gap-2 text-violet-600 dark:text-violet-400 text-sm font-semibold mb-4">
+            <span className="inline-flex items-center gap-2 text-violet-600 dark:text-violet-300 text-sm font-semibold mb-4">
               <span className="w-2 h-2 bg-violet-600 dark:bg-violet-400 rounded-full" />
               News &amp; Blog
             </span>
@@ -63,7 +63,7 @@ export default function Blog() {
           </div>
           <a
             href="#"
-            className="hidden lg:inline-flex items-center gap-2 text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 font-semibold text-sm transition-colors"
+            className="hidden lg:inline-flex items-center gap-2 text-violet-600 dark:text-violet-300 hover:text-violet-700 dark:hover:text-violet-200 font-semibold text-sm transition-colors"
           >
             View All Posts
             <ArrowRight size={15} weight="bold" />
@@ -82,27 +82,15 @@ export default function Blog() {
             <motion.article
               key={post.title}
               variants={cardVariants}
-              whileHover={{
-                y: -8,
-                scale: 1.02,
-                boxShadow: "0 20px 40px rgba(124, 58, 237, 0.12)"
-              }}
-              whileTap={{ scale: 0.98 }}
-              transition={{
-                type: "spring",
-                stiffness: 300,
-                damping: 20
-              }}
+              whileHover={{ scale: 1.04 }}
               className="group bg-white dark:bg-slate-900 rounded-2xl overflow-hidden border border-gray-100 dark:border-slate-800 hover:border-violet-200 dark:hover:border-violet-700/50 transition-all duration-300 cursor-pointer"
             >
               {/* Image */}
               <div className="relative h-52 overflow-hidden">
-                <motion.img
+                <img
                   src={post.img}
                   alt={post.title}
-                  className="w-full h-full object-cover"
-                  whileHover={{ scale: 1.1 }}
-                  transition={{ duration: 0.5, ease: "easeOut" }}
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                 />
                 <motion.div
                   className="absolute top-4 left-4"
@@ -149,7 +137,7 @@ export default function Blog() {
 
                 <motion.a
                   href="#"
-                  className="inline-flex items-center gap-1.5 text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 font-semibold text-sm transition-all duration-300"
+                  className="inline-flex items-center gap-1.5 text-violet-600 dark:text-violet-300 hover:text-violet-700 dark:hover:text-violet-200 font-semibold text-sm transition-all duration-300"
                   whileHover={{ x: 4 }}
                   transition={{ type: "spring", stiffness: 400 }}
                 >
@@ -168,7 +156,7 @@ export default function Blog() {
 
         {/* Mobile view all */}
         <div className="flex justify-center mt-10 lg:hidden">
-          <a href="#" className="inline-flex items-center gap-2 text-violet-600 dark:text-violet-400 font-semibold text-sm">
+          <a href="#" className="inline-flex items-center gap-2 text-violet-600 dark:text-violet-300 font-semibold text-sm">
             View All Posts
             <ArrowRight size={15} weight="bold" />
           </a>

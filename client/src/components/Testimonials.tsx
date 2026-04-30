@@ -67,16 +67,17 @@ export default function Testimonials() {
             <div className="flex flex-col sm:flex-row gap-4">
               <motion.a
                 href="#"
-                whileHover={{ scale: 1.03, y: -2 }}
+                whileHover={{ scale: 1.04 }}
                 whileTap={{ scale: 0.97 }}
-                className="inline-flex items-center justify-center gap-2 bg-white dark:bg-slate-900 dark:border dark:border-white/15 hover:bg-violet-50 dark:hover:bg-slate-800 text-violet-700 dark:text-violet-400 font-bold text-[15px] px-7 py-3.5 rounded-lg transition-colors shadow-[0_4px_20px_rgba(0,0,0,0.15)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.4)]"
+                className="inline-flex items-center justify-center gap-2 bg-white dark:bg-slate-900 dark:border dark:border-white/15 hover:bg-violet-50 dark:hover:bg-slate-800 text-violet-700 dark:text-violet-300 font-bold text-[15px] px-7 py-3.5 rounded-lg transition-colors shadow-[0_4px_20px_rgba(0,0,0,0.15)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.4)]"
               >
                 Start Learning Today
                 <ArrowRight size={17} weight="bold" />
               </motion.a>
               <motion.a
                 href="#"
-                whileHover={{ scale: 1.02 }}
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.97 }}
                 className="inline-flex items-center justify-center gap-2 border border-white/30 dark:border-white/20 hover:border-white/50 dark:hover:border-white/40 text-white font-semibold text-[15px] px-7 py-3.5 rounded-lg transition-all"
               >
                 View Success Stories

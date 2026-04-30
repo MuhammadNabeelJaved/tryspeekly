@@ -1,39 +1,39 @@
 import { useRef } from 'react'
 import { motion, useInView } from 'framer-motion'
-import { MagnifyingGlass, ChartBar, Palette, CheckCircle, ArrowRight } from '@phosphor-icons/react'
+import { MagnifyingGlass, Receipt, VideoCamera, Chats, CheckCircle, ArrowRight } from '@phosphor-icons/react'
 
 const STEPS = [
   {
     number: '01',
     Icon: MagnifyingGlass,
-    iconBg: 'bg-violet-50 dark:bg-violet-900/30',
-    iconColor: 'text-violet-600 dark:text-violet-400',
-    title: 'Foundation Building',
-    description: 'Master essential grammar, vocabulary, and pronunciation fundamentals through interactive lessons and practice exercises.',
+    iconBg: 'bg-violet-50 dark:bg-violet-800/40',
+    iconColor: 'text-violet-600 dark:text-violet-300',
+    title: 'Find Your Perfect Course',
+    description: 'Browse our specialized programs in IELTS, Speaking, Business English, and more to find the level that fits your goals.',
   },
   {
     number: '02',
-    Icon: ChartBar,
-    iconBg: 'bg-violet-50 dark:bg-violet-900/30',
-    iconColor: 'text-violet-600 dark:text-violet-400',
-    title: 'Skill Development',
-    description: 'Develop listening, speaking, reading, and writing skills with targeted exercises and real-world application scenarios.',
+    Icon: Receipt,
+    iconBg: 'bg-violet-50 dark:bg-violet-800/40',
+    iconColor: 'text-violet-600 dark:text-violet-300',
+    title: 'Seamless Enrollment',
+    description: 'Register and submit your payment screenshot. Our team verifies transaction IDs quickly to give you instant access.',
   },
   {
     number: '03',
-    Icon: Palette,
-    iconBg: 'bg-violet-50 dark:bg-violet-900/30',
-    iconColor: 'text-violet-600 dark:text-violet-400',
-    title: 'Conversation Practice',
-    description: 'Build confidence through live sessions with native speakers and structured conversation practice in various contexts.',
+    Icon: VideoCamera,
+    iconBg: 'bg-violet-50 dark:bg-violet-800/40',
+    iconColor: 'text-violet-600 dark:text-violet-300',
+    title: 'Live Interactive Sessions',
+    description: 'Attend real-time classes via Zoom or Google Meet links. Engage with expert trainers in dynamic, live learning environments.',
   },
   {
     number: '04',
-    Icon: CheckCircle,
-    iconBg: 'bg-violet-50 dark:bg-violet-900/30',
-    iconColor: 'text-violet-600 dark:text-violet-400',
-    title: 'Fluency Achievement',
-    description: 'Apply your skills in complex situations, achieve certification, and continue learning with advanced content and communities.',
+    Icon: Chats,
+    iconBg: 'bg-violet-50 dark:bg-violet-800/40',
+    iconColor: 'text-violet-600 dark:text-violet-300',
+    title: 'Direct Teacher Support',
+    description: 'Access private chat channels with your trainers to get personalized feedback, clear doubts, and stay motivated.',
   },
 ]
 
@@ -53,13 +53,13 @@ export default function Process() {
             animate={isInView ? { opacity: 1, x: 0 } : {}}
             transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
           >
-            <span className="inline-flex items-center gap-2 text-violet-600 dark:text-violet-400 text-sm font-semibold mb-4">
+            <span className="inline-flex items-center gap-2 text-violet-600 dark:text-violet-300 text-sm font-semibold mb-4">
               <span className="w-2 h-2 bg-violet-600 dark:bg-violet-400 rounded-full" />
-              Work Process
+              Learning Process
             </span>
 
             <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-[42px] font-bold text-gray-900 dark:text-white leading-tight tracking-tight mb-8 md:mb-10">
-              We Complete Our Work To Follow Some Easy Ways
+              Simple Steps to Master English Fluency
             </h2>
 
             {/* Steps */}
@@ -87,7 +87,7 @@ export default function Process() {
                     {/* Content */}
                     <div className={i < STEPS.length - 1 ? 'pb-7' : ''}>
                       <div className="flex items-center gap-3 mb-1.5">
-                        <span className="text-[11px] font-bold text-violet-600 dark:text-violet-400 font-mono tracking-widest">{step.number}</span>
+                        <span className="text-[11px] font-bold text-violet-600 dark:text-violet-300 font-mono tracking-widest">{step.number}</span>
                       </div>
                       <h3 className="text-[16px] font-bold text-gray-900 dark:text-white mb-1.5">{step.title}</h3>
                       <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed max-w-[42ch]">{step.description}</p>
@@ -99,7 +99,7 @@ export default function Process() {
 
             <motion.a
               href="#"
-              whileHover={{ scale: 1.02, x: 4 }}
+              whileHover={{ scale: 1.04 }}
               whileTap={{ scale: 0.97 }}
               className="inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-700 dark:bg-violet-500 dark:hover:bg-violet-600 text-white font-semibold text-[15px] px-6 py-3 rounded-lg transition-colors shadow-[0_4px_16px_rgba(124,58,237,0.3)] dark:shadow-[0_4px_16px_rgba(124,58,237,0.2)] mt-8"
             >
@@ -117,8 +117,8 @@ export default function Process() {
           >
             <div className="relative rounded-2xl overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.12)] dark:shadow-[0_20px_60px_rgba(0,0,0,0.5)]">
               <img
-                src="https://images.unsplash.com/photo-1568992687947-868a62a9f521?w=700&q=80"
-                alt="Business professional at work"
+                src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=700&q=80"
+                alt="Students studying together"
                 className="w-full h-[520px] lg:h-[580px] object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-violet-900/30 dark:from-violet-900/80 to-transparent" />
@@ -135,8 +135,8 @@ export default function Process() {
                   <CheckCircle size={20} weight="fill" className="text-white" />
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-gray-900 dark:text-white">Project Completed</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">500+ successful projects</p>
+                  <p className="text-sm font-bold text-gray-900 dark:text-white">Active Learners</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">10,000+ enrolled students</p>
                 </div>
               </div>
             </motion.div>

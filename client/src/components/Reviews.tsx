@@ -112,8 +112,8 @@ export default function Reviews() {
         >
           <p className="text-gray-500 dark:text-gray-400 mb-4 text-sm font-medium">Have you learned with us?</p>
           <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.97 }}
             onClick={() => setIsModalOpen(true)}
             className="flex items-center gap-2 bg-white dark:bg-slate-900 text-gray-900 dark:text-white border border-gray-200 dark:border-slate-700 hover:border-violet-500 dark:hover:border-violet-500 px-6 py-3 rounded-xl font-semibold transition-colors shadow-sm"
           >
