@@ -18,7 +18,7 @@ export default function Testimonials() {
               alt="Business professional"
               className="w-full h-full object-cover"
             />
-            {/* Overlay gradient to blend into violet */}
+            {/* Overlay gradient to blend into section */}
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-violet-600/20 dark:via-slate-900/40 to-violet-600/60 lg:to-violet-600/80 dark:to-slate-900/80 lg:dark:to-slate-900/90" />
 
             {/* Floating stats card */}
@@ -60,7 +60,7 @@ export default function Testimonials() {
               <span className="text-violet-200 dark:text-violet-300">English Fluency</span>
             </h2>
 
-            <p className="text-violet-100 dark:text-violet-200 text-sm md:text-[15px] leading-relaxed mb-6 md:mb-9 max-w-[44ch]">
+            <p className="text-violet-200 dark:text-violet-200 text-sm md:text-[15px] leading-relaxed mb-6 md:mb-9 max-w-[44ch]">
               Real students, real results. See how our comprehensive English learning platform has helped learners from around the world achieve their language goals and unlock new opportunities.
             </p>
 
@@ -69,7 +69,7 @@ export default function Testimonials() {
                 href="#"
                 whileHover={{ scale: 1.03, y: -2 }}
                 whileTap={{ scale: 0.97 }}
-                className="inline-flex items-center justify-center gap-2 bg-white dark:bg-slate-900 hover:bg-violet-50 dark:hover:bg-slate-800 text-violet-700 dark:text-violet-400 font-bold text-[15px] px-7 py-3.5 rounded-lg transition-colors shadow-[0_4px_20px_rgba(0,0,0,0.15)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.4)]"
+                className="inline-flex items-center justify-center gap-2 bg-white dark:bg-slate-900 dark:border dark:border-white/15 hover:bg-violet-50 dark:hover:bg-slate-800 text-violet-700 dark:text-violet-400 font-bold text-[15px] px-7 py-3.5 rounded-lg transition-colors shadow-[0_4px_20px_rgba(0,0,0,0.15)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.4)]"
               >
                 Start Learning Today
                 <ArrowRight size={17} weight="bold" />
