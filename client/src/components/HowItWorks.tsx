@@ -39,16 +39,16 @@ export default function HowItWorks() {
   const isInView = useInView(ref, { once: true, margin: '-100px' })
 
   return (
-    <section className="bg-[#0f172a] py-16 md:py-20 lg:py-28">
+    <section className="bg-gray-50 dark:bg-slate-950 py-16 md:py-20 lg:py-28 transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* Section header */}
         <div className="text-center mb-12 md:mb-14">
-          <span className="inline-flex items-center gap-2 text-violet-400 text-sm font-semibold mb-4">
-            <span className="w-2 h-2 bg-violet-400 rounded-full" />
+          <span className="inline-flex items-center gap-2 text-violet-600 dark:text-violet-400 text-sm font-semibold mb-4">
+            <span className="w-2 h-2 bg-violet-600 dark:bg-violet-400 rounded-full" />
             Learning Process
           </span>
-          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-[42px] font-bold text-white leading-tight tracking-tight">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-[42px] font-bold text-gray-900 dark:text-white leading-tight tracking-tight">
             Your Journey to English Fluency in 3 Simple Steps
           </h2>
         </div>
@@ -75,7 +75,7 @@ export default function HowItWorks() {
                 stiffness: 300,
                 damping: 20
               }}
-              className="group bg-[#1e293b] rounded-2xl overflow-hidden border border-white/5 hover:border-violet-500/30 transition-all duration-300 cursor-pointer"
+              className="group bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-gray-100 dark:border-white/5 hover:border-violet-300 dark:hover:border-violet-500/30 transition-all duration-300 cursor-pointer shadow-sm"
             >
               {/* Photo */}
               <div className="relative h-56 overflow-hidden">
@@ -86,7 +86,7 @@ export default function HowItWorks() {
                   whileHover={{ scale: 1.1 }}
                   transition={{ duration: 0.5, ease: "easeOut" }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#1e293b] via-transparent to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-white dark:from-slate-800 via-transparent to-transparent" />
 
                 {/* Step number overlay */}
                 <motion.div
@@ -107,15 +107,15 @@ export default function HowItWorks() {
               {/* Info */}
               <div className="p-5">
                 <motion.h3
-                  className="font-bold text-white text-[15px] mb-0.5"
-                  whileHover={{ color: "#a78bfa" }}
+                  className="font-bold text-gray-900 dark:text-white text-[15px] mb-0.5"
+                  whileHover={{ color: "#7c3aed" }}
                   transition={{ duration: 0.2 }}
                 >
                   {step.name}
                 </motion.h3>
                 <motion.p
-                  className="text-gray-400 text-sm mb-4"
-                  whileHover={{ color: "#cbd5e1" }}
+                  className="text-gray-500 dark:text-gray-400 text-sm mb-4"
+                  whileHover={{ color: "#64748b" }}
                   transition={{ duration: 0.2 }}
                 >
                   {step.role}
@@ -128,9 +128,9 @@ export default function HowItWorks() {
                   transition={{ type: "spring", stiffness: 400 }}
                 >
                   <motion.div
-                    className="w-8 h-8 bg-violet-600/20 rounded-lg flex items-center justify-center text-violet-400"
+                    className="w-8 h-8 bg-violet-100 dark:bg-violet-600/20 rounded-lg flex items-center justify-center text-violet-600 dark:text-violet-400"
                     whileHover={{
-                      backgroundColor: "rgba(124, 58, 237, 0.3)",
+                      backgroundColor: "rgba(124, 58, 237, 0.2)",
                       scale: 1.1
                     }}
                     transition={{ duration: 0.2 }}
@@ -139,7 +139,7 @@ export default function HowItWorks() {
                       className="text-xs font-bold"
                       animate={{
                         scale: [1, 1.2, 1],
-                        color: ["#a78bfa", "#c4b5fd", "#a78bfa"]
+                        color: ["#7c3aed", "#a78bfa", "#7c3aed"]
                       }}
                       transition={{
                         duration: 2,
