@@ -124,14 +124,14 @@ export default function CTA() {
             animate={isInView ? { opacity: 1, x: 0 } : {}}
             transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
           >
-            <span className="inline-flex items-center gap-2 text-violet-600 dark:text-violet-300 text-sm font-semibold mb-4">
+            <span className="inline-flex items-center gap-2 text-violet-600 dark:text-violet-200 text-sm font-semibold mb-4">
               <span className="w-2 h-2 bg-violet-600 dark:bg-violet-400 rounded-full" />
               Start Your Journey
             </span>
 
             <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-[42px] font-bold text-gray-900 dark:text-white leading-tight tracking-tight mb-4 md:mb-5">
               Ready to Speak English{' '}
-              <span className="text-violet-600 dark:text-violet-300">Fluently?</span>
+              <span className="text-violet-600 dark:text-violet-200">Fluently?</span>
             </h2>
 
             <p className="text-gray-500 dark:text-gray-400 text-sm md:text-[15px] leading-relaxed mb-6 md:mb-8 max-w-[46ch]">

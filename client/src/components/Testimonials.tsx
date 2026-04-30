@@ -31,12 +31,12 @@ export default function Testimonials() {
               <div className="flex items-center gap-4">
                 <div className="text-center">
                   <p className="text-2xl font-bold text-white leading-none">85%</p>
-                  <p className="text-[10px] text-violet-200 dark:text-violet-300 mt-0.5">Sales Growth</p>
+                  <p className="text-[10px] text-violet-200 dark:text-violet-200 mt-0.5">Sales Growth</p>
                 </div>
                 <div className="w-px h-10 bg-white/20 dark:bg-white/10" />
                 <div className="text-center">
                   <p className="text-2xl font-bold text-white leading-none">4.9★</p>
-                  <p className="text-[10px] text-violet-200 dark:text-violet-300 mt-0.5">Client Rating</p>
+                  <p className="text-[10px] text-violet-200 dark:text-violet-200 mt-0.5">Client Rating</p>
                 </div>
               </div>
             </motion.div>
@@ -57,10 +57,10 @@ export default function Testimonials() {
 
             <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-[42px] font-bold text-white leading-tight tracking-tight mb-4 md:mb-5">
               Join Thousands Who Achieved{' '}
-              <span className="text-violet-200 dark:text-violet-300">English Fluency</span>
+              <span className="text-violet-200 dark:text-violet-200">English Fluency</span>
             </h2>
 
-            <p className="text-violet-200 dark:text-violet-300 text-sm md:text-[15px] leading-relaxed mb-6 md:mb-9 max-w-[44ch]">
+            <p className="text-violet-200 dark:text-violet-200 text-sm md:text-[15px] leading-relaxed mb-6 md:mb-9 max-w-[44ch]">
               Real students, real results. See how our comprehensive English learning platform has helped learners from around the world achieve their language goals and unlock new opportunities.
             </p>
 
@@ -69,7 +69,7 @@ export default function Testimonials() {
                 href="#"
                 whileHover={{ scale: 1.04 }}
                 whileTap={{ scale: 0.97 }}
-                className="inline-flex items-center justify-center gap-2 bg-white dark:bg-slate-900 dark:border dark:border-white/15 hover:bg-violet-50 dark:hover:bg-slate-800 text-violet-700 dark:text-violet-300 font-bold text-[15px] px-7 py-3.5 rounded-lg transition-colors shadow-[0_4px_20px_rgba(0,0,0,0.15)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.4)]"
+                className="inline-flex items-center justify-center gap-2 bg-white dark:bg-slate-900 dark:border dark:border-white/15 hover:bg-violet-50 dark:hover:bg-slate-800 text-violet-700 dark:text-violet-200 font-bold text-[15px] px-7 py-3.5 rounded-lg transition-colors shadow-[0_4px_20px_rgba(0,0,0,0.15)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.4)]"
               >
                 Start Learning Today
                 <ArrowRight size={17} weight="bold" />

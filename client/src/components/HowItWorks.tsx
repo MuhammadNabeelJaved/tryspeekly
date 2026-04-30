@@ -44,7 +44,7 @@ export default function HowItWorks() {
 
         {/* Section header */}
         <div className="text-center mb-12 md:mb-14">
-          <span className="inline-flex items-center gap-2 text-violet-600 dark:text-violet-300 text-sm font-semibold mb-4">
+          <span className="inline-flex items-center gap-2 text-violet-600 dark:text-violet-200 text-sm font-semibold mb-4">
             <span className="w-2 h-2 bg-violet-600 dark:bg-violet-400 rounded-full" />
             Learning Process
           </span>
@@ -117,7 +117,7 @@ export default function HowItWorks() {
                   transition={{ type: "spring", stiffness: 400 }}
                 >
                   <motion.div
-                    className="w-8 h-8 bg-violet-100 dark:bg-violet-600/20 rounded-lg flex items-center justify-center text-violet-600 dark:text-violet-300"
+                    className="w-8 h-8 bg-violet-100 dark:bg-violet-600/20 rounded-lg flex items-center justify-center text-violet-600 dark:text-violet-200"
                     whileHover={{
                       backgroundColor: "rgba(124, 58, 237, 0.2)",
                       scale: 1.1

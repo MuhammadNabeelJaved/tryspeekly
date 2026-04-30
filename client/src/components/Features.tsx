@@ -127,14 +127,14 @@ export default function Features() {
             animate={isInView ? { opacity: 1, x: 0 } : {}}
             transition={{ duration: 0.7, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
           >
-            <span className="inline-flex items-center gap-2 text-violet-600 dark:text-violet-300 text-sm font-semibold mb-5">
+            <span className="inline-flex items-center gap-2 text-violet-600 dark:text-violet-200 text-sm font-semibold mb-5">
               <span className="w-2 h-2 bg-violet-600 dark:bg-violet-400 rounded-full" />
               Start Your Journey
             </span>
 
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-gray-900 dark:text-white leading-[1.15] tracking-tight mb-5">
               Ready to Speak English{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-purple-600 dark:from-violet-300 dark:to-purple-300">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-purple-600 dark:from-violet-200 dark:to-purple-200">
                 Fluently?
               </span>
             </h2>
