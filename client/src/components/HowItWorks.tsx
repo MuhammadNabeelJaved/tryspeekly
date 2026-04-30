@@ -4,12 +4,12 @@ import { motion, useInView } from 'framer-motion'
 const STEPS = [
   {
     name: 'Assess Your Level',
-    role: 'Take our placement test to determine your current English proficiency and create a personalized learning plan.',
+    role: 'Take our placement test to determine your current English proficiency and get matched with the right trainer and program.',
     img: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=400&q=80',
   },
   {
-    name: 'Learn at Your Pace',
-    role: 'Access interactive lessons, videos, and exercises designed by expert instructors to build your skills progressively.',
+    name: 'Attend Live Sessions',
+    role: 'Attend scheduled live sessions on Zoom or Google Meet with your trainer — structured, interactive, and tailored to your goals.',
     img: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400&q=80',
   },
   {
