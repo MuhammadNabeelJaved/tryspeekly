@@ -31,12 +31,12 @@ export default function Testimonials() {
               <div className="flex items-center gap-4">
                 <div className="text-center">
                   <p className="text-2xl font-bold text-white leading-none">85%</p>
-                  <p className="text-[10px] text-violet-200 dark:text-violet-200 mt-0.5">Sales Growth</p>
+                  <p className="text-[10px] text-violet-200 dark:text-violet-100 mt-0.5">Sales Growth</p>
                 </div>
                 <div className="w-px h-10 bg-white/20 dark:bg-white/10" />
                 <div className="text-center">
                   <p className="text-2xl font-bold text-white leading-none">4.9★</p>
-                  <p className="text-[10px] text-violet-200 dark:text-violet-200 mt-0.5">Client Rating</p>
+                  <p className="text-[10px] text-violet-200 dark:text-violet-100 mt-0.5">Client Rating</p>
                 </div>
               </div>
             </motion.div>
@@ -57,10 +57,10 @@ export default function Testimonials() {
 
             <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-[42px] font-bold text-white leading-tight tracking-tight mb-4 md:mb-5">
               Join Thousands Who Achieved{' '}
-              <span className="text-violet-200 dark:text-violet-200">English Fluency</span>
+              <span className="text-violet-200 dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-violet-500 dark:to-purple-500 drop-shadow-[0_0_8px_rgba(255,255,255,0.2)] dark:drop-shadow-[0_0_12px_rgba(139,92,246,0.35)]">English Fluency</span>
             </h2>
 
-            <p className="text-violet-200 dark:text-violet-200 text-sm md:text-[15px] leading-relaxed mb-6 md:mb-9 max-w-[44ch]">
+            <p className="text-violet-200 dark:text-violet-100 text-sm md:text-[15px] leading-relaxed mb-6 md:mb-9 max-w-[44ch]">
               Real students, real results. See how our comprehensive English learning platform has helped learners from around the world achieve their language goals and unlock new opportunities.
             </p>
 

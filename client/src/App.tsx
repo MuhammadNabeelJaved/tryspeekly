@@ -1,62 +1,49 @@
-import { motion } from 'framer-motion'
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
+import { useEffect } from 'react'
 import Navbar from '@/components/Navbar'
-import Hero from '@/components/Hero'
-import Stats from '@/components/Stats'
-import Features from '@/components/Features'
-import HowItWorks from '@/components/HowItWorks'
-import Testimonials from '@/components/Testimonials'
-import Reviews from '@/components/Reviews'
-import Process from '@/components/Process'
-import Blog from '@/components/Blog'
 import Footer from '@/components/Footer'
 import ScrollToTop from '@/components/ScrollToTop'
+import Home from '@/pages/Home'
+import CoursesPage from '@/pages/CoursesPage'
 import './App.css'
 
-const pageVariants = {
-  initial: { opacity: 0 },
-  animate: {
-    opacity: 1,
-    transition: {
-      duration: 0.5,
-      staggerChildren: 0.1,
-      delayChildren: 0.2
+// Scroll handler for hash links across routes
+function ScrollHandler() {
+  const { pathname, hash } = useLocation()
+  
+  useEffect(() => {
+    if (hash) {
+// Small timeout to ensure page content is rendered before scrolling
+      setTimeout(() => {
+        const element = document.getElementById(hash.replace('#', ''))
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' })
+        }
+      }, 100)
+    } else {
+      window.scrollTo(0, 0)
     }
-  }
-}
-
-const sectionVariants = {
-  initial: { opacity: 0, y: 20 },
-  animate: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.6
-    }
-  }
+  }, [pathname, hash])
+  
+  return null
 }
 
 function App() {
   return (
-    <motion.div
-      className="min-h-[100dvh] w-full overflow-x-hidden bg-white dark:bg-slate-950 transition-colors duration-300"
-      variants={pageVariants}
-      initial="initial"
-      animate="animate"
-    >
-      <Navbar />
-      <main className="relative">
-        <motion.div variants={sectionVariants}><Hero /></motion.div>
-        <motion.div variants={sectionVariants}><Stats /></motion.div>
-        <motion.div variants={sectionVariants}><Features /></motion.div>
-        <motion.div variants={sectionVariants}><HowItWorks /></motion.div>
-        <motion.div variants={sectionVariants}><Testimonials /></motion.div>
-        <motion.div variants={sectionVariants}><Reviews /></motion.div>
-        <motion.div variants={sectionVariants}><Process /></motion.div>
-        <motion.div variants={sectionVariants}><Blog /></motion.div>
-      </main>
-      <motion.div variants={sectionVariants}><Footer /></motion.div>
-      <ScrollToTop />
-    </motion.div>
+    <BrowserRouter>
+      <ScrollHandler />
+      <div className="min-h-[100dvh] w-full overflow-x-hidden bg-white dark:bg-slate-950 transition-colors duration-300">
+        <Navbar />
+        <main className="relative">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/courses" element={<CoursesPage />} />
+          </Routes>
+        </main>
+        <Footer />
+        <ScrollToTop />
+      </div>
+    </BrowserRouter>
   )
 }
 
