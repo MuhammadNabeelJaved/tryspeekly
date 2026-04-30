@@ -128,7 +128,7 @@ export default function Process() {
             <motion.div
               animate={{ y: [0, -10, 0] }}
               transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-              className="absolute -bottom-6 -left-6 bg-white dark:bg-slate-800 backdrop-blur-sm rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.4)] border border-gray-100 dark:border-slate-700 p-5"
+              className="absolute -bottom-6 -left-6 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.4)] border border-gray-100 dark:border-slate-700 p-5"
             >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-violet-600 dark:bg-violet-500 rounded-xl flex items-center justify-center flex-shrink-0">
