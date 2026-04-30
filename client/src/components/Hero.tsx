@@ -35,14 +35,14 @@ function Typewriter({ words }: { words: string[] }) {
 
   return (
     <span className="relative inline-block min-w-[130px] sm:min-w-[170px]">
-      <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 dark:from-violet-400 dark:via-purple-400 dark:to-indigo-400">
+      <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 dark:from-violet-300 dark:via-purple-300 dark:to-indigo-300">
         {words[index].substring(0, subIndex)}
         <span
           className={`inline-block w-[2px] h-[28px] sm:h-[34px] ml-0.5 bg-violet-600 dark:bg-violet-400 align-middle ${blink ? 'opacity-100' : 'opacity-0'}`}
         />
       </span>
       <motion.span
-        className="absolute -bottom-1 left-0 w-full h-[6px] bg-violet-100 dark:bg-violet-900/40 -z-10 rounded-sm"
+        className="absolute -bottom-1 left-0 w-full h-[6px] bg-violet-100 dark:bg-violet-800/50 -z-10 rounded-sm"
         initial={{ scaleX: 0 }}
         animate={{ scaleX: 1 }}
         transition={{ delay: 0.8, duration: 0.7, ease: 'easeOut' }}
@@ -89,13 +89,13 @@ export default function Hero() {
           >
             {/* Badge */}
             <motion.div variants={itemVariants} className="flex justify-center lg:justify-start">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-violet-50 dark:bg-violet-900/20 border border-violet-100 dark:border-violet-700/30">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-violet-50 dark:bg-violet-800/30 border border-violet-100 dark:border-violet-600/50">
                 <motion.span
                   animate={{ rotate: 360 }}
                   transition={{ duration: 5, repeat: Infinity, ease: 'linear' }}
                   className="flex"
                 >
-                  <Sparkle size={14} weight="fill" className="text-violet-600 dark:text-violet-400" />
+                  <Sparkle size={14} weight="fill" className="text-violet-600 dark:text-violet-300" />
                 </motion.span>
                 <span className="text-violet-700 dark:text-violet-300 text-sm font-semibold tracking-wide">
                   25+ Years of Teaching Experience
@@ -109,7 +109,7 @@ export default function Hero() {
                 The Effective Solutions
                 <br />
                 To Grow Your{' '}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 dark:from-violet-400 dark:via-purple-400 dark:to-indigo-400">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 dark:from-violet-300 dark:via-purple-300 dark:to-indigo-300">
                   English
                 </span>
               </h1>
@@ -138,7 +138,7 @@ export default function Hero() {
             >
               <motion.button
                 type="button"
-                whileHover={{ scale: 1.04, y: -2 }}
+                whileHover={{ scale: 1.04 }}
                 whileTap={{ scale: 0.97 }}
                 className="group relative inline-flex items-center justify-center gap-2 bg-gradient-to-r from-violet-600 to-purple-600 text-white font-bold px-8 py-4 rounded-2xl shadow-[0_8px_24px_rgba(124,58,237,0.35)] hover:shadow-[0_12px_32px_rgba(124,58,237,0.45)] transition-all overflow-hidden"
               >
@@ -157,7 +157,7 @@ export default function Hero() {
                 whileTap={{ scale: 0.97 }}
                 className="group inline-flex items-center justify-center gap-3 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 hover:border-violet-300 dark:hover:border-violet-500/50 text-gray-800 dark:text-white font-semibold px-8 py-4 rounded-2xl transition-all shadow-sm hover:shadow-md"
               >
-                <div className="w-8 h-8 rounded-full bg-violet-50 dark:bg-violet-900/40 flex items-center justify-center text-violet-600 dark:text-violet-400 group-hover:scale-110 group-hover:bg-violet-100 dark:group-hover:bg-violet-800/40 transition-all">
+                <div className="w-8 h-8 rounded-full bg-violet-50 dark:bg-violet-800/50 flex items-center justify-center text-violet-600 dark:text-violet-300 group-hover:scale-110 group-hover:bg-violet-100 dark:group-hover:bg-violet-800/40 transition-all">
                   <Play size={13} weight="fill" className="ml-0.5" />
                 </div>
                 <span>Watch Demo</span>
@@ -212,8 +212,8 @@ export default function Hero() {
             <div className="absolute w-[320px] h-[320px] sm:w-[400px] sm:h-[400px] lg:w-[460px] lg:h-[460px] rounded-full bg-gradient-to-br from-violet-100 to-purple-100 dark:from-violet-900/30 dark:to-purple-900/30 blur-3xl" />
 
             {/* Decorative rings */}
-            <div className="absolute w-[300px] h-[300px] sm:w-[380px] sm:h-[380px] lg:w-[440px] lg:h-[440px] rounded-full border border-violet-200/50 dark:border-violet-700/20" />
-            <div className="absolute w-[250px] h-[250px] sm:w-[310px] sm:h-[310px] lg:w-[360px] lg:h-[360px] rounded-full border border-violet-200/30 dark:border-violet-700/10" />
+            <div className="absolute w-[300px] h-[300px] sm:w-[380px] sm:h-[380px] lg:w-[440px] lg:h-[440px] rounded-full border border-violet-200/50 dark:border-violet-600/30" />
+            <div className="absolute w-[250px] h-[250px] sm:w-[310px] sm:h-[310px] lg:w-[360px] lg:h-[360px] rounded-full border border-violet-200/30 dark:border-violet-600/20" />
 
             {/* Girl image */}
             <img

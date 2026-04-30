@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { List, X, Phone } from '@phosphor-icons/react'
+import { ThemeToggle } from './ThemeToggle'
 
 const NAV_LINKS = ['Home', 'Courses', 'About', 'Instructors', 'Blog', 'Contact']
 
@@ -16,8 +17,8 @@ export default function Navbar() {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 bg-white ${
-        scrolled ? 'shadow-[0_2px_24px_rgba(0,0,0,0.08)] border-b border-gray-100' : ''
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 bg-white dark:bg-slate-900 ${
+        scrolled ? 'shadow-[0_2px_24px_rgba(0,0,0,0.08)] dark:shadow-[0_2px_24px_rgba(0,0,0,0.4)] border-b border-gray-100 dark:border-slate-800' : ''
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -27,8 +28,8 @@ export default function Navbar() {
           <motion.a
             href="#"
             className="flex items-center gap-2.5 flex-shrink-0"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.97 }}
             transition={{ type: "spring", stiffness: 400, damping: 17 }}
           >
             <motion.div
@@ -49,7 +50,7 @@ export default function Navbar() {
               </svg>
             </motion.div>
             <motion.span
-              className="text-xl font-bold text-gray-900 tracking-tight"
+              className="text-xl font-bold text-gray-900 dark:text-white tracking-tight transition-colors"
               whileHover={{ color: "#7c3aed" }}
               transition={{ duration: 0.2 }}
             >
@@ -65,8 +66,8 @@ export default function Navbar() {
                 href="#"
                 className={`text-sm font-medium transition-colors relative ${
                   i === 0
-                    ? 'text-violet-600'
-                    : 'text-gray-600 hover:text-violet-600'
+                    ? 'text-violet-600 dark:text-violet-300'
+                    : 'text-gray-600 dark:text-gray-300 hover:text-violet-600 dark:hover:text-violet-400'
                 }`}
                 whileHover={{
                   scale: 1.05,
@@ -77,7 +78,7 @@ export default function Navbar() {
               >
                 {link}
                 <motion.div
-                  className="absolute -bottom-1 left-0 right-0 h-0.5 bg-violet-600 rounded-full"
+                  className="absolute -bottom-1 left-0 right-0 h-0.5 bg-violet-600 dark:bg-violet-400 rounded-full"
                   initial={{ scaleX: 0 }}
                   whileHover={{ scaleX: 1 }}
                   transition={{ duration: 0.2 }}
@@ -88,59 +89,65 @@ export default function Navbar() {
 
           {/* Right: phone + CTA */}
           <div className="hidden lg:flex items-center gap-5">
+            <ThemeToggle />
             <motion.a
               href="tel:+80155564545"
-              className="flex items-center gap-2 text-gray-600 hover:text-violet-600 transition-colors"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              className="flex items-center gap-2 text-gray-600 dark:text-gray-300 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.97 }}
             >
               <motion.div
-                className="w-8 h-8 bg-violet-50 rounded-full flex items-center justify-center"
+                className="w-8 h-8 bg-violet-50 dark:bg-violet-800/40 rounded-full flex items-center justify-center"
                 whileHover={{
                   backgroundColor: "#ddd6fe",
                   scale: 1.1
                 }}
                 transition={{ duration: 0.2 }}
               >
-                <Phone size={15} weight="fill" className="text-violet-600" />
+                <Phone size={15} weight="fill" className="text-violet-600 dark:text-violet-300" />
               </motion.div>
               <span className="text-sm font-medium">+801 555 645 45</span>
             </motion.a>
-            <a
+            <motion.a
               href="#"
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.97 }}
               className="bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-colors shadow-[0_4px_14px_rgba(124,58,237,0.3)]"
             >
               Get a Quote
-            </a>
+            </motion.a>
           </div>
 
           {/* Mobile hamburger */}
-          <button
-            onClick={() => setMenuOpen(!menuOpen)}
-            className="lg:hidden text-gray-600 hover:text-gray-900 p-2 transition-colors"
-            aria-label={menuOpen ? 'Close menu' : 'Open menu'}
-          >
-            {menuOpen ? <X size={22} /> : <List size={22} />}
-          </button>
+          <div className="lg:hidden flex items-center gap-3">
+            <ThemeToggle />
+            <button
+              onClick={() => setMenuOpen(!menuOpen)}
+              className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white p-2 transition-colors"
+              aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+            >
+              {menuOpen ? <X size={22} /> : <List size={22} />}
+            </button>
+          </div>
         </div>
 
         {/* Mobile menu */}
         {menuOpen && (
-          <div className="lg:hidden border-t border-gray-100 py-5">
+          <div className="lg:hidden border-t border-gray-100 dark:border-slate-800 py-5">
             <div className="flex flex-col gap-5">
               {NAV_LINKS.map((link) => (
                 <a
                   key={link}
                   href="#"
                   onClick={() => setMenuOpen(false)}
-                  className="text-sm font-medium text-gray-600 hover:text-violet-600 transition-colors"
+                  className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
                 >
                   {link}
                 </a>
               ))}
-              <div className="border-t border-gray-100 pt-5 flex flex-col gap-3">
-                <a href="tel:+80155564545" className="flex items-center gap-2 text-gray-600">
-                  <Phone size={15} weight="fill" className="text-violet-600" />
+              <div className="border-t border-gray-100 dark:border-slate-800 pt-5 flex flex-col gap-3">
+                <a href="tel:+80155564545" className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
+                  <Phone size={15} weight="fill" className="text-violet-600 dark:text-violet-300" />
                   <span className="text-sm font-medium">+801 555 645 45</span>
                 </a>
                 <a href="#" className="bg-violet-600 text-white text-sm font-semibold px-5 py-3 rounded-lg text-center">

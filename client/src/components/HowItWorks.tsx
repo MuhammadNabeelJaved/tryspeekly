@@ -44,12 +44,12 @@ export default function HowItWorks() {
 
         {/* Section header */}
         <div className="text-center mb-12 md:mb-14">
-          <span className="inline-flex items-center gap-2 text-violet-600 dark:text-violet-400 text-sm font-semibold mb-4">
+          <span className="inline-flex items-center gap-2 text-violet-600 dark:text-violet-300 text-sm font-semibold mb-4">
             <span className="w-2 h-2 bg-violet-600 dark:bg-violet-400 rounded-full" />
             Learning Process
           </span>
           <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-[42px] font-bold text-gray-900 dark:text-white leading-tight tracking-tight">
-            Your Journey to English Fluency in 3 Simple Steps
+            Your Journey to English Fluency in 4 Simple Steps
           </h2>
         </div>
 
@@ -65,26 +65,15 @@ export default function HowItWorks() {
             <motion.div
               key={step.name}
               variants={cardVariants}
-              whileHover={{
-                y: -10,
-                scale: 1.03,
-                boxShadow: "0 25px 50px rgba(124, 58, 237, 0.2)"
-              }}
-              transition={{
-                type: "spring",
-                stiffness: 300,
-                damping: 20
-              }}
+              whileHover={{ scale: 1.04 }}
               className="group bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-gray-100 dark:border-white/5 hover:border-violet-300 dark:hover:border-violet-500/30 transition-all duration-300 cursor-pointer shadow-sm"
             >
               {/* Photo */}
               <div className="relative h-56 overflow-hidden">
-                <motion.img
+                <img
                   src={step.img}
                   alt={step.name}
-                  className="w-full h-full object-cover"
-                  whileHover={{ scale: 1.1 }}
-                  transition={{ duration: 0.5, ease: "easeOut" }}
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-white dark:from-slate-800 via-transparent to-transparent" />
 
@@ -128,7 +117,7 @@ export default function HowItWorks() {
                   transition={{ type: "spring", stiffness: 400 }}
                 >
                   <motion.div
-                    className="w-8 h-8 bg-violet-100 dark:bg-violet-600/20 rounded-lg flex items-center justify-center text-violet-600 dark:text-violet-400"
+                    className="w-8 h-8 bg-violet-100 dark:bg-violet-600/20 rounded-lg flex items-center justify-center text-violet-600 dark:text-violet-300"
                     whileHover={{
                       backgroundColor: "rgba(124, 58, 237, 0.2)",
                       scale: 1.1

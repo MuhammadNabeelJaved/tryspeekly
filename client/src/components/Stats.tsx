@@ -21,7 +21,7 @@ export default function Stats() {
 
       {/* Background orbs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-[600px] h-[600px] rounded-full bg-violet-200/40 dark:bg-violet-900/20 blur-[100px]" />
+        <div className="absolute -top-40 -right-40 w-[600px] h-[600px] rounded-full bg-violet-200/40 dark:bg-violet-800/30 blur-[100px]" />
         <div className="absolute -bottom-40 -left-40 w-[500px] h-[500px] rounded-full bg-purple-200/30 dark:bg-purple-900/15 blur-[100px]" />
         <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.04] mix-blend-overlay" />
       </div>
@@ -34,9 +34,9 @@ export default function Stats() {
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-violet-100 dark:bg-violet-900/30 border border-violet-200 dark:border-violet-700/40 mb-5"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-violet-100 dark:bg-violet-800/40 border border-violet-200 dark:border-violet-600/55 mb-5"
           >
-            <Sparkle size={14} weight="fill" className="text-violet-600 dark:text-violet-400" />
+            <Sparkle size={14} weight="fill" className="text-violet-600 dark:text-violet-300" />
             <span className="text-violet-700 dark:text-violet-300 text-sm font-bold tracking-wide uppercase">
               Our Features
             </span>
@@ -50,7 +50,7 @@ export default function Stats() {
             className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-gray-900 dark:text-white leading-tight tracking-tight max-w-3xl mx-auto"
           >
             Speak Fluently.{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 via-purple-500 to-indigo-600 dark:from-violet-400 dark:via-purple-400 dark:to-indigo-400">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 via-purple-500 to-indigo-600 dark:from-violet-300 dark:via-purple-300 dark:to-indigo-300">
               Score Higher.
             </span>{' '}
             Get Hired.
@@ -79,7 +79,7 @@ export default function Stats() {
           {/* ── Card 1: Live Training — image bg, wide ── */}
           <motion.div
             variants={cardVariants}
-            whileHover={{ y: -6 }}
+            whileHover={{ scale: 1.04 }}
             className="md:col-span-2 relative rounded-3xl overflow-hidden h-[340px] cursor-pointer group"
           >
             <img
@@ -134,7 +134,7 @@ export default function Stats() {
           {/* ── Card 2: IELTS 8+ — bold gradient stat ── */}
           <motion.div
             variants={cardVariants}
-            whileHover={{ y: -6 }}
+            whileHover={{ scale: 1.04 }}
             className="relative rounded-3xl overflow-hidden h-[340px] cursor-pointer group bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-700 p-7 flex flex-col justify-between"
           >
             {/* Decorative large number */}
@@ -177,7 +177,7 @@ export default function Stats() {
           {/* ── Card 3: Job Interview — image + dark overlay ── */}
           <motion.div
             variants={cardVariants}
-            whileHover={{ y: -6 }}
+            whileHover={{ scale: 1.04 }}
             className="relative rounded-3xl overflow-hidden h-[320px] cursor-pointer group"
           >
             <img
@@ -209,7 +209,7 @@ export default function Stats() {
           {/* ── Card 4: Shareable Certificate — dark premium card ── */}
           <motion.div
             variants={cardVariants}
-            whileHover={{ y: -6 }}
+            whileHover={{ scale: 1.04 }}
             className="md:col-span-2 relative rounded-3xl overflow-hidden h-[320px] cursor-pointer group bg-slate-900 dark:bg-slate-800 p-7 sm:p-8 flex flex-col sm:flex-row items-center gap-8"
           >
             {/* Decorative glow */}

@@ -5,10 +5,11 @@ import Stats from '@/components/Stats'
 import Features from '@/components/Features'
 import HowItWorks from '@/components/HowItWorks'
 import Testimonials from '@/components/Testimonials'
-import CTA from '@/components/CTA'
+import Reviews from '@/components/Reviews'
 import Process from '@/components/Process'
 import Blog from '@/components/Blog'
 import Footer from '@/components/Footer'
+import ScrollToTop from '@/components/ScrollToTop'
 import './App.css'
 
 const pageVariants = {
@@ -37,7 +38,7 @@ const sectionVariants = {
 function App() {
   return (
     <motion.div
-      className="min-h-[100dvh] w-full overflow-x-hidden bg-white"
+      className="min-h-[100dvh] w-full overflow-x-hidden bg-white dark:bg-slate-950 transition-colors duration-300"
       variants={pageVariants}
       initial="initial"
       animate="animate"
@@ -49,11 +50,12 @@ function App() {
         <motion.div variants={sectionVariants}><Features /></motion.div>
         <motion.div variants={sectionVariants}><HowItWorks /></motion.div>
         <motion.div variants={sectionVariants}><Testimonials /></motion.div>
-        <motion.div variants={sectionVariants}><CTA /></motion.div>
+        <motion.div variants={sectionVariants}><Reviews /></motion.div>
         <motion.div variants={sectionVariants}><Process /></motion.div>
         <motion.div variants={sectionVariants}><Blog /></motion.div>
       </main>
       <motion.div variants={sectionVariants}><Footer /></motion.div>
+      <ScrollToTop />
     </motion.div>
   )
 }
