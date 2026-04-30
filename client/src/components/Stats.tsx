@@ -1,46 +1,50 @@
 import { useRef } from 'react'
 import { motion, useInView } from 'framer-motion'
-import { Briefcase, ChartBar, Megaphone, Desktop, ArrowRight } from '@phosphor-icons/react'
+import { Briefcase, ChartBar, Megaphone, Desktop, ArrowRight, Sparkle } from '@phosphor-icons/react'
 
 const SERVICES = [
   {
     Icon: Briefcase,
-    iconBg: 'bg-violet-50',
-    iconColor: 'text-violet-600',
+    bgGradient: 'from-violet-500 to-purple-600',
+    glowColor: 'group-hover:shadow-violet-500/25',
     title: 'Interactive Lessons',
     description: 'Engage with dynamic video lessons, quizzes, and exercises designed to accelerate your English learning journey.',
+    colSpan: 'col-span-1 md:col-span-2 lg:col-span-2',
   },
   {
     Icon: ChartBar,
-    iconBg: 'bg-blue-50',
-    iconColor: 'text-blue-600',
+    bgGradient: 'from-violet-500 to-purple-600',
+    glowColor: 'group-hover:shadow-violet-500/25',
     title: 'Personalized Learning',
-    description: 'AI-powered learning paths adapt to your pace and goals, ensuring optimal progress in speaking, reading, and writing.',
+    description: 'AI-powered learning paths adapt to your pace and goals, ensuring optimal progress in all skills.',
+    colSpan: 'col-span-1 md:col-span-1 lg:col-span-1',
   },
   {
     Icon: Megaphone,
-    iconBg: 'bg-orange-50',
-    iconColor: 'text-orange-500',
-    title: 'Native Speaker Practice',
-    description: 'Connect with certified English tutors and conversation partners for real-world speaking practice and feedback.',
+    bgGradient: 'from-violet-500 to-purple-600',
+    glowColor: 'group-hover:shadow-violet-500/25',
+    title: 'Native Practice',
+    description: 'Connect with certified English tutors and conversation partners for real-world speaking practice and immediate feedback.',
+    colSpan: 'col-span-1 md:col-span-1 lg:col-span-1',
   },
   {
     Icon: Desktop,
-    iconBg: 'bg-emerald-50',
-    iconColor: 'text-emerald-600',
-    title: 'Mobile Learning',
-    description: 'Learn anytime, anywhere with our mobile app featuring offline access, audio lessons, and progress tracking.',
+    bgGradient: 'from-violet-500 to-purple-600',
+    glowColor: 'group-hover:shadow-violet-500/25',
+    title: 'Mobile Learning Platform',
+    description: 'Learn anytime, anywhere with our mobile app featuring offline access, audio lessons, and detailed progress tracking.',
+    colSpan: 'col-span-1 md:col-span-2 lg:col-span-2',
   },
 ]
 
 const containerVariants = {
   hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.12 } },
+  visible: { opacity: 1, transition: { staggerChildren: 0.15 } },
 }
 
 const cardVariants = {
-  hidden: { opacity: 0, y: 28 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.55 } },
+  hidden: { opacity: 0, y: 30 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut' } },
 }
 
 export default function Stats() {
@@ -48,89 +52,102 @@ export default function Stats() {
   const isInView = useInView(ref, { once: true, margin: '-100px' })
 
   return (
-    <section className="bg-gray-50 py-16 md:py-20 lg:py-28">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="relative overflow-hidden bg-white dark:bg-slate-950 py-20 md:py-28 lg:py-32 transition-colors duration-300">
+      {/* Dynamic Background Elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <motion.div 
+          animate={{ rotate: 360, scale: [1, 1.2, 1] }} 
+          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+          className="absolute -top-1/2 -right-1/4 w-[800px] h-[800px] rounded-full bg-violet-600/10 dark:bg-violet-600/10 blur-[100px]"
+        />
+        <motion.div 
+          animate={{ rotate: -360, scale: [1, 1.5, 1] }} 
+          transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+          className="absolute -bottom-1/2 -left-1/4 w-[600px] h-[600px] rounded-full bg-purple-600/10 dark:bg-purple-600/10 blur-[100px]"
+        />
+        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-5 mix-blend-overlay"></div>
+      </div>
 
-        {/* Section header */}
-        <div className="text-center mb-12 md:mb-14">
-          <span className="inline-flex items-center gap-2 text-violet-600 text-sm font-semibold mb-4">
-            <span className="w-2 h-2 bg-violet-600 rounded-full" />
-            Master English Skills
-          </span>
-          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-[42px] font-bold text-gray-900 leading-tight tracking-tight max-w-2xl mx-auto">
-            Learn English With Interactive Tools & Expert Guidance
-          </h2>
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Section Header */}
+        <div className="text-center mb-16 md:mb-20">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-violet-50/50 dark:bg-white/5 border border-violet-100 dark:border-white/10 backdrop-blur-sm mb-6"
+          >
+            <Sparkle size={16} weight="fill" className="text-violet-600 dark:text-violet-400" />
+            <span className="text-violet-700 dark:text-violet-300 text-sm font-bold tracking-wide uppercase">
+              Master English Skills
+            </span>
+          </motion.div>
+          <motion.h2 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1 }}
+            className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-gray-900 dark:text-white leading-tight tracking-tight max-w-4xl mx-auto"
+          >
+            Learn English With <br className="hidden md:block" />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 via-purple-600 to-violet-600 dark:from-violet-400 dark:via-purple-400 dark:to-blue-400">
+              Interactive Tools & Expert Guidance
+            </span>
+          </motion.h2>
         </div>
 
-        {/* Service cards */}
+        {/* Bento Grid */}
         <motion.div
           ref={ref}
           variants={containerVariants}
           initial="hidden"
           animate={isInView ? 'visible' : 'hidden'}
-          className="grid grid-cols-1 sm:grid-cols-2 gap-6"
+          className="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-[minmax(280px,auto)]"
         >
-          {SERVICES.map((service) => {
+          {SERVICES.map((service, index) => {
             const { Icon } = service
             return (
               <motion.div
                 key={service.title}
                 variants={cardVariants}
-                whileHover={{
-                  y: -8,
-                  scale: 1.02,
-                  boxShadow: "0 20px 40px rgba(124, 58, 237, 0.12)"
-                }}
-                whileTap={{ scale: 0.98 }}
-                transition={{
-                  type: "spring",
-                  stiffness: 300,
-                  damping: 20
-                }}
-                className="group bg-white rounded-2xl p-7 border border-gray-100 hover:border-violet-200 transition-all duration-300 cursor-pointer"
+                whileHover={{ y: -8 }}
+                className={`group relative rounded-3xl p-8 sm:p-10 bg-white dark:bg-slate-800/50 border border-gray-100 dark:border-slate-700/50 backdrop-blur-md overflow-hidden transition-all duration-500 hover:bg-gray-50 dark:hover:bg-slate-800/70 shadow-xl dark:shadow-2xl ${service.glowColor} ${service.colSpan}`}
               >
-                <div className="flex items-start gap-5">
-                  <motion.div
-                    className={`w-12 h-12 ${service.iconBg} rounded-xl flex items-center justify-center flex-shrink-0`}
-                    whileHover={{
-                      rotate: [0, -10, 10, 0],
-                      scale: 1.1
-                    }}
-                    transition={{
-                      rotate: { duration: 0.5, ease: "easeInOut" },
-                      scale: { duration: 0.2 }
-                    }}
-                  >
-                    <Icon size={22} weight="duotone" className={service.iconColor} />
-                  </motion.div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-[17px] font-bold text-gray-900 group-hover:text-violet-700 transition-colors duration-300">
-                        {service.title}
-                      </h3>
-                      <motion.div
-                        className="w-8 h-8 border border-gray-200 rounded-lg flex items-center justify-center group-hover:bg-violet-600 group-hover:border-violet-600 transition-all duration-300 flex-shrink-0 ml-3"
-                        whileHover={{
-                          rotate: 45,
-                          scale: 1.1
-                        }}
-                        transition={{
-                          rotate: { duration: 0.3 },
-                          scale: { duration: 0.2 }
-                        }}
-                      >
-                        <ArrowRight
-                          size={14}
-                          weight="bold"
-                          className="text-gray-400 group-hover:text-white transition-colors duration-300"
-                        />
-                      </motion.div>
-                    </div>
-                    <p className="text-gray-500 text-sm leading-relaxed group-hover:text-gray-600 transition-colors duration-300">
+                {/* Hover Gradient Background */}
+                <div className={`absolute inset-0 bg-gradient-to-br ${service.bgGradient} opacity-0 group-hover:opacity-[0.03] dark:group-hover:opacity-10 transition-opacity duration-500`} />
+                
+                <div className="relative z-10 h-full flex flex-col">
+                  <div className="flex items-start justify-between mb-8">
+                    <motion.div
+                      whileHover={{ rotate: 10, scale: 1.1 }}
+                      className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${service.bgGradient} p-[2px] shadow-lg`}
+                    >
+                      <div className="w-full h-full bg-white dark:bg-slate-900 backdrop-blur-xl rounded-xl flex items-center justify-center">
+                        <Icon size={32} weight="duotone" className="text-violet-600 dark:text-white" />
+                      </div>
+                    </motion.div>
+
+                    <motion.button
+                      whileHover={{ scale: 1.1, rotate: -45 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="w-12 h-12 rounded-full border border-gray-200 dark:border-white/10 flex items-center justify-center group-hover:border-violet-300 dark:group-hover:border-white/30 group-hover:bg-violet-50 dark:group-hover:bg-slate-700/50 transition-all duration-300"
+                    >
+                      <ArrowRight size={20} className="text-gray-400 group-hover:text-violet-600 dark:group-hover:text-white transition-colors" />
+                    </motion.button>
+                  </div>
+
+                  <div className="mt-auto">
+                    <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-violet-600 group-hover:to-purple-600 dark:group-hover:from-white dark:group-hover:to-white/70 transition-all duration-300">
+                      {service.title}
+                    </h3>
+                    <p className="text-gray-500 dark:text-gray-400 text-base sm:text-lg leading-relaxed group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors duration-300">
                       {service.description}
                     </p>
                   </div>
                 </div>
+
+                {/* Decorative glowing dot */}
+                <div className={`absolute -bottom-4 -right-4 w-24 h-24 bg-gradient-to-br ${service.bgGradient} blur-2xl opacity-0 group-hover:opacity-30 transition-opacity duration-500 rounded-full`} />
               </motion.div>
             )
           })}
