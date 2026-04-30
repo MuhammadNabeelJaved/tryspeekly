@@ -1,5 +1,5 @@
 import { useRef } from 'react'
-import { motion, useInView } from 'framer-motion'
+import { motion, useInView, type Variants } from 'framer-motion'
 import { Briefcase, ChartBar, Megaphone, Desktop, ArrowRight, Sparkle } from '@phosphor-icons/react'
 
 const SERVICES = [
@@ -37,12 +37,12 @@ const SERVICES = [
   },
 ]
 
-const containerVariants = {
+const containerVariants: Variants = {
   hidden: { opacity: 0 },
   visible: { opacity: 1, transition: { staggerChildren: 0.15 } },
 }
 
-const cardVariants = {
+const cardVariants: Variants = {
   hidden: { opacity: 0, y: 30 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut' } },
 }
