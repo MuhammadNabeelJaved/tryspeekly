@@ -255,12 +255,12 @@ export default function Courses() {
     <div className="bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
 
       {/* ─── HERO ─────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden bg-white py-20 lg:py-32">
+      <section className="relative overflow-hidden bg-white dark:bg-slate-900 py-20 lg:py-32">
         {/* Dot grid */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle,#e2e8f0_1px,transparent_1px)] bg-[size:24px_24px] opacity-40 pointer-events-none" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle,#e2e8f0_1px,transparent_1px)] dark:bg-[radial-gradient(circle,#1e293b_1px,transparent_1px)] bg-[size:24px_24px] opacity-40 pointer-events-none" />
 
         {/* Violet blob */}
-        <div className="absolute -top-32 -right-32 w-[600px] h-[600px] bg-violet-100/60 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -top-32 -right-32 w-[600px] h-[600px] bg-violet-100/60 dark:bg-violet-900/20 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col lg:flex-row lg:items-center gap-12 lg:gap-20">
@@ -333,8 +333,8 @@ export default function Courses() {
                 transition={{ duration: 0.6, delay: 0.4 }}
                 className="flex flex-wrap items-center gap-x-8 gap-y-3"
               >
-                {STATS.map(({ value, label, icon: Icon }, i) => (
-                  <div key={i} className="flex items-center gap-2">
+                {STATS.map(({ value, label, icon: Icon }) => (
+                  <div key={value} className="flex items-center gap-2">
                     <Icon size={15} weight="fill" className="text-violet-500" />
                     <span className="text-slate-900 font-black text-sm">{value}</span>
                     <span className="text-slate-400 text-xs">{label}</span>
@@ -355,7 +355,7 @@ export default function Courses() {
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.5, duration: 0.5 }}
-                  className="absolute top-6 -left-10 w-[272px] bg-white border border-slate-100 rounded-2xl shadow-md p-5 -rotate-6 z-0 opacity-70"
+                  className="absolute top-6 -left-10 w-[272px] bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl shadow-md p-5 -rotate-6 z-0 opacity-70"
                 >
                   <HeroCard course={COURSES[0]} />
                 </motion.div>
@@ -365,7 +365,7 @@ export default function Courses() {
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.35, duration: 0.5 }}
-                  className="absolute top-3 left-8 w-[272px] bg-white border border-slate-100 rounded-2xl shadow-lg p-5 rotate-3 z-10 opacity-[0.85]"
+                  className="absolute top-3 left-8 w-[272px] bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl shadow-lg p-5 rotate-3 z-10 opacity-[0.85]"
                 >
                   <HeroCard course={COURSES[2]} />
                 </motion.div>
@@ -376,7 +376,7 @@ export default function Courses() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2, duration: 0.5 }}
                   whileHover={{ scale: 1.03 }}
-                  className="relative w-[272px] bg-white border border-slate-100 rounded-2xl shadow-xl p-5 z-20"
+                  className="relative w-[272px] bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl shadow-xl p-5 z-20"
                 >
                   <HeroCard course={COURSES[1]} />
                 </motion.div>
