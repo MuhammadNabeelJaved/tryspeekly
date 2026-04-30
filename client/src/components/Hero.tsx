@@ -66,7 +66,7 @@ const floatingVariants: Variants = {
 
 export default function Hero() {
   return (
-    <section className="relative bg-[#fafafa] dark:bg-slate-950 min-h-screen overflow-hidden pt-[72px] md:pt-[80px] transition-colors duration-300">
+    <section className="relative bg-[#fafafa] dark:bg-slate-950 min-h-[100dvh] overflow-hidden pt-[72px] md:pt-[80px] transition-colors duration-300">
 
       {/* Immersive Gradient Orb Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -76,7 +76,7 @@ export default function Hero() {
           className="absolute -top-[15%] -right-[10%] w-[700px] h-[700px] rounded-full bg-gradient-to-br from-violet-600 to-purple-700 blur-[120px] mix-blend-multiply dark:mix-blend-screen"
         />
         <motion.div
-          animate={{ rotate: [0, -90, 0], scale: [1, 1.3, 1], opacity: [0.3, 0.45, 0.3] }}
+          animate={{ rotate: [0, -90, 0], scale: [1, 1.3, 1], opacity: [0.35, 0.5, 0.35] }}
           transition={{ duration: 25, repeat: Infinity, ease: 'linear' }}
           className="absolute -bottom-[15%] -left-[10%] w-[600px] h-[600px] rounded-full bg-gradient-to-tr from-indigo-700 to-violet-800 blur-[100px] mix-blend-multiply dark:mix-blend-screen"
         />
@@ -92,7 +92,7 @@ export default function Hero() {
       <motion.div
         variants={floatingVariants}
         animate="animate"
-        className="absolute top-[22%] left-[4%] xl:left-[8%] hidden lg:block bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl shadow-xl border border-white dark:border-white/10 p-4 z-20"
+        className="absolute top-[20%] left-[8%] hidden lg:block bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl shadow-xl border border-white dark:border-white/10 p-4 z-20"
       >
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-emerald-500 rounded-xl flex items-center justify-center shadow-inner">
@@ -110,7 +110,7 @@ export default function Hero() {
         variants={floatingVariants}
         animate="animate"
         transition={{ delay: 1 }}
-        className="absolute bottom-[22%] right-[4%] xl:right-[8%] hidden lg:block bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl shadow-xl border border-white dark:border-white/10 p-4 z-20"
+        className="absolute bottom-[20%] right-[8%] hidden lg:block bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl shadow-xl border border-white dark:border-white/10 p-4 z-20"
       >
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl flex items-center justify-center shadow-inner">
@@ -124,7 +124,7 @@ export default function Hero() {
       </motion.div>
 
       {/* Main Content — centered single column */}
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-[calc(100vh-72px)] md:min-h-[calc(100vh-80px)] flex items-center justify-center py-16">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-[calc(100dvh-72px)] md:min-h-[calc(100dvh-80px)] flex items-center justify-center py-16">
         <motion.div
           variants={containerVariants}
           initial="hidden"
@@ -168,7 +168,7 @@ export default function Hero() {
           </motion.div>
 
           {/* CTAs */}
-          <motion.div variants={itemVariants} className="flex flex-row gap-4 justify-center flex-wrap">
+          <motion.div variants={itemVariants} className="flex flex-row gap-4 justify-center">
             <motion.button
               whileHover={{ scale: 1.05, y: -2 }}
               whileTap={{ scale: 0.95 }}
