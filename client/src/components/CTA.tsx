@@ -47,7 +47,7 @@ export default function CTA() {
             className="relative"
           >
             {/* Main card */}
-            <div className="bg-[#0f172a] rounded-2xl p-6 shadow-[0_20px_60px_rgba(0,0,0,0.2)] dark:shadow-[0_20px_60px_rgba(0,0,0,0.5)]">
+            <div className="bg-slate-950 rounded-2xl p-6 shadow-[0_20px_60px_rgba(0,0,0,0.2)] dark:shadow-[0_20px_60px_rgba(0,0,0,0.5)]">
               <div className="flex items-center justify-between mb-5">
                 <div>
                   <p className="text-gray-400 text-xs font-medium mb-1">Active Learners</p>

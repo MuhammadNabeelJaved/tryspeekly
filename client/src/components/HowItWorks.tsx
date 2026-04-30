@@ -61,7 +61,7 @@ export default function HowItWorks() {
           animate={isInView ? 'visible' : 'hidden'}
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
         >
-          {STEPS.map((step) => (
+          {STEPS.map((step, index) => (
             <motion.div
               key={step.name}
               variants={cardVariants}
@@ -100,7 +100,7 @@ export default function HowItWorks() {
                     rotate: { duration: 0.6, ease: "easeInOut" }
                   }}
                 >
-                  {STEPS.indexOf(step) + 1}
+                  {index + 1}
                 </motion.div>
               </div>
 
@@ -147,7 +147,7 @@ export default function HowItWorks() {
                         ease: "easeInOut"
                       }}
                     >
-                      {STEPS.indexOf(step) + 1}
+                      {index + 1}
                     </motion.span>
                   </motion.div>
                   <motion.span
