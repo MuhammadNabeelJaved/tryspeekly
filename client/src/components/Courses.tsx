@@ -242,6 +242,7 @@ export default function Courses() {
   const [activeCategory, setActiveCategory] = useState('All')
   const [searchQuery, setSearchQuery] = useState('')
   const [openFaq, setOpenFaq] = useState<number | null>(null)
+  const [cardsHovered, setCardsHovered] = useState(false)
 
   const filteredCourses = COURSES.filter(course => {
     const matchesCategory = activeCategory === 'All' || course.category === activeCategory
@@ -348,37 +349,50 @@ export default function Courses() {
             {/* ── Right column — floating cards ── */}
             <div className="hidden lg:flex flex-1 items-center justify-center">
               <motion.div
-                animate={{ y: [0, -12, 0] }}
-                transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-                className="relative w-[300px] h-[260px]"
+                animate={{ y: cardsHovered ? 0 : [0, -12, 0] }}
+                transition={cardsHovered
+                  ? { duration: 0.4, ease: 'easeOut' }
+                  : { duration: 4, repeat: Infinity, ease: 'easeInOut' }
+                }
+                onMouseEnter={() => setCardsHovered(true)}
+                onMouseLeave={() => setCardsHovered(false)}
+                className="relative w-[300px] h-[220px] cursor-pointer"
               >
-                {/* Back card */}
+                {/* Back card — fans to top-left on hover */}
                 <motion.div
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.5, duration: 0.5 }}
-                  className="absolute top-6 -left-10 w-[272px] bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl shadow-md p-5 -rotate-6 z-0 opacity-70"
+                  initial={{ opacity: 0, scale: 0.85 }}
+                  animate={cardsHovered
+                    ? { x: -95, y: -40, rotate: -14, opacity: 1, scale: 0.93 }
+                    : { x: -40, y: 24, rotate: -6, opacity: 0.7, scale: 1 }
+                  }
+                  transition={{ type: 'spring', stiffness: 280, damping: 22 }}
+                  className="absolute top-0 left-0 w-[272px] bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl shadow-md p-5 z-0"
                 >
                   <HeroCard course={COURSES[0]} />
                 </motion.div>
 
-                {/* Middle card */}
+                {/* Middle card — fans to bottom-right on hover */}
                 <motion.div
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.35, duration: 0.5 }}
-                  className="absolute top-3 left-8 w-[272px] bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl shadow-lg p-5 rotate-3 z-10 opacity-[0.85]"
+                  initial={{ opacity: 0, scale: 0.85 }}
+                  animate={cardsHovered
+                    ? { x: 60, y: 55, rotate: 10, opacity: 1, scale: 0.93 }
+                    : { x: 32, y: 12, rotate: 3, opacity: 0.85, scale: 1 }
+                  }
+                  transition={{ type: 'spring', stiffness: 280, damping: 22 }}
+                  className="absolute top-0 left-0 w-[272px] bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl shadow-lg p-5 z-10"
                 >
                   <HeroCard course={COURSES[2]} />
                 </motion.div>
 
-                {/* Front card */}
+                {/* Front card — lifts up slightly on hover */}
                 <motion.div
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2, duration: 0.5 }}
-                  whileHover={{ scale: 1.03 }}
-                  className="relative w-[272px] bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl shadow-xl p-5 z-20"
+                  initial={{ opacity: 0, scale: 0.85 }}
+                  animate={cardsHovered
+                    ? { x: 0, y: -10, rotate: 0, opacity: 1, scale: 1.05 }
+                    : { x: 0, y: 0, rotate: 0, opacity: 1, scale: 1 }
+                  }
+                  transition={{ type: 'spring', stiffness: 280, damping: 22 }}
+                  className="absolute top-0 left-0 w-[272px] bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl shadow-xl p-5 z-20"
                 >
                   <HeroCard course={COURSES[1]} />
                 </motion.div>
