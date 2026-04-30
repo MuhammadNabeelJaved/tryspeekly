@@ -60,7 +60,7 @@ export default function Testimonials() {
               <span className="text-violet-200 dark:text-violet-300">English Fluency</span>
             </h2>
 
-            <p className="text-violet-200 dark:text-violet-200 text-sm md:text-[15px] leading-relaxed mb-6 md:mb-9 max-w-[44ch]">
+            <p className="text-violet-200 dark:text-violet-300 text-sm md:text-[15px] leading-relaxed mb-6 md:mb-9 max-w-[44ch]">
               Real students, real results. See how our comprehensive English learning platform has helped learners from around the world achieve their language goals and unlock new opportunities.
             </p>
 
