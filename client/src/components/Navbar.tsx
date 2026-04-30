@@ -66,8 +66,8 @@ export default function Navbar() {
                 href="#"
                 className={`text-sm font-medium transition-colors relative ${
                   i === 0
-                    ? 'text-violet-600 dark:text-violet-300'
-                    : 'text-gray-600 dark:text-gray-300 hover:text-violet-600 dark:hover:text-violet-400'
+                    ? 'text-violet-600 dark:text-violet-200'
+                    : 'text-gray-600 dark:text-gray-300 hover:text-violet-600 dark:hover:text-violet-300'
                 }`}
                 whileHover={{
                   scale: 1.05,
@@ -92,7 +92,7 @@ export default function Navbar() {
             <ThemeToggle />
             <motion.a
               href="tel:+80155564545"
-              className="flex items-center gap-2 text-gray-600 dark:text-gray-300 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
+              className="flex items-center gap-2 text-gray-600 dark:text-gray-300 hover:text-violet-600 dark:hover:text-violet-300 transition-colors"
               whileHover={{ scale: 1.04 }}
               whileTap={{ scale: 0.97 }}
             >
@@ -104,7 +104,7 @@ export default function Navbar() {
                 }}
                 transition={{ duration: 0.2 }}
               >
-                <Phone size={15} weight="fill" className="text-violet-600 dark:text-violet-300" />
+                <Phone size={15} weight="fill" className="text-violet-600 dark:text-violet-200" />
               </motion.div>
               <span className="text-sm font-medium">+801 555 645 45</span>
             </motion.a>
@@ -140,14 +140,14 @@ export default function Navbar() {
                   key={link}
                   href="#"
                   onClick={() => setMenuOpen(false)}
-                  className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
+                  className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-violet-600 dark:hover:text-violet-300 transition-colors"
                 >
                   {link}
                 </a>
               ))}
               <div className="border-t border-gray-100 dark:border-slate-800 pt-5 flex flex-col gap-3">
                 <a href="tel:+80155564545" className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
-                  <Phone size={15} weight="fill" className="text-violet-600 dark:text-violet-300" />
+                  <Phone size={15} weight="fill" className="text-violet-600 dark:text-violet-200" />
                   <span className="text-sm font-medium">+801 555 645 45</span>
                 </a>
                 <a href="#" className="bg-violet-600 text-white text-sm font-semibold px-5 py-3 rounded-lg text-center">

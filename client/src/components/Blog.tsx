@@ -6,7 +6,7 @@ const POSTS = [
   {
     img: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=700&q=80',
     category: 'Learning Tips',
-    categoryColor: 'bg-violet-50 dark:bg-violet-800/40 text-violet-600 dark:text-violet-300',
+    categoryColor: 'bg-violet-50 dark:bg-violet-800/40 text-violet-600 dark:text-violet-200',
     title: '10 Proven Techniques to Improve Your English Speaking Confidence',
     date: 'April 15, 2026',
     readTime: '5 min read',
@@ -15,7 +15,7 @@ const POSTS = [
   {
     img: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=700&q=80',
     category: 'Vocabulary',
-    categoryColor: 'bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400',
+    categoryColor: 'bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-300',
     title: 'Master Business English: Essential Vocabulary for Professional Success',
     date: 'April 10, 2026',
     readTime: '8 min read',
@@ -24,7 +24,7 @@ const POSTS = [
   {
     img: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=700&q=80',
     category: 'Grammar',
-    categoryColor: 'bg-violet-50 dark:bg-violet-800/40 text-violet-600 dark:text-violet-300',
+    categoryColor: 'bg-violet-50 dark:bg-violet-800/40 text-violet-600 dark:text-violet-200',
     title: 'Common English Grammar Mistakes and How to Avoid Them',
     date: 'April 5, 2026',
     readTime: '6 min read',
@@ -53,7 +53,7 @@ export default function Blog() {
         {/* Section header */}
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 md:gap-6 mb-12 md:mb-14">
           <div>
-            <span className="inline-flex items-center gap-2 text-violet-600 dark:text-violet-300 text-sm font-semibold mb-4">
+            <span className="inline-flex items-center gap-2 text-violet-600 dark:text-violet-200 text-sm font-semibold mb-4">
               <span className="w-2 h-2 bg-violet-600 dark:bg-violet-400 rounded-full" />
               News &amp; Blog
             </span>
@@ -63,7 +63,7 @@ export default function Blog() {
           </div>
           <a
             href="#"
-            className="hidden lg:inline-flex items-center gap-2 text-violet-600 dark:text-violet-300 hover:text-violet-700 dark:hover:text-violet-200 font-semibold text-sm transition-colors"
+            className="hidden lg:inline-flex items-center gap-2 text-violet-600 dark:text-violet-200 hover:text-violet-700 dark:hover:text-violet-100 font-semibold text-sm transition-colors"
           >
             View All Posts
             <ArrowRight size={15} weight="bold" />
@@ -125,7 +125,7 @@ export default function Blog() {
                 </div>
 
                 <motion.h3
-                  className="text-[16px] font-bold text-gray-900 dark:text-white leading-snug mb-3 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors duration-300"
+                  className="text-[16px] font-bold text-gray-900 dark:text-white leading-snug mb-3 group-hover:text-violet-600 dark:group-hover:text-violet-300 transition-colors duration-300"
                   whileHover={{ scale: 1.02 }}
                   transition={{ duration: 0.2 }}
                 >
@@ -137,7 +137,7 @@ export default function Blog() {
 
                 <motion.a
                   href="#"
-                  className="inline-flex items-center gap-1.5 text-violet-600 dark:text-violet-300 hover:text-violet-700 dark:hover:text-violet-200 font-semibold text-sm transition-all duration-300"
+                  className="inline-flex items-center gap-1.5 text-violet-600 dark:text-violet-200 hover:text-violet-700 dark:hover:text-violet-100 font-semibold text-sm transition-all duration-300"
                   whileHover={{ x: 4 }}
                   transition={{ type: "spring", stiffness: 400 }}
                 >
@@ -156,7 +156,7 @@ export default function Blog() {
 
         {/* Mobile view all */}
         <div className="flex justify-center mt-10 lg:hidden">
-          <a href="#" className="inline-flex items-center gap-2 text-violet-600 dark:text-violet-300 font-semibold text-sm">
+          <a href="#" className="inline-flex items-center gap-2 text-violet-600 dark:text-violet-200 font-semibold text-sm">
             View All Posts
             <ArrowRight size={15} weight="bold" />
           </a>

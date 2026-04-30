@@ -7,7 +7,7 @@ const STEPS = [
     number: '01',
     Icon: MagnifyingGlass,
     iconBg: 'bg-violet-50 dark:bg-violet-800/40',
-    iconColor: 'text-violet-600 dark:text-violet-300',
+    iconColor: 'text-violet-600 dark:text-violet-200',
     title: 'Find Your Perfect Course',
     description: 'Browse our specialized programs in IELTS, Speaking, Business English, and more to find the level that fits your goals.',
   },
@@ -15,7 +15,7 @@ const STEPS = [
     number: '02',
     Icon: Receipt,
     iconBg: 'bg-violet-50 dark:bg-violet-800/40',
-    iconColor: 'text-violet-600 dark:text-violet-300',
+    iconColor: 'text-violet-600 dark:text-violet-200',
     title: 'Seamless Enrollment',
     description: 'Register and submit your payment screenshot. Our team verifies transaction IDs quickly to give you instant access.',
   },
@@ -23,7 +23,7 @@ const STEPS = [
     number: '03',
     Icon: VideoCamera,
     iconBg: 'bg-violet-50 dark:bg-violet-800/40',
-    iconColor: 'text-violet-600 dark:text-violet-300',
+    iconColor: 'text-violet-600 dark:text-violet-200',
     title: 'Live Interactive Sessions',
     description: 'Attend real-time classes via Zoom or Google Meet links. Engage with expert trainers in dynamic, live learning environments.',
   },
@@ -31,7 +31,7 @@ const STEPS = [
     number: '04',
     Icon: Chats,
     iconBg: 'bg-violet-50 dark:bg-violet-800/40',
-    iconColor: 'text-violet-600 dark:text-violet-300',
+    iconColor: 'text-violet-600 dark:text-violet-200',
     title: 'Direct Teacher Support',
     description: 'Access private chat channels with your trainers to get personalized feedback, clear doubts, and stay motivated.',
   },
@@ -53,7 +53,7 @@ export default function Process() {
             animate={isInView ? { opacity: 1, x: 0 } : {}}
             transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
           >
-            <span className="inline-flex items-center gap-2 text-violet-600 dark:text-violet-300 text-sm font-semibold mb-4">
+            <span className="inline-flex items-center gap-2 text-violet-600 dark:text-violet-200 text-sm font-semibold mb-4">
               <span className="w-2 h-2 bg-violet-600 dark:bg-violet-400 rounded-full" />
               Learning Process
             </span>
@@ -87,7 +87,7 @@ export default function Process() {
                     {/* Content */}
                     <div className={i < STEPS.length - 1 ? 'pb-7' : ''}>
                       <div className="flex items-center gap-3 mb-1.5">
-                        <span className="text-[11px] font-bold text-violet-600 dark:text-violet-300 font-mono tracking-widest">{step.number}</span>
+                        <span className="text-[11px] font-bold text-violet-600 dark:text-violet-200 font-mono tracking-widest">{step.number}</span>
                       </div>
                       <h3 className="text-[16px] font-bold text-gray-900 dark:text-white mb-1.5">{step.title}</h3>
                       <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed max-w-[42ch]">{step.description}</p>

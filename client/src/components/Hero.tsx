@@ -35,7 +35,7 @@ function Typewriter({ words }: { words: string[] }) {
 
   return (
     <span className="relative inline-block min-w-[130px] sm:min-w-[170px]">
-      <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 dark:from-violet-300 dark:via-purple-300 dark:to-indigo-300">
+      <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 dark:from-violet-200 dark:via-purple-200 dark:to-indigo-200">
         {words[index].substring(0, subIndex)}
         <span
           className={`inline-block w-[2px] h-[28px] sm:h-[34px] ml-0.5 bg-violet-600 dark:bg-violet-400 align-middle ${blink ? 'opacity-100' : 'opacity-0'}`}
@@ -95,9 +95,9 @@ export default function Hero() {
                   transition={{ duration: 5, repeat: Infinity, ease: 'linear' }}
                   className="flex"
                 >
-                  <Sparkle size={14} weight="fill" className="text-violet-600 dark:text-violet-300" />
+                  <Sparkle size={14} weight="fill" className="text-violet-600 dark:text-violet-200" />
                 </motion.span>
-                <span className="text-violet-700 dark:text-violet-300 text-sm font-semibold tracking-wide">
+                <span className="text-violet-700 dark:text-violet-200 text-sm font-semibold tracking-wide">
                   25+ Years of Teaching Experience
                 </span>
               </div>
@@ -109,7 +109,7 @@ export default function Hero() {
                 The Effective Solutions
                 <br />
                 To Grow Your{' '}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 dark:from-violet-300 dark:via-purple-300 dark:to-indigo-300">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 dark:from-violet-200 dark:via-purple-200 dark:to-indigo-200">
                   English
                 </span>
               </h1>
@@ -157,7 +157,7 @@ export default function Hero() {
                 whileTap={{ scale: 0.97 }}
                 className="group inline-flex items-center justify-center gap-3 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 hover:border-violet-300 dark:hover:border-violet-500/50 text-gray-800 dark:text-white font-semibold px-8 py-4 rounded-2xl transition-all shadow-sm hover:shadow-md"
               >
-                <div className="w-8 h-8 rounded-full bg-violet-50 dark:bg-violet-800/50 flex items-center justify-center text-violet-600 dark:text-violet-300 group-hover:scale-110 group-hover:bg-violet-100 dark:group-hover:bg-violet-800/40 transition-all">
+                <div className="w-8 h-8 rounded-full bg-violet-50 dark:bg-violet-800/50 flex items-center justify-center text-violet-600 dark:text-violet-200 group-hover:scale-110 group-hover:bg-violet-100 dark:group-hover:bg-violet-800/40 transition-all">
                   <Play size={13} weight="fill" className="ml-0.5" />
                 </div>
                 <span>Watch Demo</span>

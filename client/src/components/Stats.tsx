@@ -36,8 +36,8 @@ export default function Stats() {
             viewport={{ once: true }}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-violet-100 dark:bg-violet-800/40 border border-violet-200 dark:border-violet-600/55 mb-5"
           >
-            <Sparkle size={14} weight="fill" className="text-violet-600 dark:text-violet-300" />
-            <span className="text-violet-700 dark:text-violet-300 text-sm font-bold tracking-wide uppercase">
+            <Sparkle size={14} weight="fill" className="text-violet-600 dark:text-violet-200" />
+            <span className="text-violet-700 dark:text-violet-200 text-sm font-bold tracking-wide uppercase">
               Our Features
             </span>
           </motion.div>
@@ -50,7 +50,7 @@ export default function Stats() {
             className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-gray-900 dark:text-white leading-tight tracking-tight max-w-3xl mx-auto"
           >
             Speak Fluently.{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 via-purple-500 to-indigo-600 dark:from-violet-300 dark:via-purple-300 dark:to-indigo-300">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 via-purple-500 to-indigo-600 dark:from-violet-200 dark:via-purple-200 dark:to-indigo-200">
               Score Higher.
             </span>{' '}
             Get Hired.
