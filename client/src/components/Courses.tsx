@@ -365,7 +365,7 @@ export default function Courses() {
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.35, duration: 0.5 }}
-                  className="absolute top-3 left-8 w-[272px] bg-white border border-slate-100 rounded-2xl shadow-lg p-5 rotate-3 z-10 opacity-85"
+                  className="absolute top-3 left-8 w-[272px] bg-white border border-slate-100 rounded-2xl shadow-lg p-5 rotate-3 z-10 opacity-[0.85]"
                 >
                   <HeroCard course={COURSES[2]} />
                 </motion.div>
