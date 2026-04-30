@@ -47,7 +47,7 @@ export default function Blog() {
   const isInView = useInView(ref, { once: true, margin: '-80px' })
 
   return (
-    <section className="bg-gray-50 dark:bg-slate-950 py-16 md:py-20 lg:py-28 transition-colors duration-300">
+    <section id="blog" className="bg-gray-50 dark:bg-slate-950 py-16 md:py-20 lg:py-28 transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* Section header */}
@@ -125,7 +125,7 @@ export default function Blog() {
                 </div>
 
                 <motion.h3
-                  className="text-[16px] font-bold text-gray-900 dark:text-white leading-snug mb-3 group-hover:text-violet-600 dark:group-hover:text-violet-300 transition-colors duration-300"
+                  className="text-[16px] font-bold text-gray-900 dark:text-white leading-snug mb-3 group-hover:text-violet-600 dark:group-hover:text-violet-200 transition-colors duration-300"
                   whileHover={{ scale: 1.02 }}
                   transition={{ duration: 0.2 }}
                 >

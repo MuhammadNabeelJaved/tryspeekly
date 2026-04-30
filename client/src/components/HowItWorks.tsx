@@ -39,7 +39,7 @@ export default function HowItWorks() {
   const isInView = useInView(ref, { once: true, margin: '-100px' })
 
   return (
-    <section className="bg-gray-50 dark:bg-slate-950 py-16 md:py-20 lg:py-28 transition-colors duration-300">
+    <section id="about" className="bg-gray-50 dark:bg-slate-950 py-16 md:py-20 lg:py-28 transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* Section header */}
@@ -78,19 +78,11 @@ export default function HowItWorks() {
                 <div className="absolute inset-0 bg-gradient-to-t from-white dark:from-slate-800 via-transparent to-transparent" />
 
                 {/* Step number overlay */}
-                <motion.div
+                <div
                   className="absolute top-4 left-4 w-10 h-10 bg-violet-600 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg"
-                  whileHover={{
-                    scale: 1.2,
-                    rotate: 360
-                  }}
-                  transition={{
-                    scale: { duration: 0.2 },
-                    rotate: { duration: 0.6, ease: "easeInOut" }
-                  }}
                 >
                   {index + 1}
-                </motion.div>
+                </div>
               </div>
 
               {/* Info */}

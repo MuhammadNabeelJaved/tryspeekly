@@ -35,7 +35,7 @@ function Typewriter({ words }: { words: string[] }) {
 
   return (
     <span className="relative inline-block min-w-[130px] sm:min-w-[170px]">
-      <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 dark:from-violet-200 dark:via-purple-200 dark:to-indigo-200">
+      <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-purple-600 dark:from-violet-500 dark:to-purple-500 drop-shadow-[0_0_8px_rgba(124,58,237,0.2)] dark:drop-shadow-[0_0_10px_rgba(139,92,246,0.35)]">
         {words[index].substring(0, subIndex)}
         <span
           className={`inline-block w-[2px] h-[28px] sm:h-[34px] ml-0.5 bg-violet-600 dark:bg-violet-400 align-middle ${blink ? 'opacity-100' : 'opacity-0'}`}
@@ -109,7 +109,7 @@ export default function Hero() {
                 The Effective Solutions
                 <br />
                 To Grow Your{' '}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 dark:from-violet-200 dark:via-purple-200 dark:to-indigo-200">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-purple-600 dark:from-violet-500 dark:to-purple-500 drop-shadow-[0_0_8px_rgba(124,58,237,0.2)] dark:drop-shadow-[0_0_10px_rgba(139,92,246,0.35)]">
                   English
                 </span>
               </h1>

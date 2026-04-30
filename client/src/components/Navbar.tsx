@@ -1,9 +1,20 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { List, X, Phone } from '@phosphor-icons/react'
+import { Link } from 'react-router-dom'
 import { ThemeToggle } from './ThemeToggle'
 
-const NAV_LINKS = ['Home', 'Courses', 'About', 'Instructors', 'Blog', 'Contact']
+// Create a motion-enabled Link component
+const MotionLink = motion.create(Link)
+
+const NAV_LINKS = [
+  { name: 'Home', href: '/' },
+  { name: 'Courses', href: '/courses' },
+  { name: 'About', href: '/#about' },
+  { name: 'Instructors', href: '/#instructors' },
+  { name: 'Blog', href: '/#blog' },
+  { name: 'Contact', href: '/#contact' },
+]
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
@@ -25,8 +36,8 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-[72px] lg:h-[80px]">
 
           {/* Logo */}
-          <motion.a
-            href="#"
+          <MotionLink
+            to="/"
             className="flex items-center gap-2.5 flex-shrink-0"
             whileHover={{ scale: 1.04 }}
             whileTap={{ scale: 0.97 }}
@@ -56,14 +67,14 @@ export default function Navbar() {
             >
               EnglishPro
             </motion.span>
-          </motion.a>
+          </MotionLink>
 
           {/* Desktop Nav */}
           <nav className="hidden lg:flex items-center gap-7" aria-label="Main navigation">
             {NAV_LINKS.map((link, i) => (
-              <motion.a
-                key={link}
-                href="#"
+              <MotionLink
+                key={link.name}
+                to={link.href}
                 className={`text-sm font-medium transition-colors relative ${
                   i === 0
                     ? 'text-violet-600 dark:text-violet-200'
@@ -76,14 +87,14 @@ export default function Navbar() {
                 whileTap={{ scale: 0.95 }}
                 transition={{ type: "spring", stiffness: 400, damping: 17 }}
               >
-                {link}
+                {link.name}
                 <motion.div
                   className="absolute -bottom-1 left-0 right-0 h-0.5 bg-violet-600 dark:bg-violet-400 rounded-full"
                   initial={{ scaleX: 0 }}
                   whileHover={{ scaleX: 1 }}
                   transition={{ duration: 0.2 }}
                 />
-              </motion.a>
+              </MotionLink>
             ))}
           </nav>
 
@@ -109,7 +120,7 @@ export default function Navbar() {
               <span className="text-sm font-medium">+801 555 645 45</span>
             </motion.a>
             <motion.a
-              href="#"
+              href="#contact"
               whileHover={{ scale: 1.04 }}
               whileTap={{ scale: 0.97 }}
               className="bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-colors shadow-[0_4px_14px_rgba(124,58,237,0.3)]"
@@ -136,21 +147,21 @@ export default function Navbar() {
           <div className="lg:hidden border-t border-gray-100 dark:border-slate-800 py-5">
             <div className="flex flex-col gap-5">
               {NAV_LINKS.map((link) => (
-                <a
-                  key={link}
-                  href="#"
+                <Link
+                  key={link.name}
+                  to={link.href}
                   onClick={() => setMenuOpen(false)}
                   className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-violet-600 dark:hover:text-violet-300 transition-colors"
                 >
-                  {link}
-                </a>
+                  {link.name}
+                </Link>
               ))}
               <div className="border-t border-gray-100 dark:border-slate-800 pt-5 flex flex-col gap-3">
                 <a href="tel:+80155564545" className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
                   <Phone size={15} weight="fill" className="text-violet-600 dark:text-violet-200" />
                   <span className="text-sm font-medium">+801 555 645 45</span>
                 </a>
-                <a href="#" className="bg-violet-600 text-white text-sm font-semibold px-5 py-3 rounded-lg text-center">
+                <a href="#contact" className="bg-violet-600 text-white text-sm font-semibold px-5 py-3 rounded-lg text-center">
                   Get a Quote
                 </a>
               </div>
@@ -161,3 +172,4 @@ export default function Navbar() {
     </header>
   )
 }
+
