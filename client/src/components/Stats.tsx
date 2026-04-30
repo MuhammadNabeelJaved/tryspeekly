@@ -1,38 +1,38 @@
 import { useRef } from 'react'
 import { motion, useInView, type Variants } from 'framer-motion'
-import { Briefcase, ChartBar, Megaphone, Desktop, ArrowRight, Sparkle } from '@phosphor-icons/react'
+import { VideoCamera, Trophy, Briefcase, Certificate, ArrowRight, Sparkle } from '@phosphor-icons/react'
 
 const SERVICES = [
+  {
+    Icon: VideoCamera,
+    bgGradient: 'from-violet-500 to-purple-600',
+    glowColor: 'group-hover:shadow-violet-500/25',
+    title: 'Live Training',
+    description: 'Attend live classes with expert trainers on Zoom & Google Meet. Real-time interaction, instant feedback, and structured sessions that fit your schedule.',
+    colSpan: 'col-span-1 md:col-span-2 lg:col-span-2',
+  },
+  {
+    Icon: Trophy,
+    bgGradient: 'from-violet-500 to-purple-600',
+    glowColor: 'group-hover:shadow-violet-500/25',
+    title: '8+ Bands in IELTS',
+    description: 'Proven strategies and targeted practice to help you achieve band 8 or above in your IELTS exam.',
+    colSpan: 'col-span-1 md:col-span-1 lg:col-span-1',
+  },
   {
     Icon: Briefcase,
     bgGradient: 'from-violet-500 to-purple-600',
     glowColor: 'group-hover:shadow-violet-500/25',
-    title: 'Interactive Lessons',
-    description: 'Engage with dynamic video lessons, quizzes, and exercises designed to accelerate your English learning journey.',
-    colSpan: 'col-span-1 md:col-span-2 lg:col-span-2',
-  },
-  {
-    Icon: ChartBar,
-    bgGradient: 'from-violet-500 to-purple-600',
-    glowColor: 'group-hover:shadow-violet-500/25',
-    title: 'Personalized Learning',
-    description: 'AI-powered learning paths adapt to your pace and goals, ensuring optimal progress in all skills.',
+    title: 'Job Interview Prep',
+    description: 'Master professional English for interviews, presentations, and workplace communication with real-world practice sessions.',
     colSpan: 'col-span-1 md:col-span-1 lg:col-span-1',
   },
   {
-    Icon: Megaphone,
+    Icon: Certificate,
     bgGradient: 'from-violet-500 to-purple-600',
     glowColor: 'group-hover:shadow-violet-500/25',
-    title: 'Native Practice',
-    description: 'Connect with certified English tutors and conversation partners for real-world speaking practice and immediate feedback.',
-    colSpan: 'col-span-1 md:col-span-1 lg:col-span-1',
-  },
-  {
-    Icon: Desktop,
-    bgGradient: 'from-violet-500 to-purple-600',
-    glowColor: 'group-hover:shadow-violet-500/25',
-    title: 'Mobile Learning Platform',
-    description: 'Learn anytime, anywhere with our mobile app featuring offline access, audio lessons, and detailed progress tracking.',
+    title: 'Shareable Certificate',
+    description: 'Earn a recognised certificate upon course completion and share it directly on LinkedIn or with potential employers.',
     colSpan: 'col-span-1 md:col-span-2 lg:col-span-2',
   },
 ]
@@ -79,7 +79,7 @@ export default function Stats() {
           >
             <Sparkle size={16} weight="fill" className="text-violet-600 dark:text-violet-400" />
             <span className="text-violet-700 dark:text-violet-300 text-sm font-bold tracking-wide uppercase">
-              Master English Skills
+              What We Offer
             </span>
           </motion.div>
           <motion.h2 
@@ -89,9 +89,10 @@ export default function Stats() {
             transition={{ delay: 0.1 }}
             className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-gray-900 dark:text-white leading-tight tracking-tight max-w-4xl mx-auto"
           >
-            Learn English With <br className="hidden md:block" />
+            Everything You Need To{' '}
+            <br className="hidden md:block" />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 via-purple-600 to-violet-600 dark:from-violet-400 dark:via-purple-400 dark:to-blue-400">
-              Interactive Tools & Expert Guidance
+              Master English
             </span>
           </motion.h2>
         </div>

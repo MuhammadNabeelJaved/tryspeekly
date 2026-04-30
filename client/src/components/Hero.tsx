@@ -126,7 +126,7 @@ export default function Hero() {
             {/* Description */}
             <motion.div variants={itemVariants}>
               <p className="text-base sm:text-lg text-gray-500 dark:text-gray-400 leading-relaxed max-w-md mx-auto lg:mx-0">
-                AI-powered lessons, expert tutors, and real results — all at your own pace,
+                Live sessions via Zoom & Google Meet with expert trainers — real results,
                 from anywhere in the world.
               </p>
             </motion.div>

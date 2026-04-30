@@ -1,13 +1,22 @@
 import { useRef } from 'react'
 import { motion, useInView } from 'framer-motion'
-import { ArrowRight } from '@phosphor-icons/react'
+import { ArrowRight, VideoCamera, CurrencyDollar, Trophy, Certificate, SmileyWink, Briefcase } from '@phosphor-icons/react'
 
 const STATS = [
   { value: '95%', label: 'Fluency Achieved' },
   { value: '50K+', label: 'Active Learners' },
   { value: '4.9★', label: 'Student Rating' },
-  { value: '24/7', label: 'Learning Support' },
+  { value: '8+', label: 'IELTS Bands' },
   { value: '150+', label: 'Countries Served' },
+]
+
+const FEATURES = [
+  { Icon: VideoCamera, label: 'Live Training via Zoom & Google Meet' },
+  { Icon: CurrencyDollar, label: 'Session Based Fee — Pay As You Go' },
+  { Icon: Trophy, label: '8+ Bands in IELTS Guaranteed' },
+  { Icon: Certificate, label: 'Shareable Completion Certificate' },
+  { Icon: SmileyWink, label: 'Friendly & Experienced Trainers' },
+  { Icon: Briefcase, label: 'Job Interview English Preparation' },
 ]
 
 const AGENCY_IMAGES = [
@@ -33,7 +42,7 @@ export default function Features() {
   const isInView = useInView(ref, { once: true, margin: '-100px' })
 
   return (
-    <section className="bg-white py-16 md:py-20 lg:py-28">
+    <section className="bg-white dark:bg-slate-900 py-16 md:py-20 lg:py-28 transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 md:gap-16 items-center">
 
@@ -62,15 +71,15 @@ export default function Features() {
               initial={{ opacity: 0, scale: 0.8 }}
               animate={isInView ? { opacity: 1, scale: 1 } : {}}
               transition={{ delay: 0.7, duration: 0.5 }}
-              className="absolute bottom-4 left-4 bg-violet-600 text-white rounded-2xl px-5 py-3 shadow-[0_8px_30px_rgba(124,58,237,0.4)] z-10"
+              className="absolute bottom-4 left-4 bg-violet-600 dark:bg-violet-500 text-white rounded-2xl px-5 py-3 shadow-[0_8px_30px_rgba(124,58,237,0.4)] dark:shadow-[0_8px_30px_rgba(124,58,237,0.2)] z-10"
             >
               <p className="text-3xl font-bold leading-none">22+</p>
-              <p className="text-xs text-violet-200 mt-1">Years of Experience</p>
+              <p className="text-xs text-violet-200 dark:text-violet-100 mt-1">Years of Experience</p>
             </motion.div>
 
             {/* Decorative dot pattern */}
             <div
-              className="absolute -bottom-6 -right-6 w-32 h-32 pointer-events-none opacity-30"
+              className="absolute -bottom-6 -right-6 w-32 h-32 pointer-events-none opacity-30 dark:opacity-20"
               style={{
                 backgroundImage: 'radial-gradient(circle, #7c3aed 1.5px, transparent 1.5px)',
                 backgroundSize: '12px 12px',
@@ -84,19 +93,31 @@ export default function Features() {
             animate={isInView ? { opacity: 1, x: 0 } : {}}
             transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
           >
-            <span className="inline-flex items-center gap-2 text-violet-600 text-sm font-semibold mb-4">
-              <span className="w-2 h-2 bg-violet-600 rounded-full" />
+            <span className="inline-flex items-center gap-2 text-violet-600 dark:text-violet-400 text-sm font-semibold mb-4">
+              <span className="w-2 h-2 bg-violet-600 dark:bg-violet-400 rounded-full" />
               Why Choose Our Platform
             </span>
 
-            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-[42px] font-bold text-gray-900 leading-tight tracking-tight mb-4 md:mb-5">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-[42px] font-bold text-gray-900 dark:text-white leading-tight tracking-tight mb-4 md:mb-5">
               Transform Your English Skills With{' '}
-              <span className="text-violet-600">Proven Methods</span>
+              <span className="text-violet-600 dark:text-violet-400">Expert Live Trainers</span>
             </h2>
 
-            <p className="text-gray-500 text-sm md:text-[15px] leading-relaxed mb-6 md:mb-8 max-w-[48ch]">
-              Join a community of successful English learners who have achieved fluency through our comprehensive platform featuring expert instructors, interactive content, and personalized learning experiences.
+            <p className="text-gray-500 dark:text-gray-400 text-sm md:text-[15px] leading-relaxed mb-6 md:mb-8 max-w-[48ch]">
+              Join thousands of learners who have achieved real fluency through live sessions, certified trainers, and a structured program designed to deliver results — fast.
             </p>
+
+            {/* 6-feature checklist */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 mb-8">
+              {FEATURES.map(({ Icon, label }) => (
+                <div key={label} className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-violet-50 dark:bg-violet-900/30 flex items-center justify-center flex-shrink-0">
+                    <Icon size={16} weight="fill" className="text-violet-600 dark:text-violet-400" />
+                  </div>
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{label}</span>
+                </div>
+              ))}
+            </div>
 
             {/* Stats grid */}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 mb-9">
@@ -107,8 +128,8 @@ export default function Features() {
                   animate={isInView ? { opacity: 1, y: 0 } : {}}
                   transition={{ delay: i * 0.08 + 0.4, duration: 0.5 }}
                 >
-                  <p className="text-2xl lg:text-3xl font-bold text-gray-900 leading-none mb-1">{stat.value}</p>
-                  <p className="text-xs text-gray-500 font-medium">{stat.label}</p>
+                  <p className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white leading-none mb-1">{stat.value}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">{stat.label}</p>
                 </motion.div>
               ))}
             </div>
@@ -118,7 +139,7 @@ export default function Features() {
               href="#"
               whileHover={{ scale: 1.02, x: 4 }}
               whileTap={{ scale: 0.97 }}
-              className="inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white font-semibold text-[15px] px-6 py-3 rounded-lg transition-colors shadow-[0_4px_16px_rgba(124,58,237,0.3)]"
+              className="inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-700 dark:bg-violet-500 dark:hover:bg-violet-600 text-white font-semibold text-[15px] px-6 py-3 rounded-lg transition-colors shadow-[0_4px_16px_rgba(124,58,237,0.3)] dark:shadow-[0_4px_16px_rgba(124,58,237,0.2)]"
             >
               Learn More
               <ArrowRight size={16} weight="bold" />
