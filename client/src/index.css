@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @layer base {
   *, *::before, *::after {
     box-sizing: border-box;
@@ -21,6 +23,11 @@
     overflow-x: hidden;
   }
 
+  .dark body {
+    background-color: #020617; /* slate-950 */
+    color: #f8fafc; /* slate-50 */
+  }
+
   #root {
     width: 100%;
     min-height: 100dvh;
@@ -32,6 +39,9 @@
   }
   ::-webkit-scrollbar-track {
     background: #f9fafb;
+  }
+  .dark ::-webkit-scrollbar-track {
+    background: #0f172a;
   }
   ::-webkit-scrollbar-thumb {
     background: #c4b5fd;
