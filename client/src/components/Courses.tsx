@@ -220,11 +220,11 @@ function HeroCard({ course }: { course: (typeof COURSES)[0] }) {
         </span>
         <div className="flex items-center gap-1">
           <Star size={13} weight="fill" className="text-yellow-400" />
-          <span className="text-slate-700 text-xs font-bold">{course.rating}</span>
+          <span className="text-slate-700 dark:text-slate-200 text-xs font-bold">{course.rating}</span>
         </div>
       </div>
-      <h4 className="text-slate-900 font-bold text-sm leading-snug mb-3">{course.title}</h4>
-      <div className="flex items-center gap-4 text-slate-400 text-xs">
+      <h4 className="text-slate-900 dark:text-white font-bold text-sm leading-snug mb-3">{course.title}</h4>
+      <div className="flex items-center gap-4 text-slate-400 dark:text-slate-500 text-xs">
         <div className="flex items-center gap-1.5">
           <Clock size={12} />
           <span>{course.duration}</span>
@@ -252,7 +252,7 @@ export default function Courses() {
   })
 
   return (
-    <div className="bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
+    <div id="courses" className="bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
 
       {/* ─── HERO ─────────────────────────────────────────────── */}
       <section className="relative overflow-hidden bg-white dark:bg-slate-900 py-20 lg:py-32">
@@ -311,6 +311,7 @@ export default function Courses() {
                 className="flex flex-col sm:flex-row gap-4 mb-10"
               >
                 <motion.button
+                  type="button"
                   whileHover={{ scale: 1.04 }}
                   whileTap={{ scale: 0.97 }}
                   className="flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-500 text-white font-bold px-8 py-4 rounded-2xl shadow-lg shadow-violet-200 transition-colors"
@@ -318,6 +319,7 @@ export default function Courses() {
                   Browse Courses <ArrowRight size={20} weight="bold" />
                 </motion.button>
                 <motion.button
+                  type="button"
                   whileHover={{ scale: 1.04 }}
                   whileTap={{ scale: 0.97 }}
                   className="flex items-center justify-center gap-2 border border-slate-200 hover:border-violet-300 text-slate-700 hover:text-violet-600 font-semibold px-8 py-4 rounded-2xl transition-colors"
@@ -593,7 +595,7 @@ export default function Courses() {
 
             {LEARNING_PATHS.map((path, i) => (
               <motion.div
-                key={i}
+                key={path.step}
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -669,7 +671,7 @@ export default function Courses() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               {FEATURES.map(({ icon: Icon, title, desc }, i) => (
                 <motion.div
-                  key={i}
+                  key={title}
                   initial={{ opacity: 0, y: 24 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
@@ -727,7 +729,7 @@ export default function Courses() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-7">
             {INSTRUCTORS.map((ins, i) => (
               <motion.div
-                key={i}
+                key={ins.name}
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -812,7 +814,7 @@ export default function Courses() {
           <div className="space-y-4">
             {FAQS.map((faq, i) => (
               <motion.div
-                key={i}
+                key={faq.q}
                 initial={{ opacity: 0, y: 16 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
