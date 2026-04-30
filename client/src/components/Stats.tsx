@@ -104,7 +104,7 @@ export default function Stats() {
           animate={isInView ? 'visible' : 'hidden'}
           className="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-[minmax(280px,auto)]"
         >
-          {SERVICES.map((service, index) => {
+          {SERVICES.map((service) => {
             const { Icon } = service
             return (
               <motion.div
@@ -128,6 +128,7 @@ export default function Stats() {
                     </motion.div>
 
                     <motion.button
+                      type="button"
                       whileHover={{ scale: 1.1, rotate: -45 }}
                       whileTap={{ scale: 0.95 }}
                       className="w-12 h-12 rounded-full border border-gray-200 dark:border-white/10 flex items-center justify-center group-hover:border-violet-300 dark:group-hover:border-white/30 group-hover:bg-violet-50 dark:group-hover:bg-slate-700/50 transition-all duration-300"
