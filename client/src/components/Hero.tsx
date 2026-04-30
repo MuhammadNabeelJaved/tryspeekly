@@ -18,8 +18,8 @@ function Typewriter({ words }: { words: string[] }) {
   useEffect(() => {
     if (index === words.length) { setIndex(0); return }
     if (subIndex === words[index].length + 1 && !isDeleting) {
-      setTimeout(() => setIsDeleting(true), 2000)
-      return
+      const t = setTimeout(() => setIsDeleting(true), 2000)
+      return () => clearTimeout(t)
     }
     if (subIndex === 0 && isDeleting) {
       setIsDeleting(false)
@@ -170,6 +170,7 @@ export default function Hero() {
           {/* CTAs */}
           <motion.div variants={itemVariants} className="flex flex-row gap-4 justify-center">
             <motion.button
+              type="button"
               whileHover={{ scale: 1.05, y: -2 }}
               whileTap={{ scale: 0.95 }}
               className="group relative flex items-center justify-center gap-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-bold px-8 py-4 rounded-2xl transition-all shadow-[0_8px_30px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.1)] overflow-hidden"
@@ -179,6 +180,7 @@ export default function Hero() {
               <ArrowRight size={20} weight="bold" className="relative z-10 group-hover:text-white group-hover:translate-x-1 transition-all duration-300" />
             </motion.button>
             <motion.button
+              type="button"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               className="group flex items-center justify-center gap-3 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 hover:border-violet-300 dark:hover:border-violet-500/50 text-gray-800 dark:text-white font-bold px-8 py-4 rounded-2xl transition-all shadow-sm hover:shadow-md"
@@ -198,12 +200,12 @@ export default function Hero() {
                 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&q=80',
                 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=40&q=80',
                 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=40&q=80',
-              ].map((src, i) => (
+              ].map((src) => (
                 <motion.img
-                  key={i}
+                  key={src}
                   whileHover={{ scale: 1.2, zIndex: 10 }}
                   src={src}
-                  alt="Student"
+                  alt=""
                   className="w-10 h-10 sm:w-11 sm:h-11 rounded-full border-2 border-white dark:border-slate-950 object-cover shadow-sm"
                 />
               ))}
