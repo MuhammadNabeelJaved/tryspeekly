@@ -17,7 +17,7 @@ export default function Features() {
   const isInView = useInView(ref, { once: true, margin: '-100px' })
 
   return (
-    <section className="bg-white dark:bg-slate-900 py-16 md:py-20 lg:py-28 transition-colors duration-300">
+    <section className="bg-white dark:bg-neutral-900 py-16 md:py-20 lg:py-28 transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 md:gap-20 items-center">
 
@@ -95,7 +95,7 @@ export default function Features() {
               initial={{ opacity: 0, y: 20, scale: 0.9 }}
               animate={isInView ? { opacity: 1, y: 0, scale: 1 } : {}}
               transition={{ delay: 0.8, duration: 0.5, ease: 'easeOut' }}
-              className="absolute -bottom-2 right-0 sm:right-4 bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-2xl border border-gray-100 dark:border-slate-700 w-44 z-20"
+              className="absolute -bottom-2 right-0 sm:right-4 bg-white dark:bg-neutral-800 rounded-2xl p-4 shadow-2xl border border-gray-100 dark:border-neutral-700 w-44 z-20"
             >
               <p className="text-gray-400 text-[10px] font-semibold uppercase tracking-widest mb-0.5">
                 New Learners
@@ -157,7 +157,7 @@ export default function Features() {
                       {item.value}%
                     </span>
                   </div>
-                  <div className="h-2.5 bg-gray-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                  <div className="h-2.5 bg-gray-100 dark:bg-neutral-700 rounded-full overflow-hidden">
                     <motion.div
                       className="h-full rounded-full bg-gradient-to-r from-violet-600 to-purple-500"
                       initial={{ width: 0 }}

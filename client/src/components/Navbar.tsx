@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { List, X, Phone } from '@phosphor-icons/react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { ThemeToggle } from './ThemeToggle'
 
 // Create a motion-enabled Link component
@@ -10,15 +10,17 @@ const MotionLink = motion.create(Link)
 const NAV_LINKS = [
   { name: 'Home', href: '/' },
   { name: 'Courses', href: '/courses' },
-  { name: 'About', href: '/#about' },
-  { name: 'Instructors', href: '/#instructors' },
-  { name: 'Blog', href: '/#blog' },
-  { name: 'Contact', href: '/#contact' },
+  { name: 'About', href: '/about' },
+  { name: 'Instructors', href: '/instructors' },
+  { name: 'Blog', href: '/blog' },
+  { name: 'Payments', href: '/payments' },
+  { name: 'Contact', href: '/contact' },
 ]
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
+  const location = useLocation()
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40)
@@ -28,8 +30,8 @@ export default function Navbar() {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 bg-white dark:bg-slate-900 ${
-        scrolled ? 'shadow-[0_2px_24px_rgba(0,0,0,0.08)] dark:shadow-[0_2px_24px_rgba(0,0,0,0.4)] border-b border-gray-100 dark:border-slate-800' : ''
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 bg-white dark:bg-neutral-900 ${
+        scrolled ? 'shadow-[0_2px_24px_rgba(0,0,0,0.08)] dark:shadow-[0_2px_24px_rgba(0,0,0,0.4)] border-b border-slate-100 dark:border-neutral-800' : ''
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -61,7 +63,7 @@ export default function Navbar() {
               </svg>
             </motion.div>
             <motion.span
-              className="text-xl font-bold text-gray-900 dark:text-white tracking-tight transition-colors"
+              className="text-xl font-bold text-slate-900 dark:text-white tracking-tight transition-colors"
               whileHover={{ color: "#7c3aed" }}
               transition={{ duration: 0.2 }}
             >
@@ -71,31 +73,34 @@ export default function Navbar() {
 
           {/* Desktop Nav */}
           <nav className="hidden lg:flex items-center gap-7" aria-label="Main navigation">
-            {NAV_LINKS.map((link, i) => (
-              <MotionLink
-                key={link.name}
-                to={link.href}
-                className={`text-sm font-medium transition-colors relative ${
-                  i === 0
-                    ? 'text-violet-600 dark:text-violet-200'
-                    : 'text-gray-600 dark:text-gray-300 hover:text-violet-600 dark:hover:text-violet-300'
-                }`}
-                whileHover={{
-                  scale: 1.05,
-                  y: -1
-                }}
-                whileTap={{ scale: 0.95 }}
-                transition={{ type: "spring", stiffness: 400, damping: 17 }}
-              >
-                {link.name}
-                <motion.div
-                  className="absolute -bottom-1 left-0 right-0 h-0.5 bg-violet-600 dark:bg-violet-400 rounded-full"
-                  initial={{ scaleX: 0 }}
-                  whileHover={{ scaleX: 1 }}
-                  transition={{ duration: 0.2 }}
-                />
-              </MotionLink>
-            ))}
+            {NAV_LINKS.map((link) => {
+              const isActive = link.href === '/' ? location.pathname === '/' : location.pathname.startsWith(link.href)
+              return (
+                <MotionLink
+                  key={link.name}
+                  to={link.href}
+                  className={`text-sm font-medium transition-colors relative ${
+                    isActive
+                      ? 'text-violet-600 dark:text-violet-400'
+                      : 'text-slate-600 dark:text-neutral-300 hover:text-violet-600 dark:hover:text-violet-300'
+                  }`}
+                  whileHover={{
+                    scale: 1.05,
+                    y: -1
+                  }}
+                  whileTap={{ scale: 0.95 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                >
+                  {link.name}
+                  <motion.div
+                    className="absolute -bottom-1 left-0 right-0 h-0.5 bg-violet-600 dark:bg-violet-400 rounded-full"
+                    initial={{ scaleX: 0 }}
+                    whileHover={{ scaleX: 1 }}
+                    transition={{ duration: 0.2 }}
+                  />
+                </MotionLink>
+              )
+            })}
           </nav>
 
           {/* Right: phone + CTA */}
@@ -103,7 +108,7 @@ export default function Navbar() {
             <ThemeToggle />
             <motion.a
               href="tel:+80155564545"
-              className="flex items-center gap-2 text-gray-600 dark:text-gray-300 hover:text-violet-600 dark:hover:text-violet-300 transition-colors"
+              className="flex items-center gap-2 text-slate-600 dark:text-neutral-300 hover:text-violet-600 dark:hover:text-violet-300 transition-colors"
               whileHover={{ scale: 1.04 }}
               whileTap={{ scale: 0.97 }}
             >
@@ -134,7 +139,7 @@ export default function Navbar() {
             <ThemeToggle />
             <button
               onClick={() => setMenuOpen(!menuOpen)}
-              className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white p-2 transition-colors"
+              className="text-slate-600 dark:text-neutral-300 hover:text-slate-900 dark:hover:text-white p-2 transition-colors"
               aria-label={menuOpen ? 'Close menu' : 'Open menu'}
             >
               {menuOpen ? <X size={22} /> : <List size={22} />}
@@ -144,20 +149,27 @@ export default function Navbar() {
 
         {/* Mobile menu */}
         {menuOpen && (
-          <div className="lg:hidden border-t border-gray-100 dark:border-slate-800 py-5">
+          <div className="lg:hidden border-t border-slate-100 dark:border-neutral-800 py-5">
             <div className="flex flex-col gap-5">
-              {NAV_LINKS.map((link) => (
-                <Link
-                  key={link.name}
-                  to={link.href}
-                  onClick={() => setMenuOpen(false)}
-                  className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-violet-600 dark:hover:text-violet-300 transition-colors"
-                >
-                  {link.name}
-                </Link>
-              ))}
-              <div className="border-t border-gray-100 dark:border-slate-800 pt-5 flex flex-col gap-3">
-                <a href="tel:+80155564545" className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
+              {NAV_LINKS.map((link) => {
+                const isActive = link.href === '/' ? location.pathname === '/' : location.pathname.startsWith(link.href)
+                return (
+                  <Link
+                    key={link.name}
+                    to={link.href}
+                    onClick={() => setMenuOpen(false)}
+                    className={`text-sm font-bold transition-colors ${
+                      isActive 
+                        ? 'text-violet-600 dark:text-violet-400' 
+                        : 'text-slate-600 dark:text-neutral-300 hover:text-violet-600 dark:hover:text-violet-300'
+                    }`}
+                  >
+                    {link.name}
+                  </Link>
+                )
+              })}
+              <div className="border-t border-slate-100 dark:border-neutral-800 pt-5 flex flex-col gap-3">
+                <a href="tel:+80155564545" className="flex items-center gap-2 text-slate-600 dark:text-neutral-300">
                   <Phone size={15} weight="fill" className="text-violet-600 dark:text-violet-200" />
                   <span className="text-sm font-medium">+801 555 645 45</span>
                 </a>

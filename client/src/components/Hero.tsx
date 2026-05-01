@@ -1,135 +1,80 @@
-import { useState, useEffect } from 'react'
 import { motion, type Variants } from 'framer-motion'
-import { ArrowRight, Play, Sparkle, Users, ChartLineUp, CaretDown } from '@phosphor-icons/react'
-
-const WORDS = ['Fluency', 'Grammar', 'Vocabulary', 'Confidence']
-
-function Typewriter({ words }: { words: string[] }) {
-  const [index, setIndex] = useState(0)
-  const [subIndex, setSubIndex] = useState(0)
-  const [isDeleting, setIsDeleting] = useState(false)
-  const [blink, setBlink] = useState(true)
-
-  useEffect(() => {
-    const t = setTimeout(() => setBlink((prev) => !prev), 500)
-    return () => clearTimeout(t)
-  }, [blink])
-
-  useEffect(() => {
-    if (index === words.length) { setIndex(0); return }
-    if (subIndex === words[index].length + 1 && !isDeleting) {
-      const t = setTimeout(() => setIsDeleting(true), 2000)
-      return () => clearTimeout(t)
-    }
-    if (subIndex === 0 && isDeleting) {
-      setIsDeleting(false)
-      setIndex((prev) => (prev + 1) % words.length)
-      return
-    }
-    const t = setTimeout(
-      () => setSubIndex((prev) => prev + (isDeleting ? -1 : 1)),
-      Math.max(isDeleting ? 50 : 150, Math.random() * 150)
-    )
-    return () => clearTimeout(t)
-  }, [subIndex, index, isDeleting, words])
-
-  return (
-    <span className="relative inline-block min-w-[130px] sm:min-w-[170px]">
-      <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-purple-600 dark:from-violet-500 dark:to-purple-500 drop-shadow-[0_0_8px_rgba(124,58,237,0.2)] dark:drop-shadow-[0_0_10px_rgba(139,92,246,0.35)]">
-        {words[index].substring(0, subIndex)}
-        <span
-          className={`inline-block w-[2px] h-[28px] sm:h-[34px] ml-0.5 bg-violet-600 dark:bg-violet-400 align-middle ${blink ? 'opacity-100' : 'opacity-0'}`}
-        />
-      </span>
-      <motion.span
-        className="absolute -bottom-1 left-0 w-full h-[6px] bg-violet-100 dark:bg-violet-800/50 -z-10 rounded-sm"
-        initial={{ scaleX: 0 }}
-        animate={{ scaleX: 1 }}
-        transition={{ delay: 0.8, duration: 0.7, ease: 'easeOut' }}
-        style={{ transformOrigin: 'left' }}
-      />
-    </span>
-  )
-}
+import { ArrowRight, Play, Star, GraduationCap, Trophy } from '@phosphor-icons/react'
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.12, delayChildren: 0.05 } },
+  visible: { opacity: 1, transition: { staggerChildren: 0.11, delayChildren: 0.1 } },
 }
 
 const itemVariants: Variants = {
-  hidden: { opacity: 0, y: 22 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut' } },
+  hidden: { opacity: 0, y: 24 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.65, ease: [0.25, 0.46, 0.45, 0.94] } },
 }
 
-const floatingVariants: Variants = {
-  animate: { y: [0, -10, 0], transition: { duration: 3.5, repeat: Infinity, ease: 'easeInOut' } },
-}
+const AVATARS = [
+  'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=40&q=80',
+  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&q=80',
+  'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=40&q=80',
+  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=40&q=80',
+]
+
+const LESSONS = [
+  { label: 'Reading Comprehension', done: true },
+  { label: 'Listening Practice', done: true },
+  { label: 'Writing Task 2', active: true },
+  { label: 'Speaking Module', upcoming: true },
+]
 
 export default function Hero() {
   return (
-    <section className="relative bg-white dark:bg-slate-950 min-h-[100dvh] overflow-hidden pt-[72px] md:pt-[80px] transition-colors duration-300">
+    <section className="relative bg-white dark:bg-neutral-950 min-h-[100dvh] overflow-hidden transition-colors duration-300">
 
-      {/* Subtle right-panel background wash */}
+      {/* ── Ambient background glows ── */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute right-0 top-0 w-1/2 h-full bg-gradient-to-l from-violet-50/80 via-violet-50/30 to-transparent dark:from-violet-950/20 dark:via-violet-950/10 dark:to-transparent" />
-        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] dark:opacity-[0.05] mix-blend-overlay" />
+        <div className="absolute top-1/4 right-1/4 w-[500px] h-[500px] bg-violet-200/40 dark:bg-violet-900/20 rounded-full blur-[120px]" />
+        <div className="absolute bottom-1/4 right-1/3 w-[300px] h-[300px] bg-purple-200/30 dark:bg-purple-900/15 rounded-full blur-[80px]" />
       </div>
 
-      {/* Main two-column grid */}
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-[calc(100dvh-72px)] md:min-h-[calc(100dvh-80px)] flex items-center py-14 lg:py-0">
-        <div className="grid lg:grid-cols-2 gap-14 lg:gap-10 items-center w-full">
+      {/* ── Content ── */}
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-[72px] md:pt-[80px]">
+        <div className="grid lg:grid-cols-[52%_48%] min-h-[calc(100dvh-80px)] items-center gap-8 lg:gap-0">
 
-          {/* ── LEFT: text content ── */}
+          {/* ── LEFT: Text ── */}
           <motion.div
             variants={containerVariants}
             initial="hidden"
             animate="visible"
-            className="space-y-7 order-2 lg:order-1 text-center lg:text-left"
+            className="py-16 lg:py-24 lg:pr-12 xl:pr-20 text-center lg:text-left order-2 lg:order-1 space-y-8"
           >
-            {/* Badge */}
-            <motion.div variants={itemVariants} className="flex justify-center lg:justify-start">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-violet-50 dark:bg-violet-800/30 border border-violet-100 dark:border-violet-600/50">
-                <motion.span
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 5, repeat: Infinity, ease: 'linear' }}
-                  className="flex"
-                >
-                  <Sparkle size={14} weight="fill" className="text-violet-600 dark:text-violet-200" />
-                </motion.span>
-                <span className="text-violet-700 dark:text-violet-200 text-sm font-semibold tracking-wide">
-                  25+ Years of Teaching Experience
-                </span>
-              </div>
+            {/* Label */}
+            <motion.div variants={itemVariants} className="flex items-center gap-3 justify-center lg:justify-start">
+              <span className="w-6 h-[2px] bg-violet-600 dark:bg-violet-400 rounded-full" />
+              <span className="text-violet-600 dark:text-violet-400 text-sm font-bold tracking-wide uppercase">
+                25+ Years of Excellence
+              </span>
             </motion.div>
 
             {/* Headline */}
-            <motion.div variants={itemVariants} className="space-y-3">
-              <h1 className="text-4xl sm:text-5xl lg:text-5xl xl:text-6xl font-black text-gray-900 dark:text-white leading-[1.1] tracking-tight">
-                The Effective Solutions
+            <motion.div variants={itemVariants}>
+              <h1 className="text-5xl sm:text-6xl xl:text-[68px] font-black text-slate-900 dark:text-white leading-[1.0] tracking-tight">
+                The Smarter Way
                 <br />
-                To Grow Your{' '}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-purple-600 dark:from-violet-500 dark:to-purple-500 drop-shadow-[0_0_8px_rgba(124,58,237,0.2)] dark:drop-shadow-[0_0_10px_rgba(139,92,246,0.35)]">
-                  English
+                to Learn{' '}
+                <span className="relative inline-block">
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-purple-600 dark:from-violet-400 dark:to-purple-400">
+                    English.
+                  </span>
                 </span>
               </h1>
-              <div className="flex items-center gap-2.5 justify-center lg:justify-start pt-1">
-                <span className="text-xl sm:text-2xl font-black text-gray-400 dark:text-gray-500">
-                  Build your
-                </span>
-                <span className="text-xl sm:text-2xl font-black">
-                  <Typewriter words={WORDS} />
-                </span>
-              </div>
             </motion.div>
 
-            {/* Description */}
-            <motion.div variants={itemVariants}>
-              <p className="text-base sm:text-lg text-gray-500 dark:text-gray-400 leading-relaxed max-w-md mx-auto lg:mx-0">
-                Live sessions via Zoom & Google Meet with expert trainers — real results,
-                from anywhere in the world.
-              </p>
-            </motion.div>
+            {/* Subtitle */}
+            <motion.p
+              variants={itemVariants}
+              className="text-slate-500 dark:text-neutral-400 text-lg leading-relaxed max-w-[420px] mx-auto lg:mx-0"
+            >
+              Expert-led live sessions via Zoom & Google Meet — designed to get you speaking confidently, faster.
+            </motion.p>
 
             {/* CTAs */}
             <motion.div
@@ -138,153 +83,255 @@ export default function Hero() {
             >
               <motion.button
                 type="button"
-                whileHover={{ scale: 1.04 }}
+                whileHover={{ scale: 1.03, boxShadow: '0 16px 40px rgba(124,58,237,0.45)' }}
                 whileTap={{ scale: 0.97 }}
-                className="group relative inline-flex items-center justify-center gap-2 bg-gradient-to-r from-violet-600 to-purple-600 text-white font-bold px-8 py-4 rounded-2xl shadow-[0_8px_24px_rgba(124,58,237,0.35)] hover:shadow-[0_12px_32px_rgba(124,58,237,0.45)] transition-all overflow-hidden"
+                className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-violet-600 to-purple-600 text-white font-bold px-8 py-4 rounded-2xl shadow-[0_8px_28px_rgba(124,58,237,0.35)] transition-all"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-violet-500 to-purple-500 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-                <span className="relative z-10">Start Learning Free</span>
-                <ArrowRight
-                  size={18}
-                  weight="bold"
-                  className="relative z-10 group-hover:translate-x-1 transition-transform duration-200"
-                />
+                Start Learning Free
+                <ArrowRight size={18} weight="bold" />
               </motion.button>
 
               <motion.button
                 type="button"
-                whileHover={{ scale: 1.04 }}
+                whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
-                className="group inline-flex items-center justify-center gap-3 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 hover:border-violet-300 dark:hover:border-violet-500/50 text-gray-800 dark:text-white font-semibold px-8 py-4 rounded-2xl transition-all shadow-sm hover:shadow-md"
+                className="inline-flex items-center justify-center gap-3 text-slate-700 dark:text-neutral-200 font-semibold px-8 py-4 rounded-2xl border border-slate-200 dark:border-neutral-800 hover:border-violet-300 dark:hover:border-violet-700 bg-white dark:bg-white/5 transition-all"
               >
-                <div className="w-8 h-8 rounded-full bg-violet-50 dark:bg-violet-800/50 flex items-center justify-center text-violet-600 dark:text-violet-200 group-hover:scale-110 group-hover:bg-violet-100 dark:group-hover:bg-violet-800/40 transition-all">
+                <span className="w-8 h-8 rounded-full bg-violet-100 dark:bg-violet-900/50 flex items-center justify-center text-violet-600 dark:text-violet-400">
                   <Play size={13} weight="fill" className="ml-0.5" />
-                </div>
-                <span>Watch Demo</span>
+                </span>
+                Watch Demo
               </motion.button>
             </motion.div>
 
             {/* Social proof */}
             <motion.div
               variants={itemVariants}
-              className="flex flex-wrap items-center gap-4 sm:gap-5 justify-center lg:justify-start pt-1"
+              className="flex flex-wrap items-center gap-5 justify-center lg:justify-start"
             >
               <div className="flex -space-x-2.5">
-                {[
-                  'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=40&q=80',
-                  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&q=80',
-                  'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=40&q=80',
-                  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=40&q=80',
-                ].map((src) => (
-                  <motion.img
-                    key={src}
-                    whileHover={{ scale: 1.15, zIndex: 10 }}
-                    src={src}
-                    alt=""
-                    className="w-10 h-10 rounded-full border-2 border-white dark:border-slate-950 object-cover"
-                  />
+                {AVATARS.map(src => (
+                  <img key={src} src={src} alt="" className="w-9 h-9 rounded-full border-2 border-white dark:border-neutral-950 object-cover" />
                 ))}
               </div>
-              <div>
-                <div className="flex gap-0.5 mb-0.5">
-                  {[1, 2, 3, 4, 5].map((s) => (
-                    <svg key={s} className="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                    </svg>
+              <div className="text-left">
+                <div className="flex items-center gap-0.5 mb-0.5">
+                  {[1, 2, 3, 4, 5].map(s => (
+                    <Star key={s} size={12} weight="fill" className="text-yellow-400" />
                   ))}
                 </div>
-                <p className="text-sm font-semibold text-gray-600 dark:text-gray-400">
-                  <span className="text-gray-900 dark:text-white font-bold">4.9/5</span>
-                  {' '}· 10,000+ reviews
+                <p className="text-sm text-slate-500 dark:text-neutral-400">
+                  <span className="font-bold text-slate-900 dark:text-white">4.9</span> · 10,000+ students
                 </p>
               </div>
+
+              <div className="hidden sm:block w-px h-10 bg-slate-200 dark:bg-neutral-800" />
+
+              <div className="text-left">
+                <p className="text-base font-black text-slate-900 dark:text-white">95%</p>
+                <p className="text-sm text-slate-500 dark:text-neutral-400">Success rate</p>
+              </div>
             </motion.div>
           </motion.div>
 
-          {/* ── RIGHT: hero image ── */}
-          <motion.div
-            initial={{ opacity: 0, x: 40 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.85, delay: 0.15, ease: 'easeOut' }}
-            className="relative flex items-center justify-center order-1 lg:order-2 min-h-[360px] sm:min-h-[460px] lg:min-h-0"
-          >
-            {/* Soft background blob */}
-            <div className="absolute w-[320px] h-[320px] sm:w-[400px] sm:h-[400px] lg:w-[460px] lg:h-[460px] rounded-full bg-gradient-to-br from-violet-100 to-purple-100 dark:from-violet-900/30 dark:to-purple-900/30 blur-3xl" />
+          {/* ── RIGHT: Dashboard card composition ── */}
+          <div className="relative flex items-center justify-center order-1 lg:order-2 py-10 lg:py-24 min-h-[480px]">
 
-            {/* Decorative rings */}
-            <div className="absolute w-[300px] h-[300px] sm:w-[380px] sm:h-[380px] lg:w-[440px] lg:h-[440px] rounded-full border border-violet-200/50 dark:border-violet-600/30" />
-            <div className="absolute w-[250px] h-[250px] sm:w-[310px] sm:h-[310px] lg:w-[360px] lg:h-[360px] rounded-full border border-violet-200/30 dark:border-violet-600/20" />
-
-            {/* Girl image */}
-            <img
-              src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=600&q=80"
-              alt="English learner"
-              className="relative z-10 h-[300px] sm:h-[380px] lg:h-[460px] w-auto object-cover rounded-[2rem] shadow-2xl ring-4 ring-white/60 dark:ring-slate-800/60"
-            />
-
-            {/* Floating card — top right */}
-            <motion.div
-              variants={floatingVariants}
-              animate="animate"
-              className="absolute top-[5%] right-0 lg:right-[-6%] z-20 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-gray-100 dark:border-slate-700/60 p-3 sm:p-4"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl flex items-center justify-center shadow-sm flex-shrink-0">
-                  <ChartLineUp size={20} weight="fill" className="text-white" />
-                </div>
-                <div>
-                  <p className="font-bold text-gray-900 dark:text-white text-sm leading-tight">100% Growth</p>
-                  <p className="text-gray-500 dark:text-gray-400 text-[10px] font-medium uppercase tracking-wider">In Fluency</p>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Floating card — bottom left */}
-            <motion.div
-              variants={floatingVariants}
-              animate="animate"
-              transition={{ delay: 1.4 }}
-              className="absolute bottom-[5%] left-0 lg:left-[-6%] z-20 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-gray-100 dark:border-slate-700/60 p-3 sm:p-4"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-emerald-500 rounded-xl flex items-center justify-center shadow-sm flex-shrink-0">
-                  <Users size={20} weight="fill" className="text-white" />
-                </div>
-                <div>
-                  <p className="font-bold text-gray-900 dark:text-white text-sm leading-tight">50K+ Learners</p>
-                  <p className="text-gray-500 dark:text-gray-400 text-[10px] font-medium uppercase tracking-wider">Active Students</p>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Dot-grid decoration */}
+            {/* Dot grid decoration */}
             <div
-              className="absolute bottom-0 right-0 w-28 h-28 opacity-20 dark:opacity-10 pointer-events-none"
-              style={{
-                backgroundImage: 'radial-gradient(circle, #7c3aed 1.5px, transparent 1.5px)',
-                backgroundSize: '10px 10px',
-              }}
+              className="absolute top-8 right-6 w-28 h-28 opacity-[0.15] dark:opacity-[0.08] pointer-events-none"
+              style={{ backgroundImage: 'radial-gradient(circle, #7c3aed 1.5px, transparent 1.5px)', backgroundSize: '10px 10px' }}
             />
-          </motion.div>
+            <div
+              className="absolute bottom-8 left-6 w-20 h-20 opacity-[0.1] dark:opacity-[0.06] pointer-events-none"
+              style={{ backgroundImage: 'radial-gradient(circle, #7c3aed 1.5px, transparent 1.5px)', backgroundSize: '10px 10px' }}
+            />
 
+            {/* ── Main card: Course progress ── */}
+            <motion.div
+              initial={{ opacity: 0, y: 32 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4, duration: 0.7, ease: 'easeOut' }}
+              className="relative z-10 bg-white dark:bg-neutral-900 rounded-[28px] shadow-2xl shadow-slate-200/80 dark:shadow-black/40 border border-slate-100 dark:border-neutral-800 p-6 w-[300px] sm:w-[320px]"
+            >
+              {/* Header row */}
+              <div className="flex items-center justify-between mb-5">
+                <div>
+                  <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-widest mb-0.5">Current Course</p>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white leading-tight">IELTS Academic Success</h3>
+                </div>
+                <span className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 text-[10px] font-bold rounded-full uppercase tracking-wide flex-shrink-0">
+                  <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                  Live
+                </span>
+              </div>
+
+              {/* Instructor chip */}
+              <div className="flex items-center gap-3 bg-violet-50 dark:bg-violet-950/40 rounded-2xl px-3 py-2.5 mb-5">
+                <img
+                  src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=60&q=80"
+                  alt="Sarah"
+                  className="w-9 h-9 rounded-xl object-cover flex-shrink-0"
+                />
+                <div>
+                  <p className="text-sm font-bold text-slate-900 dark:text-white leading-tight">Sarah Johnson</p>
+                  <p className="text-[11px] text-violet-600 dark:text-violet-400 font-medium">IELTS Expert & Trainer</p>
+                </div>
+              </div>
+
+              {/* Progress bar */}
+              <div className="mb-5">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-xs text-slate-500 dark:text-neutral-500 font-medium">Week 6 of 8</span>
+                  <span className="text-xs font-bold text-violet-600 dark:text-violet-400">72% done</span>
+                </div>
+                <div className="h-2 bg-slate-100 dark:bg-neutral-800 rounded-full overflow-hidden">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: '72%' }}
+                    transition={{ delay: 1.1, duration: 1.3, ease: 'easeOut' }}
+                    className="h-full rounded-full bg-gradient-to-r from-violet-500 to-purple-600"
+                  />
+                </div>
+              </div>
+
+              {/* Lesson list */}
+              <div className="space-y-3">
+                {LESSONS.map((lesson, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    {/* Status icon */}
+                    <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${
+                      lesson.done
+                        ? 'bg-violet-600'
+                        : lesson.active
+                        ? 'ring-2 ring-violet-500 ring-offset-1 dark:ring-offset-slate-900 bg-white dark:bg-neutral-900'
+                        : 'bg-slate-100 dark:bg-neutral-800'
+                    }`}>
+                      {lesson.done && (
+                        <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                      {lesson.active && <div className="w-2 h-2 rounded-full bg-violet-500" />}
+                    </div>
+
+                    <span className={`text-xs leading-tight flex-1 ${
+                      lesson.done
+                        ? 'line-through text-slate-400 dark:text-neutral-600'
+                        : lesson.active
+                        ? 'font-bold text-slate-900 dark:text-white'
+                        : 'text-slate-400 dark:text-neutral-600'
+                    }`}>
+                      {lesson.label}
+                    </span>
+
+                    {lesson.active && (
+                      <span className="text-[10px] font-bold text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-950/60 px-2 py-0.5 rounded-full">
+                        Today
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* Bottom CTA */}
+              <div className="mt-5 pt-4 border-t border-slate-100 dark:border-neutral-800">
+                <button className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-violet-600 to-purple-600 text-white text-sm font-bold py-3 rounded-2xl">
+                  Continue Learning
+                  <ArrowRight size={15} weight="bold" />
+                </button>
+              </div>
+            </motion.div>
+
+            {/* ── Floating card: Rating ── */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.7, y: -10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ delay: 0.9, duration: 0.5, ease: 'backOut' }}
+              className="absolute top-[6%] right-[4%] sm:right-[8%] lg:right-0 z-20"
+            >
+              <motion.div
+                animate={{ y: [0, -8, 0] }}
+                transition={{ duration: 3.2, repeat: Infinity, ease: 'easeInOut' }}
+                className="bg-white dark:bg-neutral-900 rounded-2xl shadow-xl shadow-slate-200/60 dark:shadow-black/30 border border-slate-100 dark:border-neutral-800 px-4 py-3.5"
+              >
+                <div className="flex items-center gap-0.5 mb-1">
+                  {[1, 2, 3, 4, 5].map(s => (
+                    <Star key={s} size={13} weight="fill" className="text-yellow-400" />
+                  ))}
+                </div>
+                <p className="text-2xl font-black text-slate-900 dark:text-white leading-none">4.9</p>
+                <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider mt-0.5">1,200+ Reviews</p>
+              </motion.div>
+            </motion.div>
+
+            {/* ── Floating card: Students enrolled ── */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.7, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ delay: 1.1, duration: 0.5, ease: 'backOut' }}
+              className="absolute bottom-[6%] left-[4%] sm:left-[8%] lg:left-0 z-20"
+            >
+              <motion.div
+                animate={{ y: [0, -8, 0] }}
+                transition={{ duration: 3.2, repeat: Infinity, ease: 'easeInOut', delay: 1.6 }}
+                className="bg-white dark:bg-neutral-900 rounded-2xl shadow-xl shadow-slate-200/60 dark:shadow-black/30 border border-slate-100 dark:border-neutral-800 px-4 py-3.5 flex items-center gap-3"
+              >
+                <div className="w-10 h-10 rounded-xl bg-violet-100 dark:bg-violet-900/40 flex items-center justify-center flex-shrink-0">
+                  <GraduationCap size={20} weight="fill" className="text-violet-600 dark:text-violet-400" />
+                </div>
+                <div>
+                  <p className="text-sm font-black text-slate-900 dark:text-white">50K+ Learners</p>
+                  <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">Globally Enrolled</p>
+                </div>
+              </motion.div>
+            </motion.div>
+
+            {/* ── Floating card: Achievement ── */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.7 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 1.3, duration: 0.5, ease: 'backOut' }}
+              className="absolute top-[50%] right-[2%] lg:right-[-4%] -translate-y-1/2 z-20 hidden sm:block"
+            >
+              <motion.div
+                animate={{ y: [0, -6, 0] }}
+                transition={{ duration: 2.8, repeat: Infinity, ease: 'easeInOut', delay: 0.8 }}
+                className="bg-white dark:bg-neutral-900 rounded-2xl shadow-xl shadow-slate-200/60 dark:shadow-black/30 border border-slate-100 dark:border-neutral-800 px-4 py-3.5 flex items-center gap-3"
+              >
+                <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0">
+                  <Trophy size={20} weight="fill" className="text-amber-500" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-slate-900 dark:text-white">Certificate</p>
+                  <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">Awarded</p>
+                </div>
+              </motion.div>
+            </motion.div>
+
+          </div>
         </div>
       </div>
 
-      {/* Scroll indicator */}
+      {/* ── Scroll cue ── */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 2, duration: 0.6 }}
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 hidden sm:flex flex-col items-center gap-1 text-gray-400 dark:text-gray-600"
+        transition={{ delay: 2.4, duration: 0.6 }}
+        className="absolute bottom-8 left-1/2 -translate-x-1/2 hidden sm:flex flex-col items-center gap-1.5"
       >
-        <span className="text-[10px] font-medium uppercase tracking-widest">Scroll</span>
+        <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-neutral-600">
+          Scroll
+        </span>
         <motion.div
-          animate={{ y: [0, 6, 0] }}
-          transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
+          animate={{ y: [0, 5, 0] }}
+          transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
+          className="w-5 h-8 rounded-full border-2 border-slate-300 dark:border-neutral-700 flex items-start justify-center pt-1.5"
         >
-          <CaretDown size={16} weight="bold" />
+          <div className="w-1 h-2 rounded-full bg-violet-500 dark:bg-violet-400" />
         </motion.div>
       </motion.div>
+
     </section>
   )
 }

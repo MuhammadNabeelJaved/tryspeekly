@@ -32,7 +32,7 @@ export default function Reviews() {
   const [hoverRating, setHoverRating] = useState(0)
 
   return (
-    <section className="py-24 bg-white dark:bg-slate-950 transition-colors duration-300">
+    <section className="py-24 bg-white dark:bg-neutral-950 transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         <div className="text-center max-w-3xl mx-auto mb-16">
@@ -71,7 +71,7 @@ export default function Reviews() {
             {[...REVIEWS, ...REVIEWS].map((review, i) => (
               <motion.div
                 key={i}
-                className="w-[350px] sm:w-[450px] p-8 rounded-2xl bg-gray-50 dark:bg-slate-900 border border-gray-100 dark:border-slate-800 flex flex-col h-full shrink-0 shadow-sm"
+                className="w-[350px] sm:w-[450px] p-8 rounded-2xl bg-gray-50 dark:bg-neutral-900 border border-gray-100 dark:border-neutral-800 flex flex-col h-full shrink-0 shadow-sm"
               >
                 <div className="flex gap-1 mb-6">
                   {[...Array(review.rating)].map((_, i) => (
@@ -99,8 +99,8 @@ export default function Reviews() {
           </motion.div>
 
           {/* Fade Gradients for seamless look */}
-          <div className="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-white dark:from-slate-950 to-transparent z-10 pointer-events-none" />
-          <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-white dark:from-slate-950 to-transparent z-10 pointer-events-none" />
+          <div className="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-white dark:from-neutral-950 to-transparent z-10 pointer-events-none" />
+          <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-white dark:from-neutral-950 to-transparent z-10 pointer-events-none" />
         </div>
 
         {/* Write a Review Button Area */}
@@ -108,14 +108,14 @@ export default function Reviews() {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="flex flex-col items-center justify-center pt-8 border-t border-gray-100 dark:border-slate-800"
+          className="flex flex-col items-center justify-center pt-8 border-t border-gray-100 dark:border-neutral-800"
         >
           <p className="text-gray-500 dark:text-gray-400 mb-4 text-sm font-medium">Have you learned with us?</p>
           <motion.button
             whileHover={{ scale: 1.04 }}
             whileTap={{ scale: 0.97 }}
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 bg-white dark:bg-slate-900 text-gray-900 dark:text-white border border-gray-200 dark:border-slate-700 hover:border-violet-500 dark:hover:border-violet-500 px-6 py-3 rounded-xl font-semibold transition-colors shadow-sm"
+            className="flex items-center gap-2 bg-white dark:bg-neutral-900 text-gray-900 dark:text-white border border-gray-200 dark:border-neutral-700 hover:border-violet-500 dark:hover:border-violet-500 px-6 py-3 rounded-xl font-semibold transition-colors shadow-sm"
           >
             <PencilSimple size={18} />
             Write a Review
@@ -142,13 +142,13 @@ export default function Reviews() {
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 20 }}
                 onClick={(e) => e.stopPropagation()}
-                className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-2xl shadow-2xl border border-gray-100 dark:border-slate-800 overflow-hidden"
+                className="bg-white dark:bg-neutral-900 w-full max-w-lg rounded-2xl shadow-2xl border border-gray-100 dark:border-neutral-800 overflow-hidden"
               >
-                <div className="flex items-center justify-between p-6 border-b border-gray-100 dark:border-slate-800">
+                <div className="flex items-center justify-between p-6 border-b border-gray-100 dark:border-neutral-800">
                   <h3 className="text-xl font-bold text-gray-900 dark:text-white">Write a Review</h3>
                   <button 
                     onClick={() => setIsModalOpen(false)}
-                    className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
+                    className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-neutral-800 transition-colors"
                   >
                     <X size={20} weight="bold" />
                   </button>
@@ -173,7 +173,7 @@ export default function Reviews() {
                             <Star 
                               size={32} 
                               weight={(hoverRating || rating) >= star ? "fill" : "regular"} 
-                              className={(hoverRating || rating) >= star ? "text-violet-500" : "text-gray-300 dark:text-slate-600"} 
+                              className={(hoverRating || rating) >= star ? "text-violet-500" : "text-gray-300 dark:text-neutral-600"} 
                             />
                           </button>
                         ))}
@@ -185,7 +185,7 @@ export default function Reviews() {
                       <input 
                         type="text" 
                         required
-                        className="w-full bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500 transition-all"
+                        className="w-full bg-gray-50 dark:bg-neutral-950 border border-gray-200 dark:border-neutral-800 text-gray-900 dark:text-white rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500 transition-all"
                         placeholder="John Doe"
                       />
                     </div>
@@ -195,7 +195,7 @@ export default function Reviews() {
                       <textarea 
                         required
                         rows={4}
-                        className="w-full bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500 transition-all resize-none"
+                        className="w-full bg-gray-50 dark:bg-neutral-950 border border-gray-200 dark:border-neutral-800 text-gray-900 dark:text-white rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500 transition-all resize-none"
                         placeholder="What did you like about learning with us?"
                       />
                     </div>

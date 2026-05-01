@@ -1,4 +1,5 @@
 import { LinkedinLogo, TwitterLogo, FacebookLogo, InstagramLogo, Phone, EnvelopeSimple, MapPin, ArrowRight } from '@phosphor-icons/react'
+import { Link } from 'react-router-dom'
 
 const FOOTER_LINKS = {
   Courses: ['Beginner English', 'Intermediate English', 'Advanced English', 'Business English', 'IELTS Preparation'],
@@ -15,68 +16,74 @@ const SOCIAL = [
 
 export default function Footer() {
   return (
-    <footer id="contact" className="bg-[#0f172a]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 md:pt-16 lg:pt-20 pb-8">
+    <footer className="bg-slate-50 dark:bg-neutral-950 transition-colors duration-300">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 md:pt-20 lg:pt-24 pb-8">
 
-        <div className="grid grid-cols-1 md:grid-cols-[260px_1fr] gap-8 md:gap-12 mb-10 md:mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-10 md:gap-16 mb-12 md:mb-16">
 
           {/* Brand column */}
           <div>
-            <a href="#" className="flex items-center gap-2.5 mb-5 w-fit">
-              <div className="w-9 h-9 bg-violet-600 rounded-lg flex items-center justify-center shadow-[0_4px_12px_rgba(124,58,237,0.4)]">
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+            <a href="#" className="flex items-center gap-2.5 mb-6 w-fit">
+              <div className="w-10 h-10 bg-violet-600 rounded-xl flex items-center justify-center shadow-[0_4px_12px_rgba(124,58,237,0.3)]">
+                <svg width="20" height="20" viewBox="0 0 18 18" fill="none" aria-hidden="true">
                   <path d="M3 6l6-3 6 3-6 3-6-3z" stroke="white" strokeWidth="1.5" strokeLinejoin="round"/>
                   <path d="M3 12l6 3 6-3" stroke="white" strokeWidth="1.5" strokeLinejoin="round"/>
                   <path d="M3 9l6 3 6-3" stroke="white" strokeWidth="1.5" strokeLinejoin="round"/>
                 </svg>
               </div>
-              <span className="text-lg font-bold text-white tracking-tight">EnglishPro</span>
+              <span className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">EnglishPro</span>
             </a>
 
-            <p className="text-sm text-gray-400 leading-relaxed mb-6 max-w-[28ch]">
+            <p className="text-sm text-slate-600 dark:text-neutral-400 leading-relaxed mb-8 max-w-[28ch]">
               Empowering learners worldwide to achieve English fluency through interactive courses, expert instruction, and personalized learning experiences.
             </p>
 
             {/* Contact info */}
-            <div className="space-y-3 mb-6">
-              <a href="tel:+80155564545" className="flex items-center gap-2.5 text-gray-400 hover:text-violet-400 transition-colors text-sm">
-                <Phone size={14} weight="fill" className="text-violet-500 flex-shrink-0" />
+            <div className="space-y-4 mb-8">
+              <a href="tel:+80155564545" className="flex items-center gap-3 text-slate-600 dark:text-neutral-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors text-sm font-medium">
+                <div className="w-8 h-8 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center flex-shrink-0">
+                  <Phone size={14} weight="fill" className="text-violet-600 dark:text-violet-400" />
+                </div>
                 +801 555 645 45
               </a>
-              <a href="mailto:hello@englishlms.com" className="flex items-center gap-2.5 text-gray-400 hover:text-violet-400 transition-colors text-sm">
-                <EnvelopeSimple size={14} weight="fill" className="text-violet-500 flex-shrink-0" />
+              <a href="mailto:hello@englishlms.com" className="flex items-center gap-3 text-slate-600 dark:text-neutral-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors text-sm font-medium">
+                <div className="w-8 h-8 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center flex-shrink-0">
+                  <EnvelopeSimple size={14} weight="fill" className="text-violet-600 dark:text-violet-400" />
+                </div>
                 hello@englishlms.com
               </a>
-              <p className="flex items-start gap-2.5 text-gray-400 text-sm">
-                <MapPin size={14} weight="fill" className="text-violet-500 flex-shrink-0 mt-0.5" />
-                123 Business Ave, New York, NY 10001
+              <p className="flex items-start gap-3 text-slate-600 dark:text-neutral-400 text-sm font-medium">
+                <div className="w-8 h-8 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <MapPin size={14} weight="fill" className="text-violet-600 dark:text-violet-400" />
+                </div>
+                123 Business Ave, New York
               </p>
             </div>
 
             {/* Social */}
-            <div className="flex gap-2.5">
+            <div className="flex gap-3">
               {SOCIAL.map(({ Icon, label, href }) => (
                 <a
                   key={label}
                   href={href}
                   aria-label={label}
-                  className="w-9 h-9 bg-white/5 hover:bg-violet-600 border border-white/10 hover:border-violet-600 rounded-lg flex items-center justify-center text-gray-500 hover:text-white transition-all duration-200"
+                  className="w-10 h-10 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-violet-600 dark:hover:bg-violet-600 hover:border-violet-600 dark:hover:border-violet-600 rounded-lg flex items-center justify-center text-slate-400 dark:text-neutral-500 hover:text-white transition-all duration-300 hover:-translate-y-1 shadow-sm hover:shadow-[0_4px_12px_rgba(124,58,237,0.3)]"
                 >
-                  <Icon size={15} weight="fill" />
+                  <Icon size={18} weight="fill" />
                 </a>
               ))}
             </div>
           </div>
 
           {/* Links + Newsletter */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-12">
             {Object.entries(FOOTER_LINKS).map(([category, links]) => (
               <div key={category}>
-                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-4">{category}</p>
-                <ul className="space-y-3">
+                <p className="text-xs font-bold text-slate-900 dark:text-neutral-300 uppercase tracking-wider mb-6">{category}</p>
+                <ul className="space-y-4">
                   {links.map((link) => (
                     <li key={link}>
-                      <a href="#" className="text-sm text-gray-500 hover:text-violet-400 transition-colors">
+                      <a href="#" className="text-sm text-slate-600 dark:text-neutral-500 hover:text-violet-600 dark:hover:text-violet-400 transition-colors font-medium">
                         {link}
                       </a>
                     </li>
@@ -87,28 +94,34 @@ export default function Footer() {
 
             {/* Newsletter */}
             <div>
-              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-4">Newsletter</p>
-              <p className="text-sm text-gray-500 leading-relaxed mb-4">
-                Subscribe to get the latest business insights.
+              <p className="text-xs font-bold text-slate-900 dark:text-neutral-300 uppercase tracking-wider mb-6">Newsletter</p>
+              <p className="text-sm text-slate-600 dark:text-neutral-500 leading-relaxed mb-5 font-medium">
+                Subscribe to get the latest courses and tips.
               </p>
-              <div className="flex flex-col gap-2">
+              <form className="flex flex-col gap-3" onSubmit={(e) => e.preventDefault()}>
                 <input
                   type="email"
-                  placeholder="Your email"
-                  className="bg-white/5 border border-white/10 text-gray-300 placeholder-gray-600 text-sm px-3 py-2.5 rounded-lg outline-none focus:border-violet-500 transition-colors w-full"
+                  placeholder="Enter your email"
+                  className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-neutral-300 placeholder-slate-400 dark:placeholder-neutral-600 text-sm px-4 py-3 rounded-xl outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all w-full shadow-sm"
                 />
-                <button className="bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold px-4 py-2.5 rounded-lg transition-colors flex items-center justify-center gap-1.5">
-                  Subscribe <ArrowRight size={13} weight="bold" />
+                <button className="bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold px-4 py-3 rounded-xl transition-all shadow-sm hover:shadow-[0_4px_12px_rgba(124,58,237,0.3)] flex items-center justify-center gap-2 group">
+                  Subscribe Now <ArrowRight size={14} weight="bold" className="group-hover:translate-x-1 transition-transform" />
                 </button>
-              </div>
+              </form>
             </div>
           </div>
         </div>
 
         {/* Bottom bar */}
-        <div className="border-t border-white/5 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <p className="text-sm text-gray-600">© 2026 Next Agency. All rights reserved.</p>
-          <p className="text-sm text-gray-600">Designed with excellence for growing businesses.</p>
+        <div className="border-t border-slate-200 dark:border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+          <p className="text-sm text-slate-500 dark:text-neutral-600 font-medium">
+            &copy; {new Date().getFullYear()} EnglishPro. All rights reserved.
+          </p>
+            <div className="flex gap-6">
+              <Link to="/privacy" className="text-sm text-slate-500 dark:text-neutral-600 hover:text-violet-600 dark:hover:text-violet-400 transition-colors font-medium">Privacy Policy</Link>
+              <Link to="/terms" className="text-sm text-slate-500 dark:text-neutral-600 hover:text-violet-600 dark:hover:text-violet-400 transition-colors font-medium">Terms of Service</Link>
+              <Link to="/cookies" className="text-sm text-slate-500 dark:text-neutral-600 hover:text-violet-600 dark:hover:text-violet-400 transition-colors font-medium">Cookie Policy</Link>
+            </div>
         </div>
       </div>
     </footer>

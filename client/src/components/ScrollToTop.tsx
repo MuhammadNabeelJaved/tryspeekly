@@ -38,7 +38,7 @@ export default function ScrollToTop() {
           whileHover={{ scale: 1.04 }}
           whileTap={{ scale: 0.97 }}
           transition={{ duration: 0.3, ease: 'easeOut' }}
-          className="fixed bottom-6 right-6 md:bottom-8 md:right-8 z-50 flex h-12 w-12 md:h-14 md:w-14 items-center justify-center rounded-full bg-violet-600 text-white shadow-[0_8px_30px_rgba(124,58,237,0.5)] dark:shadow-[0_8px_30px_rgba(124,58,237,0.8)] border-2 border-white dark:border-slate-800 hover:bg-violet-700 hover:shadow-[0_12px_40px_rgba(124,58,237,0.6)] dark:bg-violet-500 dark:hover:bg-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 dark:focus:ring-offset-slate-950 transition-all"
+          className="fixed bottom-6 right-6 md:bottom-8 md:right-8 z-50 flex h-12 w-12 md:h-14 md:w-14 items-center justify-center rounded-full bg-violet-600 text-white shadow-[0_8px_30px_rgba(124,58,237,0.5)] dark:shadow-[0_8px_30px_rgba(124,58,237,0.8)] border-2 border-white dark:border-neutral-800 hover:bg-violet-700 hover:shadow-[0_12px_40px_rgba(124,58,237,0.6)] dark:bg-violet-500 dark:hover:bg-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 dark:focus:ring-offset-slate-950 transition-all"
           aria-label="Scroll to top"
         >
           <ArrowUp size={24} weight="bold" />
