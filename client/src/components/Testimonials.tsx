@@ -7,7 +7,7 @@ export default function Testimonials() {
   const isInView = useInView(ref, { once: true, margin: '-80px' })
 
   return (
-    <section className="bg-violet-600 dark:bg-slate-900 dark:border-t dark:border-violet-500/20 overflow-hidden transition-colors duration-300">
+    <section className="bg-violet-600 dark:bg-neutral-900 dark:border-t dark:border-violet-500/20 overflow-hidden transition-colors duration-300">
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-2 items-stretch">
 
@@ -19,14 +19,14 @@ export default function Testimonials() {
               className="w-full h-full object-cover"
             />
             {/* Overlay gradient to blend into section */}
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-violet-600/20 dark:via-slate-900/40 to-violet-600/60 lg:to-violet-600/80 dark:to-slate-900/80 lg:dark:to-slate-900/90" />
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-violet-600/20 dark:via-slate-900/40 to-violet-600/60 lg:to-violet-600/80 dark:to-neutral-900/80 lg:dark:to-neutral-900/90" />
 
             {/* Floating stats card */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ delay: 0.6, duration: 0.6 }}
-              className="absolute bottom-8 left-8 bg-white/10 dark:bg-slate-800/60 backdrop-blur-sm border border-white/20 dark:border-white/10 rounded-xl p-4"
+              className="absolute bottom-8 left-8 bg-white/10 dark:bg-neutral-800/60 backdrop-blur-sm border border-white/20 dark:border-white/10 rounded-xl p-4"
             >
               <div className="flex items-center gap-4">
                 <div className="text-center">
@@ -69,7 +69,7 @@ export default function Testimonials() {
                 href="#"
                 whileHover={{ scale: 1.04 }}
                 whileTap={{ scale: 0.97 }}
-                className="inline-flex items-center justify-center gap-2 bg-white dark:bg-slate-900 dark:border dark:border-white/15 hover:bg-violet-50 dark:hover:bg-slate-800 text-violet-700 dark:text-violet-200 font-bold text-[15px] px-7 py-3.5 rounded-lg transition-colors shadow-[0_4px_20px_rgba(0,0,0,0.15)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.4)]"
+                className="inline-flex items-center justify-center gap-2 bg-white dark:bg-neutral-900 dark:border dark:border-white/15 hover:bg-violet-50 dark:hover:bg-neutral-800 text-violet-700 dark:text-violet-200 font-bold text-[15px] px-7 py-3.5 rounded-lg transition-colors shadow-[0_4px_20px_rgba(0,0,0,0.15)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.4)]"
               >
                 Start Learning Today
                 <ArrowRight size={17} weight="bold" />

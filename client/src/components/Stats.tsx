@@ -17,7 +17,7 @@ export default function Stats() {
   const isInView = useInView(ref, { once: true, margin: '-80px' })
 
   return (
-    <section className="relative overflow-hidden bg-[#f5f4ff] dark:bg-slate-950 py-20 md:py-28 lg:py-32 transition-colors duration-300">
+    <section className="relative overflow-hidden bg-[#f5f4ff] dark:bg-neutral-950 py-20 md:py-28 lg:py-32 transition-colors duration-300">
 
       {/* Background orbs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -210,7 +210,7 @@ export default function Stats() {
           <motion.div
             variants={cardVariants}
             whileHover={{ scale: 1.04 }}
-            className="md:col-span-2 relative rounded-3xl overflow-hidden h-[320px] cursor-pointer group bg-slate-900 dark:bg-slate-800 p-7 sm:p-8 flex flex-col sm:flex-row items-center gap-8"
+            className="md:col-span-2 relative rounded-3xl overflow-hidden h-[320px] cursor-pointer group bg-slate-900 dark:bg-neutral-800 p-7 sm:p-8 flex flex-col sm:flex-row items-center gap-8"
           >
             {/* Decorative glow */}
             <div className="absolute top-0 right-0 w-64 h-64 bg-violet-600/20 rounded-full blur-[80px] pointer-events-none" />

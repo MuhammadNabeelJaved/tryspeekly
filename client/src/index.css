@@ -24,8 +24,8 @@
   }
 
   .dark body {
-    background-color: #020617; /* slate-950 */
-    color: #f8fafc; /* slate-50 */
+    background-color: #0a0a0a; /* neutral-950 */
+    color: #f5f5f5; /* neutral-50 */
   }
 
   #root {
@@ -41,7 +41,7 @@
     background: #f9fafb;
   }
   .dark ::-webkit-scrollbar-track {
-    background: #0f172a;
+    background: #171717;
   }
   ::-webkit-scrollbar-thumb {
     background: #c4b5fd;

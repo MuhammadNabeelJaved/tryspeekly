@@ -1,10 +1,39 @@
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, useInView, animate } from 'framer-motion'
+import { Link } from 'react-router-dom'
 import {
   Clock, Star, Users, GraduationCap, ArrowRight, MagnifyingGlass,
   BookOpen, Trophy, Lightning, ChatCircle, Globe, Medal,
   CaretDown, CheckCircle, Funnel, Play
 } from '@phosphor-icons/react'
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
+
+// Animated Counter Component
+function AnimatedCounter({ from, to, duration = 1.5, format }: { from: number, to: number, duration?: number, format?: (val: number) => string }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-50px" });
+  
+  const formatRef = useRef(format);
+  useEffect(() => {
+    formatRef.current = format;
+  }, [format]);
+
+  useEffect(() => {
+    if (inView) {
+      const controls = animate(from, to, {
+        duration,
+        ease: "easeOut",
+        onUpdate(value) {
+          if (ref.current) {
+            ref.current.textContent = formatRef.current ? formatRef.current(value) : Math.floor(value).toString();
+          }
+        }
+      });
+      return () => controls.stop();
+    }
+  }, [from, to, duration, inView]);
+
+  return <span ref={ref}>{format ? format(from) : from}</span>;
+}
 
 const CATEGORIES = ['All', 'General English', 'IELTS Prep', 'Business English', 'Kids & Teens', 'Speaking']
 
@@ -90,10 +119,10 @@ const COURSES = [
 ]
 
 const STATS = [
-  { value: '6,000+', label: 'Active Students', icon: Users },
-  { value: '20+', label: 'Expert Courses', icon: BookOpen },
-  { value: '4.9', label: 'Avg. Rating', icon: Star },
-  { value: '95%', label: 'Success Rate', icon: Trophy },
+  { value: 6000, suffix: '+', isFloat: false, label: 'Active Students', icon: Users },
+  { value: 20, suffix: '+', isFloat: false, label: 'Expert Courses', icon: BookOpen },
+  { value: 4.9, suffix: '', isFloat: true, label: 'Avg. Rating', icon: Star },
+  { value: 95, suffix: '%', isFloat: false, label: 'Success Rate', icon: Trophy },
 ]
 
 const FEATURES = [
@@ -214,23 +243,23 @@ const FAQS = [
 function HeroCard({ course }: { course: (typeof COURSES)[0] }) {
   return (
     <>
-      <div className="flex items-center justify-between mb-3">
-        <span className="px-3 py-1 bg-violet-600 text-white text-[11px] font-bold rounded-lg">
+      <div className="flex items-center justify-between mb-4">
+        <span className="px-4 py-1.5 bg-violet-600 text-white text-xs font-bold rounded-lg">
           {course.category}
         </span>
-        <div className="flex items-center gap-1">
-          <Star size={13} weight="fill" className="text-yellow-400" />
-          <span className="text-slate-700 dark:text-slate-200 text-xs font-bold">{course.rating}</span>
+        <div className="flex items-center gap-1.5">
+          <Star size={16} weight="fill" className="text-yellow-400" />
+          <span className="text-slate-700 dark:text-neutral-200 text-sm font-bold">{course.rating}</span>
         </div>
       </div>
-      <h4 className="text-slate-900 dark:text-white font-bold text-sm leading-snug mb-3">{course.title}</h4>
-      <div className="flex items-center gap-4 text-slate-400 dark:text-slate-500 text-xs">
-        <div className="flex items-center gap-1.5">
-          <Clock size={12} />
+      <h4 className="text-slate-900 dark:text-white font-bold text-lg leading-snug mb-4">{course.title}</h4>
+      <div className="flex items-center gap-5 text-slate-500 dark:text-neutral-400 text-sm">
+        <div className="flex items-center gap-2">
+          <Clock size={16} />
           <span>{course.duration}</span>
         </div>
-        <div className="flex items-center gap-1.5">
-          <Users size={12} />
+        <div className="flex items-center gap-2">
+          <Users size={16} />
           <span>{course.students.toLocaleString()} learners</span>
         </div>
       </div>
@@ -253,17 +282,17 @@ export default function Courses() {
   })
 
   return (
-    <div id="courses" className="bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
+    <div id="courses" className="bg-slate-50 dark:bg-neutral-950 transition-colors duration-300">
 
       {/* ─── HERO ─────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden bg-white dark:bg-slate-900 py-20 lg:py-32">
+      <section className="relative overflow-hidden bg-white dark:bg-neutral-900 min-h-[calc(100dvh-80px)] flex items-center py-12 lg:py-0">
         {/* Dot grid */}
         <div className="absolute inset-0 bg-[radial-gradient(circle,#e2e8f0_1px,transparent_1px)] dark:bg-[radial-gradient(circle,#1e293b_1px,transparent_1px)] bg-[size:24px_24px] opacity-40 pointer-events-none" />
 
         {/* Violet blob */}
         <div className="absolute -top-32 -right-32 w-[600px] h-[600px] bg-violet-100/60 dark:bg-violet-900/20 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col lg:flex-row lg:items-center gap-12 lg:gap-20">
 
             {/* ── Left column ── */}
@@ -285,10 +314,10 @@ export default function Courses() {
                 initial={{ opacity: 0, y: 24 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.1 }}
-                className="text-5xl md:text-6xl lg:text-7xl font-black text-slate-900 leading-[1.05] tracking-tight mb-6"
+                className="text-5xl md:text-6xl lg:text-7xl font-black text-slate-900 dark:text-white leading-[1.05] tracking-tight mb-6"
               >
                 Explore Our English{' '}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-purple-600">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-purple-600 dark:from-violet-400 dark:to-purple-400">
                   Courses
                 </span>
               </motion.h1>
@@ -298,7 +327,7 @@ export default function Courses() {
                 initial={{ opacity: 0, y: 24 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.2 }}
-                className="text-slate-500 text-lg max-w-lg leading-relaxed mb-8"
+                className="text-slate-500 dark:text-neutral-400 text-lg max-w-lg leading-relaxed mb-8"
               >
                 From beginner basics to IELTS mastery — expert-led courses designed
                 to get you speaking confidently, faster.
@@ -313,9 +342,9 @@ export default function Courses() {
               >
                 <motion.button
                   type="button"
-                  whileHover={{ scale: 1.04 }}
+                  whileHover={{ scale: 1.03, boxShadow: '0 16px 40px rgba(124,58,237,0.45)' }}
                   whileTap={{ scale: 0.97 }}
-                  className="flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-500 text-white font-bold px-8 py-4 rounded-2xl shadow-lg shadow-violet-200 transition-colors"
+                  className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-violet-600 to-purple-600 text-white font-bold px-8 py-4 rounded-2xl shadow-[0_8px_28px_rgba(124,58,237,0.35)] transition-all"
                 >
                   Browse Courses <ArrowRight size={20} weight="bold" />
                 </motion.button>
@@ -323,7 +352,7 @@ export default function Courses() {
                   type="button"
                   whileHover={{ scale: 1.04 }}
                   whileTap={{ scale: 0.97 }}
-                  className="flex items-center justify-center gap-2 border border-slate-200 hover:border-violet-300 text-slate-700 hover:text-violet-600 font-semibold px-8 py-4 rounded-2xl transition-colors"
+                  className="flex items-center justify-center gap-2 border border-slate-200 dark:border-neutral-700 hover:border-violet-300 dark:hover:border-violet-500 text-slate-700 dark:text-neutral-300 hover:text-violet-600 dark:hover:text-violet-400 font-semibold px-8 py-4 rounded-2xl transition-colors"
                 >
                   <Play size={18} weight="fill" /> Free Trial Class
                 </motion.button>
@@ -336,18 +365,28 @@ export default function Courses() {
                 transition={{ duration: 0.6, delay: 0.4 }}
                 className="flex flex-wrap items-center gap-x-8 gap-y-3"
               >
-                {STATS.map(({ value, label, icon: Icon }) => (
-                  <div key={value} className="flex items-center gap-2">
+                {STATS.map(({ value, suffix, isFloat, label, icon: Icon }) => (
+                  <div key={label} className="flex items-center gap-2">
                     <Icon size={15} weight="fill" className="text-violet-500" />
-                    <span className="text-slate-900 font-black text-sm">{value}</span>
-                    <span className="text-slate-400 text-xs">{label}</span>
+                    <span className="text-slate-900 dark:text-white font-black text-sm">
+                      <AnimatedCounter 
+                        from={0} 
+                        to={value} 
+                        duration={2} 
+                        format={(val) => 
+                          isFloat ? val.toFixed(1) : Math.floor(val).toLocaleString('en-US')
+                        } 
+                      />
+                      {suffix}
+                    </span>
+                    <span className="text-slate-400 dark:text-neutral-500 text-xs">{label}</span>
                   </div>
                 ))}
               </motion.div>
             </div>
 
             {/* ── Right column — floating cards ── */}
-            <div className="hidden lg:flex flex-1 items-center justify-center">
+            <div className="hidden lg:flex flex-1 items-center justify-center pt-8 lg:pt-0">
               <motion.div
                 animate={{ y: cardsHovered ? 0 : [0, -12, 0] }}
                 transition={cardsHovered
@@ -356,43 +395,69 @@ export default function Courses() {
                 }
                 onMouseEnter={() => setCardsHovered(true)}
                 onMouseLeave={() => setCardsHovered(false)}
-                className="relative w-[300px] h-[220px] cursor-pointer"
+                className="relative w-[400px] h-[300px] cursor-pointer"
               >
-                {/* Back card — fans to top-left on hover */}
+                {/* Card 5 (Top Left) */}
                 <motion.div
                   initial={{ opacity: 0, scale: 0.85 }}
                   animate={cardsHovered
-                    ? { x: -95, y: -40, rotate: -14, opacity: 1, scale: 0.93 }
-                    : { x: -40, y: 24, rotate: -6, opacity: 0.7, scale: 1 }
+                    ? { x: -240, y: -40, rotate: -15, opacity: 1, scale: 0.95 }
+                    : { x: -60, y: 40, rotate: -10, opacity: 0.3, scale: 1 }
                   }
                   transition={{ type: 'spring', stiffness: 280, damping: 22 }}
-                  className="absolute top-0 left-0 w-[272px] bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl shadow-md p-5 z-0"
+                  className="absolute top-0 left-0 w-[380px] bg-white dark:bg-neutral-900 border border-slate-100 dark:border-neutral-800 rounded-3xl shadow-sm p-7 z-0"
+                >
+                  <HeroCard course={COURSES[4]} />
+                </motion.div>
+
+                {/* Card 4 (Top Right) */}
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.85 }}
+                  animate={cardsHovered
+                    ? { x: 240, y: -40, rotate: 15, opacity: 1, scale: 0.95 }
+                    : { x: 50, y: 35, rotate: 8, opacity: 0.4, scale: 1 }
+                  }
+                  transition={{ type: 'spring', stiffness: 280, damping: 22 }}
+                  className="absolute top-0 left-0 w-[380px] bg-white dark:bg-neutral-900 border border-slate-100 dark:border-neutral-800 rounded-3xl shadow-sm p-7 z-[5]"
+                >
+                  <HeroCard course={COURSES[3]} />
+                </motion.div>
+
+                {/* Card 3 (Bottom Left) */}
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.85 }}
+                  animate={cardsHovered
+                    ? { x: -140, y: 150, rotate: -5, opacity: 1, scale: 0.95 }
+                    : { x: -30, y: 20, rotate: -5, opacity: 0.6, scale: 1 }
+                  }
+                  transition={{ type: 'spring', stiffness: 280, damping: 22 }}
+                  className="absolute top-0 left-0 w-[380px] bg-white dark:bg-neutral-900 border border-slate-100 dark:border-neutral-800 rounded-3xl shadow-md p-7 z-10"
                 >
                   <HeroCard course={COURSES[0]} />
                 </motion.div>
 
-                {/* Middle card — fans to bottom-right on hover */}
+                {/* Card 2 (Bottom Right) */}
                 <motion.div
                   initial={{ opacity: 0, scale: 0.85 }}
                   animate={cardsHovered
-                    ? { x: 60, y: 55, rotate: 10, opacity: 1, scale: 0.93 }
-                    : { x: 32, y: 12, rotate: 3, opacity: 0.85, scale: 1 }
+                    ? { x: 140, y: 150, rotate: 5, opacity: 1, scale: 0.95 }
+                    : { x: 25, y: 10, rotate: 4, opacity: 0.8, scale: 1 }
                   }
                   transition={{ type: 'spring', stiffness: 280, damping: 22 }}
-                  className="absolute top-0 left-0 w-[272px] bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl shadow-lg p-5 z-10"
+                  className="absolute top-0 left-0 w-[380px] bg-white dark:bg-neutral-900 border border-slate-100 dark:border-neutral-800 rounded-3xl shadow-lg p-7 z-20"
                 >
                   <HeroCard course={COURSES[2]} />
                 </motion.div>
 
-                {/* Front card — lifts up slightly on hover */}
+                {/* Card 1 (Center Front) */}
                 <motion.div
                   initial={{ opacity: 0, scale: 0.85 }}
                   animate={cardsHovered
-                    ? { x: 0, y: -10, rotate: 0, opacity: 1, scale: 1.05 }
+                    ? { x: 0, y: 50, rotate: 0, opacity: 1, scale: 1 }
                     : { x: 0, y: 0, rotate: 0, opacity: 1, scale: 1 }
                   }
                   transition={{ type: 'spring', stiffness: 280, damping: 22 }}
-                  className="absolute top-0 left-0 w-[272px] bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl shadow-xl p-5 z-20"
+                  className="absolute top-0 left-0 w-[380px] bg-white dark:bg-neutral-900 border border-slate-100 dark:border-neutral-800 rounded-3xl shadow-2xl p-7 z-30"
                 >
                   <HeroCard course={COURSES[1]} />
                 </motion.div>
@@ -420,7 +485,7 @@ export default function Courses() {
                     className={`flex-shrink-0 whitespace-nowrap px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 ${
                       activeCategory === cat
                         ? 'bg-violet-600 text-white shadow-lg shadow-violet-600/25'
-                        : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800'
+                        : 'bg-white dark:bg-neutral-900 text-slate-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-neutral-800 border border-slate-200 dark:border-neutral-800'
                     }`}
                   >
                     {cat}
@@ -440,15 +505,15 @@ export default function Courses() {
                 placeholder="Search courses..."
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                className="w-full pl-11 pr-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl focus:outline-none focus:ring-2 focus:ring-violet-600/20 focus:border-violet-600 transition-all text-slate-900 dark:text-white text-sm"
+                className="w-full pl-11 pr-4 py-3 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl focus:outline-none focus:ring-2 focus:ring-violet-600/20 focus:border-violet-600 transition-all text-slate-900 dark:text-white text-sm"
               />
             </div>
           </div>
 
           {/* Result count */}
           {filteredCourses.length > 0 && (
-            <p className="text-sm text-slate-500 dark:text-slate-500 mb-8">
-              Showing <span className="font-semibold text-slate-700 dark:text-slate-300">{filteredCourses.length}</span> course{filteredCourses.length !== 1 ? 's' : ''}
+            <p className="text-sm text-slate-500 dark:text-neutral-500 mb-8">
+              Showing <span className="font-semibold text-slate-700 dark:text-neutral-300">{filteredCourses.length}</span> course{filteredCourses.length !== 1 ? 's' : ''}
               {activeCategory !== 'All' && <> in <span className="font-semibold text-violet-600 dark:text-violet-400">{activeCategory}</span></>}
             </p>
           )}
@@ -464,7 +529,7 @@ export default function Courses() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95 }}
                   transition={{ delay: idx * 0.05, duration: 0.35 }}
-                  className="group bg-white dark:bg-slate-900 rounded-3xl overflow-hidden border border-slate-100 dark:border-slate-800 hover:shadow-2xl hover:shadow-violet-600/8 hover:-translate-y-1 transition-all duration-400"
+                  className="group bg-white dark:bg-neutral-900 rounded-3xl overflow-hidden border border-slate-100 dark:border-neutral-800 hover:shadow-2xl hover:shadow-violet-600/8 hover:-translate-y-1 transition-all duration-400"
                 >
                   {/* Image */}
                   <div className="relative h-52 overflow-hidden">
@@ -511,33 +576,35 @@ export default function Courses() {
                       </span>
                     </div>
 
-                    <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed mb-5">
+                    <p className="text-slate-500 dark:text-neutral-400 text-sm leading-relaxed mb-5">
                       {course.description}
                     </p>
 
                     {/* Meta row */}
-                    <div className="flex items-center gap-4 mb-5 pt-4 border-t border-slate-100 dark:border-slate-800">
-                      <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
-                        <div className="p-1.5 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                    <div className="flex items-center gap-4 mb-5 pt-4 border-t border-slate-100 dark:border-neutral-800">
+                      <div className="flex items-center gap-2 text-slate-500 dark:text-neutral-400">
+                        <div className="p-1.5 bg-slate-100 dark:bg-neutral-800 rounded-lg">
                           <GraduationCap size={14} />
                         </div>
                         <span className="text-xs font-semibold">{course.level}</span>
                       </div>
-                      <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
-                        <div className="p-1.5 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                      <div className="flex items-center gap-2 text-slate-500 dark:text-neutral-400">
+                        <div className="p-1.5 bg-slate-100 dark:bg-neutral-800 rounded-lg">
                           <Clock size={14} />
                         </div>
                         <span className="text-xs font-semibold">{course.duration}</span>
                       </div>
                     </div>
 
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.97 }}
-                      className="w-full flex items-center justify-center gap-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold py-3.5 rounded-2xl transition-all hover:bg-violet-600 dark:hover:bg-violet-500 dark:hover:text-white text-sm"
-                    >
-                      Enroll Now <ArrowRight size={18} weight="bold" />
-                    </motion.button>
+                    <Link to={`/courses/${course.id}`} className="block">
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.97 }}
+                        className="w-full flex items-center justify-center gap-2 bg-slate-900 dark:bg-white text-white dark:text-neutral-900 font-bold py-3.5 rounded-2xl transition-all hover:bg-violet-600 dark:hover:bg-violet-500 dark:hover:text-white text-sm"
+                      >
+                        Enroll Now <ArrowRight size={18} weight="bold" />
+                      </motion.button>
+                    </Link>
                   </div>
                 </motion.div>
               ))}
@@ -551,11 +618,11 @@ export default function Courses() {
               animate={{ opacity: 1 }}
               className="text-center py-24"
             >
-              <div className="inline-flex items-center justify-center w-20 h-20 bg-slate-100 dark:bg-slate-900 rounded-full mb-6">
+              <div className="inline-flex items-center justify-center w-20 h-20 bg-slate-100 dark:bg-neutral-900 rounded-full mb-6">
                 <Funnel size={32} className="text-slate-400" />
               </div>
               <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">No courses found</h3>
-              <p className="text-slate-500 dark:text-slate-400 mb-6">Try adjusting your search or category filters.</p>
+              <p className="text-slate-500 dark:text-neutral-400 mb-6">Try adjusting your search or category filters.</p>
               <button
                 onClick={() => { setActiveCategory('All'); setSearchQuery('') }}
                 className="px-6 py-2.5 bg-violet-600 text-white text-sm font-semibold rounded-full hover:bg-violet-500 transition-colors"
@@ -568,7 +635,7 @@ export default function Courses() {
       </section>
 
       {/* ─── LEARNING PATHS ───────────────────────────────────── */}
-      <section className="py-20 lg:py-28 bg-white dark:bg-slate-900 transition-colors duration-300">
+      <section className="py-20 lg:py-28 bg-white dark:bg-neutral-900 transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
           <div className="text-center mb-16">
@@ -597,16 +664,13 @@ export default function Courses() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.2 }}
-              className="text-slate-500 dark:text-slate-400 text-lg max-w-xl mx-auto"
+              className="text-slate-500 dark:text-neutral-400 text-lg max-w-xl mx-auto"
             >
               No matter where you start, we guide you step by step to English confidence.
             </motion.p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative">
-            {/* Connector line (desktop) */}
-            <div className="hidden md:block absolute top-16 left-1/3 right-1/3 h-px bg-gradient-to-r from-emerald-400 via-violet-400 to-amber-400 z-0" />
-
             {LEARNING_PATHS.map((path, i) => (
               <motion.div
                 key={path.step}
@@ -627,13 +691,13 @@ export default function Courses() {
                 <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-3">
                   {path.label}
                 </h3>
-                <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed mb-6">
+                <p className="text-slate-600 dark:text-neutral-400 text-sm leading-relaxed mb-6">
                   {path.desc}
                 </p>
 
                 <div className="space-y-2">
                   {path.courses.map(c => (
-                    <div key={c} className="flex items-center gap-2.5 text-slate-700 dark:text-slate-300 text-sm">
+                    <div key={c} className="flex items-center gap-2.5 text-slate-700 dark:text-neutral-300 text-sm">
                       <CheckCircle size={16} weight="fill" className={path.textClass} />
                       <span className="font-medium">{c}</span>
                     </div>
@@ -646,7 +710,7 @@ export default function Courses() {
       </section>
 
       {/* ─── WHY CHOOSE US ────────────────────────────────────── */}
-      <section className="py-20 lg:py-28 bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
+      <section className="py-20 lg:py-28 bg-slate-50 dark:bg-neutral-950 transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
@@ -675,7 +739,7 @@ export default function Courses() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: 0.2 }}
-                className="text-slate-500 dark:text-slate-400 text-lg leading-relaxed"
+                className="text-slate-500 dark:text-neutral-400 text-lg leading-relaxed"
               >
                 We combine expert teaching, flexible learning, and real accountability to help you reach your English goals — guaranteed.
               </motion.p>
@@ -690,13 +754,13 @@ export default function Courses() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.1 }}
-                  className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-6 hover:shadow-lg hover:shadow-violet-600/5 hover:-translate-y-0.5 transition-all duration-300"
+                  className="bg-white dark:bg-neutral-900 border border-slate-100 dark:border-neutral-800 rounded-2xl p-6 hover:shadow-lg hover:shadow-violet-600/5 hover:-translate-y-0.5 transition-all duration-300"
                 >
                   <div className="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-violet-600/10 dark:bg-violet-600/20 mb-4">
                     <Icon size={22} weight="fill" className="text-violet-600 dark:text-violet-400" />
                   </div>
                   <h4 className="text-base font-bold text-slate-900 dark:text-white mb-2">{title}</h4>
-                  <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">{desc}</p>
+                  <p className="text-slate-500 dark:text-neutral-400 text-sm leading-relaxed">{desc}</p>
                 </motion.div>
               ))}
             </div>
@@ -705,7 +769,7 @@ export default function Courses() {
       </section>
 
       {/* ─── INSTRUCTORS ──────────────────────────────────────── */}
-      <section className="py-20 lg:py-28 bg-white dark:bg-slate-900 transition-colors duration-300">
+      <section className="py-20 lg:py-28 bg-white dark:bg-neutral-900 transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
           <div className="text-center mb-16">
@@ -734,7 +798,7 @@ export default function Courses() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.2 }}
-              className="text-slate-500 dark:text-slate-400 text-lg max-w-xl mx-auto"
+              className="text-slate-500 dark:text-neutral-400 text-lg max-w-xl mx-auto"
             >
               Our teachers are certified experts with years of real-world teaching experience.
             </motion.p>
@@ -748,7 +812,7 @@ export default function Courses() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.12 }}
-                className="group bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-3xl overflow-hidden hover:shadow-xl hover:shadow-violet-600/8 hover:-translate-y-1 transition-all duration-400"
+                className="group bg-slate-50 dark:bg-neutral-950 border border-slate-100 dark:border-neutral-800 rounded-3xl overflow-hidden hover:shadow-xl hover:shadow-violet-600/8 hover:-translate-y-1 transition-all duration-400"
               >
                 {/* Photo */}
                 <div className="relative h-64 overflow-hidden">
@@ -774,17 +838,17 @@ export default function Courses() {
                   <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">{ins.name}</h3>
                   <p className="text-violet-600 dark:text-violet-400 text-sm font-semibold mb-4">{ins.role}</p>
 
-                  <div className="flex items-center gap-4 pt-4 border-t border-slate-100 dark:border-slate-800">
-                    <div className="text-center">
-                      <div className="text-base font-black text-slate-900 dark:text-white">{ins.students}</div>
-                      <div className="text-[11px] text-slate-500 font-medium">Students</div>
+                    <div className="flex items-center gap-4 pt-4 border-t border-slate-100 dark:border-neutral-800">
+                      <div className="text-center">
+                        <div className="text-base font-black text-slate-900 dark:text-white">{ins.students}</div>
+                        <div className="text-[11px] text-slate-500 dark:text-neutral-400 font-medium">Students</div>
+                      </div>
+                      <div className="w-px h-8 bg-slate-200 dark:bg-neutral-700" />
+                      <div className="text-center">
+                        <div className="text-base font-black text-slate-900 dark:text-white">{ins.experience}</div>
+                        <div className="text-[11px] text-slate-500 dark:text-neutral-400 font-medium">Experience</div>
+                      </div>
                     </div>
-                    <div className="w-px h-8 bg-slate-200 dark:bg-slate-700" />
-                    <div className="text-center">
-                      <div className="text-base font-black text-slate-900 dark:text-white">{ins.experience}</div>
-                      <div className="text-[11px] text-slate-500 font-medium">Experience</div>
-                    </div>
-                  </div>
                 </div>
               </motion.div>
             ))}
@@ -793,7 +857,7 @@ export default function Courses() {
       </section>
 
       {/* ─── FAQ ──────────────────────────────────────────────── */}
-      <section className="py-20 lg:py-28 bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
+      <section className="py-20 lg:py-28 bg-slate-50 dark:bg-neutral-950 transition-colors duration-300">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
 
           <div className="text-center mb-14">
@@ -819,7 +883,7 @@ export default function Courses() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.2 }}
-              className="text-slate-500 dark:text-slate-400 text-lg"
+              className="text-slate-500 dark:text-neutral-400 text-lg"
             >
               Everything you need to know before enrolling.
             </motion.p>
@@ -833,7 +897,7 @@ export default function Courses() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.07 }}
-                className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl overflow-hidden"
+                className="bg-white dark:bg-neutral-900 border border-slate-100 dark:border-neutral-800 rounded-2xl overflow-hidden"
               >
                 <button
                   onClick={() => setOpenFaq(openFaq === i ? null : i)}
@@ -843,7 +907,7 @@ export default function Courses() {
                   <motion.div
                     animate={{ rotate: openFaq === i ? 180 : 0 }}
                     transition={{ duration: 0.25 }}
-                    className="flex-shrink-0 text-slate-400 dark:text-slate-500"
+                    className="flex-shrink-0 text-slate-400 dark:text-neutral-500"
                   >
                     <CaretDown size={20} weight="bold" />
                   </motion.div>
@@ -859,7 +923,7 @@ export default function Courses() {
                       transition={{ duration: 0.3, ease: 'easeInOut' }}
                       className="overflow-hidden"
                     >
-                      <div className="px-6 pb-6 text-slate-500 dark:text-slate-400 text-sm leading-relaxed border-t border-slate-100 dark:border-slate-800 pt-4">
+                      <div className="px-6 pb-6 text-slate-500 dark:text-neutral-400 text-sm leading-relaxed border-t border-slate-100 dark:border-neutral-800 pt-4">
                         {faq.a}
                       </div>
                     </motion.div>
@@ -872,7 +936,7 @@ export default function Courses() {
       </section>
 
       {/* ─── CTA ──────────────────────────────────────────────── */}
-      <section className="py-20 lg:py-28 bg-white dark:bg-slate-900 transition-colors duration-300">
+      <section className="py-20 lg:py-28 bg-white dark:bg-neutral-900 transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 30 }}

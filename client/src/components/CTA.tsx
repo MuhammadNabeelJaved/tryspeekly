@@ -18,7 +18,7 @@ function ProgressBar({ value, label, color, delay }: { value: number; label: str
         <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{label}</span>
         <span className="text-sm font-bold text-gray-900 dark:text-white">{value}%</span>
       </div>
-      <div className="w-full h-2 bg-gray-100 dark:bg-slate-800 rounded-full overflow-hidden">
+      <div className="w-full h-2 bg-gray-100 dark:bg-neutral-800 rounded-full overflow-hidden">
         <motion.div
           initial={{ width: 0 }}
           animate={isInView ? { width: `${value}%` } : {}}
@@ -35,7 +35,7 @@ export default function CTA() {
   const isInView = useInView(ref, { once: true, margin: '-80px' })
 
   return (
-    <section className="bg-gray-50 dark:bg-slate-950 py-16 md:py-20 lg:py-28 transition-colors duration-300">
+    <section className="bg-gray-50 dark:bg-neutral-950 py-16 md:py-20 lg:py-28 transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 md:gap-16 items-center">
 
@@ -94,7 +94,7 @@ export default function CTA() {
             <motion.div
               animate={{ y: [0, -8, 0] }}
               transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-              className="absolute -bottom-6 -right-4 bg-white dark:bg-slate-900 rounded-xl shadow-[0_8px_30px_rgba(0,0,0,0.1)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.5)] border border-gray-100 dark:border-slate-800 p-4 w-44 transition-colors duration-300"
+              className="absolute -bottom-6 -right-4 bg-white dark:bg-neutral-900 rounded-xl shadow-[0_8px_30px_rgba(0,0,0,0.1)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.5)] border border-gray-100 dark:border-neutral-800 p-4 w-44 transition-colors duration-300"
             >
               <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 font-medium">New Learners</p>
               <p className="text-2xl font-bold text-gray-900 dark:text-white leading-none">+248</p>

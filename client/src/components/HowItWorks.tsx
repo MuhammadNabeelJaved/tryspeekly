@@ -39,7 +39,7 @@ export default function HowItWorks() {
   const isInView = useInView(ref, { once: true, margin: '-100px' })
 
   return (
-    <section id="about" className="bg-gray-50 dark:bg-slate-950 py-16 md:py-20 lg:py-28 transition-colors duration-300">
+    <section id="about" className="bg-gray-50 dark:bg-neutral-950 py-16 md:py-20 lg:py-28 transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* Section header */}
@@ -66,7 +66,7 @@ export default function HowItWorks() {
               key={step.name}
               variants={cardVariants}
               whileHover={{ scale: 1.04 }}
-              className="group bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-gray-100 dark:border-white/5 hover:border-violet-300 dark:hover:border-violet-500/30 transition-all duration-300 cursor-pointer shadow-sm"
+              className="group bg-white dark:bg-neutral-800 rounded-2xl overflow-hidden border border-gray-100 dark:border-white/5 hover:border-violet-300 dark:hover:border-violet-500/30 transition-all duration-300 cursor-pointer shadow-sm"
             >
               {/* Photo */}
               <div className="relative h-56 overflow-hidden">
@@ -75,7 +75,7 @@ export default function HowItWorks() {
                   alt={step.name}
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-white dark:from-slate-800 via-transparent to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-white dark:from-neutral-800 via-transparent to-transparent" />
 
                 {/* Step number overlay */}
                 <div

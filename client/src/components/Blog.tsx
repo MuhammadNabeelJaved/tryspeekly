@@ -47,7 +47,7 @@ export default function Blog() {
   const isInView = useInView(ref, { once: true, margin: '-80px' })
 
   return (
-    <section id="blog" className="bg-gray-50 dark:bg-slate-950 py-16 md:py-20 lg:py-28 transition-colors duration-300">
+    <section id="blog" className="bg-gray-50 dark:bg-neutral-950 py-16 md:py-20 lg:py-28 transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* Section header */}
@@ -83,7 +83,7 @@ export default function Blog() {
               key={post.title}
               variants={cardVariants}
               whileHover={{ scale: 1.04 }}
-              className="group bg-white dark:bg-slate-900 rounded-2xl overflow-hidden border border-gray-100 dark:border-slate-800 hover:border-violet-200 dark:hover:border-violet-700/50 transition-all duration-300 cursor-pointer"
+              className="group bg-white dark:bg-neutral-900 rounded-2xl overflow-hidden border border-gray-100 dark:border-neutral-800 hover:border-violet-200 dark:hover:border-violet-700/50 transition-all duration-300 cursor-pointer"
             >
               {/* Image */}
               <div className="relative h-52 overflow-hidden">
