@@ -1,62 +1,73 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
+import { useForm } from 'react-hook-form'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   ChartBar, Users, Chalkboard, BookOpen, CreditCard, Wallet, PencilSimple,
   List, X, SignOut, Bell, MagnifyingGlass, Sun, Moon, GearSix,
-  Lock, Eye, EyeSlash,
+  Lock, Eye, EyeSlash, Handshake
 } from '@phosphor-icons/react'
-import type { Student, Instructor, Course, CMSPage } from './admin/adminData'
-import { INITIAL_STUDENTS, INITIAL_INSTRUCTORS, INITIAL_COURSES, INITIAL_CMS_PAGES } from './admin/adminData'
+import type { Student, Instructor, Course, CMSPage, FinancialAidApp } from './admin/adminData'
+import { INITIAL_STUDENTS, INITIAL_INSTRUCTORS, INITIAL_COURSES, INITIAL_CMS_PAGES, INITIAL_FINANCIAL_AID } from './admin/adminData'
 import AdminOverview from './admin/AdminOverview'
 import AdminStudents from './admin/AdminStudents'
 import AdminInstructors from './admin/AdminInstructors'
 import AdminCourses from './admin/AdminCourses'
 import AdminPaymentsView from './admin/AdminPaymentsView'
 import AdminPaymentsSetup from './admin/AdminPaymentsSetup'
+import AdminFinancialAid from './admin/AdminFinancialAid'
 import AdminCMS from './admin/AdminCMS'
 import AdminSettings from './admin/AdminSettings'
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 
-export type AdminView = 'overview' | 'students' | 'instructors' | 'courses' | 'payments' | 'payments-setup' | 'cms' | 'settings'
+export type AdminView = 'overview' | 'students' | 'instructors' | 'courses' | 'payments' | 'payments-setup' | 'financial-aid' | 'cms' | 'settings'
 
 export interface AdminStore {
   students: Student[]
   instructors: Instructor[]
   courses: Course[]
   cmsPages: CMSPage[]
+  financialAidApps: FinancialAidApp[]
   setStudents: (s: Student[]) => void
   setInstructors: (i: Instructor[]) => void
   setCourses: (c: Course[]) => void
   setCmsPages: (p: CMSPage[]) => void
+  setFinancialAidApps: (apps: FinancialAidApp[]) => void
 }
 
 // ─── CONSTANTS ────────────────────────────────────────────────────────────────
 
 const ADMIN_PASSWORD = 'admin123'
 
-const NAV_ITEMS: { view: AdminView; label: string; Icon: React.FC<{ size?: number; weight?: string; className?: string }> }[] = [
-  { view: 'overview', label: 'Overview', Icon: ChartBar as React.FC<{ size?: number; weight?: string; className?: string }> },
-  { view: 'students', label: 'Students', Icon: Users as React.FC<{ size?: number; weight?: string; className?: string }> },
-  { view: 'instructors', label: 'Instructors', Icon: Chalkboard as React.FC<{ size?: number; weight?: string; className?: string }> },
-  { view: 'courses', label: 'Courses', Icon: BookOpen as React.FC<{ size?: number; weight?: string; className?: string }> },
-  { view: 'payments', label: 'Payments', Icon: CreditCard as React.FC<{ size?: number; weight?: string; className?: string }> },
-  { view: 'payments-setup', label: 'Pay. Setup', Icon: Wallet as React.FC<{ size?: number; weight?: string; className?: string }> },
-  { view: 'cms', label: 'CMS Editor', Icon: PencilSimple as React.FC<{ size?: number; weight?: string; className?: string }> },
-  { view: 'settings', label: 'Settings', Icon: GearSix as React.FC<{ size?: number; weight?: string; className?: string }> },
+type NavItem = { view: AdminView; label: string; Icon: React.FC<{ size?: number; weight?: string; className?: string }> }
+
+const NAV_ANALYTICS: NavItem[] = [
+  { view: 'overview',     label: 'Overview',     Icon: ChartBar as NavItem['Icon'] },
+  { view: 'students',     label: 'Students',     Icon: Users as NavItem['Icon'] },
+  { view: 'instructors',  label: 'Instructors',  Icon: Chalkboard as NavItem['Icon'] },
+]
+
+const NAV_MANAGEMENT: NavItem[] = [
+  { view: 'courses',        label: 'Courses',       Icon: BookOpen as NavItem['Icon'] },
+  { view: 'payments',       label: 'Payments',      Icon: CreditCard as NavItem['Icon'] },
+  { view: 'payments-setup', label: 'Pay. Setup',    Icon: Wallet as NavItem['Icon'] },
+  { view: 'financial-aid',  label: 'Financial Aid', Icon: Handshake as NavItem['Icon'] },
+  { view: 'cms',            label: 'CMS Editor',    Icon: PencilSimple as NavItem['Icon'] },
+  { view: 'settings',       label: 'Settings',      Icon: GearSix as NavItem['Icon'] },
 ]
 
 // ─── LOGIN SCREEN ─────────────────────────────────────────────────────────────
 
 function LoginScreen({ onLogin }: { onLogin: () => void }) {
-  const [password, setPassword] = useState('')
+  const { register, handleSubmit, formState: { errors } } = useForm({
+    defaultValues: { password: '' }
+  })
   const [show, setShow] = useState(false)
   const [error, setError] = useState(false)
   const [shaking, setShaking] = useState(false)
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (password === ADMIN_PASSWORD) {
+  function onSubmit(data: any) {
+    if (data.password === ADMIN_PASSWORD) {
       onLogin()
     } else {
       setError(true)
@@ -89,7 +100,7 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
             <p className="text-sm text-slate-400 dark:text-neutral-500 mt-1">EnglishPro Academy</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div>
               <label className="text-xs font-semibold text-slate-500 dark:text-neutral-400 uppercase tracking-wide block mb-1.5">
                 Admin Password
@@ -97,11 +108,13 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
               <div className="relative">
                 <input
                   type={show ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => { setPassword(e.target.value); setError(false) }}
                   placeholder="Enter admin password"
+                  {...register('password', { 
+                    required: 'Password is required',
+                    onChange: () => setError(false)
+                  })}
                   className={`w-full px-4 py-3 pr-11 rounded-xl border text-sm font-medium bg-slate-50 dark:bg-neutral-800 text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-neutral-600 outline-none transition-all ${
-                    error
+                    error || errors.password
                       ? 'border-red-400 dark:border-red-600 focus:border-red-500'
                       : 'border-slate-200 dark:border-neutral-700 focus:border-violet-500 dark:focus:border-violet-500'
                   }`}
@@ -114,6 +127,7 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
                   {show ? <EyeSlash size={17} /> : <Eye size={17} />}
                 </button>
               </div>
+              {errors.password && <p className="text-red-500 text-xs mt-1.5 font-medium">{errors.password.message as string}</p>}
               {error && (
                 <p className="text-red-500 text-xs mt-1.5 font-medium">Incorrect password. Try again.</p>
               )}
@@ -161,11 +175,16 @@ export default function AdminPage() {
     try { return JSON.parse(localStorage.getItem('admin_cms') || 'null') ?? INITIAL_CMS_PAGES }
     catch { return INITIAL_CMS_PAGES }
   })
+  const [financialAidApps, setFinancialAidApps] = useState<FinancialAidApp[]>(() => {
+    try { return JSON.parse(localStorage.getItem('admin_financial_aid') || 'null') ?? INITIAL_FINANCIAL_AID }
+    catch { return INITIAL_FINANCIAL_AID }
+  })
 
   useEffect(() => { localStorage.setItem('admin_students', JSON.stringify(students)) }, [students])
   useEffect(() => { localStorage.setItem('admin_instructors', JSON.stringify(instructors)) }, [instructors])
   useEffect(() => { localStorage.setItem('admin_courses', JSON.stringify(courses)) }, [courses])
   useEffect(() => { localStorage.setItem('admin_cms', JSON.stringify(cmsPages)) }, [cmsPages])
+  useEffect(() => { localStorage.setItem('admin_financial_aid', JSON.stringify(financialAidApps)) }, [financialAidApps])
 
   function handleLogin() {
     sessionStorage.setItem('admin_authed', '1')
@@ -184,9 +203,45 @@ export default function AdminPage() {
 
   if (!authed) return <LoginScreen onLogin={handleLogin} />
 
-  const store: AdminStore = { students, instructors, courses, cmsPages, setStudents, setInstructors, setCourses, setCmsPages }
+  const paymentAlerts = students.filter(s => s.paymentStatus === 'pending' || s.paymentStatus === 'failed').length
+  const aidPending = financialAidApps.filter(a => a.status === 'pending' || a.status === 'under_review').length
 
-  const activeLabel = NAV_ITEMS.find(n => n.view === activeView)?.label ?? 'Dashboard'
+  const renderNavItem = ({ view, label, Icon }: NavItem) => {
+    const active = activeView === view
+    const badge =
+      view === 'students' ? students.length :
+      view === 'payments' && paymentAlerts > 0 ? paymentAlerts :
+      view === 'financial-aid' && aidPending > 0 ? aidPending :
+      null
+
+    return (
+      <button
+        onClick={() => { setActiveView(view); setSidebarOpen(false) }}
+        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm font-semibold transition-all duration-150 ${
+          active
+            ? 'bg-violet-600 text-white shadow-[0_4px_12px_rgba(124,58,237,0.3)]'
+            : 'text-slate-600 dark:text-neutral-400 hover:bg-slate-50 dark:hover:bg-neutral-800 hover:text-slate-900 dark:hover:text-white'
+        }`}
+      >
+        <Icon size={18} weight={active ? 'fill' : 'regular'} />
+        {label}
+        {badge !== null && (
+          <span className={`ml-auto text-[9px] font-black px-1.5 py-0.5 rounded-full ${
+            active ? 'bg-white/20 text-white' :
+            view === 'students' ? 'bg-violet-100 dark:bg-violet-950/50 text-violet-600 dark:text-violet-400' :
+            'bg-amber-400 text-white'
+          }`}>
+            {badge}
+          </span>
+        )}
+      </button>
+    )
+  }
+
+  const store: AdminStore = { students, instructors, courses, cmsPages, financialAidApps, setStudents, setInstructors, setCourses, setCmsPages, setFinancialAidApps }
+
+  const allNavItems = [...NAV_ANALYTICS, ...NAV_MANAGEMENT]
+  const activeLabel = allNavItems.find(n => n.view === activeView)?.label ?? 'Dashboard'
 
   return (
     <div className="flex h-screen bg-slate-50 dark:bg-neutral-950 overflow-hidden transition-colors duration-300">
@@ -205,7 +260,7 @@ export default function AdminPage() {
         </AnimatePresence>
 
         <motion.aside
-          className={`fixed lg:static inset-y-0 left-0 z-40 w-64 bg-white dark:bg-neutral-900 border-r border-slate-100 dark:border-neutral-800 flex flex-col transition-transform duration-300 ${
+          className={`fixed lg:static inset-y-0 left-0 z-40 w-64 bg-gradient-to-b from-violet-50 to-white dark:from-violet-950/20 dark:to-neutral-900 border-r border-slate-100 dark:border-neutral-800 flex flex-col transition-transform duration-300 ${
             sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
           }`}
         >
@@ -228,33 +283,33 @@ export default function AdminPage() {
           </div>
 
           {/* Nav */}
-          <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
-            {NAV_ITEMS.map(({ view, label, Icon }) => {
-              const active = activeView === view
-              return (
-                <button
-                  key={view}
-                  onClick={() => { setActiveView(view); setSidebarOpen(false) }}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 ${
-                    active
-                      ? 'bg-violet-600 text-white shadow-[0_4px_12px_rgba(124,58,237,0.3)]'
-                      : 'text-slate-600 dark:text-neutral-400 hover:bg-slate-50 dark:hover:bg-neutral-800 hover:text-slate-900 dark:hover:text-white'
-                  }`}
-                >
-                  <Icon size={18} weight={active ? 'fill' : 'regular'} />
-                  {label}
-                  {view === 'students' && (
-                    <span className={`ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-full ${active ? 'bg-white/20 text-white' : 'bg-violet-100 dark:bg-violet-950/50 text-violet-600 dark:text-violet-400'}`}>
-                      {students.length}
-                    </span>
-                  )}
-                </button>
-              )
-            })}
+          <nav className="flex-1 px-3 py-4 overflow-y-auto">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-neutral-600 px-3 mb-1">
+              Analytics
+            </p>
+            <div className="space-y-0.5 mb-4">
+              {NAV_ANALYTICS.map(item => <React.Fragment key={item.view}>{renderNavItem(item)}</React.Fragment>)}
+            </div>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-neutral-600 px-3 mb-1">
+              Management
+            </p>
+            <div className="space-y-0.5">
+              {NAV_MANAGEMENT.map(item => <React.Fragment key={item.view}>{renderNavItem(item)}</React.Fragment>)}
+            </div>
           </nav>
 
-          {/* Bottom: logout */}
+          {/* Bottom: profile card + logout */}
           <div className="px-3 pb-4 border-t border-slate-100 dark:border-neutral-800 pt-3">
+            {/* Profile card */}
+            <div className="flex items-center gap-3 bg-slate-50 dark:bg-neutral-800 rounded-2xl px-3 py-2.5 mb-3">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-600 to-purple-600 flex items-center justify-center text-white text-sm font-black flex-shrink-0 shadow-[0_4px_12px_rgba(124,58,237,0.4)]">
+                A
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-black text-slate-900 dark:text-white leading-none">Admin</p>
+                <p className="text-[10px] text-slate-400 dark:text-neutral-600 mt-0.5 truncate">admin@englishpro.com</p>
+              </div>
+            </div>
             <button
               onClick={handleLogout}
               className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all"
@@ -326,7 +381,8 @@ export default function AdminPage() {
               {activeView === 'instructors' && <AdminInstructors store={store} />}
               {activeView === 'courses'     && <AdminCourses store={store} />}
               {activeView === 'payments'       && <AdminPaymentsView store={store} />}
-              {activeView === 'payments-setup' && <AdminPaymentsSetup store={store} />}
+              {activeView === 'payments-setup' && <AdminPaymentsSetup />}
+              {activeView === 'financial-aid'  && <AdminFinancialAid store={store} />}
               {activeView === 'cms'            && <AdminCMS store={store} />}
               {activeView === 'settings'    && <AdminSettings store={store} />}
             </motion.div>
