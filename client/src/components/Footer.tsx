@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 const FOOTER_LINKS = {
   Courses: ['Beginner English', 'Intermediate English', 'Advanced English', 'Business English', 'IELTS Preparation'],
   Company: ['About Us', 'Our Instructors', 'Success Stories', 'Careers', 'Contact Us'],
-  Resources: ['Learning Blog', 'Grammar Guide', 'Vocabulary Builder', 'Practice Tests', 'Help Center'],
+  Resources: ['Learning Blog', 'Grammar Guide', 'Financial Aid', 'Practice Tests', 'Help Center'],
 }
 
 const SOCIAL = [
@@ -83,9 +83,15 @@ export default function Footer() {
                 <ul className="space-y-4">
                   {links.map((link) => (
                     <li key={link}>
-                      <a href="#" className="text-sm text-slate-600 dark:text-neutral-500 hover:text-violet-600 dark:hover:text-violet-400 transition-colors font-medium">
-                        {link}
-                      </a>
+                      {link === 'Financial Aid' ? (
+                        <Link to="/financial-aid" className="text-sm text-slate-600 dark:text-neutral-500 hover:text-violet-600 dark:hover:text-violet-400 transition-colors font-medium">
+                          {link}
+                        </Link>
+                      ) : (
+                        <a href="#" className="text-sm text-slate-600 dark:text-neutral-500 hover:text-violet-600 dark:hover:text-violet-400 transition-colors font-medium">
+                          {link}
+                        </a>
+                      )}
                     </li>
                   ))}
                 </ul>

@@ -17,7 +17,7 @@ export default function Stats() {
   const isInView = useInView(ref, { once: true, margin: '-80px' })
 
   return (
-    <section className="relative overflow-hidden bg-[#f5f4ff] dark:bg-neutral-950 py-20 md:py-28 lg:py-32 transition-colors duration-300">
+    <section className="relative overflow-hidden bg-[#f5f4ff] dark:bg-neutral-950 py-16 lg:py-24 transition-colors duration-300">
 
       {/* Background orbs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">

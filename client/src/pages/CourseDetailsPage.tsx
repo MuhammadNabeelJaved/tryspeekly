@@ -3,88 +3,92 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { 
   Star, Users, Clock, GraduationCap, CheckCircle, 
-  PlayCircle, Certificate, Globe, FileText, CaretDown, 
-  ArrowLeft, MonitorPlay, Infinity, DeviceMobile, Sparkle,
-  ChartBar, Tag, Chats, CaretLeft, CaretRight, ThumbsUp
+  PlayCircle, Certificate, FileText, CaretDown, 
+  ArrowLeft, Sparkle,
+  ChartBar, Tag, Chats, CaretLeft, CaretRight, ThumbsUp,
+  Calendar, VideoCamera, UsersThree, ChalkboardTeacher, Laptop
 } from '@phosphor-icons/react'
 
 // Dummy Data for the specific course
 const COURSE = {
   id: 1,
-  title: 'General English Mastery: Complete Course',
-  category: 'General English',
-  description: 'Master the fundamentals of English grammar, vocabulary, and daily conversation. This comprehensive course takes you from beginner basics to confident speaker through interactive lessons and real-world practice.',
+  title: 'General English Mastery: Live Interactive Cohort',
+  category: 'Live Class',
+  description: 'Join our intensive 12-week live cohort. Master the fundamentals of English grammar, vocabulary, and daily conversation through real-time interaction, group activities, and live feedback via Zoom/Google Meet.',
   rating: 4.9,
-  reviews: 1248,
-  students: 12500,
-  price: '$199',
-  originalPrice: '$299',
-  level: 'Beginner to Advanced',
-  duration: '12 Weeks (48 hours)',
+  reviews: 342,
+  students: 120, // Smaller number for live cohort
+  price: '$299',
+  originalPrice: '$399',
+  level: 'Beginner to Intermediate',
+  duration: '12 Weeks (24 Live Sessions)',
+  schedule: 'Tuesdays & Thursdays, 7:00 PM - 8:30 PM (EST)',
+  startDate: 'May 10, 2026',
+  platform: 'Zoom / Google Meet',
+  maxStudents: 25,
   language: 'English',
-  lastUpdated: 'April 2026',
   image: 'https://images.unsplash.com/photo-1544650030-3c51ad04fe0b?q=80&w=1200&auto=format&fit=crop',
   videoPreview: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=800&auto=format&fit=crop',
   instructor: {
     name: 'Emily Chen',
-    role: 'General English Specialist',
+    role: 'Lead English Instructor',
     image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=400&auto=format&fit=crop',
     rating: 5.0,
-    students: '21,000+',
-    courses: 4,
-    bio: 'Emily has over 10 years of experience teaching English as a second language across Europe and Asia. She specializes in making complex grammar simple and helping students overcome their fear of speaking.'
+    students: '1,500+',
+    courses: 2,
+    bio: 'Emily specializes in live, interactive teaching. With over 10 years of experience, she creates a dynamic virtual classroom environment where every student gets personal attention and real-time pronunciation feedback.'
   },
   whatYouWillLearn: [
-    'Confidently introduce yourself and hold everyday conversations.',
-    'Master all English verb tenses and know exactly when to use them.',
+    'Participate confidently in live conversations and group discussions.',
+    'Receive real-time feedback on your pronunciation and grammar.',
+    'Collaborate with classmates in Zoom breakout rooms.',
     'Build a robust vocabulary of 3,000+ essential English words.',
-    'Improve your listening comprehension with real-world audio exercises.',
-    'Write clear, concise emails and text messages in English.',
-    'Perfect your pronunciation and sound more like a native speaker.'
+    'Write clear, concise emails with live review sessions.',
+    'Overcome your fear of speaking in front of others.'
   ],
   curriculum: [
     {
-      title: 'The Foundations of English',
-      lessons: 8,
-      duration: '4h 15m',
+      title: 'Week 1-3: The Foundations of English',
+      lessons: 6,
+      duration: '9 Hours Live',
       items: [
-        { title: 'Introduction to the Course', duration: '05:20', type: 'video', isFree: true },
-        { title: 'The Verb "To Be" - Present Tense', duration: '15:45', type: 'video', isFree: true },
-        { title: 'Subject Pronouns & Possessive Adjectives', duration: '12:10', type: 'video', isFree: false },
-        { title: 'Practice Exercises: Module 1', duration: '30:00', type: 'quiz', isFree: false }
+        { title: 'Orientation & Introduction (Live)', date: 'May 10, 2026', time: '7:00 PM EST', type: 'live', isFree: true },
+        { title: 'The Verb "To Be" - Interactive Practice', date: 'May 12, 2026', time: '7:00 PM EST', type: 'live', isFree: false },
+        { title: 'Subject Pronouns & Breakout Rooms', date: 'May 17, 2026', time: '7:00 PM EST', type: 'live', isFree: false },
+        { title: 'Week 1-3 Q&A and Live Assessment', date: 'May 26, 2026', time: '7:00 PM EST', type: 'quiz', isFree: false }
       ]
     },
     {
-      title: 'Daily Routines & Activities',
-      lessons: 12,
-      duration: '6h 30m',
+      title: 'Week 4-6: Daily Routines & Activities',
+      lessons: 6,
+      duration: '9 Hours Live',
       items: [
-        { title: 'Present Simple: Habits and Routines', duration: '18:20', type: 'video', isFree: false },
-        { title: 'Adverbs of Frequency', duration: '14:15', type: 'video', isFree: false },
-        { title: 'Telling Time and Dates', duration: '10:50', type: 'video', isFree: false },
-        { title: 'Vocabulary: Work and Leisure', duration: '15:00', type: 'document', isFree: false }
+        { title: 'Present Simple: Group Storytelling', date: 'May 31, 2026', time: '7:00 PM EST', type: 'live', isFree: false },
+        { title: 'Adverbs of Frequency - Live Polls', date: 'Jun 02, 2026', time: '7:00 PM EST', type: 'live', isFree: false },
+        { title: 'Telling Time - Partner Activities', date: 'Jun 07, 2026', time: '7:00 PM EST', type: 'live', isFree: false },
+        { title: 'Vocabulary Workshop: Work and Leisure', date: 'Jun 16, 2026', time: '7:00 PM EST', type: 'live', isFree: false }
       ]
     },
     {
-      title: 'Traveling & Directions',
-      lessons: 10,
-      duration: '5h 45m',
+      title: 'Week 7-9: Traveling & Directions',
+      lessons: 6,
+      duration: '9 Hours Live',
       items: [
-        { title: 'Essential Airport Vocabulary', duration: '16:40', type: 'video', isFree: false },
-        { title: 'Asking for and Giving Directions', duration: '20:15', type: 'video', isFree: false },
-        { title: 'Booking a Hotel Room', duration: '18:00', type: 'video', isFree: false },
-        { title: 'Roleplay: At the Restaurant', duration: '25:00', type: 'video', isFree: false }
+        { title: 'Airport Roleplay (Live Pairs)', date: 'Jun 21, 2026', time: '7:00 PM EST', type: 'live', isFree: false },
+        { title: 'Giving Directions - Virtual Map Task', date: 'Jun 23, 2026', time: '7:00 PM EST', type: 'live', isFree: false },
+        { title: 'Booking a Hotel Room Simulation', date: 'Jun 28, 2026', time: '7:00 PM EST', type: 'live', isFree: false },
+        { title: 'Restaurant Roleplay & Group Feedback', date: 'Jul 07, 2026', time: '7:00 PM EST', type: 'live', isFree: false }
       ]
     },
     {
-      title: 'Past Events & Storytelling',
-      lessons: 14,
-      duration: '8h 20m',
+      title: 'Week 10-12: Past Events & Storytelling',
+      lessons: 6,
+      duration: '9 Hours Live',
       items: [
-        { title: 'Past Simple: Regular & Irregular Verbs', duration: '22:10', type: 'video', isFree: false },
-        { title: 'Pronunciation of "-ed" Endings', duration: '15:30', type: 'video', isFree: false },
-        { title: 'Past Continuous vs Past Simple', duration: '19:45', type: 'video', isFree: false },
-        { title: 'Writing Assignment: My Best Vacation', duration: '45:00', type: 'document', isFree: false }
+        { title: 'Past Simple: Sharing Memories', date: 'Jul 12, 2026', time: '7:00 PM EST', type: 'live', isFree: false },
+        { title: 'Pronunciation Clinic: "-ed" Endings', date: 'Jul 14, 2026', time: '7:00 PM EST', type: 'live', isFree: false },
+        { title: 'Past Continuous - Group Story Building', date: 'Jul 19, 2026', time: '7:00 PM EST', type: 'live', isFree: false },
+        { title: 'Final Presentations & Graduation', date: 'Jul 28, 2026', time: '7:00 PM EST', type: 'live', isFree: false }
       ]
     }
   ],
@@ -197,12 +201,16 @@ export default function CourseDetailsPage() {
                   </button>
                 </div>
                 <div className="flex items-center gap-2 text-slate-300">
-                  <Users size={18} className="text-violet-400" />
-                  <span><strong>{COURSE.students.toLocaleString()}</strong> students</span>
+                  <UsersThree size={18} className="text-violet-400" />
+                  <span><strong>Max {COURSE.maxStudents}</strong> per cohort</span>
                 </div>
                 <div className="flex items-center gap-2 text-slate-300">
-                  <Globe size={18} className="text-emerald-400" />
-                  <span>{COURSE.language}</span>
+                  <Calendar size={18} className="text-emerald-400" />
+                  <span>Starts: <strong>{COURSE.startDate}</strong></span>
+                </div>
+                <div className="flex items-center gap-2 text-slate-300">
+                  <VideoCamera size={18} className="text-blue-400" />
+                  <span>{COURSE.platform}</span>
                 </div>
               </div>
             </motion.div>
@@ -276,12 +284,12 @@ export default function CourseDetailsPage() {
                   <div>
                     <h2 className="text-2xl lg:text-3xl font-black text-slate-900 dark:text-white mb-2 flex items-center gap-3">
                       <div className="w-10 h-10 rounded-xl bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center text-violet-600 dark:text-violet-400">
-                        <MonitorPlay size={24} weight="fill" />
+                        <Calendar size={24} weight="fill" />
                       </div>
-                      Course Curriculum
+                      Live Session Schedule
                     </h2>
                     <p className="text-slate-500 dark:text-neutral-400 text-sm font-medium ml-13">
-                      {COURSE.curriculum.length} modules • {COURSE.curriculum.reduce((acc, curr) => acc + curr.lessons, 0)} lessons • {COURSE.duration} total length
+                      {COURSE.schedule} • {COURSE.duration}
                     </p>
                   </div>
                   <button className="text-sm font-bold text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 transition-colors bg-violet-50 dark:bg-violet-900/20 px-4 py-2 rounded-lg">
@@ -303,7 +311,7 @@ export default function CourseDetailsPage() {
                           <div>
                             <h3 className="font-bold text-slate-900 dark:text-white text-base lg:text-lg mb-1 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">{module.title}</h3>
                             <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-neutral-400 font-medium">
-                              <span className="flex items-center gap-1"><FileText size={14} /> {module.lessons} lessons</span>
+                              <span className="flex items-center gap-1"><VideoCamera size={14} /> {module.lessons} sessions</span>
                               <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-neutral-700" />
                               <span className="flex items-center gap-1"><Clock size={14} /> {module.duration}</span>
                             </div>
@@ -332,9 +340,9 @@ export default function CourseDetailsPage() {
                                     <div className="absolute left-[-32px] w-2 h-2 rounded-full bg-slate-300 dark:bg-neutral-700 group-hover:bg-violet-500 transition-colors ring-4 ring-white dark:ring-neutral-900" />
                                     
                                     <div className="flex items-center gap-3">
-                                      {item.type === 'video' ? (
+                                      {item.type === 'live' ? (
                                         <div className="w-8 h-8 rounded-full bg-violet-50 dark:bg-violet-900/20 flex items-center justify-center text-violet-600 dark:text-violet-400">
-                                          <PlayCircle size={16} weight="fill" />
+                                          <VideoCamera size={16} weight="fill" />
                                         </div>
                                       ) : item.type === 'document' ? (
                                         <div className="w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600 dark:text-blue-400">
@@ -355,7 +363,7 @@ export default function CourseDetailsPage() {
                                           Preview
                                         </span>
                                       )}
-                                      <span className="text-xs text-slate-400 dark:text-neutral-500 font-semibold">{item.duration}</span>
+                                      <span className="text-xs text-slate-500 dark:text-neutral-400 font-semibold flex items-center gap-1.5"><Calendar size={14}/> {item.date} • {item.time}</span>
                                     </div>
                                   </div>
                                 ))}
@@ -555,7 +563,7 @@ export default function CourseDetailsPage() {
                     </div>
                   </div>
                   <div className="absolute bottom-4 left-0 right-0 text-center text-white font-bold text-sm tracking-wide drop-shadow-md">
-                    Preview this course
+                    Meet Your Instructor
                   </div>
                 </div>
 
@@ -585,18 +593,18 @@ export default function CourseDetailsPage() {
                     Enroll Now
                   </motion.button>
                   <p className="text-center text-xs text-slate-500 dark:text-neutral-400 mb-8 font-medium">
-                    30-Day Money-Back Guarantee • Full Lifetime Access
+                    7-Day Refund Policy • Session Recordings Included
                   </p>
 
                   {/* Course Includes */}
                   <div className="bg-slate-50 dark:bg-neutral-800/50 rounded-2xl p-5 mb-8">
-                    <h4 className="font-bold text-slate-900 dark:text-white mb-4 text-sm uppercase tracking-wider">This course includes:</h4>
+                    <h4 className="font-bold text-slate-900 dark:text-white mb-4 text-sm uppercase tracking-wider">This live cohort includes:</h4>
                     <ul className="space-y-4">
                       {[
-                        { icon: MonitorPlay, text: `${COURSE.duration} on-demand video` },
-                        { icon: FileText, text: '24 downloadable resources' },
-                        { icon: Infinity, text: 'Full lifetime access' },
-                        { icon: DeviceMobile, text: 'Access on mobile and TV' },
+                        { icon: VideoCamera, text: '24 Interactive Live Sessions' },
+                        { icon: UsersThree, text: `Intimate cohort (Max ${COURSE.maxStudents})` },
+                        { icon: ChalkboardTeacher, text: 'Real-time teacher feedback' },
+                        { icon: Laptop, text: 'Access to session recordings' },
                         { icon: Certificate, text: 'Certificate of completion' }
                       ].map((item, i) => (
                         <li key={i} className="flex items-center gap-3 text-sm text-slate-700 dark:text-neutral-300 font-medium">
@@ -614,12 +622,16 @@ export default function CourseDetailsPage() {
                       <span className="font-bold text-slate-900 dark:text-white">{COURSE.level}</span>
                     </div>
                     <div className="flex justify-between items-center text-sm border-b border-slate-100 dark:border-neutral-800 pb-3">
-                      <span className="text-slate-500 dark:text-neutral-400">Language</span>
-                      <span className="font-bold text-slate-900 dark:text-white">{COURSE.language}</span>
+                      <span className="text-slate-500 dark:text-neutral-400">Platform</span>
+                      <span className="font-bold text-slate-900 dark:text-white">{COURSE.platform}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm border-b border-slate-100 dark:border-neutral-800 pb-3">
+                      <span className="text-slate-500 dark:text-neutral-400">Starts</span>
+                      <span className="font-bold text-slate-900 dark:text-white">{COURSE.startDate}</span>
                     </div>
                     <div className="flex justify-between items-center text-sm">
-                      <span className="text-slate-500 dark:text-neutral-400">Captions</span>
-                      <span className="font-bold text-slate-900 dark:text-white">Yes, English</span>
+                      <span className="text-slate-500 dark:text-neutral-400">Language</span>
+                      <span className="font-bold text-slate-900 dark:text-white">{COURSE.language}</span>
                     </div>
                   </div>
                   
