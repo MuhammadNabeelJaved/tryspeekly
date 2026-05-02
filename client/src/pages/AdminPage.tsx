@@ -59,14 +59,14 @@ const NAV_MANAGEMENT: NavItem[] = [
 // ─── LOGIN SCREEN ─────────────────────────────────────────────────────────────
 
 function LoginScreen({ onLogin }: { onLogin: () => void }) {
-  const { register, handleSubmit, formState: { errors } } = useForm({
+  const { register, handleSubmit, formState: { errors } } = useForm<{ password: string }>({
     defaultValues: { password: '' }
   })
   const [show, setShow] = useState(false)
   const [error, setError] = useState(false)
   const [shaking, setShaking] = useState(false)
 
-  function onSubmit(data: any) {
+  function onSubmit(data: { password: string }) {
     if (data.password === ADMIN_PASSWORD) {
       onLogin()
     } else {
