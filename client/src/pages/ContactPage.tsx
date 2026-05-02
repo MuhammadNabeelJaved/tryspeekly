@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useForm } from 'react-hook-form'
 import { motion, type Variants } from 'framer-motion'
 import { Envelope, Phone, MapPin, PaperPlaneRight, LinkedinLogo, TwitterLogo, FacebookLogo, InstagramLogo } from '@phosphor-icons/react'
 
@@ -34,17 +35,18 @@ const SOCIAL = [
 ]
 
 export default function ContactPage() {
-  const [formState, setFormState] = useState({ name: '', email: '', subject: '', message: '' })
+  const { register, handleSubmit, reset, formState: { errors } } = useForm({
+    defaultValues: { name: '', email: '', subject: '', message: '' }
+  })
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+  const onSubmit = () => {
     setIsSubmitting(true)
     // Simulate API call
     setTimeout(() => {
       setIsSubmitting(false)
       alert('Message sent successfully!')
-      setFormState({ name: '', email: '', subject: '', message: '' })
+      reset()
     }, 1500)
   }
 
@@ -145,31 +147,32 @@ export default function ContactPage() {
           <motion.div variants={itemVariants} className="bg-white dark:bg-neutral-900 shadow-2xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-neutral-800 rounded-3xl p-8 lg:p-10">
             <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">Send us a message</h3>
             
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
               <div className="grid sm:grid-cols-2 gap-5">
                 <div className="space-y-1.5">
                   <label htmlFor="name" className="text-sm font-medium text-slate-700 dark:text-neutral-300">Your Name</label>
                   <input
                     type="text"
                     id="name"
-                    required
-                    value={formState.name}
-                    onChange={(e) => setFormState({ ...formState, name: e.target.value })}
+                    {...register('name', { required: 'Name is required' })}
                     className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800/50 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-600/50 focus:border-violet-600 transition-all"
                     placeholder="John Doe"
                   />
+                  {errors.name && <p className="text-xs text-red-500">{errors.name.message as string}</p>}
                 </div>
                 <div className="space-y-1.5">
                   <label htmlFor="email" className="text-sm font-medium text-slate-700 dark:text-neutral-300">Email Address</label>
                   <input
                     type="email"
                     id="email"
-                    required
-                    value={formState.email}
-                    onChange={(e) => setFormState({ ...formState, email: e.target.value })}
+                    {...register('email', { 
+                      required: 'Email is required',
+                      pattern: { value: /^\S+@\S+$/i, message: 'Invalid email address' }
+                    })}
                     className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800/50 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-600/50 focus:border-violet-600 transition-all"
                     placeholder="john@example.com"
                   />
+                  {errors.email && <p className="text-xs text-red-500">{errors.email.message as string}</p>}
                 </div>
               </div>
 
@@ -178,25 +181,23 @@ export default function ContactPage() {
                 <input
                   type="text"
                   id="subject"
-                  required
-                  value={formState.subject}
-                  onChange={(e) => setFormState({ ...formState, subject: e.target.value })}
+                  {...register('subject', { required: 'Subject is required' })}
                   className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800/50 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-600/50 focus:border-violet-600 transition-all"
                   placeholder="How can we help you?"
                 />
+                {errors.subject && <p className="text-xs text-red-500">{errors.subject.message as string}</p>}
               </div>
 
               <div className="space-y-1.5">
                 <label htmlFor="message" className="text-sm font-medium text-slate-700 dark:text-neutral-300">Message</label>
                 <textarea
                   id="message"
-                  required
                   rows={5}
-                  value={formState.message}
-                  onChange={(e) => setFormState({ ...formState, message: e.target.value })}
+                  {...register('message', { required: 'Message is required' })}
                   className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800/50 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-600/50 focus:border-violet-600 transition-all resize-none"
                   placeholder="Tell us more about your inquiry..."
                 ></textarea>
+                {errors.message && <p className="text-xs text-red-500">{errors.message.message as string}</p>}
               </div>
 
               <button

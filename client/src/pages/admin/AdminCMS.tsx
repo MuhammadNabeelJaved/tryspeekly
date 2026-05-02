@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useForm } from 'react-hook-form'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   FloppyDisk, ArrowCounterClockwise, Plus, Trash, CheckCircle,
@@ -23,30 +24,44 @@ function isRepeaterField(f: CMSField): f is CMSRepeaterField {
 // ─── FIELD RENDERERS ─────────────────────────────────────────────────────────
 
 function TextFieldEditor({ field, onChange }: { field: CMSTextField; onChange: (value: string) => void }) {
+  const { register, reset } = useForm({ defaultValues: { value: field.value } })
+  
+  useEffect(() => {
+    reset({ value: field.value })
+  }, [field.value, reset])
+
   const base = 'w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-neutral-600 outline-none focus:border-violet-500 dark:focus:border-violet-500 transition-colors'
+  
   if (field.type === 'textarea') {
-    return <textarea value={field.value} onChange={e => onChange(e.target.value)} rows={3} className={`${base} resize-none leading-relaxed`} />
+    return <textarea {...register('value', { onChange: e => onChange(e.target.value) })} rows={3} className={`${base} resize-none leading-relaxed`} />
   }
   if (field.type === 'color') {
     return (
       <div className="flex items-center gap-3">
-        <input type="color" value={field.value} onChange={e => onChange(e.target.value)} className="w-10 h-10 rounded-lg border border-slate-200 dark:border-neutral-700 cursor-pointer bg-transparent" />
-        <input type="text" value={field.value} onChange={e => onChange(e.target.value)} className={`${base} flex-1`} />
+        <input type="color" {...register('value', { onChange: e => onChange(e.target.value) })} className="w-10 h-10 rounded-lg border border-slate-200 dark:border-neutral-700 cursor-pointer bg-transparent" />
+        <input type="text" {...register('value', { onChange: e => onChange(e.target.value) })} className={`${base} flex-1`} />
       </div>
     )
   }
-  return <input type={field.type === 'number' ? 'number' : field.type === 'url' ? 'url' : 'text'} value={field.value} onChange={e => onChange(e.target.value)} className={base} />
+  return <input type={field.type === 'number' ? 'number' : field.type === 'url' ? 'url' : 'text'} {...register('value', { onChange: e => onChange(e.target.value) })} className={base} />
 }
 
 function ListFieldEditor({ field, onChange }: { field: CMSListField; onChange: (items: string[]) => void }) {
+  const { register, reset } = useForm({ defaultValues: { items: field.items } })
+
+  useEffect(() => {
+    reset({ items: field.items })
+  }, [field.items, reset])
+
   return (
     <div className="space-y-2">
-      {field.items.map((item, idx) => (
+      {field.items.map((_, idx) => (
         <div key={idx} className="flex items-center gap-2">
           <span className="text-xs font-bold text-slate-300 dark:text-neutral-700 w-5 flex-shrink-0">{idx + 1}.</span>
           <input
-            value={item}
-            onChange={e => { const n = [...field.items]; n[idx] = e.target.value; onChange(n) }}
+            {...register(`items.${idx}`, { 
+              onChange: e => { const n = [...field.items]; n[idx] = e.target.value; onChange(n) }
+            })}
             className="flex-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors"
           />
           <button
@@ -71,6 +86,11 @@ function ListFieldEditor({ field, onChange }: { field: CMSListField; onChange: (
 
 function RepeaterFieldEditor({ field, onChange }: { field: CMSRepeaterField; onChange: (rows: Record<string, string>[]) => void }) {
   const [expandedRow, setExpandedRow] = useState<number | null>(0)
+  const { register, reset } = useForm({ defaultValues: { rows: field.rows } })
+
+  useEffect(() => {
+    reset({ rows: field.rows })
+  }, [field.rows, reset])
 
   function updateRow(idx: number, key: string, value: string) {
     const updated = field.rows.map((row, i) => i === idx ? { ...row, [key]: value } : row)
@@ -135,10 +155,10 @@ function RepeaterFieldEditor({ field, onChange }: { field: CMSRepeaterField; onC
                       <div key={schema.key}>
                         <label className="text-[10px] font-bold text-slate-500 dark:text-neutral-400 uppercase tracking-wide block mb-1">{schema.label}</label>
                         {schema.type === 'textarea'
-                          ? <textarea value={row[schema.key] ?? ''} onChange={e => updateRow(idx, schema.key, e.target.value)} rows={2}
+                          ? <textarea {...register(`rows.${idx}.${schema.key}`, { onChange: e => updateRow(idx, schema.key, e.target.value) })} rows={2}
                               className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-sm text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors resize-none"
                             />
-                          : <input type={schema.type === 'number' ? 'number' : 'text'} value={row[schema.key] ?? ''} onChange={e => updateRow(idx, schema.key, e.target.value)}
+                          : <input type={schema.type === 'number' ? 'number' : 'text'} {...register(`rows.${idx}.${schema.key}`, { onChange: e => updateRow(idx, schema.key, e.target.value) })}
                               className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-sm text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors"
                             />
                         }
@@ -222,7 +242,7 @@ export default function AdminCMS({ store }: { store: AdminStore }) {
           return {
             ...section,
             fields: section.fields.map(field =>
-              field.key === fieldKey ? { ...field, ...update } : field
+              field.key === fieldKey ? { ...field, ...update } as CMSField : field
             ),
           }
         }),

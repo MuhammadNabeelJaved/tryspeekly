@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useForm } from 'react-hook-form'
 import { motion } from 'framer-motion'
 import {
   FloppyDisk, CheckCircle, Globe, Phone, Share, MagnifyingGlass,
@@ -18,17 +19,17 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
   )
 }
 
-function Input({ value, onChange, type = 'text', placeholder }: { value: string; onChange: (v: string) => void; type?: string; placeholder?: string }) {
+function Input({ register, name, type = 'text', placeholder }: { register: any; name: string; type?: string; placeholder?: string }) {
   return (
-    <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
+    <input type={type} {...register(name)} placeholder={placeholder}
       className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-neutral-600 outline-none focus:border-violet-500 dark:focus:border-violet-500 transition-colors"
     />
   )
 }
 
-function Textarea({ value, onChange, placeholder, rows = 2 }: { value: string; onChange: (v: string) => void; placeholder?: string; rows?: number }) {
+function Textarea({ register, name, placeholder, rows = 2 }: { register: any; name: string; placeholder?: string; rows?: number }) {
   return (
-    <textarea value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} rows={rows}
+    <textarea {...register(name)} placeholder={placeholder} rows={rows}
       className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-neutral-600 outline-none focus:border-violet-500 dark:focus:border-violet-500 transition-colors resize-none"
     />
   )
@@ -51,9 +52,13 @@ function SectionCard({ title, icon, children }: { title: string; icon: React.Rea
 }
 
 export default function AdminSettings({ store }: { store: AdminStore }) {
-  const [settings, setSettings] = useState<AdminSettings>(() => {
+  const defaultSettings = (() => {
     try { return JSON.parse(localStorage.getItem('admin_settings') || 'null') ?? INITIAL_SETTINGS }
     catch { return INITIAL_SETTINGS }
+  })();
+
+  const { register, handleSubmit, watch, reset } = useForm<AdminSettings>({
+    defaultValues: defaultSettings
   })
 
   const [saved, setSaved] = useState(false)
@@ -64,15 +69,11 @@ export default function AdminSettings({ store }: { store: AdminStore }) {
   const [passwordError, setPasswordError] = useState('')
   const [showResetConfirm, setShowResetConfirm] = useState(false)
 
-  function update<K extends keyof AdminSettings>(section: K, key: keyof AdminSettings[K], value: string) {
-    setSettings(prev => ({
-      ...prev,
-      [section]: { ...prev[section], [key]: value },
-    }))
-  }
+  const metaTitle = watch('seo.metaTitle') || ''
+  const metaDescription = watch('seo.metaDescription') || ''
 
-  function handleSave() {
-    localStorage.setItem('admin_settings', JSON.stringify(settings))
+  function onSaveAll(data: AdminSettings) {
+    localStorage.setItem('admin_settings', JSON.stringify(data))
     setSaved(true)
     setTimeout(() => setSaved(false), 2500)
   }
@@ -80,8 +81,10 @@ export default function AdminSettings({ store }: { store: AdminStore }) {
   function handleChangePassword() {
     if (newPassword.length < 6) { setPasswordError('Password must be at least 6 characters.'); return }
     if (newPassword !== confirmPassword) { setPasswordError('Passwords do not match.'); return }
-    setSettings(prev => ({ ...prev, admin: { ...prev.admin, password: newPassword } }))
-    localStorage.setItem('admin_settings', JSON.stringify({ ...settings, admin: { ...settings.admin, password: newPassword } }))
+    const currentData = watch()
+    const updatedData = { ...currentData, admin: { ...currentData.admin, password: newPassword } }
+    localStorage.setItem('admin_settings', JSON.stringify(updatedData))
+    reset(updatedData)
     setNewPassword('')
     setConfirmPassword('')
     setPasswordError('')
@@ -90,8 +93,8 @@ export default function AdminSettings({ store }: { store: AdminStore }) {
   }
 
   function handleResetAll() {
-    setSettings(INITIAL_SETTINGS)
     localStorage.setItem('admin_settings', JSON.stringify(INITIAL_SETTINGS))
+    reset(INITIAL_SETTINGS)
     store.setStudents([])
     store.setCourses([])
     store.setInstructors([])
@@ -107,7 +110,7 @@ export default function AdminSettings({ store }: { store: AdminStore }) {
   const inputClass = 'w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-neutral-600 outline-none focus:border-violet-500 dark:focus:border-violet-500 transition-colors'
 
   return (
-    <div className="p-4 sm:p-6 max-w-4xl space-y-6">
+    <form onSubmit={handleSubmit(onSaveAll)} className="p-4 sm:p-6 max-w-4xl space-y-6">
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-4">
@@ -115,7 +118,7 @@ export default function AdminSettings({ store }: { store: AdminStore }) {
           <h2 className="text-lg font-black text-slate-900 dark:text-white">Settings</h2>
           <p className="text-xs text-slate-400 dark:text-neutral-500 mt-0.5">Manage site configuration, contact info, social links, and admin account</p>
         </div>
-        <button onClick={handleSave}
+        <button type="submit"
           className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all self-start ${
             saved ? 'bg-emerald-500 text-white' : 'bg-violet-600 hover:bg-violet-700 text-white shadow-[0_4px_14px_rgba(124,58,237,0.35)]'
           }`}
@@ -127,38 +130,38 @@ export default function AdminSettings({ store }: { store: AdminStore }) {
       {/* ── SITE IDENTITY ── */}
       <SectionCard title="Site Identity" icon={<Globe size={16} />}>
         <div className="col-span-full">
-          <Field label="Site Name"><Input value={settings.site.name} onChange={v => update('site', 'name', v)} placeholder="EnglishPro Academy" /></Field>
+          <Field label="Site Name"><Input register={register} name="site.name" placeholder="EnglishPro Academy" /></Field>
         </div>
-        <Field label="Logo Text" hint="Text shown in the navbar logo"><Input value={settings.site.logoText} onChange={v => update('site', 'logoText', v)} placeholder="EnglishPro" /></Field>
+        <Field label="Logo Text" hint="Text shown in the navbar logo"><Input register={register} name="site.logoText" placeholder="EnglishPro" /></Field>
         <div className="col-span-full">
-          <Field label="Site Tagline"><Input value={settings.site.tagline} onChange={v => update('site', 'tagline', v)} placeholder="Master English. Change Your Life." /></Field>
+          <Field label="Site Tagline"><Input register={register} name="site.tagline" placeholder="Master English. Change Your Life." /></Field>
         </div>
         <div className="col-span-full">
-          <Field label="Footer Copyright Text"><Input value={settings.site.footerCopyright} onChange={v => update('site', 'footerCopyright', v)} placeholder="© 2026 EnglishPro Academy." /></Field>
+          <Field label="Footer Copyright Text"><Input register={register} name="site.footerCopyright" placeholder="© 2026 EnglishPro Academy." /></Field>
         </div>
       </SectionCard>
 
       {/* ── CONTACT INFO ── */}
       <SectionCard title="Contact Information" icon={<Phone size={16} />}>
-        <Field label="Phone Number"><Input value={settings.contact.phone} onChange={v => update('contact', 'phone', v)} placeholder="+92 300 0000000" /></Field>
-        <Field label="Email Address"><Input value={settings.contact.email} onChange={v => update('contact', 'email', v)} type="email" placeholder="hello@englishpro.com" /></Field>
-        <Field label="WhatsApp Number"><Input value={settings.contact.whatsapp} onChange={v => update('contact', 'whatsapp', v)} placeholder="+92 300 0000000" /></Field>
-        <Field label="Working Hours"><Input value={settings.contact.workingHours} onChange={v => update('contact', 'workingHours', v)} placeholder="Mon–Sat · 9 AM – 6 PM PKT" /></Field>
+        <Field label="Phone Number"><Input register={register} name="contact.phone" placeholder="+92 300 0000000" /></Field>
+        <Field label="Email Address"><Input register={register} name="contact.email" type="email" placeholder="hello@englishpro.com" /></Field>
+        <Field label="WhatsApp Number"><Input register={register} name="contact.whatsapp" placeholder="+92 300 0000000" /></Field>
+        <Field label="Working Hours"><Input register={register} name="contact.workingHours" placeholder="Mon–Sat · 9 AM – 6 PM PKT" /></Field>
         <div className="col-span-full">
           <Field label="Office Address">
-            <Textarea value={settings.contact.address} onChange={v => update('contact', 'address', v)} placeholder="Karachi, Pakistan" />
+            <Textarea register={register} name="contact.address" placeholder="Karachi, Pakistan" />
           </Field>
         </div>
       </SectionCard>
 
       {/* ── SOCIAL MEDIA ── */}
       <SectionCard title="Social Media Links" icon={<Share size={16} />}>
-        <Field label="Facebook URL"><Input value={settings.social.facebook} onChange={v => update('social', 'facebook', v)} type="url" placeholder="https://facebook.com/..." /></Field>
-        <Field label="Instagram URL"><Input value={settings.social.instagram} onChange={v => update('social', 'instagram', v)} type="url" placeholder="https://instagram.com/..." /></Field>
-        <Field label="Twitter / X URL"><Input value={settings.social.twitter} onChange={v => update('social', 'twitter', v)} type="url" placeholder="https://twitter.com/..." /></Field>
-        <Field label="LinkedIn URL"><Input value={settings.social.linkedin} onChange={v => update('social', 'linkedin', v)} type="url" placeholder="https://linkedin.com/..." /></Field>
+        <Field label="Facebook URL"><Input register={register} name="social.facebook" type="url" placeholder="https://facebook.com/..." /></Field>
+        <Field label="Instagram URL"><Input register={register} name="social.instagram" type="url" placeholder="https://instagram.com/..." /></Field>
+        <Field label="Twitter / X URL"><Input register={register} name="social.twitter" type="url" placeholder="https://twitter.com/..." /></Field>
+        <Field label="LinkedIn URL"><Input register={register} name="social.linkedin" type="url" placeholder="https://linkedin.com/..." /></Field>
         <div className="col-span-full">
-          <Field label="YouTube URL"><Input value={settings.social.youtube} onChange={v => update('social', 'youtube', v)} type="url" placeholder="https://youtube.com/..." /></Field>
+          <Field label="YouTube URL"><Input register={register} name="social.youtube" type="url" placeholder="https://youtube.com/..." /></Field>
         </div>
       </SectionCard>
 
@@ -166,19 +169,19 @@ export default function AdminSettings({ store }: { store: AdminStore }) {
       <SectionCard title="SEO & Meta Tags" icon={<MagnifyingGlass size={16} />}>
         <div className="col-span-full">
           <Field label="Meta Title" hint="Appears in browser tab and search results (50–60 chars recommended)">
-            <Input value={settings.seo.metaTitle} onChange={v => update('seo', 'metaTitle', v)} placeholder="EnglishPro Academy — Professional English Courses Online" />
+            <Input register={register} name="seo.metaTitle" placeholder="EnglishPro Academy — Professional English Courses Online" />
           </Field>
-          <p className={`text-[10px] mt-1 ${settings.seo.metaTitle.length > 60 ? 'text-red-400' : 'text-slate-400 dark:text-neutral-600'}`}>{settings.seo.metaTitle.length}/60 characters</p>
+          <p className={`text-[10px] mt-1 ${metaTitle.length > 60 ? 'text-red-400' : 'text-slate-400 dark:text-neutral-600'}`}>{metaTitle.length}/60 characters</p>
         </div>
         <div className="col-span-full">
           <Field label="Meta Description" hint="Search engine snippet (150–160 chars recommended)">
-            <Textarea value={settings.seo.metaDescription} onChange={v => update('seo', 'metaDescription', v)} placeholder="Join 2,000+ learners..." rows={3} />
+            <Textarea register={register} name="seo.metaDescription" placeholder="Join 2,000+ learners..." rows={3} />
           </Field>
-          <p className={`text-[10px] mt-1 ${settings.seo.metaDescription.length > 160 ? 'text-red-400' : 'text-slate-400 dark:text-neutral-600'}`}>{settings.seo.metaDescription.length}/160 characters</p>
+          <p className={`text-[10px] mt-1 ${metaDescription.length > 160 ? 'text-red-400' : 'text-slate-400 dark:text-neutral-600'}`}>{metaDescription.length}/160 characters</p>
         </div>
         <div className="col-span-full">
           <Field label="Keywords" hint="Comma-separated keywords for SEO">
-            <Input value={settings.seo.keywords} onChange={v => update('seo', 'keywords', v)} placeholder="english courses, ielts, spoken english, pakistan" />
+            <Input register={register} name="seo.keywords" placeholder="english courses, ielts, spoken english, pakistan" />
           </Field>
         </div>
       </SectionCard>
@@ -193,8 +196,8 @@ export default function AdminSettings({ store }: { store: AdminStore }) {
         </div>
         <div className="p-5 space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label="Admin Name"><Input value={settings.admin.name} onChange={v => update('admin', 'name', v)} placeholder="Admin" /></Field>
-            <Field label="Admin Email"><Input value={settings.admin.email} onChange={v => update('admin', 'email', v)} type="email" placeholder="admin@englishpro.com" /></Field>
+            <Field label="Admin Name"><Input register={register} name="admin.name" placeholder="Admin" /></Field>
+            <Field label="Admin Email"><Input register={register} name="admin.email" type="email" placeholder="admin@englishpro.com" /></Field>
           </div>
 
           <div className="border-t border-slate-100 dark:border-neutral-800 pt-4">
@@ -202,7 +205,7 @@ export default function AdminSettings({ store }: { store: AdminStore }) {
             <div className="space-y-3">
               <Field label="Current Password">
                 <div className="relative">
-                  <input type={showPassword ? 'text' : 'password'} value={settings.admin.password} readOnly
+                  <input type={showPassword ? 'text' : 'password'} {...register('admin.password')} readOnly
                     className={`${inputClass} pr-10 opacity-60 cursor-default`}
                   />
                   <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-neutral-200 transition-colors">
@@ -228,7 +231,7 @@ export default function AdminSettings({ store }: { store: AdminStore }) {
                 </Field>
               </div>
               {passwordError && <p className="text-red-500 text-xs font-medium">{passwordError}</p>}
-              <button onClick={handleChangePassword}
+              <button type="button" onClick={handleChangePassword}
                 className="flex items-center gap-2 px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold transition-colors shadow-[0_4px_12px_rgba(124,58,237,0.3)]"
               >
                 <ShieldCheck size={13} />Update Password
@@ -240,7 +243,7 @@ export default function AdminSettings({ store }: { store: AdminStore }) {
 
       {/* ── SAVE ALL ── */}
       <div className="flex justify-center pb-2">
-        <button onClick={handleSave}
+        <button type="submit"
           className={`flex items-center gap-2 px-8 py-3 rounded-2xl text-sm font-bold transition-all ${
             saved
               ? 'bg-emerald-500 text-white'
@@ -265,7 +268,7 @@ export default function AdminSettings({ store }: { store: AdminStore }) {
               <p className="text-sm font-bold text-red-700 dark:text-red-400">Reset All Data to Defaults</p>
               <p className="text-xs text-red-500 dark:text-red-600 mt-0.5">This will delete all students, courses, instructors, and CMS edits and restore factory defaults. This cannot be undone.</p>
             </div>
-            <button onClick={() => setShowResetConfirm(true)}
+            <button type="button" onClick={() => setShowResetConfirm(true)}
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-xs font-bold transition-colors flex-shrink-0 shadow-[0_4px_12px_rgba(239,68,68,0.3)]"
             >
               <ArrowCounterClockwise size={13} />Reset Everything
@@ -284,12 +287,12 @@ export default function AdminSettings({ store }: { store: AdminStore }) {
             <h3 className="font-black text-slate-900 dark:text-white mb-1 text-lg">Reset All Data?</h3>
             <p className="text-sm text-slate-500 dark:text-neutral-400 mb-6 leading-relaxed">This will permanently delete all students, courses, instructors, and CMS edits. This action <strong>cannot be undone</strong>.</p>
             <div className="flex gap-3">
-              <button onClick={() => setShowResetConfirm(false)} className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-neutral-700 text-sm font-semibold text-slate-600 dark:text-neutral-400 hover:bg-slate-50 dark:hover:bg-neutral-800 transition-colors">Cancel</button>
-              <button onClick={handleResetAll} className="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-bold transition-colors">Yes, Reset All</button>
+              <button type="button" onClick={() => setShowResetConfirm(false)} className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-neutral-700 text-sm font-semibold text-slate-600 dark:text-neutral-400 hover:bg-slate-50 dark:hover:bg-neutral-800 transition-colors">Cancel</button>
+              <button type="button" onClick={handleResetAll} className="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-bold transition-colors">Yes, Reset All</button>
             </div>
           </motion.div>
         </motion.div>
       )}
-    </div>
+    </form>
   )
 }

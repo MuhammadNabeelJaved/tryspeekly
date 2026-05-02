@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useForm } from 'react-hook-form'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, PencilSimple, Trash, X, Check, Users, Clock, CurrencyCircleDollar } from '@phosphor-icons/react'
 import type { AdminStore } from '../AdminPage'
@@ -34,9 +35,9 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   )
 }
 
-function Input({ value, onChange, type = 'text', placeholder }: { value: string | number; onChange: (v: string) => void; type?: string; placeholder?: string }) {
+function Input({ register, name, type = 'text', placeholder, valueAsNumber }: { register: any; name: string; type?: string; placeholder?: string; valueAsNumber?: boolean }) {
   return (
-    <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
+    <input type={type} {...register(name, { valueAsNumber })} placeholder={placeholder}
       className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-neutral-600 outline-none focus:border-violet-500 transition-colors"
     />
   )
@@ -44,12 +45,14 @@ function Input({ value, onChange, type = 'text', placeholder }: { value: string 
 
 export default function AdminCourses({ store }: { store: AdminStore }) {
   const { courses, setCourses, instructors } = store
-  const [modal, setModal] = useState<{ type: 'add' | 'edit'; course: Course } | null>(null)
+  const [modalType, setModalType] = useState<'add' | 'edit' | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
-  const [form, setForm] = useState<Course>(EMPTY)
-  const [featuresInput, setFeaturesInput] = useState('')
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState('All')
+
+  const { register, handleSubmit, reset, setValue } = useForm<Course & { featuresInput: string }>({
+    defaultValues: { ...EMPTY, featuresInput: '' }
+  })
 
   const filtered = courses.filter(c => {
     const q = search.toLowerCase()
@@ -59,28 +62,26 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
   })
 
   function openAdd() {
-    setForm({ ...EMPTY, id: `c${Date.now()}` })
-    setFeaturesInput('')
-    setModal({ type: 'add', course: EMPTY })
+    reset({ ...EMPTY, id: `c${Date.now()}`, featuresInput: '' })
+    setModalType('add')
   }
 
   function openEdit(course: Course) {
-    setForm({ ...course })
-    setFeaturesInput(course.features.join(', '))
-    setModal({ type: 'edit', course })
+    reset({ ...course, featuresInput: course.features.join(', ') })
+    setModalType('edit')
   }
 
-  function handleSave() {
+  function onSave(data: Course & { featuresInput: string }) {
     const course: Course = {
-      ...form,
-      features: featuresInput.split(',').map(f => f.trim()).filter(Boolean),
+      ...data,
+      features: data.featuresInput.split(',').map(f => f.trim()).filter(Boolean),
     }
-    if (modal?.type === 'add') {
+    if (modalType === 'add') {
       setCourses([...courses, course])
     } else {
       setCourses(courses.map(c => c.id === course.id ? course : c))
     }
-    setModal(null)
+    setModalType(null)
   }
 
   function handleDelete(id: string) {
@@ -88,16 +89,10 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
     setDeleteId(null)
   }
 
-  function f(key: keyof Course) {
-    return (v: string) => setForm(prev => ({
-      ...prev,
-      [key]: key === 'price' || key === 'totalStudents' || key === 'maxStudents' ? Number(v) : v,
-    }))
-  }
-
   function pickInstructor(id: string) {
     const inst = instructors.find(i => i.id === id)
-    setForm(prev => ({ ...prev, instructorId: id, instructorName: inst?.name ?? '' }))
+    setValue('instructorId', id)
+    setValue('instructorName', inst?.name ?? '')
   }
 
   const totalEnrolled = courses.reduce((a, c) => a + c.totalStudents, 0)
@@ -220,54 +215,54 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
 
       {/* ADD / EDIT MODAL */}
       <AnimatePresence>
-        {modal && (
+        {modalType && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-white dark:bg-neutral-900 rounded-[24px] w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-slate-100 dark:border-neutral-800 shadow-2xl">
+            <motion.form onSubmit={handleSubmit(onSave)} initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-white dark:bg-neutral-900 rounded-[24px] w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-slate-100 dark:border-neutral-800 shadow-2xl">
               <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-neutral-800 sticky top-0 bg-white dark:bg-neutral-900 z-10">
-                <h3 className="text-base font-black text-slate-900 dark:text-white">{modal.type === 'add' ? 'New Course' : 'Edit Course'}</h3>
-                <button onClick={() => setModal(null)} className="w-8 h-8 rounded-full bg-slate-100 dark:bg-neutral-800 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors"><X size={15} /></button>
+                <h3 className="text-base font-black text-slate-900 dark:text-white">{modalType === 'add' ? 'New Course' : 'Edit Course'}</h3>
+                <button type="button" onClick={() => setModalType(null)} className="w-8 h-8 rounded-full bg-slate-100 dark:bg-neutral-800 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors"><X size={15} /></button>
               </div>
               <div className="p-6 grid grid-cols-2 gap-4">
-                <div className="col-span-2"><Field label="Course Title"><Input value={form.title} onChange={f('title')} placeholder="Business English" /></Field></div>
+                <div className="col-span-2"><Field label="Course Title"><Input register={register} name="title" placeholder="Business English" /></Field></div>
                 <Field label="Level">
-                  <select value={form.level} onChange={e => setForm(p => ({ ...p, level: e.target.value }))} className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors">
+                  <select {...register('level')} className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors">
                     {['Beginner', 'Intermediate', 'Advanced', 'Business', 'Kids'].map(l => <option key={l}>{l}</option>)}
                   </select>
                 </Field>
-                <Field label="Duration"><Input value={form.duration} onChange={f('duration')} placeholder="3 months" /></Field>
-                <Field label="Price (PKR)"><Input value={form.price} onChange={f('price')} type="number" placeholder="8000" /></Field>
-                <Field label="Max Students"><Input value={form.maxStudents} onChange={f('maxStudents')} type="number" placeholder="15" /></Field>
+                <Field label="Duration"><Input register={register} name="duration" placeholder="3 months" /></Field>
+                <Field label="Price (PKR)"><Input register={register} name="price" type="number" placeholder="8000" valueAsNumber /></Field>
+                <Field label="Max Students"><Input register={register} name="maxStudents" type="number" placeholder="15" valueAsNumber /></Field>
                 <Field label="Instructor">
-                  <select value={form.instructorId} onChange={e => pickInstructor(e.target.value)} className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors">
+                  <select {...register('instructorId', { onChange: e => pickInstructor(e.target.value) })} className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors">
                     <option value="">Select instructor…</option>
                     {instructors.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
                   </select>
                 </Field>
                 <Field label="Status">
-                  <select value={form.status} onChange={e => setForm(p => ({ ...p, status: e.target.value as Course['status'] }))} className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors">
+                  <select {...register('status')} className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors">
                     {['active', 'inactive', 'draft'].map(s => <option key={s}>{s}</option>)}
                   </select>
                 </Field>
-                <Field label="Start Date"><Input value={form.startDate} onChange={f('startDate')} type="date" /></Field>
-                <Field label="Schedule"><Input value={form.schedule} onChange={f('schedule')} placeholder="Mon/Wed/Fri · 7–8 PM PKT" /></Field>
+                <Field label="Start Date"><Input register={register} name="startDate" type="date" /></Field>
+                <Field label="Schedule"><Input register={register} name="schedule" placeholder="Mon/Wed/Fri · 7–8 PM PKT" /></Field>
                 <div className="col-span-2">
                   <Field label="Description">
-                    <textarea value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} rows={2} placeholder="Short description of the course…" className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-neutral-600 outline-none focus:border-violet-500 transition-colors resize-none" />
+                    <textarea {...register('description')} rows={2} placeholder="Short description of the course…" className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-neutral-600 outline-none focus:border-violet-500 transition-colors resize-none" />
                   </Field>
                 </div>
                 <div className="col-span-2">
                   <Field label="Features (comma-separated)">
-                    <input value={featuresInput} onChange={e => setFeaturesInput(e.target.value)} placeholder="Grammar, Speaking, Writing, Vocabulary" className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-neutral-600 outline-none focus:border-violet-500 transition-colors" />
+                    <input {...register('featuresInput')} placeholder="Grammar, Speaking, Writing, Vocabulary" className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-neutral-600 outline-none focus:border-violet-500 transition-colors" />
                   </Field>
                 </div>
               </div>
               <div className="flex gap-3 px-6 pb-6">
-                <button onClick={() => setModal(null)} className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-neutral-700 text-sm font-semibold text-slate-600 dark:text-neutral-400 hover:bg-slate-50 dark:hover:bg-neutral-800 transition-colors">Cancel</button>
-                <button onClick={handleSave} className="flex-1 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-bold flex items-center justify-center gap-2 shadow-[0_4px_12px_rgba(124,58,237,0.3)] transition-colors">
-                  <Check size={15} weight="bold" />{modal.type === 'add' ? 'Create Course' : 'Save Changes'}
+                <button type="button" onClick={() => setModalType(null)} className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-neutral-700 text-sm font-semibold text-slate-600 dark:text-neutral-400 hover:bg-slate-50 dark:hover:bg-neutral-800 transition-colors">Cancel</button>
+                <button type="submit" className="flex-1 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-bold flex items-center justify-center gap-2 shadow-[0_4px_12px_rgba(124,58,237,0.3)] transition-colors">
+                  <Check size={15} weight="bold" />{modalType === 'add' ? 'Create Course' : 'Save Changes'}
                 </button>
               </div>
-            </motion.div>
+            </motion.form>
           </motion.div>
         )}
       </AnimatePresence>

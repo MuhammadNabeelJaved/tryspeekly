@@ -16,6 +16,7 @@ import TermsOfServicePage from '@/pages/TermsOfServicePage'
 import CookiePolicyPage from '@/pages/CookiePolicyPage'
 import PaymentsPage from '@/pages/PaymentsPage'
 import FinancialAidPage from '@/pages/FinancialAidPage'
+
 import AdminPage from '@/pages/AdminPage'
 import './App.css'
 
@@ -53,6 +54,7 @@ function PublicLayout() {
           <Route path="/cookies" element={<CookiePolicyPage />} />
           <Route path="/payments" element={<PaymentsPage />} />
           <Route path="/financial-aid" element={<FinancialAidPage />} />
+
         </Routes>
       </main>
       <Footer />

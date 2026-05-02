@@ -1,11 +1,11 @@
 import { useState } from 'react'
+import { useForm } from 'react-hook-form'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Plus, Trash, PencilSimple, X, Check, Star, FloppyDisk,
   CheckCircle, ArrowCounterClockwise, CaretDown, CaretUp,
   Globe, Phone as PhoneIcon, ShieldCheck, CreditCard,
 } from '@phosphor-icons/react'
-import type { AdminStore } from '../AdminPage'
 import type { PaymentMethodAdmin, PaymentPolicyAdmin, PaymentFaqAdmin } from './adminData'
 import { INITIAL_PAYMENTS_SETUP } from './adminData'
 
@@ -94,21 +94,25 @@ function MethodModal({ method, onSave, onClose }: {
   onSave: (m: PaymentMethodAdmin) => void
   onClose: () => void
 }) {
-  const [form, setForm] = useState<PaymentMethodAdmin>({ ...method })
+  const { watch, setValue, handleSubmit } = useForm<PaymentMethodAdmin>({
+    defaultValues: method
+  })
   const [tab, setTab] = useState<'basic' | 'design' | 'features' | 'account'>('basic')
 
+  const form = watch()
+
   function f(key: keyof PaymentMethodAdmin) {
-    return (v: string) => setForm(p => ({ ...p, [key]: v }))
+    return (v: string) => setValue(key, v as any)
   }
 
   function updateFeature(idx: number, v: string) {
     const features = [...form.features]
     features[idx] = v
-    setForm(p => ({ ...p, features }))
+    setValue('features', features)
   }
 
-  function addFeature() { setForm(p => ({ ...p, features: [...p.features, ''] })) }
-  function removeFeature(idx: number) { setForm(p => ({ ...p, features: p.features.filter((_, i) => i !== idx) })) }
+  function addFeature() { setValue('features', [...form.features, '']) }
+  function removeFeature(idx: number) { setValue('features', form.features.filter((_, i) => i !== idx)) }
 
   const TABS = [
     { key: 'basic', label: 'Basic Info' },
@@ -152,7 +156,7 @@ function MethodModal({ method, onSave, onClose }: {
                 <Inp label="Method Name" value={form.name} onChange={f('name')} placeholder="Easypaisa" />
                 <div>
                   <label className="text-[11px] font-bold text-slate-600 dark:text-neutral-400 uppercase tracking-wide block mb-1">Tab</label>
-                  <select value={form.tab} onChange={e => setForm(p => ({ ...p, tab: e.target.value as 'local' | 'international' }))}
+                  <select value={form.tab} onChange={e => setValue('tab', e.target.value as 'local' | 'international')}
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors"
                   >
                     <option value="local">Local (Pakistani)</option>
@@ -167,7 +171,7 @@ function MethodModal({ method, onSave, onClose }: {
                 <Inp label="Button Text" value={form.buttonText} onChange={f('buttonText')} placeholder="Pay with Easypaisa" />
               </div>
               <div className="flex items-center gap-3 p-3 bg-violet-50 dark:bg-violet-950/30 rounded-xl border border-violet-100 dark:border-violet-900">
-                <input type="checkbox" id="recommended" checked={form.recommended} onChange={e => setForm(p => ({ ...p, recommended: e.target.checked }))}
+                <input type="checkbox" id="recommended" checked={form.recommended} onChange={e => setValue('recommended', e.target.checked)}
                   className="w-4 h-4 rounded accent-violet-600"
                 />
                 <label htmlFor="recommended" className="text-sm font-semibold text-violet-700 dark:text-violet-400 cursor-pointer flex items-center gap-2">
@@ -182,7 +186,7 @@ function MethodModal({ method, onSave, onClose }: {
             <div className="space-y-4">
               <div>
                 <label className="text-[11px] font-bold text-slate-600 dark:text-neutral-400 uppercase tracking-wide block mb-1">Logo</label>
-                <select value={form.logoKey} onChange={e => setForm(p => ({ ...p, logoKey: e.target.value }))}
+                <select value={form.logoKey} onChange={e => setValue('logoKey', e.target.value)}
                   className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors mb-3"
                 >
                   {LOGO_KEYS.map(l => <option key={l.key} value={l.key}>{l.label}</option>)}
@@ -199,16 +203,16 @@ function MethodModal({ method, onSave, onClose }: {
                   <label className="text-[11px] font-bold text-slate-600 dark:text-neutral-400 uppercase tracking-wide block mb-1">Fallback Background</label>
                   <p className="text-[10px] text-slate-400 mb-1.5">Shown if logo fails to load</p>
                   <div className="flex items-center gap-2">
-                    <input type="color" value={form.fallbackBg} onChange={e => setForm(p => ({ ...p, fallbackBg: e.target.value }))} className="w-10 h-10 rounded-lg border border-slate-200 dark:border-neutral-700 cursor-pointer" />
-                    <input type="text" value={form.fallbackBg} onChange={e => setForm(p => ({ ...p, fallbackBg: e.target.value }))} className="flex-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors" />
+                    <input type="color" value={form.fallbackBg} onChange={e => setValue('fallbackBg', e.target.value)} className="w-10 h-10 rounded-lg border border-slate-200 dark:border-neutral-700 cursor-pointer" />
+                    <input type="text" value={form.fallbackBg} onChange={e => setValue('fallbackBg', e.target.value)} className="flex-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors" />
                   </div>
                 </div>
                 <div>
                   <label className="text-[11px] font-bold text-slate-600 dark:text-neutral-400 uppercase tracking-wide block mb-1">Accent Color</label>
                   <p className="text-[10px] text-slate-400 mb-1.5">Used for hover effects & highlights</p>
                   <div className="flex items-center gap-2">
-                    <input type="color" value={form.accentColor} onChange={e => setForm(p => ({ ...p, accentColor: e.target.value }))} className="w-10 h-10 rounded-lg border border-slate-200 dark:border-neutral-700 cursor-pointer" />
-                    <input type="text" value={form.accentColor} onChange={e => setForm(p => ({ ...p, accentColor: e.target.value }))} className="flex-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors" />
+                    <input type="color" value={form.accentColor} onChange={e => setValue('accentColor', e.target.value)} className="w-10 h-10 rounded-lg border border-slate-200 dark:border-neutral-700 cursor-pointer" />
+                    <input type="text" value={form.accentColor} onChange={e => setValue('accentColor', e.target.value)} className="flex-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors" />
                   </div>
                 </div>
               </div>
@@ -268,7 +272,7 @@ function MethodModal({ method, onSave, onClose }: {
         {/* Footer */}
         <div className="flex gap-3 px-6 py-4 border-t border-slate-100 dark:border-neutral-800 flex-shrink-0">
           <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-neutral-700 text-sm font-semibold text-slate-600 dark:text-neutral-400 hover:bg-slate-50 dark:hover:bg-neutral-800 transition-colors">Cancel</button>
-          <button onClick={() => onSave(form)} className="flex-1 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-bold flex items-center justify-center gap-2 shadow-[0_4px_12px_rgba(124,58,237,0.3)] transition-colors">
+          <button onClick={handleSubmit(onSave)} className="flex-1 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-bold flex items-center justify-center gap-2 shadow-[0_4px_12px_rgba(124,58,237,0.3)] transition-colors">
             <Check size={15} weight="bold" />Save Method
           </button>
         </div>
@@ -279,7 +283,7 @@ function MethodModal({ method, onSave, onClose }: {
 
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 
-export default function AdminPaymentsSetup({ store }: { store: AdminStore }) {
+export default function AdminPaymentsSetup() {
   const [data, setData] = useState(() => {
     try { return JSON.parse(localStorage.getItem('admin_payments_setup') || 'null') ?? INITIAL_PAYMENTS_SETUP }
     catch { return INITIAL_PAYMENTS_SETUP }

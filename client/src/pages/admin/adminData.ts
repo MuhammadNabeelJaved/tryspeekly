@@ -18,6 +18,18 @@ export interface Student {
   status: 'active' | 'completed' | 'inactive'
   notes: string
   avatar: string
+  financialAid?: boolean
+}
+
+export interface FinancialAidApp {
+  id: string
+  name: string
+  email: string
+  phone: string
+  reason: string
+  status: 'pending' | 'under_review' | 'accepted' | 'rejected'
+  appliedAt: string
+  notes?: string
 }
 
 export interface Instructor {
@@ -864,4 +876,10 @@ export const INITIAL_COURSES: Course[] = [
   { id: 'c3', title: 'IELTS Preparation', level: 'Advanced', duration: '2 months', price: 10000, currency: 'PKR', instructorId: 'i1', instructorName: 'Dr. Sarah Johnson', totalStudents: 38, maxStudents: 10, status: 'active', description: 'Targeted IELTS coaching for 7+ band score with expert certified examiner.', startDate: '2026-05-15', schedule: 'Daily · 8–9 PM PKT', features: ['All 4 modules', 'Mock tests', 'Band score analysis', 'Personalized feedback'] },
   { id: 'c4', title: 'Kids English', level: 'Kids', duration: '3 months', price: 5000, currency: 'PKR', instructorId: 'i2', instructorName: 'Mr. James Williams', totalStudents: 28, maxStudents: 8, status: 'active', description: 'Fun, interactive English for children aged 6–12 years.', startDate: '2026-05-08', schedule: 'Sat/Sun · 10–11 AM PKT', features: ['Storytelling', 'Phonics', 'Games & activities', 'Reading & writing'] },
   { id: 'c5', title: 'Grammar Mastery', level: 'Beginner', duration: '6 weeks', price: 4500, currency: 'PKR', instructorId: 'i3', instructorName: 'Ms. Amna Raza', totalStudents: 0, maxStudents: 15, status: 'draft', description: 'Zero to hero grammar course — tenses, sentence structure, and more.', startDate: '2026-06-01', schedule: 'Mon/Wed · 5–6 PM PKT', features: ['All tenses', 'Sentence structure', 'Common mistakes', 'Practice exercises'] },
+]
+
+export const INITIAL_FINANCIAL_AID: FinancialAidApp[] = [
+  { id: 'fa1', name: 'Zohaib Ahmed', email: 'zohaib@example.com', phone: '+92 300 9998888', reason: 'I am a university student and currently unable to pay the full fee. I want to learn English to get a better job.', status: 'pending', appliedAt: '2026-05-01' },
+  { id: 'fa2', name: 'Mina Ali', email: 'mina@example.com', phone: '+92 333 1112222', reason: 'I lost my job recently and am looking to upgrade my skills to apply for remote roles.', status: 'under_review', appliedAt: '2026-04-28', notes: 'Scheduled a call for tomorrow' },
+  { id: 'fa3', name: 'Khalid Mehmood', email: 'khalid@example.com', phone: '+92 345 7776666', reason: 'My father is a daily wage worker. I need this course to apply for a scholarship abroad.', status: 'accepted', appliedAt: '2026-04-15', notes: 'Enrolled in Spoken English' },
 ]

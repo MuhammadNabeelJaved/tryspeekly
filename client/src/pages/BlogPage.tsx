@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useForm } from 'react-hook-form'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { 
@@ -107,6 +108,15 @@ const POSTS = [
 export default function BlogPage() {
   const [activeCategory, setActiveCategory] = useState('All')
   const [searchQuery, setSearchQuery] = useState('')
+  
+  const { register, handleSubmit, reset, formState: { errors } } = useForm({
+    defaultValues: { email: '' }
+  })
+
+  const onSubmit = (data: any) => {
+    alert("Subscribed " + data.email)
+    reset()
+  }
 
   // Scroll to top on mount
   useState(() => {
@@ -389,18 +399,24 @@ export default function BlogPage() {
                 Get the latest study tips, grammar guides, and course announcements delivered straight to your inbox every week.
               </p>
               
-              <form onSubmit={(e) => e.preventDefault()} className="flex flex-col sm:flex-row gap-3 max-w-lg mx-auto">
-                <input 
-                  type="email" 
-                  placeholder="Enter your email address" 
-                  className="flex-1 px-5 py-4 rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-600/50 transition-all font-medium"
-                  required
-                />
+              <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col sm:flex-row gap-3 max-w-lg mx-auto">
+                <div className="flex-1">
+                  <input 
+                    type="email" 
+                    {...register('email', { 
+                      required: 'Email is required',
+                      pattern: { value: /^\S+@\S+$/i, message: 'Invalid email address' }
+                    })}
+                    placeholder="Enter your email address" 
+                    className="w-full px-5 py-4 rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-600/50 transition-all font-medium"
+                  />
+                  {errors.email && <p className="text-xs text-red-500 mt-1 text-left">{errors.email.message as string}</p>}
+                </div>
                 <motion.button 
                   type="submit"
                   whileHover={{ scale: 1.03, boxShadow: '0 16px 40px rgba(124,58,237,0.45)' }}
                   whileTap={{ scale: 0.97 }}
-                  className="inline-flex items-center justify-center bg-gradient-to-r from-violet-600 to-purple-600 text-white font-bold px-8 py-4 rounded-2xl shadow-[0_8px_28px_rgba(124,58,237,0.35)] transition-all whitespace-nowrap"
+                  className="inline-flex items-center justify-center bg-gradient-to-r from-violet-600 to-purple-600 text-white font-bold px-8 py-4 rounded-2xl shadow-[0_8px_28px_rgba(124,58,237,0.35)] transition-all whitespace-nowrap h-[58px]"
                 >
                   Subscribe
                 </motion.button>
