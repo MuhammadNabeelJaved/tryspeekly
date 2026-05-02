@@ -16,6 +16,8 @@ import TermsOfServicePage from '@/pages/TermsOfServicePage'
 import CookiePolicyPage from '@/pages/CookiePolicyPage'
 import PaymentsPage from '@/pages/PaymentsPage'
 import FinancialAidPage from '@/pages/FinancialAidPage'
+import LoginPage from '@/pages/LoginPage'
+import SignupPage from '@/pages/SignupPage'
 
 import AdminPage from '@/pages/AdminPage'
 import './App.css'
@@ -48,6 +50,8 @@ function PublicLayout() {
           <Route path="/blog/:id" element={<BlogPostPage />} />
           <Route path="/courses" element={<CoursesPage />} />
           <Route path="/courses/:id" element={<CourseDetailsPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignupPage />} />
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/privacy" element={<PrivacyPolicyPage />} />
           <Route path="/terms" element={<TermsOfServicePage />} />

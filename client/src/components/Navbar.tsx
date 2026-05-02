@@ -106,6 +106,15 @@ export default function Navbar() {
           {/* Right: phone + CTA */}
           <div className="hidden lg:flex items-center gap-5">
             <ThemeToggle />
+            <Link to="/login" className="text-sm font-semibold text-slate-600 dark:text-neutral-300 hover:text-violet-600 dark:hover:text-violet-300 transition-colors">
+              Login
+            </Link>
+            <Link
+              to="/signup"
+              className="hidden xl:inline-flex items-center justify-center rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-[0_4px_14px_rgba(124,58,237,0.3)] transition hover:bg-violet-700"
+            >
+              Sign Up
+            </Link>
             <motion.a
               href="tel:+80155564545"
               className="flex items-center gap-2 text-slate-600 dark:text-neutral-300 hover:text-violet-600 dark:hover:text-violet-300 transition-colors"
@@ -169,6 +178,12 @@ export default function Navbar() {
                 )
               })}
               <div className="border-t border-slate-100 dark:border-neutral-800 pt-5 flex flex-col gap-3">
+                <Link to="/login" onClick={() => setMenuOpen(false)} className="text-sm font-semibold text-slate-600 dark:text-neutral-300 hover:text-violet-600 dark:hover:text-violet-300">
+                  Login
+                </Link>
+                <Link to="/signup" onClick={() => setMenuOpen(false)} className="bg-violet-600 text-white text-sm font-semibold px-5 py-3 rounded-lg text-center">
+                  Sign Up
+                </Link>
                 <a href="tel:+80155564545" className="flex items-center gap-2 text-slate-600 dark:text-neutral-300">
                   <Phone size={15} weight="fill" className="text-violet-600 dark:text-violet-200" />
                   <span className="text-sm font-medium">+801 555 645 45</span>
