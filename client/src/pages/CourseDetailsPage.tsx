@@ -1,16 +1,14 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import {
   Star, Users, Clock, GraduationCap, CheckCircle,
   PlayCircle, Certificate, FileText, CaretDown,
-  ArrowLeft, Sparkle,
+  ArrowLeft, ArrowRight, Sparkle,
   ChartBar, Tag, Chats, CaretLeft, CaretRight, ThumbsUp,
   Calendar, VideoCamera, UsersThree, ChalkboardTeacher, Laptop,
-  CreditCard, Bank, PaypalLogo, ShieldCheck, Phone, Globe, CurrencyDollar
+  CreditCard, Bank, PaypalLogo, ShieldCheck, Phone, Globe
 } from '@phosphor-icons/react'
-import React from 'react';
 
 // Dummy Data for the specific course
 const COURSE = {
@@ -311,7 +309,6 @@ function MethodLogo({ method }: { method: PaymentMethod }) {
 
 
 export default function CourseDetailsPage() {
-  const navigate = useNavigate();
   const [openModule, setOpenModule] = useState<number | null>(0)
   const [showMobileNav, setShowMobileNav] = useState(false)
   const [currentReviewPage, setCurrentReviewPage] = useState(1)
