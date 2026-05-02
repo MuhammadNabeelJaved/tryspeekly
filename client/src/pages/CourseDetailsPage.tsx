@@ -316,8 +316,8 @@ export default function CourseDetailsPage() {
   const [showMobileNav, setShowMobileNav] = useState(false)
   const [currentReviewPage, setCurrentReviewPage] = useState(1)
 
-  // New states for payment section
-  const [showPaymentSection, setShowPaymentSection] = useState(false);
+  // New states for enrollment modal
+  const [showEnrollmentModal, setShowEnrollmentModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'local' | 'international'>('local');
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
 
@@ -337,13 +337,8 @@ export default function CourseDetailsPage() {
   }
 
   // New function to scroll to payment section
-  const scrollToPayment = () => {
-    const el = document.getElementById('enrollment-section');
-    if (el) {
-      const y = el.getBoundingClientRect().top + window.scrollY - 100;
-      window.scrollTo({ top: y, behavior: 'smooth' });
-    }
-    setShowPaymentSection(true);
+  const openEnrollmentModal = () => {
+    setShowEnrollmentModal(true);
   };
 
   const handlePageChange = (page: number) => {
@@ -918,7 +913,7 @@ export default function CourseDetailsPage() {
                   <motion.button
                     whileHover={{ scale: 1.02, boxShadow: '0 16px 40px rgba(124,58,237,0.45)' }}
                     whileTap={{ scale: 0.98 }}
-                    onClick={scrollToPayment} // Modified to scroll and show payment section
+                    onClick={openEnrollmentModal} // Open enrollment modal
                     className="w-full flex items-center justify-center bg-gradient-to-r from-violet-600 to-purple-600 text-white font-bold py-4 rounded-2xl shadow-[0_8px_28px_rgba(124,58,237,0.35)] transition-all mb-4 text-lg"
                   >
                     Enroll Now
@@ -980,235 +975,265 @@ export default function CourseDetailsPage() {
         </div>
       </section>
 
-      {/* ─── ENROLLMENT/PAYMENT SECTION ──────────────────────────────── */}
+      {/* ─── ENROLLMENT MODAL ──────────────────────────────── */}
       <AnimatePresence>
-        {showPaymentSection && (
-          <motion.section
-            id="enrollment-section"
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 40 }}
-            transition={{ duration: 0.6 }}
-            className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative z-10 scroll-mt-24"
+        {showEnrollmentModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+            onClick={() => setShowEnrollmentModal(false)}
           >
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="bg-white dark:bg-neutral-900 rounded-3xl p-8 sm:p-10 border border-slate-200 dark:border-neutral-800 shadow-xl"
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+              className="relative w-full max-w-6xl max-h-[90vh] overflow-y-auto bg-white dark:bg-neutral-900 rounded-3xl border border-slate-200 dark:border-neutral-800 shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-center gap-3 mb-6">
-                <span className="w-6 h-[2px] bg-violet-600 dark:bg-violet-400 rounded-full" />
-                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Complete Your Enrollment</h2>
-              </div>
+              {/* Close button */}
+              <button
+                onClick={() => setShowEnrollmentModal(false)}
+                className="absolute top-6 right-6 z-10 w-10 h-10 rounded-full bg-slate-100 dark:bg-neutral-800 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-neutral-200 hover:bg-slate-200 dark:hover:bg-neutral-700 transition-colors text-lg font-bold"
+                aria-label="Close modal"
+              >
+                ✕
+              </button>
 
+              <div className="p-8 sm:p-10">
+                <div className="flex items-center gap-3 mb-8">
+                  <span className="w-6 h-[2px] bg-violet-600 dark:bg-violet-400 rounded-full" />
+                  <h2 className="text-3xl font-bold text-slate-900 dark:text-white">Complete Your Enrollment</h2>
+                </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
-                {/* Left Column: Course Details Summary for Enrollment */}
-                <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
-                  <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-5">Course Details</h3>
-                  <div className="p-6 bg-slate-50 dark:bg-neutral-800/50 rounded-2xl border border-slate-100 dark:border-neutral-700">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-slate-700 dark:text-neutral-300">
-                      <div className="flex items-center gap-3">
-                        <CheckCircle size={20} className="text-emerald-500" weight="fill" />
-                        <span><strong>Category:</strong> {COURSE.category}</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <CheckCircle size={20} className="text-emerald-500" weight="fill" />
-                        <span><strong>Level:</strong> {COURSE.level}</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <CheckCircle size={20} className="text-emerald-500" weight="fill" />
-                        <span><strong>Duration:</strong> {COURSE.duration}</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <CheckCircle size={20} className="text-emerald-500" weight="fill" />
-                        <span><strong>Starts:</strong> {COURSE.startDate}</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <CheckCircle size={20} className="text-emerald-500" weight="fill" />
-                        <span><strong>Price:</strong> {COURSE.price}</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <CheckCircle size={20} className="text-emerald-500" weight="fill" />
-                        <span><strong>Platform:</strong> {COURSE.platform}</span>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+                  {/* Left Column: Course Details Summary for Enrollment */}
+                  <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-5">Course Details</h3>
+                    <div className="p-6 bg-slate-50 dark:bg-neutral-800/50 rounded-2xl border border-slate-100 dark:border-neutral-700">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-slate-700 dark:text-neutral-300">
+                        <div className="flex items-center gap-3">
+                          <CheckCircle size={20} className="text-emerald-500" weight="fill" />
+                          <span><strong>Category:</strong> {COURSE.category}</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <CheckCircle size={20} className="text-emerald-500" weight="fill" />
+                          <span><strong>Level:</strong> {COURSE.level}</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <CheckCircle size={20} className="text-emerald-500" weight="fill" />
+                          <span><strong>Duration:</strong> {COURSE.duration}</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <CheckCircle size={20} className="text-emerald-500" weight="fill" />
+                          <span><strong>Starts:</strong> {COURSE.startDate}</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <CheckCircle size={20} className="text-emerald-500" weight="fill" />
+                          <span><strong>Price:</strong> {COURSE.price}</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <CheckCircle size={20} className="text-emerald-500" weight="fill" />
+                          <span><strong>Platform:</strong> {COURSE.platform}</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </motion.div>
+                  </motion.div>
 
-                {/* Right Column: Payment Method Selection & Details */}
-                <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
-                  <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-6">Select Payment Method</h3>
+                  {/* Right Column: Payment Method Selection & Details */}
+                  <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-6">Select Payment Method</h3>
 
-                  {/* Tab Switcher for Local/International Payments */}
-                  <div className="flex justify-center mb-6">
-                    <div className="inline-flex bg-white dark:bg-neutral-900 rounded-2xl p-1.5 border border-slate-200 dark:border-neutral-800 shadow-sm">
-                      {[
-                        { key: 'local', label: 'Local Payments', Icon: Phone },
-                        { key: 'international', label: 'International', Icon: Globe },
-                      ].map(({ key, label, Icon }) => (
-                        <button
-                          key={key}
-                          type="button"
-                          onClick={() => { setActiveTab(key as 'local' | 'international'); setSelectedPaymentMethod(null); }}
-                          className={`relative flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
-                            activeTab === key
-                              ? 'bg-violet-600 text-white shadow-[0_4px_14px_rgba(124,58,237,0.35)]'
-                              : 'text-slate-500 dark:text-neutral-400 hover:text-slate-700 dark:hover:text-neutral-200'
-                          }`}
-                        >
-                          <Icon size={16} weight={activeTab === key ? 'fill' : 'regular'} />
-                          {label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <AnimatePresence mode="wait">
-                    {!selectedPaymentMethod && (
-                      <motion.div
-                        key={activeTab}
-                        initial={{ opacity: 0, y: 16 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -16 }}
-                        transition={{ duration: 0.35 }}
-                      >
-                        <div className="flex items-center gap-3 mb-6">
-                          <span className="w-6 h-[2px] bg-violet-600 dark:bg-violet-400 rounded-full" />
-                          <span className="text-violet-600 dark:text-violet-400 text-sm font-bold tracking-wide uppercase">
-                            {activeTab === 'local' ? 'Pakistani Payment Methods' : 'International Payment Methods'}
-                          </span>
-                        </div>
-
-                        <div className="grid gap-5 grid-cols-1 sm:grid-cols-2">
-                          {methodsToDisplay.map((method, i) => {
-                            const isSelected = selectedPaymentMethod === method.id;
-                            return (
-                              <motion.div
-                                key={method.id}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: i * 0.07, duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
-                                onClick={() => setSelectedPaymentMethod(isSelected ? null : method.id)}
-                                className={`relative bg-white dark:bg-neutral-900 rounded-[24px] border-2 transition-all duration-200 cursor-pointer group overflow-hidden shadow-sm
-                                  ${isSelected
-                                    ? `border-violet-500 dark:border-violet-500 shadow-[0_0_0_4px_rgba(124,58,237,0.15)]`
-                                    : 'border-slate-100 dark:border-neutral-800 hover:border-violet-300 dark:hover:border-violet-700 hover:shadow-lg hover:shadow-violet-100/50 dark:hover:shadow-violet-950/30'
-                                  }`}
-                              >
-                                {method.recommended && (
-                                  <div className="absolute top-4 right-4 z-10">
-                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-violet-600 text-white text-[10px] font-bold uppercase tracking-wide rounded-full">
-                                      <Sparkle size={10} weight="fill" />
-                                      Recommended
-                                    </span>
-                                  </div>
-                                )}
-
-                                <div
-                                  className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
-                                  style={{ background: `radial-gradient(circle at 20% 20%, ${method.accentColor}08, transparent 60%)` }}
-                                />
-
-                                <div className="p-5 relative">
-                                  <div className="flex items-center gap-3 mb-3">
-                                    <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 shadow-md">
-                                      <MethodLogo method={method} />
-                                    </div>
-                                    <div className={method.recommended ? 'pr-20' : ''}>
-                                      <h3 className="text-sm font-bold text-slate-900 dark:text-white leading-tight">{method.name}</h3>
-                                      <p className="text-xs text-slate-400 dark:text-neutral-500 font-medium mt-0.5">{method.tagline}</p>
-                                    </div>
-                                  </div>
-
-                                  <ul className="space-y-1.5 mb-4">
-                                    {method.features.map((f) => (
-                                      <li key={f} className="flex items-center gap-2 text-xs text-slate-600 dark:text-neutral-300">
-                                        <CheckCircle size={12} weight="fill" className="text-emerald-500 flex-shrink-0" />
-                                        {f}
-                                      </li>
-                                    ))}
-                                  </ul>
-
-                                  <div className="flex items-center gap-2 mb-4 px-3 py-1.5 bg-slate-50 dark:bg-neutral-800/60 rounded-xl">
-                                    <Clock size={12} weight="fill" className="text-violet-500 flex-shrink-0" />
-                                    <span className="text-xs text-slate-500 dark:text-neutral-400">Processing:</span>
-                                    <span className="text-xs font-bold text-slate-700 dark:text-neutral-200 ml-auto">{method.processingTime}</span>
-                                  </div>
-
-                                  <motion.button
-                                    type="button"
-                                    whileHover={{ scale: 1.02 }}
-                                    whileTap={{ scale: 0.97 }}
-                                    onClick={(e) => { e.stopPropagation(); setSelectedPaymentMethod(method.id); }}
-                                    className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-2xl text-xs font-bold transition-all ${
-                                      isSelected
-                                        ? 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-[0_4px_14px_rgba(124,58,237,0.35)]'
-                                        : 'bg-slate-50 dark:bg-neutral-800 text-slate-700 dark:text-neutral-200 hover:bg-violet-50 dark:hover:bg-violet-950/40 hover:text-violet-700 dark:hover:text-violet-300'
-                                    }`}
-                                  >
-                                    {isSelected ? (
-                                      <><CheckCircle size={14} weight="fill" />Selected</>
-                                    ) : (
-                                      <>Pay with {method.name.split(' ')[0]}<ArrowRight size={13} weight="bold" /></>
-                                    )}
-                                  </motion.button>
-                                </div>
-                              </motion.div>
-                            );
-                          })}
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-
-                  <AnimatePresence mode="wait">
-                    {selectedPaymentDetails && (
-                      <motion.div
-                        key={selectedPaymentDetails.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -20 }}
-                        transition={{ duration: 0.3 }}
-                        className="mt-8 p-6 bg-white dark:bg-neutral-900 rounded-3xl border border-violet-200 dark:border-violet-800 shadow-xl"
-                      >
-                        <div className="flex items-center justify-between mb-5">
-                          <div className="flex items-center gap-3">
-                            <div className="w-11 h-11 rounded-xl overflow-hidden flex-shrink-0 shadow-md">
-                              <MethodLogo method={selectedPaymentDetails} />
-                            </div>
-                            <div>
-                              <p className="text-[10px] font-bold uppercase tracking-widest text-violet-600 dark:text-violet-400">Payment Details</p>
-                              <h3 className="text-base font-black text-slate-900 dark:text-white leading-tight">Pay via {selectedPaymentDetails.name}</h3>
-                            </div>
-                          </div>
+                    {/* Tab Switcher for Local/International Payments */}
+                    <div className="flex justify-center mb-6">
+                      <div className="inline-flex bg-white dark:bg-neutral-900 rounded-2xl p-1.5 border border-slate-200 dark:border-neutral-800 shadow-sm">
+                        {[
+                          { key: 'local', label: 'Local Payments', Icon: Phone },
+                          { key: 'international', label: 'International', Icon: Globe },
+                        ].map(({ key, label, Icon }) => (
                           <button
+                            key={key}
                             type="button"
-                            onClick={() => setSelectedPaymentMethod(null)}
-                            className="w-8 h-8 rounded-full bg-slate-100 dark:bg-neutral-800 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-neutral-200 hover:bg-slate-200 dark:hover:bg-neutral-700 transition-colors text-xs font-bold flex-shrink-0"
-                            aria-label="Close"
+                            onClick={() => { setActiveTab(key as 'local' | 'international'); setSelectedPaymentMethod(null); }}
+                            className={`relative flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                              activeTab === key
+                                ? 'bg-violet-600 text-white shadow-[0_4px_14px_rgba(124,58,237,0.35)]'
+                                : 'text-slate-500 dark:text-neutral-400 hover:text-slate-700 dark:hover:text-neutral-200'
+                            }`}
                           >
-                            ✕
+                            <Icon size={16} weight={activeTab === key ? 'fill' : 'regular'} />
+                            {label}
                           </button>
-                        </div>
+                        ))}
+                      </div>
+                    </div>
 
-                        <div className="h-0.5 rounded-full mb-5" style={{ background: `linear-gradient(to right, ${selectedPaymentDetails.accentColor}, transparent)` }} />
+                    <AnimatePresence mode="wait">
+                      {!selectedPaymentMethod && (
+                        <motion.div
+                          key={activeTab}
+                          initial={{ opacity: 0, y: 16 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -16 }}
+                          transition={{ duration: 0.35 }}
+                        >
+                          <div className="flex items-center gap-3 mb-6">
+                            <span className="w-6 h-[2px] bg-violet-600 dark:bg-violet-400 rounded-full" />
+                            <span className="text-violet-600 dark:text-violet-400 text-sm font-bold tracking-wide uppercase">
+                              {activeTab === 'local' ? 'Pakistani Payment Methods' : 'International Payment Methods'}
+                            </span>
+                          </div>
 
-                        {renderPaymentDetails()}
+                          <div className="grid gap-5 grid-cols-1 sm:grid-cols-2">
+                            {methodsToDisplay.map((method, i) => {
+                              const isSelected = selectedPaymentMethod === method.id;
+                              return (
+                                <motion.div
+                                  key={method.id}
+                                  initial={{ opacity: 0, y: 20 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  transition={{ delay: i * 0.07, duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+                                  onClick={() => setSelectedPaymentMethod(isSelected ? null : method.id)}
+                                  className={`relative bg-white dark:bg-neutral-900 rounded-[24px] border-2 transition-all duration-200 cursor-pointer group overflow-hidden shadow-sm
+                                    ${isSelected
+                                      ? `border-violet-500 dark:border-violet-500 shadow-[0_0_0_4px_rgba(124,58,237,0.15)]`
+                                      : 'border-slate-100 dark:border-neutral-800 hover:border-violet-300 dark:hover:border-violet-700 hover:shadow-lg hover:shadow-violet-100/50 dark:hover:shadow-violet-950/30'
+                                    }`}
+                                >
+                                  {method.recommended && (
+                                    <div className="absolute top-4 right-4 z-10">
+                                      <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-violet-600 text-white text-[10px] font-bold uppercase tracking-wide rounded-full">
+                                        <Sparkle size={10} weight="fill" />
+                                        Recommended
+                                      </span>
+                                    </div>
+                                  )}
 
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                                  <div
+                                    className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+                                    style={{ background: `radial-gradient(circle at 20% 20%, ${method.accentColor}08, transparent 60%)` }}
+                                  />
 
-                  <p className="text-center text-sm text-slate-500 dark:text-neutral-400 mt-10 flex items-center justify-center gap-2">
-                    <ShieldCheck size={20} className="text-emerald-500" weight="fill" />
-                    Your payment information is secure and encrypted.
-                  </p>
-                </motion.div>
+                                  <div className="p-5 relative">
+                                    <div className="flex items-center gap-3 mb-3">
+                                      <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 shadow-md">
+                                        <MethodLogo method={method} />
+                                      </div>
+                                      <div className={method.recommended ? 'pr-20' : ''}>
+                                        <h3 className="text-sm font-bold text-slate-900 dark:text-white leading-tight">{method.name}</h3>
+                                        <p className="text-xs text-slate-400 dark:text-neutral-500 font-medium mt-0.5">{method.tagline}</p>
+                                      </div>
+                                    </div>
+
+                                    <ul className="space-y-1.5 mb-4">
+                                      {method.features.map((f) => (
+                                        <li key={f} className="flex items-center gap-2 text-xs text-slate-600 dark:text-neutral-300">
+                                          <CheckCircle size={12} weight="fill" className="text-emerald-500 flex-shrink-0" />
+                                          {f}
+                                        </li>
+                                      ))}
+                                    </ul>
+
+                                    <div className="flex items-center gap-2 mb-4 px-3 py-1.5 bg-slate-50 dark:bg-neutral-800/60 rounded-xl">
+                                      <Clock size={12} weight="fill" className="text-violet-500 flex-shrink-0" />
+                                      <span className="text-xs text-slate-500 dark:text-neutral-400">Processing:</span>
+                                      <span className="text-xs font-bold text-slate-700 dark:text-neutral-200 ml-auto">{method.processingTime}</span>
+                                    </div>
+
+                                    <motion.button
+                                      type="button"
+                                      whileHover={{ scale: 1.02 }}
+                                      whileTap={{ scale: 0.97 }}
+                                      onClick={(e) => { e.stopPropagation(); setSelectedPaymentMethod(method.id); }}
+                                      className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-2xl text-xs font-bold transition-all ${
+                                        isSelected
+                                          ? 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-[0_4px_14px_rgba(124,58,237,0.35)]'
+                                          : 'bg-slate-50 dark:bg-neutral-800 text-slate-700 dark:text-neutral-200 hover:bg-violet-50 dark:hover:bg-violet-950/40 hover:text-violet-700 dark:hover:text-violet-300'
+                                      }`}
+                                    >
+                                      {isSelected ? (
+                                        <><CheckCircle size={14} weight="fill" />Selected</>
+                                      ) : (
+                                        <>Pay with {method.name.split(' ')[0]}<ArrowRight size={13} weight="bold" /></>
+                                      )}
+                                    </motion.button>
+                                  </div>
+                                </motion.div>
+                              );
+                            })}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
+                    <AnimatePresence mode="wait">
+                      {selectedPaymentDetails && (
+                        <motion.div
+                          key={selectedPaymentDetails.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -20 }}
+                          transition={{ duration: 0.3 }}
+                          className="mt-8 p-6 bg-white dark:bg-neutral-900 rounded-3xl border border-violet-200 dark:border-violet-800 shadow-xl"
+                        >
+                          <div className="flex items-center justify-between mb-5">
+                            <div className="flex items-center gap-3">
+                              <div className="w-11 h-11 rounded-xl overflow-hidden flex-shrink-0 shadow-md">
+                                <MethodLogo method={selectedPaymentDetails} />
+                              </div>
+                              <div>
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-violet-600 dark:text-violet-400">Payment Details</p>
+                                <h3 className="text-base font-black text-slate-900 dark:text-white leading-tight">Pay via {selectedPaymentDetails.name}</h3>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedPaymentMethod(null)}
+                              className="w-8 h-8 rounded-full bg-slate-100 dark:bg-neutral-800 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-neutral-200 hover:bg-slate-200 dark:hover:bg-neutral-700 transition-colors text-xs font-bold flex-shrink-0"
+                              aria-label="Close"
+                            >
+                              ✕
+                            </button>
+                          </div>
+
+                          <div className="h-0.5 rounded-full mb-5" style={{ background: `linear-gradient(to right, ${selectedPaymentDetails.accentColor}, transparent)` }} />
+
+                          {renderPaymentDetails()}
+
+                          <motion.button
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.3 }}
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={() => {
+                              // Handle enrollment completion
+                              alert('Enrollment completed! You will receive a confirmation email shortly.');
+                              setShowEnrollmentModal(false);
+                              setSelectedPaymentMethod(null);
+                            }}
+                            className="w-full mt-6 bg-gradient-to-r from-violet-600 to-purple-600 text-white font-bold py-4 rounded-2xl shadow-[0_8px_28px_rgba(124,58,237,0.35)] transition-all text-lg flex items-center justify-center gap-2"
+                          >
+                            <CheckCircle size={20} weight="fill" />
+                            Complete Enrollment
+                          </motion.button>
+
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
+                    <p className="text-center text-sm text-slate-500 dark:text-neutral-400 mt-10 flex items-center justify-center gap-2">
+                      <ShieldCheck size={20} className="text-emerald-500" weight="fill" />
+                      Your payment information is secure and encrypted.
+                    </p>
+                  </motion.div>
+                </div>
               </div>
             </motion.div>
-          </motion.section>
+          </motion.div>
         )}
       </AnimatePresence>
 
@@ -1227,7 +1252,7 @@ export default function CourseDetailsPage() {
                 <div className="text-2xl font-black text-slate-900 dark:text-white">{COURSE.price}</div>
               </div>
               <button
-                onClick={scrollToPayment} // Modified to scroll and show payment section
+                onClick={openEnrollmentModal} // Open enrollment modal
                 className="flex-1 max-w-[200px] bg-gradient-to-r from-violet-600 to-purple-600 text-white font-bold py-3.5 px-6 rounded-2xl shadow-[0_8px_28px_rgba(124,58,237,0.35)] text-center text-sm">
                 Enroll Now
               </button>
