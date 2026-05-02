@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useForm } from 'react-hook-form'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Star, X, PencilSimple } from '@phosphor-icons/react'
 
@@ -30,6 +31,22 @@ export default function Reviews() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [rating, setRating] = useState(0)
   const [hoverRating, setHoverRating] = useState(0)
+  
+  const { register, handleSubmit, reset, formState: { errors } } = useForm({
+    defaultValues: { name: '', review: '' }
+  })
+
+  const onSubmit = (data: any) => {
+    // Add custom rating validation if needed
+    if (rating === 0) {
+      alert("Please select a rating.")
+      return
+    }
+    console.log(data, rating)
+    setIsModalOpen(false)
+    reset()
+    setRating(0)
+  }
 
   return (
     <section className="py-16 lg:py-24 bg-white dark:bg-neutral-950 transition-colors duration-300">
@@ -154,7 +171,7 @@ export default function Reviews() {
                   </button>
                 </div>
                 
-                <form className="p-6" onSubmit={(e) => { e.preventDefault(); setIsModalOpen(false); }}>
+                <form className="p-6" onSubmit={handleSubmit(onSubmit)}>
                   <div className="space-y-5">
                     
                     {/* Interactive Star Rating */}
@@ -184,20 +201,22 @@ export default function Reviews() {
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Your Name</label>
                       <input 
                         type="text" 
-                        required
+                        {...register('name', { required: 'Name is required' })}
                         className="w-full bg-gray-50 dark:bg-neutral-950 border border-gray-200 dark:border-neutral-800 text-gray-900 dark:text-white rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500 transition-all"
                         placeholder="John Doe"
                       />
+                      {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name.message as string}</p>}
                     </div>
                     
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Your Review</label>
                       <textarea 
-                        required
                         rows={4}
+                        {...register('review', { required: 'Review is required' })}
                         className="w-full bg-gray-50 dark:bg-neutral-950 border border-gray-200 dark:border-neutral-800 text-gray-900 dark:text-white rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500 transition-all resize-none"
                         placeholder="What did you like about learning with us?"
                       />
+                      {errors.review && <p className="text-xs text-red-500 mt-1">{errors.review.message as string}</p>}
                     </div>
                   </div>
 

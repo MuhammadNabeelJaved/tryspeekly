@@ -1,113 +1,40 @@
-import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Link } from 'react-router-dom'
-import {
-  Star, Users, Clock, GraduationCap, CheckCircle,
-  PlayCircle, Certificate, FileText, CaretDown,
-  ArrowLeft, Sparkle,
-  ChartBar, Tag, Chats, CaretLeft, CaretRight, ThumbsUp,
-  Calendar, VideoCamera, UsersThree, ChalkboardTeacher, Laptop,
-  CreditCard, Bank, PaypalLogo, ShieldCheck, Phone, Globe, CurrencyDollar
-} from '@phosphor-icons/react'
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  CreditCard, Bank, PaypalLogo, ShieldCheck, CheckCircle, ArrowLeft, ArrowRight, Sparkle, Clock, Phone, Globe, CurrencyDollar
+} from '@phosphor-icons/react';
 import React from 'react';
 
-// Dummy Data for the specific course
-const COURSE = {
-  id: 1,
-  title: 'General English Mastery: Live Interactive Cohort',
-  category: 'Live Class',
-  description: 'Join our intensive 12-week live cohort. Master the fundamentals of English grammar, vocabulary, and daily conversation through real-time interaction, group activities, and live feedback via Zoom/Google Meet.',
-  rating: 4.9,
-  reviews: 342,
-  students: 120, // Smaller number for live cohort
-  price: '$299',
-  originalPrice: '$399',
-  level: 'Beginner to Intermediate',
-  duration: '12 Weeks (24 Live Sessions)',
-  schedule: 'Tuesdays & Thursdays, 7:00 PM - 8:30 PM (EST)',
-  startDate: 'May 10, 2026',
-  platform: 'Zoom / Google Meet',
-  maxStudents: 25,
-  language: 'English',
-  image: 'https://images.unsplash.com/photo-1544650030-3c51ad04fe0b?q=80&w=1200&auto=format&fit=crop',
-  videoPreview: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=800&auto=format&fit=crop',
-  instructor: {
-    name: 'Emily Chen',
-    role: 'Lead English Instructor',
-    image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=400&auto=format&fit=crop',
-    rating: 5.0,
-    students: '1,500+',
-    courses: 2,
-    bio: 'Emily specializes in live, interactive teaching. With over 10 years of experience, she creates a dynamic virtual classroom environment where every student gets personal attention and real-time pronunciation feedback.'
+// Dummy Course Data (for now, will later fetch from API based on courseId)
+const COURSES_DATA = {
+  '1': {
+    id: 1,
+    title: 'General English Mastery: Live Interactive Cohort',
+    category: 'Live Class',
+    description: 'Join our intensive 12-week live cohort. Master the fundamentals of English grammar, vocabulary, and daily conversation through real-time interaction, group activities, and live feedback via Zoom/Google Meet.',
+    rating: 4.9,
+    reviews: 342,
+    students: 120,
+    price: '$299',
+    originalPrice: '$399',
+    level: 'Beginner to Intermediate',
+    duration: '12 Weeks (24 Live Sessions)',
+    schedule: 'Tuesdays & Thursdays, 7:00 PM - 8:30 PM (EST)',
+    startDate: 'May 10, 2026',
+    platform: 'Zoom / Google Meet',
+    maxStudents: 25,
+    language: 'English',
+    image: 'https://images.unsplash.com/photo-1544650030-3c51ad04fe0b?q=80&w=1200&auto=format&fit=crop',
+    whatYouWillLearn: [
+      'Participate confidently in live conversations and group discussions.',
+      'Receive real-time feedback on your pronunciation and grammar.',
+      'Collaborate with classmates in Zoom breakout rooms.',
+      'Build a robust vocabulary of 3,000+ essential English words.',
+    ],
   },
-  whatYouWillLearn: [
-    'Participate confidently in live conversations and group discussions.',
-    'Receive real-time feedback on your pronunciation and grammar.',
-    'Collaborate with classmates in Zoom breakout rooms.',
-    'Build a robust vocabulary of 3,000+ essential English words.',
-    'Write clear, concise emails with live review sessions.',
-    'Overcome your fear of speaking in front of others.'
-  ],
-  curriculum: [
-    {
-      title: 'Week 1-3: The Foundations of English',
-      lessons: 6,
-      duration: '9 Hours Live',
-      items: [
-        { title: 'Orientation & Introduction (Live)', date: 'May 10, 2026', time: '7:00 PM EST', type: 'live', isFree: true },
-        { title: 'The Verb "To Be" - Interactive Practice', date: 'May 12, 2026', time: '7:00 PM EST', type: 'live', isFree: false },
-        { title: 'Subject Pronouns & Breakout Rooms', date: 'May 17, 2026', time: '7:00 PM EST', type: 'live', isFree: false },
-        { title: 'Week 1-3 Q&A and Live Assessment', date: 'May 26, 2026', time: '7:00 PM EST', type: 'quiz', isFree: false }
-      ]
-    },
-    {
-      title: 'Week 4-6: Daily Routines & Activities',
-      lessons: 6,
-      duration: '9 Hours Live',
-      items: [
-        { title: 'Present Simple: Group Storytelling', date: 'May 31, 2026', time: '7:00 PM EST', type: 'live', isFree: false },
-        { title: 'Adverbs of Frequency - Live Polls', date: 'Jun 02, 2026', time: '7:00 PM EST', type: 'live', isFree: false },
-        { title: 'Telling Time - Partner Activities', date: 'Jun 07, 2026', time: '7:00 PM EST', type: 'live', isFree: false },
-        { title: 'Vocabulary Workshop: Work and Leisure', date: 'Jun 16, 2026', time: '7:00 PM EST', type: 'live', isFree: false }
-      ]
-    },
-    {
-      title: 'Week 7-9: Traveling & Directions',
-      lessons: 6,
-      duration: '9 Hours Live',
-      items: [
-        { title: 'Airport Roleplay (Live Pairs)', date: 'Jun 21, 2026', time: '7:00 PM EST', type: 'live', isFree: false },
-        { title: 'Giving Directions - Virtual Map Task', date: 'Jun 23, 2026', time: '7:00 PM EST', type: 'live', isFree: false },
-        { title: 'Booking a Hotel Room Simulation', date: 'Jun 28, 2026', time: '7:00 PM EST', type: 'live', isFree: false },
-        { title: 'Restaurant Roleplay & Group Feedback', date: 'Jul 07, 2026', time: '7:00 PM EST', type: 'live', isFree: false }
-      ]
-    },
-    {
-      title: 'Week 10-12: Past Events & Storytelling',
-      lessons: 6,
-      duration: '9 Hours Live',
-      items: [
-        { title: 'Past Simple: Sharing Memories', date: 'Jul 12, 2026', time: '7:00 PM EST', type: 'live', isFree: false },
-        { title: 'Pronunciation Clinic: "-ed" Endings', date: 'Jul 14, 2026', time: '7:00 PM EST', type: 'live', isFree: false },
-        { title: 'Past Continuous - Group Story Building', date: 'Jul 19, 2026', time: '7:00 PM EST', type: 'live', isFree: false },
-        { title: 'Final Presentations & Graduation', date: 'Jul 28, 2026', time: '7:00 PM EST', type: 'live', isFree: false }
-      ]
-    }
-  ],
-  reviewsList: [
-    { id: 1, author: 'Alex Morgan', avatar: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=100&h=100&fit=crop', rating: 5, date: '1 week ago', content: 'This course is exactly what I needed. Emily explains grammar rules so clearly that they finally make sense. The pacing is perfect, and the practice exercises are very helpful.' },
-    { id: 2, author: 'Sarah K.', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop', rating: 4, date: '3 weeks ago', content: 'Great course overall! The vocabulary sections are fantastic. I took off one star just because I wish there were a few more speaking assignments to submit for feedback.' },
-    { id: 3, author: 'Mateo R.', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop', rating: 5, date: '1 month ago', content: 'I have taken many English courses, but this one is by far the best. The production quality is amazing, and I love the interactive elements.' },
-    { id: 4, author: 'Elena Petrova', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop', rating: 5, date: '2 months ago', content: 'Highly recommend this! My confidence in speaking has grown tremendously. The storytelling module was my absolute favorite.' },
-    { id: 5, author: 'David W.', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop', rating: 4, date: '3 months ago', content: 'Very detailed grammar explanations. Good for intermediate learners looking to brush up on their basics.' },
-    { id: 6, author: 'Yuki T.', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop', rating: 5, date: '4 months ago', content: 'Emily is a wonderful teacher. Her pronunciation is very clear and easy to understand. Thank you for this course!' },
-    { id: 7, author: 'Carlos S.', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop', rating: 5, date: '5 months ago', content: 'Five stars! I passed my B2 exam after finishing this course. The travel vocabulary was incredibly useful for my recent trip to London.' },
-    { id: 8, author: 'Nina K.', avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop', rating: 4, date: '6 months ago', content: 'Well structured and very professional. A great investment in my education. The only improvement could be adding more live sessions.' },
-  ]
-}
-
-const REVIEWS_PER_PAGE = 3
+  // Add other courses here if needed
+};
 
 // ─── LOGO COMPONENTS (Copied from PaymentsPage.tsx) ───────────────────────────
 
@@ -146,8 +73,8 @@ const LOGOS = {
   sadapay:   'https://play-lh.googleusercontent.com/jLxWI86qzbYgHs7KvooLG9dYRFwmOXhWYwuSMD0KHRgzNrjR6mnSdcJQ2-ZjZICKig=s512-rw',
   nayapay:   'https://play-lh.googleusercontent.com/OaLId--7-ubuipOHiNGR4N-EpFVg9wIGYIw6trOt5tOFKcjvcxdpsuEDfYcWLWJTUx4=s512-rw',
   nsave:     'https://play-lh.googleusercontent.com/EepJU_3DjuHfGCsFtBd2bhRhDS_dUGLcqLpfLZc3oPqu_PLgNV6IJ4Ui4fv6XfxRv0c=s512-rw',
-  paypal:    'https://play-lh.googleusercontent.com/bE_qL120v2g60K0L2K5vXw_hT662gI84wB3n_f3a-nO_n8W6_k_q_k_k_q_k_q_k_q_k=s512-rw',
-  credit_card: 'https://www.citypng.com/public/uploads/preview/white-credit-card-icon-hd-png-316246372138kgy50h76u.png',
+  paypal:    'https://play-lh.googleusercontent.com/bE_qL120v2g60K0L2K5vXw_hT662gI84wB3n_f3a-nO_n8W6_k_q_k_k_q_k_q_k_q_k=s512-rw', // Custom added for PayPal
+  credit_card: 'https://www.citypng.com/public/uploads/preview/white-credit-card-icon-hd-png-316246372138kgy50h76u.png', // Custom added for Credit Card
 };
 
 // ─── DATA (Copied from PaymentsPage.tsx and extended for Credit Card/PayPal) ──
@@ -310,70 +237,32 @@ function MethodLogo({ method }: { method: PaymentMethod }) {
 }
 
 
-export default function CourseDetailsPage() {
+export default function CourseEnrollmentPage() {
+  const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
-  const [openModule, setOpenModule] = useState<number | null>(0)
-  const [showMobileNav, setShowMobileNav] = useState(false)
-  const [currentReviewPage, setCurrentReviewPage] = useState(1)
-
-  // New states for payment section
-  const [showPaymentSection, setShowPaymentSection] = useState(false);
   const [activeTab, setActiveTab] = useState<'local' | 'international'>('local');
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
+  const course = COURSES_DATA[courseId as keyof typeof COURSES_DATA];
 
-
-  const totalReviewPages = Math.ceil(COURSE.reviewsList.length / REVIEWS_PER_PAGE)
-  const currentReviews = COURSE.reviewsList.slice(
-    (currentReviewPage - 1) * REVIEWS_PER_PAGE,
-    currentReviewPage * REVIEWS_PER_PAGE
-  )
-
-  const scrollToReviews = () => {
-    const el = document.getElementById('reviews-section')
-    if (el) {
-      const y = el.getBoundingClientRect().top + window.scrollY - 100
-      window.scrollTo({ top: y, behavior: 'smooth' })
-    }
-  }
-
-  // New function to scroll to payment section
-  const scrollToPayment = () => {
-    const el = document.getElementById('enrollment-section');
-    if (el) {
-      const y = el.getBoundingClientRect().top + window.scrollY - 100;
-      window.scrollTo({ top: y, behavior: 'smooth' });
-    }
-    setShowPaymentSection(true);
-  };
-
-  const handlePageChange = (page: number) => {
-    setCurrentReviewPage(page)
-    scrollToReviews()
-  }
-
-  // Scroll to top on mount
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'instant' })
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, []);
 
-    const handleScroll = () => {
-      if (window.scrollY > 400) {
-        setShowMobileNav(true)
-      } else {
-        setShowMobileNav(false)
-      }
-    }
-
-    window.addEventListener('scroll', handleScroll, { passive: true })
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
+  if (!course) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-neutral-950 pt-[72px] lg:pt-[80px]">
+        <h1 className="text-3xl font-bold text-red-600 dark:text-red-400">Course Not Found</h1>
+      </div>
+    );
+  }
 
   const allMethods = [...LOCAL_METHODS, ...INTL_METHODS];
-  const selectedPaymentDetails = allMethods.find(m => m.id === selectedPaymentMethod);
+  const selected = allMethods.find(m => m.id === selectedPaymentMethod);
   const methodsToDisplay = activeTab === 'local' ? LOCAL_METHODS : INTL_METHODS;
 
 
   const renderPaymentDetails = () => {
-    if (!selectedPaymentDetails) {
+    if (!selected) {
       return (
         <p className="text-slate-500 dark:text-neutral-400 mt-6 text-center">
           Please select a payment method to see details.
@@ -382,7 +271,7 @@ export default function CourseDetailsPage() {
     }
 
     // Handle generic Credit Card form
-    if (selectedPaymentDetails.id === 'credit_card') {
+    if (selected.id === 'credit_card') {
       return (
         <div className="space-y-4">
           <div>
@@ -411,7 +300,7 @@ export default function CourseDetailsPage() {
     }
 
     // Handle generic PayPal button
-    if (selectedPaymentDetails.id === 'paypal') {
+    if (selected.id === 'paypal') {
       return (
         <div className="space-y-4">
           <p className="text-slate-700 dark:text-neutral-300 mb-4">
@@ -428,15 +317,15 @@ export default function CourseDetailsPage() {
     return (
       <div className="space-y-3">
         <p className="text-slate-700 dark:text-neutral-300 mb-4">
-          {selectedPaymentDetails.description}
+          {selected.description}
         </p>
         <div className="space-y-3 mb-5">
           {[
             { label: 'Account Title', value: 'EnglishPro Academy' },
             { label: 'Account / IBAN', value: 'PK36 MEZN 0001 2345 0100 6543' }, // Dummy IBAN
             { label: 'Bank Name', value: 'Meezan Bank Ltd.' },
-            { label: 'Reference', value: 'Your Full Name / Course ID: ' + COURSE.id },
-            { label: 'Amount', value: COURSE.price },
+            { label: 'Reference', value: 'Your Full Name / Course ID: ' + course.id },
+            { label: 'Amount', value: course.price },
           ].map(({ label, value }) => (
             <div key={label} className="bg-slate-50 dark:bg-neutral-800/60 rounded-2xl px-4 py-3">
               <p className="text-[10px] font-semibold text-slate-400 dark:text-neutral-500 uppercase tracking-wide mb-1">{label}</p>
@@ -448,7 +337,7 @@ export default function CourseDetailsPage() {
         <div className="flex items-center gap-2 px-3 py-2 bg-violet-50 dark:bg-violet-950/40 rounded-xl border border-violet-100 dark:border-violet-900 mb-5">
           <Clock size={13} weight="fill" className="text-violet-500" />
           <span className="text-xs text-violet-600 dark:text-violet-400 font-medium">Processing time:</span>
-          <span className="text-xs font-bold text-violet-700 dark:text-violet-300 ml-auto">{selectedPaymentDetails.processingTime}</span>
+          <span className="text-xs font-bold text-violet-700 dark:text-violet-300 ml-auto">{selected.processingTime}</span>
         </div>
 
         <div className="flex flex-col gap-2.5">
@@ -477,76 +366,57 @@ export default function CourseDetailsPage() {
   };
 
   return (
-    <div className="bg-slate-50 dark:bg-neutral-950 min-h-screen pt-[72px] lg:pt-[80px] pb-24 lg:pb-0 selection:bg-violet-200 dark:selection:bg-violet-900/50">
+    <div className="bg-slate-50 dark:bg-neutral-950 min-h-screen pt-[72px] lg:pt-[80px] pb-24 selection:bg-violet-200 dark:selection:bg-violet-900/50">
+      {/* ── HERO ── */}
+      <section className="relative bg-white dark:bg-neutral-900 py-16 lg:py-20 border-b border-slate-100 dark:border-neutral-800 overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(circle,#e2e8f0_1px,transparent_1px)] dark:bg-[radial-gradient(circle,#1e293b_1px,transparent_1px)] bg-[size:24px_24px] opacity-40 pointer-events-none" />
+        <div className="absolute top-0 right-0 w-[600px] h-[400px] bg-violet-100/60 dark:bg-violet-900/15 rounded-full blur-3xl pointer-events-none -translate-y-1/2 translate-x-1/3" />
 
-      {/* ─── CREATIVE HERO HEADER ──────────────────────────────── */}
-      <div className="relative bg-slate-900 dark:bg-black text-white pt-12 pb-24 lg:pt-16 lg:pb-32 overflow-hidden border-b border-white/5">
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-violet-600/20 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/3 animate-pulse" style={{ animationDuration: '8s' }} />
-          <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-indigo-600/20 rounded-full blur-[100px] translate-y-1/2 -translate-x-1/4" />
-          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjEiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4wNSkiLz48L3N2Zz4=')] opacity-50" />
-        </div>
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="grid lg:grid-cols-[1fr_380px] gap-12 items-center">
-
-            {/* Left Content */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+            <button
+              onClick={() => navigate(-1)}
+              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-950/50 text-violet-700 dark:text-violet-300 text-sm font-semibold mb-6 group hover:bg-violet-100 dark:hover:bg-violet-900/50 hover:border-violet-300 dark:hover:border-violet-700 transition-all"
             >
-              <Link to="/courses" className="inline-flex items-center gap-2 text-violet-300 hover:text-white transition-colors text-sm font-medium mb-6 group">
-                <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" /> Back to Courses
-              </Link>
+              <ArrowLeft size={15} weight="bold" className="group-hover:-translate-x-1 transition-transform" />
+              Back to Course
+            </button>
+          </motion.div>
 
-              <div className="flex flex-wrap items-center gap-3 mb-5">
-                <span className="flex items-center gap-1.5 px-3 py-1 bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xs font-bold rounded-lg uppercase tracking-wider shadow-[0_0_15px_rgba(245,158,11,0.15)]">
-                  <Sparkle size={14} weight="fill" />
-                  Bestseller
-                </span>
-                <span className="px-3 py-1 bg-white/5 border border-white/10 text-slate-300 text-xs font-bold rounded-lg uppercase tracking-wider backdrop-blur-sm">
-                  {COURSE.category}
-                </span>
+          <motion.h1
+            initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}
+            className="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-900 dark:text-white leading-[1.1] tracking-tight mb-5"
+          >
+            Enroll in{' '}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-purple-600 dark:from-violet-400 dark:to-purple-400">
+              {COURSE.title}
+            </span>
+          </motion.h1>
+
+          <motion.p
+            initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}
+            className="text-lg text-slate-500 dark:text-neutral-400 max-w-2xl mx-auto mb-8 leading-relaxed"
+          >
+            Complete your enrollment for the course. Select your preferred payment method below to finalize your registration.
+          </motion.p>
+
+          <motion.div
+            initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }}
+            className="flex flex-wrap items-center justify-center gap-4 sm:gap-6"
+          >
+            {[
+              { Icon: ShieldCheck, label: '100% Secure' },
+              { Icon: Clock, label: 'Fast Confirmation' },
+              { Icon: Phone, label: 'Dedicated Support' },
+            ].map(({ Icon, label }) => (
+              <div key={label} className="flex items-center gap-2 text-sm text-slate-600 dark:text-neutral-400 font-medium">
+                <Icon size={16} weight="fill" className="text-violet-500" />
+                {label}
               </div>
-
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-black leading-[1.1] mb-6 tracking-tight text-white drop-shadow-sm">
-                {COURSE.title}
-              </h1>
-
-              <p className="text-slate-300 text-lg md:text-xl leading-relaxed mb-8 max-w-2xl font-light">
-                {COURSE.description}
-              </p>
-
-              <div className="flex flex-wrap items-center gap-x-8 gap-y-4 text-sm">
-                <div className="flex items-center gap-2.5">
-                  <div className="flex items-center gap-1 text-yellow-400 font-bold bg-yellow-400/10 px-2 py-1 rounded">
-                    <Star size={16} weight="fill" />
-                    <span className="text-base">{COURSE.rating}</span>
-                  </div>
-                  <button onClick={() => {
-                    document.getElementById('reviews-section')?.scrollIntoView({ behavior: 'smooth' })
-                  }} className="text-slate-300 border-b border-slate-600 border-dashed pb-0.5 cursor-pointer hover:text-white transition-colors">
-                    ({COURSE.reviews.toLocaleString()} reviews)
-                  </button>
-                </div>
-                <div className="flex items-center gap-2 text-slate-300">
-                  <UsersThree size={18} className="text-violet-400" />
-                  <span><strong>Max {COURSE.maxStudents}</strong> per cohort</span>
-                </div>
-                <div className="flex items-center gap-2 text-slate-300">
-                  <Calendar size={18} className="text-emerald-400" />
-                  <span>Starts: <strong>{COURSE.startDate}</strong></span>
-                </div>
-                <div className="flex items-center gap-2 text-slate-300">
-                  <VideoCamera size={18} className="text-blue-400" />
-                  <span>{COURSE.platform}</span>
-                </div>
-              </div>
-            </motion.div>
-          </div>
+            ))}
+          </motion.div>
         </div>
-      </div>
+      </section>
 
       {/* ─── MAIN CONTENT LAYOUT ──────────────────────────────── */}
       <section className="relative">
@@ -566,7 +436,7 @@ export default function CourseDetailsPage() {
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="relative">
                     <div className="absolute inset-0 bg-violet-600 rounded-full animate-ping opacity-40"></div>
-                    <button className="relative w-16 h-16 bg-white/20 backdrop-blur-md border border-white/30 rounded-full flex items-center justify-center text-white group-hover:scale-110 group-hover:bg-violet-600 transition-all duration-300 shadow-2xl">
+                    <button className="relative w-16 h-16 bg-white/20 backdrop-blur-md border border-white/50 rounded-full flex items-center justify-center text-white group-hover:scale-110 group-hover:bg-violet-600 transition-all duration-300 shadow-2xl">
                       <PlayCircle size={40} weight="fill" />
                     </button>
                   </div>
@@ -918,7 +788,7 @@ export default function CourseDetailsPage() {
                   <motion.button
                     whileHover={{ scale: 1.02, boxShadow: '0 16px 40px rgba(124,58,237,0.45)' }}
                     whileTap={{ scale: 0.98 }}
-                    onClick={scrollToPayment} // Modified to scroll and show payment section
+                    onClick={() => navigate(`/enroll/${COURSE.id}`)}
                     className="w-full flex items-center justify-center bg-gradient-to-r from-violet-600 to-purple-600 text-white font-bold py-4 rounded-2xl shadow-[0_8px_28px_rgba(124,58,237,0.35)] transition-all mb-4 text-lg"
                   >
                     Enroll Now

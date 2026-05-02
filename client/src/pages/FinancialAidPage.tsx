@@ -1,23 +1,41 @@
 import { useState, useEffect } from 'react'
+import { useForm } from 'react-hook-form'
 import { motion } from 'framer-motion'
-import { Heart, Handshake, VideoCamera, CheckCircle, WarningCircle, CaretRight, ShieldCheck } from '@phosphor-icons/react'
+import { Heart, Handshake, VideoCamera, CheckCircle, WarningCircle, CaretRight, ShieldCheck, GraduationCap, Question, CaretDown, Star, Certificate, Target } from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
 
 export default function FinancialAidPage() {
+  const { register, handleSubmit, formState: { errors }, reset } = useForm({
+    defaultValues: { name: '', email: '', phone: '', reason: '', agree: false }
+  })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
+  const [openFaq, setOpenFaq] = useState<number | null>(null)
+
+  const FAQS = [
+    { q: "How long does the verification process take?", a: "After you submit your application, our team will review it and contact you within 3-5 business days to schedule a brief verification call." },
+    { q: "Are there any hidden charges?", a: "No. If your financial aid application is approved, you will receive a 100% scholarship. There are no hidden fees or charges." },
+    { q: "What documents do I need for verification?", a: "We usually require a brief video call. In some cases, we may ask for a student ID or a basic proof of income/unemployment, but we focus mainly on your interview." },
+    { q: "Do financial aid students get the same certificate?", a: "Yes! You get access to the exact same live classes, study materials, community groups, and the final certificate as paid students." }
+  ]
+
+  const INCLUDED = [
+    { icon: <VideoCamera size={24} weight="fill" />, title: "Live Classes", desc: "Full access to all interactive live sessions with our expert instructors." },
+    { icon: <Star size={24} weight="fill" />, title: "Premium Materials", desc: "Get all worksheets, slides, and recording access." },
+    { icon: <Certificate size={24} weight="fill" />, title: "Verified Certificate", desc: "Earn the same completion certificate to boost your resume." }
+  ]
 
   useEffect(() => {
     window.scrollTo(0, 0)
   }, [])
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+  const onSubmit = () => {
     setIsSubmitting(true)
     // Simulate API call
     setTimeout(() => {
       setIsSubmitting(false)
       setIsSubmitted(true)
+      reset()
     }, 1500)
   }
 
@@ -174,16 +192,17 @@ export default function FinancialAidPage() {
                     </button>
                   </div>
                 ) : (
-                  <form onSubmit={handleSubmit} className="space-y-5">
+                  <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
                     <div>
                       <label htmlFor="name" className="block text-sm font-bold text-slate-700 dark:text-neutral-300 mb-2">Full Name <span className="text-rose-500">*</span></label>
                       <input 
                         type="text" 
                         id="name" 
-                        required
+                        {...register('name', { required: 'Name is required' })}
                         className="w-full bg-slate-50 dark:bg-neutral-950 border border-slate-200 dark:border-neutral-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent dark:text-white transition-shadow"
                         placeholder="John Doe"
                       />
+                      {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name.message as string}</p>}
                     </div>
                     
                     <div>
@@ -191,10 +210,14 @@ export default function FinancialAidPage() {
                       <input 
                         type="email" 
                         id="email" 
-                        required
+                        {...register('email', { 
+                          required: 'Email is required',
+                          pattern: { value: /^\S+@\S+$/i, message: 'Invalid email address' }
+                        })}
                         className="w-full bg-slate-50 dark:bg-neutral-950 border border-slate-200 dark:border-neutral-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent dark:text-white transition-shadow"
                         placeholder="john@example.com"
                       />
+                      {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email.message as string}</p>}
                     </div>
 
                     <div>
@@ -202,11 +225,11 @@ export default function FinancialAidPage() {
                       <input 
                         type="tel" 
                         id="phone" 
-                        required
+                        {...register('phone', { required: 'Phone number is required' })}
                         className="w-full bg-slate-50 dark:bg-neutral-950 border border-slate-200 dark:border-neutral-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent dark:text-white transition-shadow"
                         placeholder="+1 234 567 890"
                       />
-                      <p className="text-xs text-slate-500 mt-2">Required for scheduling the verification call.</p>
+                      {errors.phone ? <p className="text-xs text-red-500 mt-1">{errors.phone.message as string}</p> : <p className="text-xs text-slate-500 mt-2">Required for scheduling the verification call.</p>}
                     </div>
 
                     <div>
@@ -214,16 +237,17 @@ export default function FinancialAidPage() {
                       <textarea 
                         id="reason" 
                         rows={4}
-                        required
+                        {...register('reason', { required: 'Reason is required' })}
                         className="w-full bg-slate-50 dark:bg-neutral-950 border border-slate-200 dark:border-neutral-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent dark:text-white transition-shadow resize-none"
                         placeholder="Please explain your financial situation honestly..."
                       ></textarea>
+                      {errors.reason && <p className="text-xs text-red-500 mt-1">{errors.reason.message as string}</p>}
                     </div>
 
                     <div className="pt-2">
                       <label className="flex items-start gap-3 cursor-pointer group">
                         <div className="relative flex items-center justify-center mt-0.5">
-                          <input type="checkbox" required className="peer sr-only" />
+                          <input type="checkbox" {...register('agree', { required: 'You must agree to continue' })} className="peer sr-only" />
                           <div className="w-5 h-5 rounded border-2 border-slate-300 dark:border-neutral-700 peer-checked:bg-violet-600 peer-checked:border-violet-600 transition-colors" />
                           <CheckCircle size={14} weight="bold" className="absolute text-white opacity-0 peer-checked:opacity-100 transition-opacity" />
                         </div>
@@ -231,6 +255,7 @@ export default function FinancialAidPage() {
                           I confirm that the information provided is accurate and truthful. I agree to participate in a live verification call to prove my eligibility.
                         </span>
                       </label>
+                      {errors.agree && <p className="text-xs text-red-500 mt-1">{errors.agree.message as string}</p>}
                     </div>
 
                     <button 
@@ -256,6 +281,126 @@ export default function FinancialAidPage() {
             </div>
 
           </div>
+        </div>
+      </section>
+
+      {/* ─── ELIGIBILITY & WHAT'S INCLUDED ──────────────────────────────── */}
+      <section className="relative py-16 lg:py-24 z-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16">
+            
+            {/* Eligibility */}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="space-y-8"
+            >
+              <div>
+                <span className="inline-flex items-center gap-2 text-violet-600 dark:text-violet-400 font-bold uppercase tracking-wider text-xs mb-3">
+                  <Target size={16} weight="bold" /> Who Can Apply
+                </span>
+                <h2 className="text-3xl font-black text-slate-900 dark:text-white mb-4">Eligibility Criteria</h2>
+                <p className="text-slate-600 dark:text-neutral-400 leading-relaxed">
+                  Our financial aid program is designed specifically for those who possess the passion to learn but lack the financial means to afford standard course fees.
+                </p>
+              </div>
+
+              <ul className="space-y-4">
+                {[
+                  "Currently unemployed or from a low-income household",
+                  "Demonstrated strong desire and commitment to complete the course",
+                  "Access to a stable internet connection and a device for live classes",
+                  "Willingness to participate in a quick verification call"
+                ].map((item, idx) => (
+                  <li key={idx} className="flex items-start gap-3 bg-white dark:bg-neutral-900 p-4 rounded-2xl border border-slate-200 dark:border-neutral-800 shadow-sm">
+                    <div className="w-6 h-6 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center text-violet-600 dark:text-violet-400 flex-shrink-0 mt-0.5">
+                      <CheckCircle size={14} weight="bold" />
+                    </div>
+                    <span className="text-slate-700 dark:text-neutral-300 font-medium text-sm leading-relaxed">{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </motion.div>
+
+            {/* What's Included */}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2 }}
+              className="space-y-8"
+            >
+              <div>
+                <span className="inline-flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider text-xs mb-3">
+                  <GraduationCap size={16} weight="bold" /> Equal Access
+                </span>
+                <h2 className="text-3xl font-black text-slate-900 dark:text-white mb-4">What's Included?</h2>
+                <p className="text-slate-600 dark:text-neutral-400 leading-relaxed">
+                  Financial aid students are treated exactly the same as our paid students. You will receive 100% of the benefits to ensure your success.
+                </p>
+              </div>
+
+              <div className="grid gap-4">
+                {INCLUDED.map((item, idx) => (
+                  <div key={idx} className="flex items-start gap-4 p-5 rounded-2xl bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 shadow-sm hover:border-emerald-200 dark:hover:border-emerald-900/50 transition-colors">
+                    <div className="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-500 flex items-center justify-center flex-shrink-0">
+                      {item.icon}
+                    </div>
+                    <div>
+                      <h4 className="text-base font-bold text-slate-900 dark:text-white mb-1">{item.title}</h4>
+                      <p className="text-sm text-slate-600 dark:text-neutral-400 leading-relaxed">{item.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+
+          </div>
+        </div>
+      </section>
+
+      {/* ─── FAQ ──────────────────────────────── */}
+      <section className="relative py-16 lg:py-24 bg-white dark:bg-neutral-900 border-y border-slate-200 dark:border-neutral-800 z-20">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+          
+          <div className="text-center mb-12">
+            <span className="inline-flex items-center gap-2 px-3 py-1 bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400 text-xs font-bold rounded-full uppercase tracking-wider mb-4">
+              <Question size={16} weight="bold" />
+              FAQ
+            </span>
+            <h2 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-4">Frequently Asked Questions</h2>
+            <p className="text-slate-600 dark:text-neutral-400 text-lg">Got questions about the financial aid process? We've got answers.</p>
+          </div>
+
+          <div className="space-y-4">
+            {FAQS.map((faq, idx) => {
+              const isOpen = openFaq === idx
+              return (
+                <div key={idx} className={`rounded-2xl border transition-all duration-300 ${isOpen ? 'border-violet-300 dark:border-violet-700 bg-violet-50/50 dark:bg-violet-900/10 shadow-sm' : 'border-slate-200 dark:border-neutral-800 hover:border-violet-200 dark:hover:border-neutral-700'}`}>
+                  <button 
+                    onClick={() => setOpenFaq(isOpen ? null : idx)}
+                    className="flex items-center justify-between w-full p-5 text-left"
+                  >
+                    <span className="text-base font-bold text-slate-900 dark:text-white pr-4">{faq.q}</span>
+                    <motion.div animate={{ rotate: isOpen ? 180 : 0 }} className="flex-shrink-0 text-violet-600 dark:text-violet-400">
+                      <CaretDown size={20} weight="bold" />
+                    </motion.div>
+                  </button>
+                  <motion.div
+                    initial={false}
+                    animate={{ height: isOpen ? 'auto' : 0, opacity: isOpen ? 1 : 0 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="p-5 pt-0 text-slate-600 dark:text-neutral-400 leading-relaxed text-sm">
+                      {faq.a}
+                    </div>
+                  </motion.div>
+                </div>
+              )
+            })}
+          </div>
+
         </div>
       </section>
 

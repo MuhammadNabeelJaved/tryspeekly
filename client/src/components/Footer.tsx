@@ -1,3 +1,4 @@
+import { useForm } from 'react-hook-form'
 import { LinkedinLogo, TwitterLogo, FacebookLogo, InstagramLogo, Phone, EnvelopeSimple, MapPin, ArrowRight } from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
 
@@ -15,6 +16,15 @@ const SOCIAL = [
 ]
 
 export default function Footer() {
+  const { register, handleSubmit, reset, formState: { errors } } = useForm({
+    defaultValues: { email: '' }
+  })
+
+  const onSubmit = (data: any) => {
+    alert("Subscribed " + data.email)
+    reset()
+  }
+
   return (
     <footer className="bg-slate-50 dark:bg-neutral-950 transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 md:pt-20 lg:pt-24 pb-8">
@@ -104,13 +114,20 @@ export default function Footer() {
               <p className="text-sm text-slate-600 dark:text-neutral-500 leading-relaxed mb-5 font-medium">
                 Subscribe to get the latest courses and tips.
               </p>
-              <form className="flex flex-col gap-3" onSubmit={(e) => e.preventDefault()}>
-                <input
-                  type="email"
-                  placeholder="Enter your email"
-                  className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-neutral-300 placeholder-slate-400 dark:placeholder-neutral-600 text-sm px-4 py-3 rounded-xl outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all w-full shadow-sm"
-                />
-                <button className="bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold px-4 py-3 rounded-xl transition-all shadow-sm hover:shadow-[0_4px_12px_rgba(124,58,237,0.3)] flex items-center justify-center gap-2 group">
+              <form className="flex flex-col gap-3" onSubmit={handleSubmit(onSubmit)}>
+                <div>
+                  <input
+                    type="email"
+                    {...register('email', { 
+                      required: 'Email is required',
+                      pattern: { value: /^\S+@\S+$/i, message: 'Invalid email address' }
+                    })}
+                    placeholder="Enter your email"
+                    className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-neutral-300 placeholder-slate-400 dark:placeholder-neutral-600 text-sm px-4 py-3 rounded-xl outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all w-full shadow-sm"
+                  />
+                  {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email.message as string}</p>}
+                </div>
+                <button type="submit" className="bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold px-4 py-3 rounded-xl transition-all shadow-sm hover:shadow-[0_4px_12px_rgba(124,58,237,0.3)] flex items-center justify-center gap-2 group">
                   Subscribe Now <ArrowRight size={14} weight="bold" className="group-hover:translate-x-1 transition-transform" />
                 </button>
               </form>

@@ -1,6 +1,7 @@
 import { useState } from 'react'
+import { useForm } from 'react-hook-form'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, MagnifyingGlass, PencilSimple, Trash, X, Check, Eye, FunnelSimple } from '@phosphor-icons/react'
+import { Plus, MagnifyingGlass, PencilSimple, Trash, X, Check, Eye, FunnelSimple, Handshake } from '@phosphor-icons/react'
 import type { AdminStore } from '../AdminPage'
 import type { Student } from './adminData'
 
@@ -32,23 +33,21 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   )
 }
 
-function Input({ value, onChange, type = 'text', placeholder }: { value: string | number; onChange: (v: string) => void; type?: string; placeholder?: string }) {
+function Input({ register, name, type = 'text', placeholder, valueAsNumber }: { register: any; name: string; type?: string; placeholder?: string; valueAsNumber?: boolean }) {
   return (
     <input
       type={type}
-      value={value}
-      onChange={e => onChange(e.target.value)}
+      {...register(name, { valueAsNumber })}
       placeholder={placeholder}
       className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-neutral-600 outline-none focus:border-violet-500 dark:focus:border-violet-500 transition-colors"
     />
   )
 }
 
-function Select({ value, onChange, options }: { value: string; onChange: (v: string) => void; options: string[] }) {
+function Select({ register, name, options }: { register: any; name: string; options: string[] }) {
   return (
     <select
-      value={value}
-      onChange={e => onChange(e.target.value)}
+      {...register(name)}
       className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white outline-none focus:border-violet-500 dark:focus:border-violet-500 transition-colors"
     >
       {options.map(o => <option key={o} value={o}>{o}</option>)}
@@ -64,9 +63,13 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
   const [filterPayStatus, setFilterPayStatus] = useState('All')
   const [filterStatus, setFilterStatus] = useState('All')
   const [showFilters, setShowFilters] = useState(false)
-  const [modal, setModal] = useState<{ type: 'add' | 'edit' | 'view'; student: Student } | null>(null)
+  const [modalType, setModalType] = useState<'add' | 'edit' | 'view' | null>(null)
+  const [viewStudent, setViewStudent] = useState<Student | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
-  const [form, setForm] = useState<Student>(EMPTY)
+
+  const { register, handleSubmit, reset } = useForm<Student>({
+    defaultValues: EMPTY
+  })
 
   const countries = ['All', ...Array.from(new Set(students.map(s => s.country))).sort()]
   const filtered = students.filter(s => {
@@ -79,37 +82,34 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
   })
 
   function openAdd() {
-    setForm({ ...EMPTY, id: `s${Date.now()}`, avatar: '' })
-    setModal({ type: 'add', student: EMPTY })
+    reset({ ...EMPTY, id: `s${Date.now()}`, avatar: '' })
+    setModalType('add')
   }
 
   function openEdit(s: Student) {
-    setForm({ ...s })
-    setModal({ type: 'edit', student: s })
+    reset(s)
+    setModalType('edit')
   }
 
   function openView(s: Student) {
-    setModal({ type: 'view', student: s })
+    setViewStudent(s)
+    setModalType('view')
   }
 
-  function handleSave() {
-    const initials = form.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
-    const student = { ...form, avatar: form.avatar || initials }
-    if (modal?.type === 'add') {
+  function onSave(data: Student) {
+    const initials = data.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
+    const student = { ...data, avatar: data.avatar || initials }
+    if (modalType === 'add') {
       setStudents([...students, student])
     } else {
       setStudents(students.map(s => s.id === student.id ? student : s))
     }
-    setModal(null)
+    setModalType(null)
   }
 
   function handleDelete(id: string) {
     setStudents(students.filter(s => s.id !== id))
     setDeleteId(null)
-  }
-
-  function f(key: keyof Student) {
-    return (v: string) => setForm(prev => ({ ...prev, [key]: key === 'paymentAmount' ? Number(v) : v }))
   }
 
   return (
@@ -211,8 +211,18 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
                     </div>
                   </td>
                   <td className="px-4 py-3 text-xs text-slate-600 dark:text-neutral-300 whitespace-nowrap">{s.country}<br /><span className="text-[10px] text-slate-400 dark:text-neutral-600">{s.city}</span></td>
-                  <td className="px-4 py-3 text-xs text-slate-600 dark:text-neutral-300 whitespace-nowrap">{s.courseName}<br /><span className="text-[10px] text-slate-400 dark:text-neutral-600">{s.courseLevel}</span></td>
-                  <td className="px-4 py-3 text-xs text-slate-600 dark:text-neutral-300 whitespace-nowrap">{s.paymentMethod}</td>
+                  <td className="px-4 py-3 text-xs text-slate-600 dark:text-neutral-300 whitespace-nowrap">
+                    {s.courseName}<br />
+                    <span className="text-[10px] text-slate-400 dark:text-neutral-600">{s.courseLevel}</span>
+                  </td>
+                  <td className="px-4 py-3 text-xs text-slate-600 dark:text-neutral-300 whitespace-nowrap">
+                    {s.paymentMethod}
+                    {s.financialAid && (
+                      <div className="mt-1 flex items-center gap-1 w-max px-1.5 py-0.5 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-[9px] font-bold rounded uppercase tracking-wide">
+                        <Handshake size={10} weight="fill" /> Financial Aid
+                      </div>
+                    )}
+                  </td>
                   <td className="px-4 py-3 text-xs font-bold text-slate-900 dark:text-white whitespace-nowrap">{s.paymentCurrency === 'PKR' ? `₨${s.paymentAmount.toLocaleString()}` : `$${s.paymentAmount}`}</td>
                   <td className="px-4 py-3"><Badge value={s.paymentStatus} /></td>
                   <td className="px-4 py-3"><Badge value={s.status} /></td>
@@ -233,81 +243,82 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
 
       {/* ADD / EDIT MODAL */}
       <AnimatePresence>
-        {modal && modal.type !== 'view' && (
+        {modalType && modalType !== 'view' && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-white dark:bg-neutral-900 rounded-[24px] w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-slate-100 dark:border-neutral-800 shadow-2xl">
+            <motion.form onSubmit={handleSubmit(onSave)} initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-white dark:bg-neutral-900 rounded-[24px] w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-slate-100 dark:border-neutral-800 shadow-2xl">
               <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-neutral-800 sticky top-0 bg-white dark:bg-neutral-900 z-10">
-                <h3 className="text-base font-black text-slate-900 dark:text-white">{modal.type === 'add' ? 'Add New Student' : 'Edit Student'}</h3>
-                <button onClick={() => setModal(null)} className="w-8 h-8 rounded-full bg-slate-100 dark:bg-neutral-800 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors"><X size={15} /></button>
+                <h3 className="text-base font-black text-slate-900 dark:text-white">{modalType === 'add' ? 'Add New Student' : 'Edit Student'}</h3>
+                <button type="button" onClick={() => setModalType(null)} className="w-8 h-8 rounded-full bg-slate-100 dark:bg-neutral-800 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors"><X size={15} /></button>
               </div>
               <div className="p-6 grid grid-cols-2 gap-4">
-                <Field label="Full Name"><Input value={form.name} onChange={f('name')} placeholder="Ahmed Ali" /></Field>
-                <Field label="Email"><Input value={form.email} onChange={f('email')} type="email" placeholder="student@email.com" /></Field>
-                <Field label="Phone"><Input value={form.phone} onChange={f('phone')} placeholder="+92 300 0000000" /></Field>
-                <Field label="Country"><Input value={form.country} onChange={f('country')} placeholder="Pakistan" /></Field>
-                <Field label="City"><Input value={form.city} onChange={f('city')} placeholder="Karachi" /></Field>
-                <Field label="Course Name"><Input value={form.courseName} onChange={f('courseName')} placeholder="Business English" /></Field>
-                <Field label="Course Level"><Input value={form.courseLevel} onChange={f('courseLevel')} placeholder="Intermediate" /></Field>
-                <Field label="Payment Method"><Input value={form.paymentMethod} onChange={f('paymentMethod')} placeholder="Easypaisa" /></Field>
+                <Field label="Full Name"><Input register={register} name="name" placeholder="Ahmed Ali" /></Field>
+                <Field label="Email"><Input register={register} name="email" type="email" placeholder="student@email.com" /></Field>
+                <Field label="Phone"><Input register={register} name="phone" placeholder="+92 300 0000000" /></Field>
+                <Field label="Country"><Input register={register} name="country" placeholder="Pakistan" /></Field>
+                <Field label="City"><Input register={register} name="city" placeholder="Karachi" /></Field>
+                <Field label="Course Name"><Input register={register} name="courseName" placeholder="Business English" /></Field>
+                <Field label="Course Level"><Input register={register} name="courseLevel" placeholder="Intermediate" /></Field>
+                <Field label="Payment Method"><Input register={register} name="paymentMethod" placeholder="Easypaisa" /></Field>
                 <Field label="Amount">
                   <div className="flex gap-2">
-                    <select value={form.paymentCurrency} onChange={e => setForm(p => ({ ...p, paymentCurrency: e.target.value }))} className="px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors">
+                    <select {...register('paymentCurrency')} className="px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors">
                       {['PKR', 'USD', 'GBP', 'AED', 'CAD', 'AUD'].map(c => <option key={c}>{c}</option>)}
                     </select>
-                    <Input value={form.paymentAmount} onChange={f('paymentAmount')} type="number" placeholder="0" />
+                    <Input register={register} name="paymentAmount" type="number" placeholder="0" valueAsNumber />
                   </div>
                 </Field>
-                <Field label="Enrolled Date"><Input value={form.enrolledAt} onChange={f('enrolledAt')} type="date" /></Field>
-                <Field label="Payment Status"><Select value={form.paymentStatus} onChange={f('paymentStatus')} options={['paid', 'pending', 'failed']} /></Field>
-                <Field label="Student Status"><Select value={form.status} onChange={f('status')} options={['active', 'inactive', 'completed']} /></Field>
+                <Field label="Enrolled Date"><Input register={register} name="enrolledAt" type="date" /></Field>
+                <Field label="Payment Status"><Select register={register} name="paymentStatus" options={['paid', 'pending', 'failed']} /></Field>
+                <Field label="Student Status"><Select register={register} name="status" options={['active', 'inactive', 'completed']} /></Field>
                 <div className="col-span-2">
                   <Field label="Notes">
-                    <textarea value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} rows={2} placeholder="Any notes about the student…" className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-neutral-600 outline-none focus:border-violet-500 transition-colors resize-none" />
+                    <textarea {...register('notes')} rows={2} placeholder="Any notes about the student…" className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-neutral-600 outline-none focus:border-violet-500 transition-colors resize-none" />
                   </Field>
                 </div>
               </div>
               <div className="flex gap-3 px-6 pb-6">
-                <button onClick={() => setModal(null)} className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-neutral-700 text-sm font-semibold text-slate-600 dark:text-neutral-400 hover:bg-slate-50 dark:hover:bg-neutral-800 transition-colors">Cancel</button>
-                <button onClick={handleSave} className="flex-1 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-bold flex items-center justify-center gap-2 shadow-[0_4px_12px_rgba(124,58,237,0.3)] transition-colors">
-                  <Check size={15} weight="bold" />{modal.type === 'add' ? 'Add Student' : 'Save Changes'}
+                <button type="button" onClick={() => setModalType(null)} className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-neutral-700 text-sm font-semibold text-slate-600 dark:text-neutral-400 hover:bg-slate-50 dark:hover:bg-neutral-800 transition-colors">Cancel</button>
+                <button type="submit" className="flex-1 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-bold flex items-center justify-center gap-2 shadow-[0_4px_12px_rgba(124,58,237,0.3)] transition-colors">
+                  <Check size={15} weight="bold" />{modalType === 'add' ? 'Add Student' : 'Save Changes'}
                 </button>
               </div>
-            </motion.div>
+            </motion.form>
           </motion.div>
         )}
       </AnimatePresence>
 
       {/* VIEW MODAL */}
       <AnimatePresence>
-        {modal?.type === 'view' && (
+        {modalType === 'view' && viewStudent && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
             <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-white dark:bg-neutral-900 rounded-[24px] w-full max-w-lg border border-slate-100 dark:border-neutral-800 shadow-2xl overflow-hidden">
               <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-neutral-800">
                 <h3 className="text-base font-black text-slate-900 dark:text-white">Student Details</h3>
-                <button onClick={() => setModal(null)} className="w-8 h-8 rounded-full bg-slate-100 dark:bg-neutral-800 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors"><X size={15} /></button>
+                <button onClick={() => setModalType(null)} className="w-8 h-8 rounded-full bg-slate-100 dark:bg-neutral-800 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors"><X size={15} /></button>
               </div>
               <div className="p-6">
                 <div className="flex items-center gap-4 mb-6 pb-6 border-b border-slate-100 dark:border-neutral-800">
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white text-lg font-black shadow-lg">{modal.student.avatar}</div>
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white text-lg font-black shadow-lg">{viewStudent.avatar}</div>
                   <div>
-                    <h4 className="text-lg font-black text-slate-900 dark:text-white">{modal.student.name}</h4>
-                    <p className="text-sm text-slate-500 dark:text-neutral-400">{modal.student.email}</p>
+                    <h4 className="text-lg font-black text-slate-900 dark:text-white">{viewStudent.name}</h4>
+                    <p className="text-sm text-slate-500 dark:text-neutral-400">{viewStudent.email}</p>
                     <div className="flex gap-2 mt-1.5">
-                      <Badge value={modal.student.status} />
-                      <Badge value={modal.student.paymentStatus} />
+                      <Badge value={viewStudent.status} />
+                      <Badge value={viewStudent.paymentStatus} />
+                      {viewStudent.financialAid && <Badge value="Financial Aid" />}
                     </div>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   {[
-                    { label: 'Phone', value: modal.student.phone },
-                    { label: 'Country', value: `${modal.student.city}, ${modal.student.country}` },
-                    { label: 'Course', value: modal.student.courseName },
-                    { label: 'Level', value: modal.student.courseLevel },
-                    { label: 'Payment Method', value: modal.student.paymentMethod },
-                    { label: 'Amount', value: modal.student.paymentCurrency === 'PKR' ? `₨${modal.student.paymentAmount.toLocaleString()}` : `$${modal.student.paymentAmount}` },
-                    { label: 'Enrolled', value: modal.student.enrolledAt },
-                    { label: 'Notes', value: modal.student.notes || '—' },
+                    { label: 'Phone', value: viewStudent.phone },
+                    { label: 'Country', value: `${viewStudent.city}, ${viewStudent.country}` },
+                    { label: 'Course', value: viewStudent.courseName },
+                    { label: 'Level', value: viewStudent.courseLevel },
+                    { label: 'Payment Method', value: viewStudent.paymentMethod },
+                    { label: 'Amount', value: viewStudent.paymentCurrency === 'PKR' ? `₨${viewStudent.paymentAmount.toLocaleString()}` : `$${viewStudent.paymentAmount}` },
+                    { label: 'Enrolled', value: viewStudent.enrolledAt },
+                    { label: 'Notes', value: viewStudent.notes || '—' },
                   ].map(({ label, value }) => (
                     <div key={label} className="bg-slate-50 dark:bg-neutral-800/60 rounded-xl p-3">
                       <p className="text-[10px] font-semibold text-slate-400 dark:text-neutral-500 uppercase tracking-wide mb-0.5">{label}</p>
@@ -317,10 +328,10 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
                 </div>
               </div>
               <div className="flex gap-3 px-6 pb-6">
-                <button onClick={() => { setModal(null); setTimeout(() => openEdit(modal.student), 50) }} className="flex-1 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold flex items-center justify-center gap-2 transition-colors">
+                <button onClick={() => { setModalType(null); setTimeout(() => openEdit(viewStudent), 50) }} className="flex-1 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold flex items-center justify-center gap-2 transition-colors">
                   <PencilSimple size={14} />Edit
                 </button>
-                <button onClick={() => { setModal(null); setDeleteId(modal.student.id) }} className="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-bold flex items-center justify-center gap-2 transition-colors">
+                <button onClick={() => { setModalType(null); setDeleteId(viewStudent.id) }} className="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-bold flex items-center justify-center gap-2 transition-colors">
                   <Trash size={14} />Delete
                 </button>
               </div>

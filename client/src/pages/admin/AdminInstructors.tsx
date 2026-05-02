@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useForm } from 'react-hook-form'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, PencilSimple, Trash, X, Check, Star, Eye } from '@phosphor-icons/react'
 import type { AdminStore } from '../AdminPage'
@@ -28,9 +29,9 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   )
 }
 
-function Input({ value, onChange, type = 'text', placeholder }: { value: string | number; onChange: (v: string) => void; type?: string; placeholder?: string }) {
+function Input({ register, name, type = 'text', placeholder, valueAsNumber, step }: { register: any; name: string; type?: string; placeholder?: string; valueAsNumber?: boolean; step?: string }) {
   return (
-    <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
+    <input type={type} {...register(name, { valueAsNumber })} placeholder={placeholder} step={step}
       className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-neutral-600 outline-none focus:border-violet-500 transition-colors"
     />
   )
@@ -38,11 +39,14 @@ function Input({ value, onChange, type = 'text', placeholder }: { value: string 
 
 export default function AdminInstructors({ store }: { store: AdminStore }) {
   const { instructors, setInstructors } = store
-  const [modal, setModal] = useState<{ type: 'add' | 'edit' | 'view'; inst: Instructor } | null>(null)
+  const [modalType, setModalType] = useState<'add' | 'edit' | 'view' | null>(null)
+  const [viewInst, setViewInst] = useState<Instructor | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
-  const [form, setForm] = useState<Instructor>(EMPTY)
-  const [coursesInput, setCoursesInput] = useState('')
   const [search, setSearch] = useState('')
+
+  const { register, handleSubmit, reset } = useForm<Instructor & { coursesInput: string }>({
+    defaultValues: { ...EMPTY, coursesInput: '' }
+  })
 
   const filtered = instructors.filter(i => {
     const q = search.toLowerCase()
@@ -50,46 +54,38 @@ export default function AdminInstructors({ store }: { store: AdminStore }) {
   })
 
   function openAdd() {
-    setForm({ ...EMPTY, id: `i${Date.now()}` })
-    setCoursesInput('')
-    setModal({ type: 'add', inst: EMPTY })
+    reset({ ...EMPTY, id: `i${Date.now()}`, coursesInput: '' })
+    setModalType('add')
   }
 
   function openEdit(inst: Instructor) {
-    setForm({ ...inst })
-    setCoursesInput(inst.courses.join(', '))
-    setModal({ type: 'edit', inst })
+    reset({ ...inst, coursesInput: inst.courses.join(', ') })
+    setModalType('edit')
   }
 
   function openView(inst: Instructor) {
-    setModal({ type: 'view', inst })
+    setViewInst(inst)
+    setModalType('view')
   }
 
-  function handleSave() {
-    const initials = form.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
+  function onSave(data: Instructor & { coursesInput: string }) {
+    const initials = data.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
     const inst: Instructor = {
-      ...form,
-      avatar: form.avatar || initials,
-      courses: coursesInput.split(',').map(c => c.trim()).filter(Boolean),
+      ...data,
+      avatar: data.avatar || initials,
+      courses: data.coursesInput.split(',').map(c => c.trim()).filter(Boolean),
     }
-    if (modal?.type === 'add') {
+    if (modalType === 'add') {
       setInstructors([...instructors, inst])
     } else {
       setInstructors(instructors.map(i => i.id === inst.id ? inst : i))
     }
-    setModal(null)
+    setModalType(null)
   }
 
   function handleDelete(id: string) {
     setInstructors(instructors.filter(i => i.id !== id))
     setDeleteId(null)
-  }
-
-  function f(key: keyof Instructor) {
-    return (v: string) => setForm(prev => ({
-      ...prev,
-      [key]: key === 'totalStudents' || key === 'salary' ? Number(v) : key === 'rating' ? parseFloat(v) : v
-    }))
   }
 
   const AVATAR_GRADIENTS = ['from-violet-500 to-purple-600', 'from-blue-500 to-blue-700', 'from-emerald-500 to-emerald-700', 'from-pink-500 to-rose-600']
@@ -190,83 +186,83 @@ export default function AdminInstructors({ store }: { store: AdminStore }) {
 
       {/* ADD / EDIT MODAL */}
       <AnimatePresence>
-        {modal && modal.type !== 'view' && (
+        {modalType && modalType !== 'view' && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-white dark:bg-neutral-900 rounded-[24px] w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-slate-100 dark:border-neutral-800 shadow-2xl">
+            <motion.form onSubmit={handleSubmit(onSave)} initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-white dark:bg-neutral-900 rounded-[24px] w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-slate-100 dark:border-neutral-800 shadow-2xl">
               <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-neutral-800 sticky top-0 bg-white dark:bg-neutral-900 z-10">
-                <h3 className="text-base font-black text-slate-900 dark:text-white">{modal.type === 'add' ? 'Add Instructor' : 'Edit Instructor'}</h3>
-                <button onClick={() => setModal(null)} className="w-8 h-8 rounded-full bg-slate-100 dark:bg-neutral-800 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors"><X size={15} /></button>
+                <h3 className="text-base font-black text-slate-900 dark:text-white">{modalType === 'add' ? 'Add Instructor' : 'Edit Instructor'}</h3>
+                <button type="button" onClick={() => setModalType(null)} className="w-8 h-8 rounded-full bg-slate-100 dark:bg-neutral-800 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors"><X size={15} /></button>
               </div>
               <div className="p-6 grid grid-cols-2 gap-4">
-                <Field label="Full Name"><Input value={form.name} onChange={f('name')} placeholder="Dr. Sarah Johnson" /></Field>
-                <Field label="Email"><Input value={form.email} onChange={f('email')} type="email" placeholder="sarah@englishpro.com" /></Field>
-                <Field label="Phone"><Input value={form.phone} onChange={f('phone')} placeholder="+92 300 0000000" /></Field>
-                <Field label="Country"><Input value={form.country} onChange={f('country')} placeholder="Pakistan" /></Field>
-                <Field label="Specialization"><Input value={form.specialization} onChange={f('specialization')} placeholder="Business English & IELTS" /></Field>
-                <Field label="Experience"><Input value={form.experience} onChange={f('experience')} placeholder="8 years" /></Field>
-                <Field label="Rating (1–5)"><Input value={form.rating} onChange={f('rating')} type="number" placeholder="4.8" /></Field>
-                <Field label="Monthly Salary (PKR)"><Input value={form.salary} onChange={f('salary')} type="number" placeholder="75000" /></Field>
-                <Field label="Joined Date"><Input value={form.joinedAt} onChange={f('joinedAt')} type="date" /></Field>
+                <Field label="Full Name"><Input register={register} name="name" placeholder="Dr. Sarah Johnson" /></Field>
+                <Field label="Email"><Input register={register} name="email" type="email" placeholder="sarah@englishpro.com" /></Field>
+                <Field label="Phone"><Input register={register} name="phone" placeholder="+92 300 0000000" /></Field>
+                <Field label="Country"><Input register={register} name="country" placeholder="Pakistan" /></Field>
+                <Field label="Specialization"><Input register={register} name="specialization" placeholder="Business English & IELTS" /></Field>
+                <Field label="Experience"><Input register={register} name="experience" placeholder="8 years" /></Field>
+                <Field label="Rating (1–5)"><Input register={register} name="rating" type="number" step="0.1" placeholder="4.8" valueAsNumber /></Field>
+                <Field label="Monthly Salary (PKR)"><Input register={register} name="salary" type="number" placeholder="75000" valueAsNumber /></Field>
+                <Field label="Joined Date"><Input register={register} name="joinedAt" type="date" /></Field>
                 <Field label="Status">
-                  <select value={form.status} onChange={e => setForm(p => ({ ...p, status: e.target.value as 'active' | 'inactive' }))} className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors">
+                  <select {...register('status')} className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors">
                     <option value="active">Active</option>
                     <option value="inactive">Inactive</option>
                   </select>
                 </Field>
                 <div className="col-span-2">
                   <Field label="Courses (comma-separated)">
-                    <input value={coursesInput} onChange={e => setCoursesInput(e.target.value)} placeholder="Business English, IELTS Prep" className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-neutral-600 outline-none focus:border-violet-500 transition-colors" />
+                    <input {...register('coursesInput')} placeholder="Business English, IELTS Prep" className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-neutral-600 outline-none focus:border-violet-500 transition-colors" />
                   </Field>
                 </div>
                 <div className="col-span-2">
                   <Field label="Bio">
-                    <textarea value={form.bio} onChange={e => setForm(p => ({ ...p, bio: e.target.value }))} rows={3} placeholder="Short bio about the instructor…" className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-neutral-600 outline-none focus:border-violet-500 transition-colors resize-none" />
+                    <textarea {...register('bio')} rows={3} placeholder="Short bio about the instructor…" className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-neutral-600 outline-none focus:border-violet-500 transition-colors resize-none" />
                   </Field>
                 </div>
               </div>
               <div className="flex gap-3 px-6 pb-6">
-                <button onClick={() => setModal(null)} className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-neutral-700 text-sm font-semibold text-slate-600 dark:text-neutral-400 hover:bg-slate-50 dark:hover:bg-neutral-800 transition-colors">Cancel</button>
-                <button onClick={handleSave} className="flex-1 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-bold flex items-center justify-center gap-2 shadow-[0_4px_12px_rgba(124,58,237,0.3)] transition-colors">
-                  <Check size={15} weight="bold" />{modal.type === 'add' ? 'Add Instructor' : 'Save Changes'}
+                <button type="button" onClick={() => setModalType(null)} className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-neutral-700 text-sm font-semibold text-slate-600 dark:text-neutral-400 hover:bg-slate-50 dark:hover:bg-neutral-800 transition-colors">Cancel</button>
+                <button type="submit" className="flex-1 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-bold flex items-center justify-center gap-2 shadow-[0_4px_12px_rgba(124,58,237,0.3)] transition-colors">
+                  <Check size={15} weight="bold" />{modalType === 'add' ? 'Add Instructor' : 'Save Changes'}
                 </button>
               </div>
-            </motion.div>
+            </motion.form>
           </motion.div>
         )}
       </AnimatePresence>
 
       {/* VIEW MODAL */}
       <AnimatePresence>
-        {modal?.type === 'view' && (
+        {modalType === 'view' && viewInst && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
             <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-white dark:bg-neutral-900 rounded-[24px] w-full max-w-md border border-slate-100 dark:border-neutral-800 shadow-2xl overflow-hidden">
               <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-neutral-800">
                 <h3 className="text-base font-black text-slate-900 dark:text-white">Instructor Profile</h3>
-                <button onClick={() => setModal(null)} className="w-8 h-8 rounded-full bg-slate-100 dark:bg-neutral-800 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors"><X size={15} /></button>
+                <button onClick={() => setModalType(null)} className="w-8 h-8 rounded-full bg-slate-100 dark:bg-neutral-800 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors"><X size={15} /></button>
               </div>
               <div className="p-6">
                 <div className="flex items-center gap-4 mb-5">
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white text-lg font-black shadow-lg">{modal.inst.avatar}</div>
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white text-lg font-black shadow-lg">{viewInst.avatar}</div>
                   <div>
-                    <h4 className="text-base font-black text-slate-900 dark:text-white">{modal.inst.name}</h4>
-                    <p className="text-xs text-slate-500">{modal.inst.specialization}</p>
+                    <h4 className="text-base font-black text-slate-900 dark:text-white">{viewInst.name}</h4>
+                    <p className="text-xs text-slate-500">{viewInst.specialization}</p>
                     <div className="flex items-center gap-1 mt-1">
                       <Star size={11} weight="fill" className="text-amber-400" />
-                      <span className="text-xs font-bold">{modal.inst.rating}</span>
-                      <Badge value={modal.inst.status} />
+                      <span className="text-xs font-bold">{viewInst.rating}</span>
+                      <Badge value={viewInst.status} />
                     </div>
                   </div>
                 </div>
-                <p className="text-xs text-slate-500 dark:text-neutral-400 mb-4 leading-relaxed">{modal.inst.bio}</p>
+                <p className="text-xs text-slate-500 dark:text-neutral-400 mb-4 leading-relaxed">{viewInst.bio}</p>
                 <div className="grid grid-cols-2 gap-2">
                   {[
-                    { label: 'Email', value: modal.inst.email },
-                    { label: 'Phone', value: modal.inst.phone },
-                    { label: 'Country', value: modal.inst.country },
-                    { label: 'Experience', value: modal.inst.experience },
-                    { label: 'Total Students', value: modal.inst.totalStudents },
-                    { label: 'Joined', value: modal.inst.joinedAt },
-                    { label: 'Salary', value: `₨${modal.inst.salary.toLocaleString()}` },
+                    { label: 'Email', value: viewInst.email },
+                    { label: 'Phone', value: viewInst.phone },
+                    { label: 'Country', value: viewInst.country },
+                    { label: 'Experience', value: viewInst.experience },
+                    { label: 'Total Students', value: viewInst.totalStudents },
+                    { label: 'Joined', value: viewInst.joinedAt },
+                    { label: 'Salary', value: `₨${viewInst.salary.toLocaleString()}` },
                   ].map(({ label, value }) => (
                     <div key={label} className="bg-slate-50 dark:bg-neutral-800/60 rounded-xl p-2.5">
                       <p className="text-[10px] text-slate-400 dark:text-neutral-500 font-semibold uppercase tracking-wide mb-0.5">{label}</p>
@@ -277,13 +273,13 @@ export default function AdminInstructors({ store }: { store: AdminStore }) {
                 <div className="mt-3">
                   <p className="text-[10px] text-slate-400 dark:text-neutral-500 font-semibold uppercase tracking-wide mb-2">Courses</p>
                   <div className="flex flex-wrap gap-1">
-                    {modal.inst.courses.map(c => <span key={c} className="px-2 py-0.5 bg-violet-50 dark:bg-violet-950/30 text-violet-700 dark:text-violet-400 text-[10px] font-semibold rounded-lg border border-violet-100 dark:border-violet-900">{c}</span>)}
+                    {viewInst.courses.map(c => <span key={c} className="px-2 py-0.5 bg-violet-50 dark:bg-violet-950/30 text-violet-700 dark:text-violet-400 text-[10px] font-semibold rounded-lg border border-violet-100 dark:border-violet-900">{c}</span>)}
                   </div>
                 </div>
               </div>
               <div className="flex gap-3 px-6 pb-6">
-                <button onClick={() => { setModal(null); setTimeout(() => openEdit(modal.inst), 50) }} className="flex-1 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold flex items-center justify-center gap-2 transition-colors"><PencilSimple size={14} />Edit</button>
-                <button onClick={() => { setModal(null); setDeleteId(modal.inst.id) }} className="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-bold flex items-center justify-center gap-2 transition-colors"><Trash size={14} />Delete</button>
+                <button onClick={() => { setModalType(null); setTimeout(() => openEdit(viewInst), 50) }} className="flex-1 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold flex items-center justify-center gap-2 transition-colors"><PencilSimple size={14} />Edit</button>
+                <button onClick={() => { setModalType(null); setDeleteId(viewInst.id) }} className="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-bold flex items-center justify-center gap-2 transition-colors"><Trash size={14} />Delete</button>
               </div>
             </motion.div>
           </motion.div>
