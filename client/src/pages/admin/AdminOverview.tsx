@@ -1,12 +1,40 @@
 import { motion } from 'framer-motion'
-import { Users, BookOpen, CreditCard, TrendUp, Globe, ChartPieSlice, ArrowRight, Student } from '@phosphor-icons/react'
+import { Users, BookOpen, CreditCard, TrendUp, Globe, ChartPieSlice, ArrowRight, Student, Handshake } from '@phosphor-icons/react'
 import type { AdminStore } from '../AdminPage'
 import type { AdminView } from '../AdminPage'
+
+const FLAG_MAP: Record<string, string> = {
+  'Pakistan': '🇵🇰',
+  'India': '🇮🇳',
+  'United Kingdom': '🇬🇧',
+  'UK': '🇬🇧',
+  'United States': '🇺🇸',
+  'USA': '🇺🇸',
+  'Canada': '🇨🇦',
+  'Australia': '🇦🇺',
+  'UAE': '🇦🇪',
+  'Saudi Arabia': '🇸🇦',
+  'Bangladesh': '🇧🇩',
+}
+
+const AVATAR_GRADIENTS = [
+  'from-violet-500 to-purple-600',
+  'from-blue-500 to-blue-700',
+  'from-emerald-500 to-emerald-700',
+  'from-amber-500 to-orange-600',
+]
+
+function getGreeting(hour = new Date().getHours()) {
+  if (hour < 12) return 'Good morning'
+  if (hour < 17) return 'Good afternoon'
+  return 'Good evening'
+}
 
 const card = { initial: { opacity: 0, y: 16 }, animate: { opacity: 1, y: 0 } }
 
 export default function AdminOverview({ store, onNavigate }: { store: AdminStore; onNavigate: (v: AdminView) => void }) {
-  const { students, instructors, courses } = store
+  const { students, instructors, courses, financialAidApps } = store
+  const now = new Date()
 
   const totalRevenuePKR = students
     .filter(s => s.paymentStatus === 'paid' && s.paymentCurrency === 'PKR')
@@ -38,10 +66,23 @@ export default function AdminOverview({ store, onNavigate }: { store: AdminStore
     { label: 'Total Courses', value: courses.filter(c => c.status === 'active').length, sub: `${courses.length} total`, Icon: BookOpen, color: 'from-blue-500 to-blue-700', glow: 'rgba(59,130,246,0.35)', view: 'courses' as AdminView },
     { label: 'Instructors', value: instructors.length, sub: `${instructors.filter(i => i.status === 'active').length} active`, Icon: Student, color: 'from-emerald-500 to-emerald-700', glow: 'rgba(16,185,129,0.35)', view: 'instructors' as AdminView },
     { label: 'Revenue (PKR)', value: `₨${totalRevenuePKR.toLocaleString()}`, sub: `${students.filter(s => s.paymentStatus === 'paid').length} paid`, Icon: CreditCard, color: 'from-amber-500 to-orange-600', glow: 'rgba(245,158,11,0.35)', view: 'payments' as AdminView },
+    { label: 'Financial Aid', value: financialAidApps.length, sub: `${financialAidApps.filter(a => a.status === 'pending' || a.status === 'under_review').length} pending/review`, Icon: Handshake, color: 'from-pink-500 to-rose-600', glow: 'rgba(244,63,94,0.35)', view: 'financial-aid' as AdminView },
   ]
 
   return (
-    <div className="p-4 sm:p-6 space-y-6 max-w-7xl mx-auto">
+    <div className="relative p-4 sm:p-6 space-y-6 max-w-7xl mx-auto overflow-hidden">
+      <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-violet-200/30 dark:bg-violet-900/15 rounded-full blur-[100px] pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-purple-200/20 dark:bg-purple-900/10 rounded-full blur-[80px] pointer-events-none" />
+
+      {/* Welcome strip */}
+      <motion.div {...card} className="relative">
+        <h2 className="text-2xl font-black text-slate-900 dark:text-white">
+          {getGreeting(now.getHours())}, Admin 👋
+        </h2>
+        <p className="text-sm text-slate-400 dark:text-neutral-500 mt-0.5">
+          {now.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+        </p>
+      </motion.div>
 
       {/* Alert strip */}
       {(pendingPayments > 0 || failedPayments > 0) && (
@@ -62,7 +103,7 @@ export default function AdminOverview({ store, onNavigate }: { store: AdminStore
       )}
 
       {/* Stat cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         {STAT_CARDS.map((s, i) => (
           <motion.button
             key={s.label}
