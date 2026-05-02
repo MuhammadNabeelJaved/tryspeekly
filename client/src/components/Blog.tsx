@@ -47,7 +47,7 @@ export default function Blog() {
   const isInView = useInView(ref, { once: true, margin: '-80px' })
 
   return (
-    <section id="blog" className="bg-gray-50 dark:bg-neutral-950 py-16 md:py-20 lg:py-28 transition-colors duration-300">
+    <section id="blog" className="bg-gray-50 dark:bg-neutral-950 py-16 lg:py-24 transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* Section header */}

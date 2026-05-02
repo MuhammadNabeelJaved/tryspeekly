@@ -3,6 +3,7 @@ import Hero from '@/components/Hero'
 import Stats from '@/components/Stats'
 import Features from '@/components/Features'
 import HowItWorks from '@/components/HowItWorks'
+import FinancialAidSection from '@/components/FinancialAidSection'
 import Testimonials from '@/components/Testimonials'
 import Reviews from '@/components/Reviews'
 import Process from '@/components/Process'
@@ -42,6 +43,7 @@ export default function Home() {
       <motion.div variants={sectionVariants}><Stats /></motion.div>
       <motion.div variants={sectionVariants}><Features /></motion.div>
       <motion.div variants={sectionVariants}><HowItWorks /></motion.div>
+      <motion.div variants={sectionVariants}><FinancialAidSection /></motion.div>
       <motion.div variants={sectionVariants}><Testimonials /></motion.div>
       <motion.div variants={sectionVariants}><Reviews /></motion.div>
       <motion.div variants={sectionVariants}><Process /></motion.div>
