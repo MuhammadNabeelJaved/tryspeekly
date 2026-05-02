@@ -237,18 +237,18 @@ export default function AdminOverview({ store, onNavigate }: { store: AdminStore
         {/* Recent enrollments */}
         <motion.div {...card} transition={{ delay: 0.2 }} className="lg:col-span-2 bg-white dark:bg-neutral-900 rounded-[20px] border border-slate-100 dark:border-neutral-800 overflow-hidden">
           <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-neutral-800">
-            <div className="flex items-center gap-2">
-              <TrendUp size={16} weight="fill" className="text-violet-500" />
-              <h2 className="text-sm font-bold text-slate-900 dark:text-white">Recent Enrollments</h2>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-100 dark:bg-violet-900/30 border border-violet-200 dark:border-violet-700/50">
+              <TrendUp size={13} weight="fill" className="text-violet-600 dark:text-violet-400" />
+              <span className="text-violet-700 dark:text-violet-300 text-xs font-bold tracking-wide uppercase">Recent Enrollments</span>
             </div>
-            <button onClick={() => onNavigate('students')} className="text-xs text-violet-600 dark:text-violet-400 font-semibold hover:underline flex items-center gap-1">
+            <button type="button" onClick={() => onNavigate('students')} className="text-xs text-violet-600 dark:text-violet-400 font-semibold hover:underline flex items-center gap-1">
               View all <ArrowRight size={11} />
             </button>
           </div>
           <div className="divide-y divide-slate-50 dark:divide-neutral-800">
-            {recentStudents.map(s => (
+            {recentStudents.map((s, idx) => (
               <div key={s.id} className="flex items-center gap-3 px-5 py-3 hover:bg-slate-50 dark:hover:bg-neutral-800/50 transition-colors">
-                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                <div className={`w-8 h-8 rounded-xl bg-gradient-to-br ${AVATAR_GRADIENTS[idx % AVATAR_GRADIENTS.length]} flex items-center justify-center text-white text-xs font-bold flex-shrink-0`}>
                   {s.avatar}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -273,20 +273,24 @@ export default function AdminOverview({ store, onNavigate }: { store: AdminStore
         {/* Countries */}
         <motion.div {...card} transition={{ delay: 0.25 }} className="bg-white dark:bg-neutral-900 rounded-[20px] border border-slate-100 dark:border-neutral-800 overflow-hidden">
           <div className="flex items-center gap-2 px-5 py-4 border-b border-slate-100 dark:border-neutral-800">
-            <Globe size={16} weight="fill" className="text-emerald-500" />
-            <h2 className="text-sm font-bold text-slate-900 dark:text-white">Students by Country</h2>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700/50">
+              <Globe size={13} weight="fill" className="text-emerald-600 dark:text-emerald-400" />
+              <span className="text-emerald-700 dark:text-emerald-300 text-xs font-bold tracking-wide uppercase">Students by Country</span>
+            </div>
           </div>
           <div className="p-5 space-y-3">
             {topCountries.map(([country, count]) => (
               <div key={country}>
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-semibold text-slate-700 dark:text-neutral-300 truncate">{country}</span>
+                  <span className="text-xs font-semibold text-slate-700 dark:text-neutral-300 truncate">
+                    {FLAG_MAP[country] ? `${FLAG_MAP[country]} ` : ''}{country}
+                  </span>
                   <span className="text-xs font-bold text-slate-500 dark:text-neutral-400 flex-shrink-0 ml-2">{count}</span>
                 </div>
-                <div className="h-1.5 bg-slate-100 dark:bg-neutral-800 rounded-full overflow-hidden">
+                <div className="h-2.5 bg-slate-100 dark:bg-neutral-800 rounded-full overflow-hidden">
                   <motion.div
                     initial={{ width: 0 }}
-                    animate={{ width: `${(count / students.length) * 100}%` }}
+                    animate={{ width: `${(count / (students.length || 1)) * 100}%` }}
                     transition={{ duration: 0.8, delay: 0.3 }}
                     className="h-full bg-gradient-to-r from-violet-500 to-purple-600 rounded-full"
                   />
@@ -303,8 +307,10 @@ export default function AdminOverview({ store, onNavigate }: { store: AdminStore
         {/* Payment methods */}
         <motion.div {...card} transition={{ delay: 0.3 }} className="bg-white dark:bg-neutral-900 rounded-[20px] border border-slate-100 dark:border-neutral-800 overflow-hidden">
           <div className="flex items-center gap-2 px-5 py-4 border-b border-slate-100 dark:border-neutral-800">
-            <ChartPieSlice size={16} weight="fill" className="text-blue-500" />
-            <h2 className="text-sm font-bold text-slate-900 dark:text-white">Payment Methods</h2>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700/50">
+              <ChartPieSlice size={13} weight="fill" className="text-blue-600 dark:text-blue-400" />
+              <span className="text-blue-700 dark:text-blue-300 text-xs font-bold tracking-wide uppercase">Payment Methods</span>
+            </div>
           </div>
           <div className="p-5 space-y-3">
             {payMethods.map(([method, count]) => (
@@ -312,12 +318,12 @@ export default function AdminOverview({ store, onNavigate }: { store: AdminStore
                 <div className="flex-1">
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-xs font-semibold text-slate-700 dark:text-neutral-300">{method}</span>
-                    <span className="text-xs font-bold text-slate-500 dark:text-neutral-400">{count} ({Math.round((count / students.length) * 100)}%)</span>
+                    <span className="text-xs font-bold text-slate-500 dark:text-neutral-400">{count} ({Math.round((count / (students.length || 1)) * 100)}%)</span>
                   </div>
-                  <div className="h-1.5 bg-slate-100 dark:bg-neutral-800 rounded-full overflow-hidden">
+                  <div className="h-2.5 bg-blue-50 dark:bg-blue-950/20 rounded-full overflow-hidden">
                     <motion.div
                       initial={{ width: 0 }}
-                      animate={{ width: `${(count / students.length) * 100}%` }}
+                      animate={{ width: `${(count / (students.length || 1)) * 100}%` }}
                       transition={{ duration: 0.8, delay: 0.4 }}
                       className="h-full bg-gradient-to-r from-blue-400 to-blue-600 rounded-full"
                     />
@@ -331,8 +337,10 @@ export default function AdminOverview({ store, onNavigate }: { store: AdminStore
         {/* Course enrollment */}
         <motion.div {...card} transition={{ delay: 0.35 }} className="bg-white dark:bg-neutral-900 rounded-[20px] border border-slate-100 dark:border-neutral-800 overflow-hidden">
           <div className="flex items-center gap-2 px-5 py-4 border-b border-slate-100 dark:border-neutral-800">
-            <BookOpen size={16} weight="fill" className="text-amber-500" />
-            <h2 className="text-sm font-bold text-slate-900 dark:text-white">Enrollment by Course</h2>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700/50">
+              <BookOpen size={13} weight="fill" className="text-amber-600 dark:text-amber-400" />
+              <span className="text-amber-700 dark:text-amber-300 text-xs font-bold tracking-wide uppercase">Enrollment by Course</span>
+            </div>
           </div>
           <div className="p-5 space-y-3">
             {topCourses.map(([course, count]) => (
@@ -341,10 +349,10 @@ export default function AdminOverview({ store, onNavigate }: { store: AdminStore
                   <span className="text-xs font-semibold text-slate-700 dark:text-neutral-300 truncate">{course}</span>
                   <span className="text-xs font-bold text-slate-500 dark:text-neutral-400 flex-shrink-0 ml-2">{count}</span>
                 </div>
-                <div className="h-1.5 bg-slate-100 dark:bg-neutral-800 rounded-full overflow-hidden">
+                <div className="h-2.5 bg-amber-50 dark:bg-amber-950/20 rounded-full overflow-hidden">
                   <motion.div
                     initial={{ width: 0 }}
-                    animate={{ width: `${(count / students.length) * 100}%` }}
+                    animate={{ width: `${(count / (students.length || 1)) * 100}%` }}
                     transition={{ duration: 0.8, delay: 0.4 }}
                     className="h-full bg-gradient-to-r from-amber-400 to-orange-500 rounded-full"
                   />
