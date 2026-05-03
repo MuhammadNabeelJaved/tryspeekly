@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, MagnifyingGlass, PencilSimple, Trash, X, Check, Eye, FunnelSimple, Handshake } from '@phosphor-icons/react'
+import { Plus, MagnifyingGlass, PencilSimple, Trash, X, Check, Eye, FunnelSimple, Handshake, Certificate } from '@phosphor-icons/react'
 import type { AdminStore } from '../AdminPage'
 import type { Student } from './adminData'
 
@@ -10,6 +10,7 @@ const EMPTY: Student = {
   courseId: '', courseName: '', courseLevel: '', paymentMethod: '',
   paymentAmount: 0, paymentCurrency: 'PKR', paymentStatus: 'pending',
   enrolledAt: new Date().toISOString().split('T')[0], status: 'active', notes: '', avatar: '',
+  attendance: 0, certificateId: '', certificateIssueDate: ''
 }
 
 function Badge({ value }: { value: string }) {
@@ -94,6 +95,19 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
   function openView(s: Student) {
     setViewStudent(s)
     setModalType('view')
+  }
+
+  function handleIssueCertificate(s: Student) {
+    const updated = {
+      ...s,
+      status: 'completed' as const,
+      certificateId: s.certificateId || `EP-${new Date().getFullYear()}-${Math.floor(Math.random() * 10000)}X`,
+      certificateIssueDate: s.certificateIssueDate || new Date().toISOString().split('T')[0]
+    }
+    setStudents(students.map(st => st.id === s.id ? updated : st))
+    if (modalType === 'view' && viewStudent?.id === s.id) {
+      setViewStudent(updated)
+    }
   }
 
   function onSave(data: Student) {
@@ -229,9 +243,10 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
                   <td className="px-4 py-3 text-[10px] text-slate-400 dark:text-neutral-600 whitespace-nowrap">{s.enrolledAt}</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button onClick={() => openView(s)} className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-neutral-800 hover:bg-violet-100 dark:hover:bg-violet-950/40 text-slate-500 hover:text-violet-600 dark:hover:text-violet-400 flex items-center justify-center transition-colors"><Eye size={13} /></button>
-                      <button onClick={() => openEdit(s)} className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-neutral-800 hover:bg-amber-100 dark:hover:bg-amber-950/40 text-slate-500 hover:text-amber-600 dark:hover:text-amber-400 flex items-center justify-center transition-colors"><PencilSimple size={13} /></button>
-                      <button onClick={() => setDeleteId(s.id)} className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-neutral-800 hover:bg-red-100 dark:hover:bg-red-950/40 text-slate-500 hover:text-red-600 dark:hover:text-red-400 flex items-center justify-center transition-colors"><Trash size={13} /></button>
+                      <button onClick={() => openView(s)} className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-neutral-800 hover:bg-violet-100 dark:hover:bg-violet-950/40 text-slate-500 hover:text-violet-600 dark:hover:text-violet-400 flex items-center justify-center transition-colors" title="View"><Eye size={13} /></button>
+                      <button onClick={() => openEdit(s)} className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-neutral-800 hover:bg-amber-100 dark:hover:bg-amber-950/40 text-slate-500 hover:text-amber-600 dark:hover:text-amber-400 flex items-center justify-center transition-colors" title="Edit"><PencilSimple size={13} /></button>
+                      <button onClick={() => handleIssueCertificate(s)} className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-neutral-800 hover:bg-green-100 dark:hover:bg-green-950/40 text-slate-500 hover:text-green-600 dark:hover:text-green-400 flex items-center justify-center transition-colors" title="Issue Certificate"><Certificate size={13} /></button>
+                      <button onClick={() => setDeleteId(s.id)} className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-neutral-800 hover:bg-red-100 dark:hover:bg-red-950/40 text-slate-500 hover:text-red-600 dark:hover:text-red-400 flex items-center justify-center transition-colors" title="Delete"><Trash size={13} /></button>
                     </div>
                   </td>
                 </tr>
@@ -270,7 +285,15 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
                 <Field label="Enrolled Date"><Input register={register} name="enrolledAt" type="date" /></Field>
                 <Field label="Payment Status"><Select register={register} name="paymentStatus" options={['paid', 'pending', 'failed']} /></Field>
                 <Field label="Student Status"><Select register={register} name="status" options={['active', 'inactive', 'completed']} /></Field>
-                <div className="col-span-2">
+                <div className="col-span-2 border-t border-slate-100 dark:border-neutral-800 pt-4 mt-2">
+                  <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-3">Academic Progress & Certification</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <Field label="Attendance (%)"><Input register={register} name="attendance" type="number" placeholder="85" valueAsNumber /></Field>
+                    <Field label="Certificate ID (Leave empty to auto-generate)"><Input register={register} name="certificateId" placeholder="EP-2026-1234X" /></Field>
+                    <Field label="Certificate Issue Date"><Input register={register} name="certificateIssueDate" type="date" /></Field>
+                  </div>
+                </div>
+                <div className="col-span-2 border-t border-slate-100 dark:border-neutral-800 pt-4 mt-2">
                   <Field label="Notes">
                     <textarea {...register('notes')} rows={2} placeholder="Any notes about the student…" className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-neutral-600 outline-none focus:border-violet-500 transition-colors resize-none" />
                   </Field>
@@ -306,15 +329,18 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
                       <Badge value={viewStudent.status} />
                       <Badge value={viewStudent.paymentStatus} />
                       {viewStudent.financialAid && <Badge value="Financial Aid" />}
+                      {viewStudent.certificateId && <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-yellow-100 text-yellow-700 flex items-center gap-1"><Certificate size={10} weight="fill"/> Certified</span>}
                     </div>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-3 mb-4">
                   {[
                     { label: 'Phone', value: viewStudent.phone },
                     { label: 'Country', value: `${viewStudent.city}, ${viewStudent.country}` },
                     { label: 'Course', value: viewStudent.courseName },
                     { label: 'Level', value: viewStudent.courseLevel },
+                    { label: 'Attendance', value: `${viewStudent.attendance || 0}%` },
+                    { label: 'Cert ID', value: viewStudent.certificateId || 'Not issued' },
                     { label: 'Payment Method', value: viewStudent.paymentMethod },
                     { label: 'Amount', value: viewStudent.paymentCurrency === 'PKR' ? `₨${viewStudent.paymentAmount.toLocaleString()}` : `$${viewStudent.paymentAmount}` },
                     { label: 'Enrolled', value: viewStudent.enrolledAt },

@@ -37,7 +37,7 @@ function AnimatedCounter({ from, to, duration = 1.5, format }: { from: number, t
 
 const CATEGORIES = ['All', 'General English', 'IELTS Prep', 'Business English', 'Kids & Teens', 'Speaking']
 
-const COURSES = [
+export const COURSES = [
   {
     id: 1,
     title: 'General English Mastery',

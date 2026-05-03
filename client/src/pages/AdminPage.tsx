@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react'
+import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  ChartBar, Users, Chalkboard, BookOpen, CreditCard, Wallet, PencilSimple,
+  ChartBar, Users, Chalkboard, BookOpen, CreditCard, PencilSimple,
   List, X, SignOut, Bell, MagnifyingGlass, Sun, Moon, GearSix,
-  Lock, Eye, EyeSlash, Handshake
+  Lock, Eye, EyeSlash, Handshake, Certificate
 } from '@phosphor-icons/react'
 import type { Student, Instructor, Course, CMSPage, FinancialAidApp } from './admin/adminData'
 import { INITIAL_STUDENTS, INITIAL_INSTRUCTORS, INITIAL_COURSES, INITIAL_CMS_PAGES, INITIAL_FINANCIAL_AID } from './admin/adminData'
@@ -12,6 +13,7 @@ import AdminOverview from './admin/AdminOverview'
 import AdminStudents from './admin/AdminStudents'
 import AdminInstructors from './admin/AdminInstructors'
 import AdminCourses from './admin/AdminCourses'
+import AdminCertificates from './admin/AdminCertificates'
 import AdminPaymentsView from './admin/AdminPaymentsView'
 import AdminPaymentsSetup from './admin/AdminPaymentsSetup'
 import AdminFinancialAid from './admin/AdminFinancialAid'
@@ -20,7 +22,7 @@ import AdminSettings from './admin/AdminSettings'
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 
-export type AdminView = 'overview' | 'students' | 'instructors' | 'courses' | 'payments' | 'payments-setup' | 'financial-aid' | 'cms' | 'settings'
+export type AdminView = 'overview' | 'students' | 'instructors' | 'courses' | 'certificates' | 'payments' | 'payments-setup' | 'financial-aid' | 'cms' | 'settings'
 
 export interface AdminStore {
   students: Student[]
@@ -39,21 +41,21 @@ export interface AdminStore {
 
 const ADMIN_PASSWORD = 'admin123'
 
-type NavItem = { view: AdminView; label: string; Icon: React.FC<{ size?: number; weight?: string; className?: string }> }
+type NavItem = { view: AdminView; label: string; path: string; Icon: React.FC<{ size?: number; weight?: string; className?: string }> }
 
 const NAV_ANALYTICS: NavItem[] = [
-  { view: 'overview',     label: 'Overview',     Icon: ChartBar as NavItem['Icon'] },
-  { view: 'students',     label: 'Students',     Icon: Users as NavItem['Icon'] },
-  { view: 'instructors',  label: 'Instructors',  Icon: Chalkboard as NavItem['Icon'] },
+  { view: 'overview',     label: 'Overview',     path: '',          Icon: ChartBar as NavItem['Icon'] },
+  { view: 'students',     label: 'Students',     path: 'students',    Icon: Users as NavItem['Icon'] },
+  { view: 'instructors',  label: 'Instructors',  path: 'instructors', Icon: Chalkboard as NavItem['Icon'] },
 ]
 
 const NAV_MANAGEMENT: NavItem[] = [
-  { view: 'courses',        label: 'Courses',       Icon: BookOpen as NavItem['Icon'] },
-  { view: 'payments',       label: 'Payments',      Icon: CreditCard as NavItem['Icon'] },
-  { view: 'payments-setup', label: 'Pay. Setup',    Icon: Wallet as NavItem['Icon'] },
-  { view: 'financial-aid',  label: 'Financial Aid', Icon: Handshake as NavItem['Icon'] },
-  { view: 'cms',            label: 'CMS Editor',    Icon: PencilSimple as NavItem['Icon'] },
-  { view: 'settings',       label: 'Settings',      Icon: GearSix as NavItem['Icon'] },
+  { view: 'courses',        label: 'Courses',       path: 'courses',        Icon: BookOpen as NavItem['Icon'] },
+  { view: 'certificates',   label: 'Certificates',  path: 'certificates',   Icon: Certificate as NavItem['Icon'] },
+  { view: 'payments',       label: 'Payments',      path: 'payments',       Icon: CreditCard as NavItem['Icon'] },
+  { view: 'cms',            label: 'CMS Editor',    path: 'cms',            Icon: PencilSimple as NavItem['Icon'] },
+  { view: 'financial-aid',  label: 'Financial Aid', path: 'financial-aid',  Icon: Handshake as NavItem['Icon'] },
+  { view: 'settings',       label: 'Settings',      path: 'settings',       Icon: GearSix as NavItem['Icon'] },
 ]
 
 // ─── LOGIN SCREEN ─────────────────────────────────────────────────────────────
@@ -153,11 +155,24 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
 // ─── MAIN ADMIN COMPONENT ─────────────────────────────────────────────────────
 
 export default function AdminPage() {
+  const navigate = useNavigate()
+  const location = useLocation()
+  
   const [authed, setAuthed] = useState(() => sessionStorage.getItem('admin_authed') === '1')
-  const [activeView, setActiveView] = useState<AdminView>('overview')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [darkMode, setDarkMode] = useState(() => document.documentElement.classList.contains('dark'))
   const [notifications] = useState(3)
+
+  const currentPath = location.pathname.replace('/admin', '').replace(/^\//, '')
+  const allNavItems = [...NAV_ANALYTICS, ...NAV_MANAGEMENT]
+  const activeView = allNavItems.find(item => item.path === currentPath)?.view || 'overview'
+
+  function handleNavigate(view: AdminView) {
+    const item = allNavItems.find(n => n.view === view)
+    if (item) {
+      navigate(`/admin${item.path ? `/${item.path}` : ''}`)
+    }
+  }
 
   const [students, setStudents] = useState<Student[]>(() => {
     try { return JSON.parse(localStorage.getItem('admin_students') || 'null') ?? INITIAL_STUDENTS }
@@ -206,7 +221,7 @@ export default function AdminPage() {
   const paymentAlerts = students.filter(s => s.paymentStatus === 'pending' || s.paymentStatus === 'failed').length
   const aidPending = financialAidApps.filter(a => a.status === 'pending' || a.status === 'under_review').length
 
-  const renderNavItem = ({ view, label, Icon }: NavItem) => {
+  const renderNavItem = ({ view, label, path, Icon }: NavItem) => {
     const active = activeView === view
     const badge =
       view === 'students' ? students.length :
@@ -216,7 +231,7 @@ export default function AdminPage() {
 
     return (
       <button
-        onClick={() => { setActiveView(view); setSidebarOpen(false) }}
+        onClick={() => { navigate(`/admin${path ? `/${path}` : ''}`); setSidebarOpen(false) }}
         className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm font-semibold transition-all duration-150 ${
           active
             ? 'bg-violet-600 text-white shadow-[0_4px_12px_rgba(124,58,237,0.3)]'
@@ -240,7 +255,6 @@ export default function AdminPage() {
 
   const store: AdminStore = { students, instructors, courses, cmsPages, financialAidApps, setStudents, setInstructors, setCourses, setCmsPages, setFinancialAidApps }
 
-  const allNavItems = [...NAV_ANALYTICS, ...NAV_MANAGEMENT]
   const activeLabel = allNavItems.find(n => n.view === activeView)?.label ?? 'Dashboard'
 
   return (
@@ -369,22 +383,25 @@ export default function AdminPage() {
         <main className="flex-1 overflow-y-auto">
           <AnimatePresence mode="wait">
             <motion.div
-              key={activeView}
+              key={location.pathname}
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.22, ease: [0.25, 0.46, 0.45, 0.94] }}
               className="h-full"
             >
-              {activeView === 'overview'    && <AdminOverview store={store} onNavigate={setActiveView} />}
-              {activeView === 'students'    && <AdminStudents store={store} />}
-              {activeView === 'instructors' && <AdminInstructors store={store} />}
-              {activeView === 'courses'     && <AdminCourses store={store} />}
-              {activeView === 'payments'       && <AdminPaymentsView store={store} />}
-              {activeView === 'payments-setup' && <AdminPaymentsSetup />}
-              {activeView === 'financial-aid'  && <AdminFinancialAid store={store} />}
-              {activeView === 'cms'            && <AdminCMS store={store} />}
-              {activeView === 'settings'    && <AdminSettings store={store} />}
+              <Routes>
+                <Route path="/" element={<AdminOverview store={store} onNavigate={handleNavigate} />} />
+                <Route path="/students" element={<AdminStudents store={store} />} />
+                <Route path="/instructors" element={<AdminInstructors store={store} />} />
+                <Route path="/courses" element={<AdminCourses store={store} />} />
+                <Route path="/certificates" element={<AdminCertificates store={store} />} />
+                <Route path="/payments" element={<AdminPaymentsView store={store} />} />
+                <Route path="/financial-aid" element={<AdminFinancialAid store={store} />} />
+                <Route path="/cms/*" element={<AdminCMS store={store} />} />
+                <Route path="/settings" element={<AdminSettings store={store} />} />
+                <Route path="*" element={<Navigate to="/admin" replace />} />
+              </Routes>
             </motion.div>
           </AnimatePresence>
         </main>

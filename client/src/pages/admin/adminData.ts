@@ -19,6 +19,9 @@ export interface Student {
   notes: string
   avatar: string
   financialAid?: boolean
+  certificateId?: string
+  certificateIssueDate?: string
+  attendance?: number
 }
 
 export interface FinancialAidApp {
@@ -65,6 +68,11 @@ export interface Course {
   description: string
   startDate: string
   schedule: string
+  nextClassTime?: string
+  nextClassNumber?: number
+  meetingLink?: string
+  meetingId?: string
+  passcode?: string
   features: string[]
 }
 

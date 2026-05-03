@@ -1009,6 +1009,43 @@ export default function CourseDetailsPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
                   {/* Left Column: Course Details Summary for Enrollment */}
                   <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
+                    <div className="mb-6">
+                      <p className="text-sm uppercase tracking-[0.32em] text-violet-600 dark:text-violet-400 font-bold mb-3">Course overview</p>
+                      <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-3">{COURSE.title}</h3>
+                      <p className="text-sm text-slate-600 dark:text-neutral-400 leading-relaxed">{COURSE.description}</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                      <div className="rounded-3xl bg-slate-100 dark:bg-neutral-800/60 p-4">
+                        <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500 dark:text-neutral-500 mb-3">Instructor</p>
+                        <div className="flex items-center gap-3">
+                          <img src={COURSE.instructor.image} alt={COURSE.instructor.name} className="w-12 h-12 rounded-2xl object-cover" />
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-slate-900 dark:text-white leading-none">{COURSE.instructor.name}</p>
+                            <p className="text-xs text-slate-500 dark:text-neutral-400">{COURSE.instructor.role}</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="rounded-3xl bg-slate-100 dark:bg-neutral-800/60 p-4">
+                        <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500 dark:text-neutral-500 mb-3">At a glance</p>
+                        <div className="space-y-3 text-sm text-slate-700 dark:text-neutral-300">
+                          <div className="flex items-center justify-between"><span>Rating</span><strong>{COURSE.rating}</strong></div>
+                          <div className="flex items-center justify-between"><span>Reviews</span><strong>{COURSE.reviews}</strong></div>
+                          <div className="flex items-center justify-between"><span>Live seats</span><strong>{COURSE.maxStudents}</strong></div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">What you'll learn</h3>
+                    <ul className="grid gap-3 mb-8 text-sm text-slate-700 dark:text-neutral-300">
+                      {COURSE.whatYouWillLearn.slice(0, 5).map((item, index) => (
+                        <li key={index} className="flex items-start gap-3">
+                          <span className="mt-1 shrink-0 text-violet-600 dark:text-violet-400">•</span>
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+
                     <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-5">Course Details</h3>
                     <div className="p-6 bg-slate-50 dark:bg-neutral-800/50 rounded-2xl border border-slate-100 dark:border-neutral-700">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-slate-700 dark:text-neutral-300">
