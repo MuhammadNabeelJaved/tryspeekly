@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { motion, AnimatePresence } from 'framer-motion'
-import {
-  FloppyDisk, ArrowCounterClockwise, Plus, Trash, CheckCircle,
-  CaretDown, CaretRight, PencilSimple, List,
+import { 
+  PencilSimple, FloppyDisk, CaretRight, Plus, Trash, List, Wallet, ArrowCounterClockwise, CheckCircle, CaretDown
 } from '@phosphor-icons/react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import type { AdminStore } from '../AdminPage'
 import { INITIAL_CMS_PAGES } from './adminData'
-import type { CMSPage, CMSField, CMSTextField, CMSListField, CMSRepeaterField, CMSSection } from './adminData'
+import type { CMSPage, CMSSection, CMSField, CMSRepeaterField, CMSListField, CMSTextField } from './adminData'
+import AdminPaymentsSetup from './AdminPaymentsSetup'
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 
@@ -223,6 +224,12 @@ function SectionEditor({
 export default function AdminCMS({ store }: { store: AdminStore }) {
   const { cmsPages, setCmsPages } = store
 
+  const location = useLocation()
+  const navigate = useNavigate()
+
+  // Determine sub-view based on URL
+  const isPaymentsSetup = location.pathname.includes('/payments-setup')
+
   const [activePageId, setActivePageId] = useState(cmsPages[0]?.id ?? '')
   const [activeSectionId, setActiveSectionId] = useState(cmsPages[0]?.sections[0]?.id ?? '')
   const [saved, setSaved] = useState(false)
@@ -270,6 +277,7 @@ export default function AdminCMS({ store }: { store: AdminStore }) {
   }
 
   function pickPage(pageId: string) {
+    navigate('/admin/cms')
     const page = cmsPages.find(p => p.id === pageId)
     setActivePageId(pageId)
     setActiveSectionId(page?.sections[0]?.id ?? '')
@@ -297,12 +305,30 @@ export default function AdminCMS({ store }: { store: AdminStore }) {
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>
         <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-neutral-800 flex-shrink-0">
-          <span className="text-xs font-black text-slate-600 dark:text-neutral-400 uppercase tracking-widest">All Pages</span>
+          <span className="text-xs font-black text-slate-600 dark:text-neutral-400 uppercase tracking-widest">Global Settings</span>
           <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-slate-400 hover:text-slate-600 transition-colors">✕</button>
+        </div>
+        
+        <div className="border-b border-slate-100 dark:border-neutral-800 pb-2">
+          <button
+            onClick={() => { navigate('/admin/cms/payments-setup'); setSidebarOpen(false) }}
+            className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-bold transition-colors ${
+              isPaymentsSetup
+                ? 'bg-violet-50 dark:bg-violet-950/30 text-violet-700 dark:text-violet-400'
+                : 'text-slate-700 dark:text-neutral-300 hover:bg-slate-50 dark:hover:bg-neutral-800'
+            }`}
+          >
+            <Wallet size={16} weight={isPaymentsSetup ? 'fill' : 'regular'} />
+            Payments Page Setup
+          </button>
+        </div>
+
+        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-neutral-800 flex-shrink-0 mt-2">
+          <span className="text-xs font-black text-slate-600 dark:text-neutral-400 uppercase tracking-widest">All Pages</span>
         </div>
         <div className="flex-1 overflow-y-auto">
           {(cmsPages as CMSPage[]).map(page => {
-            const isPageActive = activePageId === page.id
+            const isPageActive = !isPaymentsSetup && activePageId === page.id
             return (
               <div key={page.id}>
                 {/* Page header */}
@@ -349,44 +375,52 @@ export default function AdminCMS({ store }: { store: AdminStore }) {
             </button>
             <div>
               <p className="text-sm font-black text-slate-900 dark:text-white">
-                {activePage?.title ?? 'CMS Editor'}
-                {activeSection && <span className="text-slate-400 dark:text-neutral-600 font-medium"> / {activeSection.label}</span>}
+                {isPaymentsSetup ? 'Payments Page Setup' : (activePage?.title ?? 'CMS Editor')}
+                {!isPaymentsSetup && activeSection && <span className="text-slate-400 dark:text-neutral-600 font-medium"> / {activeSection.label}</span>}
               </p>
-              <p className="text-[10px] text-slate-400 dark:text-neutral-600">{activePage?.slug}</p>
+              <p className="text-[10px] text-slate-400 dark:text-neutral-600">
+                {isPaymentsSetup ? '/payments' : activePage?.slug}
+              </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <button onClick={resetPage}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-neutral-700 text-xs font-semibold text-slate-500 dark:text-neutral-400 hover:bg-slate-50 dark:hover:bg-neutral-800 transition-colors"
-            >
-              <ArrowCounterClockwise size={12} />Reset Page
-            </button>
-            <button onClick={handleSave}
-              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                saved
-                  ? 'bg-emerald-500 text-white'
-                  : 'bg-violet-600 hover:bg-violet-700 text-white shadow-[0_4px_12px_rgba(124,58,237,0.3)]'
-              }`}
-            >
-              {saved ? <><CheckCircle size={13} weight="fill" />Saved!</> : <><FloppyDisk size={13} weight="fill" />Save Changes</>}
-            </button>
-          </div>
-        </div>
-
-        {/* All sections for active page (accordion) */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3">
-          {activePage ? activePage.sections.map(section => {
-            const isExpanded = expandedSections.has(section.id)
-            const isActive = activeSectionId === section.id
-            return (
-              <div key={section.id}
-                className={`rounded-2xl border-2 overflow-hidden transition-all ${
-                  isActive
-                    ? 'border-violet-400 dark:border-violet-600 shadow-[0_0_0_3px_rgba(124,58,237,0.1)]'
-                    : 'border-slate-200 dark:border-neutral-800'
+          {!isPaymentsSetup && (
+            <div className="flex items-center gap-2">
+              <button onClick={resetPage}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-neutral-700 text-xs font-semibold text-slate-500 dark:text-neutral-400 hover:bg-slate-50 dark:hover:bg-neutral-800 transition-colors"
+              >
+                <ArrowCounterClockwise size={12} />Reset Page
+              </button>
+              <button onClick={handleSave}
+                className={`flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                  saved
+                    ? 'bg-emerald-500 text-white'
+                    : 'bg-violet-600 hover:bg-violet-700 text-white shadow-[0_4px_12px_rgba(124,58,237,0.3)]'
                 }`}
               >
+                {saved ? <><CheckCircle size={13} weight="fill" />Saved!</> : <><FloppyDisk size={13} weight="fill" />Save Changes</>}
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* CMS Content */}
+        <div className="flex-1 overflow-y-auto bg-slate-50 dark:bg-neutral-950">
+          {isPaymentsSetup ? (
+            <AdminPaymentsSetup />
+          ) : (
+            <div className="p-4 sm:p-6 space-y-3">
+              {activePage ? activePage.sections.map(section => {
+                const isExpanded = expandedSections.has(section.id)
+                const isActive = activeSectionId === section.id
+                return (
+                  <div key={section.id}
+                    className={`rounded-2xl border-2 overflow-hidden bg-white dark:bg-neutral-900 transition-all ${
+                      isActive
+                        ? 'border-violet-400 dark:border-violet-600 shadow-[0_0_0_3px_rgba(124,58,237,0.1)]'
+                        : 'border-slate-200 dark:border-neutral-800'
+                    }`}
+                  >
                 {/* Section header */}
                 <button
                   type="button"
@@ -439,34 +473,36 @@ export default function AdminCMS({ store }: { store: AdminStore }) {
                 </AnimatePresence>
               </div>
             )
-          }) : (
-            <div className="text-center py-16 text-slate-400 dark:text-neutral-600">
-              <PencilSimple size={40} className="mx-auto mb-3 opacity-30" />
-              <p className="text-sm">Select a page to edit its content</p>
+              }) : (
+                <div className="text-center py-16 text-slate-400 dark:text-neutral-600">
+                  <PencilSimple size={40} className="mx-auto mb-3 opacity-30" />
+                  <p className="text-sm">Select a page to edit its content</p>
+                </div>
+              )}
+
+              {/* Global save button at bottom */}
+              {activePage && (
+                <div className="pt-2 flex justify-center">
+                  <button onClick={handleSave}
+                    className={`flex items-center gap-2 px-8 py-3 rounded-2xl text-sm font-bold transition-all ${
+                      saved
+                        ? 'bg-emerald-500 text-white'
+                        : 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-[0_8px_24px_rgba(124,58,237,0.35)] hover:shadow-[0_12px_32px_rgba(124,58,237,0.45)]'
+                    }`}
+                  >
+                    {saved
+                      ? <><CheckCircle size={16} weight="fill" />All Changes Saved!</>
+                      : <><FloppyDisk size={16} weight="fill" />Save All Changes for {activePage.title}</>
+                    }
+                  </button>
+                </div>
+              )}
+
+              <p className="text-center text-[11px] text-slate-300 dark:text-neutral-700 pb-2">
+                CMS data is persisted to localStorage. Wire to your API/backend to update live pages.
+              </p>
             </div>
           )}
-
-          {/* Global save button at bottom */}
-          {activePage && (
-            <div className="pt-2 flex justify-center">
-              <button onClick={handleSave}
-                className={`flex items-center gap-2 px-8 py-3 rounded-2xl text-sm font-bold transition-all ${
-                  saved
-                    ? 'bg-emerald-500 text-white'
-                    : 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-[0_8px_24px_rgba(124,58,237,0.35)] hover:shadow-[0_12px_32px_rgba(124,58,237,0.45)]'
-                }`}
-              >
-                {saved
-                  ? <><CheckCircle size={16} weight="fill" />All Changes Saved!</>
-                  : <><FloppyDisk size={16} weight="fill" />Save All Changes for {activePage.title}</>
-                }
-              </button>
-            </div>
-          )}
-
-          <p className="text-center text-[11px] text-slate-300 dark:text-neutral-700 pb-2">
-            CMS data is persisted to localStorage. Wire to your API/backend to update live pages.
-          </p>
         </div>
       </div>
     </div>

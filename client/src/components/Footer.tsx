@@ -2,11 +2,32 @@ import { useForm } from 'react-hook-form'
 import { LinkedinLogo, TwitterLogo, FacebookLogo, InstagramLogo, Phone, EnvelopeSimple, MapPin, ArrowRight } from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
 
-const FOOTER_LINKS = {
-  Courses: ['Beginner English', 'Intermediate English', 'Advanced English', 'Business English', 'IELTS Preparation'],
-  Company: ['About Us', 'Our Instructors', 'Success Stories', 'Careers', 'Contact Us'],
-  Resources: ['Learning Blog', 'Grammar Guide', 'Financial Aid', 'Practice Tests', 'Help Center'],
-}
+const FOOTER_LINK_CATEGORIES = [
+  {
+    title: 'Explore',
+    links: [
+      { label: 'Home', to: '/' },
+      { label: 'Courses', to: '/courses' },
+      { label: 'Blog', to: '/blog' },
+    ],
+  },
+  {
+    title: 'Company',
+    links: [
+      { label: 'About', to: '/about' },
+      { label: 'Instructors', to: '/instructors' },
+      { label: 'Contact', to: '/contact' },
+    ],
+  },
+  {
+    title: 'Support',
+    links: [
+      { label: 'Payments', to: '/payments' },
+      { label: 'Financial Aid', to: '/financial-aid' },
+      { label: 'Cookie Policy', to: '/cookies' },
+    ],
+  },
+]
 
 const SOCIAL = [
   { Icon: LinkedinLogo, label: 'LinkedIn', href: '#' },
@@ -33,7 +54,7 @@ export default function Footer() {
 
           {/* Brand column */}
           <div>
-            <a href="#" className="flex items-center gap-2.5 mb-6 w-fit">
+            <Link to="/" className="flex items-center gap-2.5 mb-6 w-fit">
               <div className="w-10 h-10 bg-violet-600 rounded-xl flex items-center justify-center shadow-[0_4px_12px_rgba(124,58,237,0.3)]">
                 <svg width="20" height="20" viewBox="0 0 18 18" fill="none" aria-hidden="true">
                   <path d="M3 6l6-3 6 3-6 3-6-3z" stroke="white" strokeWidth="1.5" strokeLinejoin="round"/>
@@ -42,7 +63,7 @@ export default function Footer() {
                 </svg>
               </div>
               <span className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">EnglishPro</span>
-            </a>
+            </Link>
 
             <p className="text-sm text-slate-600 dark:text-neutral-400 leading-relaxed mb-8 max-w-[28ch]">
               Empowering learners worldwide to achieve English fluency through interactive courses, expert instruction, and personalized learning experiences.
@@ -86,22 +107,16 @@ export default function Footer() {
           </div>
 
           {/* Links + Newsletter */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-12">
-            {Object.entries(FOOTER_LINKS).map(([category, links]) => (
-              <div key={category}>
-                <p className="text-xs font-bold text-slate-900 dark:text-neutral-300 uppercase tracking-wider mb-6">{category}</p>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-x-8 gap-y-12">
+            {FOOTER_LINK_CATEGORIES.map((category) => (
+              <div key={category.title}>
+                <p className="text-xs font-bold text-slate-900 dark:text-neutral-300 uppercase tracking-wider mb-6">{category.title}</p>
                 <ul className="space-y-4">
-                  {links.map((link) => (
-                    <li key={link}>
-                      {link === 'Financial Aid' ? (
-                        <Link to="/financial-aid" className="text-sm text-slate-600 dark:text-neutral-500 hover:text-violet-600 dark:hover:text-violet-400 transition-colors font-medium">
-                          {link}
-                        </Link>
-                      ) : (
-                        <a href="#" className="text-sm text-slate-600 dark:text-neutral-500 hover:text-violet-600 dark:hover:text-violet-400 transition-colors font-medium">
-                          {link}
-                        </a>
-                      )}
+                  {category.links.map((link) => (
+                    <li key={link.to}>
+                      <Link to={link.to} className="text-sm text-slate-600 dark:text-neutral-500 hover:text-violet-600 dark:hover:text-violet-400 transition-colors font-medium">
+                        {link.label}
+                      </Link>
                     </li>
                   ))}
                 </ul>

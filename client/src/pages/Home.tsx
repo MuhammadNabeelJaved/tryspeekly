@@ -2,6 +2,7 @@ import { motion } from 'framer-motion'
 import Hero from '@/components/Hero'
 import Stats from '@/components/Stats'
 import Features from '@/components/Features'
+import HomeCourses from '@/components/HomeCourses'
 import HowItWorks from '@/components/HowItWorks'
 import FinancialAidSection from '@/components/FinancialAidSection'
 import Testimonials from '@/components/Testimonials'
@@ -41,6 +42,7 @@ export default function Home() {
     >
       <motion.div variants={sectionVariants}><Hero /></motion.div>
       <motion.div variants={sectionVariants}><Stats /></motion.div>
+      <motion.div variants={sectionVariants}><HomeCourses /></motion.div>
       <motion.div variants={sectionVariants}><Features /></motion.div>
       <motion.div variants={sectionVariants}><HowItWorks /></motion.div>
       <motion.div variants={sectionVariants}><Testimonials /></motion.div>

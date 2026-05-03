@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { List, X, Phone } from '@phosphor-icons/react'
 import { Link, useLocation } from 'react-router-dom'
 import { ThemeToggle } from './ThemeToggle'
@@ -8,12 +8,11 @@ import { ThemeToggle } from './ThemeToggle'
 const MotionLink = motion.create(Link)
 
 const NAV_LINKS = [
-  { name: 'Home', href: '/' },
   { name: 'Courses', href: '/courses' },
-  { name: 'About', href: '/about' },
   { name: 'Instructors', href: '/instructors' },
   { name: 'Blog', href: '/blog' },
   { name: 'Payments', href: '/payments' },
+  { name: 'About', href: '/about' },
   { name: 'Contact', href: '/contact' },
 ]
 
@@ -103,21 +102,13 @@ export default function Navbar() {
             })}
           </nav>
 
-          {/* Right: phone + CTA */}
-          <div className="hidden lg:flex items-center gap-5">
-            <ThemeToggle />
-            <Link to="/login" className="text-sm font-semibold text-slate-600 dark:text-neutral-300 hover:text-violet-600 dark:hover:text-violet-300 transition-colors">
-              Login
-            </Link>
-            <Link
-              to="/signup"
-              className="hidden xl:inline-flex items-center justify-center rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-[0_4px_14px_rgba(124,58,237,0.3)] transition hover:bg-violet-700"
-            >
-              Sign Up
-            </Link>
+          {/* Right: Actions */}
+          <div className="hidden lg:flex items-center gap-4">
+            
+            {/* Contact Number */}
             <motion.a
               href="tel:+80155564545"
-              className="flex items-center gap-2 text-slate-600 dark:text-neutral-300 hover:text-violet-600 dark:hover:text-violet-300 transition-colors"
+              className="flex items-center gap-2 text-slate-600 dark:text-neutral-300 hover:text-violet-600 dark:hover:text-violet-300 transition-colors mr-2"
               whileHover={{ scale: 1.04 }}
               whileTap={{ scale: 0.97 }}
             >
@@ -131,70 +122,98 @@ export default function Navbar() {
               >
                 <Phone size={15} weight="fill" className="text-violet-600 dark:text-violet-200" />
               </motion.div>
-              <span className="text-sm font-medium">+801 555 645 45</span>
+              <span className="text-sm font-bold tracking-tight">+801 555 645 45</span>
             </motion.a>
-            <motion.a
-              href="#contact"
-              whileHover={{ scale: 1.04 }}
-              whileTap={{ scale: 0.97 }}
-              className="bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-colors shadow-[0_4px_14px_rgba(124,58,237,0.3)]"
+
+            <div className="w-px h-6 bg-slate-200 dark:bg-neutral-800 hidden xl:block"></div>
+
+            <Link to="/login" className="text-sm font-bold text-slate-600 dark:text-neutral-300 hover:text-violet-600 dark:hover:text-violet-300 transition-colors">
+              Login
+            </Link>
+            
+            <Link to="/dashboard" className="text-sm font-bold text-slate-600 dark:text-neutral-300 hover:text-violet-600 dark:hover:text-violet-300 transition-colors">
+              Dashboard
+            </Link>
+            
+            <Link
+              to="/signup"
+              className="hidden xl:inline-flex items-center justify-center rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-bold text-white shadow-[0_4px_14px_rgba(124,58,237,0.3)] transition hover:bg-violet-700"
             >
-              Get a Quote
-            </motion.a>
+              Sign Up
+            </Link>
+
+            <div className="ml-1">
+              <ThemeToggle />
+            </div>
           </div>
 
-          {/* Mobile hamburger */}
-          <div className="lg:hidden flex items-center gap-3">
+          {/* Mobile Actions */}
+          <div className="lg:hidden flex items-center gap-4">
             <ThemeToggle />
             <button
               onClick={() => setMenuOpen(!menuOpen)}
-              className="text-slate-600 dark:text-neutral-300 hover:text-slate-900 dark:hover:text-white p-2 transition-colors"
+              className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 dark:bg-neutral-800 text-slate-600 dark:text-neutral-300 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-900/30 transition-all"
               aria-label={menuOpen ? 'Close menu' : 'Open menu'}
             >
-              {menuOpen ? <X size={22} /> : <List size={22} />}
+              {menuOpen ? <X size={20} weight="bold" /> : <List size={20} weight="bold" />}
             </button>
           </div>
         </div>
 
         {/* Mobile menu */}
-        {menuOpen && (
-          <div className="lg:hidden border-t border-slate-100 dark:border-neutral-800 py-5">
-            <div className="flex flex-col gap-5">
-              {NAV_LINKS.map((link) => {
-                const isActive = link.href === '/' ? location.pathname === '/' : location.pathname.startsWith(link.href)
-                return (
-                  <Link
-                    key={link.name}
-                    to={link.href}
-                    onClick={() => setMenuOpen(false)}
-                    className={`text-sm font-bold transition-colors ${
-                      isActive 
-                        ? 'text-violet-600 dark:text-violet-400' 
-                        : 'text-slate-600 dark:text-neutral-300 hover:text-violet-600 dark:hover:text-violet-300'
-                    }`}
-                  >
-                    {link.name}
+        <AnimatePresence>
+          {menuOpen && (
+            <motion.div 
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="lg:hidden border-t border-slate-100 dark:border-neutral-800 overflow-hidden"
+            >
+              <div className="py-5 flex flex-col gap-2">
+                {NAV_LINKS.map((link) => {
+                  const isActive = link.href === '/' ? location.pathname === '/' : location.pathname.startsWith(link.href)
+                  return (
+                    <Link
+                      key={link.name}
+                      to={link.href}
+                      onClick={() => setMenuOpen(false)}
+                      className={`px-4 py-3 rounded-xl text-sm font-bold transition-all ${
+                        isActive 
+                          ? 'bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-400' 
+                          : 'text-slate-600 dark:text-neutral-300 hover:bg-slate-50 dark:hover:bg-neutral-800'
+                      }`}
+                    >
+                      {link.name}
+                    </Link>
+                  )
+                })}
+                
+                <div className="h-px bg-slate-100 dark:bg-neutral-800 my-3 mx-4" />
+                
+                <div className="px-4 flex flex-col gap-3">
+                  <a href="tel:+80155564545" className="flex items-center justify-center gap-2 bg-slate-50 dark:bg-neutral-800 py-3 rounded-xl text-slate-700 dark:text-neutral-200 transition-colors">
+                    <Phone size={18} weight="fill" className="text-violet-600 dark:text-violet-400" />
+                    <span className="text-sm font-bold tracking-tight">+801 555 645 45</span>
+                  </a>
+                  
+                  <div className="grid grid-cols-2 gap-3 mt-1">
+                    <Link to="/login" onClick={() => setMenuOpen(false)} className="bg-slate-100 dark:bg-neutral-800 hover:bg-slate-200 dark:hover:bg-neutral-700 text-slate-700 dark:text-white text-sm font-bold py-3 rounded-xl text-center transition-colors">
+                      Login
+                    </Link>
+                    <Link to="/dashboard" onClick={() => setMenuOpen(false)} className="bg-violet-50 dark:bg-violet-900/20 hover:bg-violet-100 dark:hover:bg-violet-900/40 text-violet-700 dark:text-violet-300 text-sm font-bold py-3 rounded-xl text-center transition-colors">
+                      Dashboard
+                    </Link>
+                  </div>
+                  
+                  <Link to="/signup" onClick={() => setMenuOpen(false)} className="bg-violet-600 hover:bg-violet-700 text-white text-sm font-bold py-3.5 rounded-xl text-center shadow-[0_4px_12px_rgba(124,58,237,0.3)] transition-colors mt-1">
+                    Create Account
                   </Link>
-                )
-              })}
-              <div className="border-t border-slate-100 dark:border-neutral-800 pt-5 flex flex-col gap-3">
-                <Link to="/login" onClick={() => setMenuOpen(false)} className="text-sm font-semibold text-slate-600 dark:text-neutral-300 hover:text-violet-600 dark:hover:text-violet-300">
-                  Login
-                </Link>
-                <Link to="/signup" onClick={() => setMenuOpen(false)} className="bg-violet-600 text-white text-sm font-semibold px-5 py-3 rounded-lg text-center">
-                  Sign Up
-                </Link>
-                <a href="tel:+80155564545" className="flex items-center gap-2 text-slate-600 dark:text-neutral-300">
-                  <Phone size={15} weight="fill" className="text-violet-600 dark:text-violet-200" />
-                  <span className="text-sm font-medium">+801 555 645 45</span>
-                </a>
-                <a href="#contact" className="bg-violet-600 text-white text-sm font-semibold px-5 py-3 rounded-lg text-center">
-                  Get a Quote
-                </a>
+                </div>
               </div>
-            </div>
-          </div>
-        )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </header>
   )

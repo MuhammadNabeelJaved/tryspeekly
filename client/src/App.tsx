@@ -18,6 +18,8 @@ import PaymentsPage from '@/pages/PaymentsPage'
 import FinancialAidPage from '@/pages/FinancialAidPage'
 import LoginPage from '@/pages/LoginPage'
 import SignupPage from '@/pages/SignupPage'
+import StudentDashboardPage from '@/pages/StudentDashboardPage'
+import CertificateViewPage from '@/pages/CertificateViewPage'
 
 import AdminPage from '@/pages/AdminPage'
 import './App.css'
@@ -73,6 +75,8 @@ function App() {
       <ScrollHandler />
       <Routes>
         <Route path="/admin/*" element={<AdminPage />} />
+        <Route path="/dashboard/*" element={<StudentDashboardPage />} />
+        <Route path="/certificate/:id" element={<CertificateViewPage />} />
         <Route path="/*" element={<PublicLayout />} />
       </Routes>
     </BrowserRouter>

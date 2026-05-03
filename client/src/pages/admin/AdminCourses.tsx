@@ -9,7 +9,7 @@ const EMPTY: Course = {
   id: '', title: '', level: 'Beginner', duration: '', price: 0, currency: 'PKR',
   instructorId: '', instructorName: '', totalStudents: 0, maxStudents: 15,
   status: 'active', description: '', startDate: new Date().toISOString().split('T')[0],
-  schedule: '', features: [],
+  schedule: '', nextClassTime: '', nextClassNumber: 1, meetingLink: '', meetingId: '', passcode: '', features: [],
 }
 
 const LEVEL_COLORS: Record<string, string> = {
@@ -244,8 +244,18 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
                   </select>
                 </Field>
                 <Field label="Start Date"><Input register={register} name="startDate" type="date" /></Field>
-                <Field label="Schedule"><Input register={register} name="schedule" placeholder="Mon/Wed/Fri · 7–8 PM PKT" /></Field>
-                <div className="col-span-2">
+                <Field label="Schedule (Routine)"><Input register={register} name="schedule" placeholder="Mon/Wed/Fri · 7–8 PM PKT" /></Field>
+                <div className="col-span-2 border-t border-slate-100 dark:border-neutral-800 pt-4 mt-2">
+                  <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-3">Live Class Setup (Zoom / Google Meet)</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <Field label="Next Class Time"><Input register={register} name="nextClassTime" type="datetime-local" /></Field>
+                    <Field label="Class Number (e.g. 12)"><Input register={register} name="nextClassNumber" type="number" valueAsNumber placeholder="1" /></Field>
+                    <div className="col-span-2"><Field label="Meeting Link (URL)"><Input register={register} name="meetingLink" type="url" placeholder="https://zoom.us/j/..." /></Field></div>
+                    <Field label="Meeting ID"><Input register={register} name="meetingId" placeholder="123 456 789" /></Field>
+                    <Field label="Passcode"><Input register={register} name="passcode" placeholder="ENGLISH" /></Field>
+                  </div>
+                </div>
+                <div className="col-span-2 border-t border-slate-100 dark:border-neutral-800 pt-4 mt-2">
                   <Field label="Description">
                     <textarea {...register('description')} rows={2} placeholder="Short description of the course…" className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-neutral-600 outline-none focus:border-violet-500 transition-colors resize-none" />
                   </Field>
