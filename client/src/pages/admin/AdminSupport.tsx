@@ -318,7 +318,7 @@ export default function AdminSupport({ store: _store }: { store: AdminStore }) {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [activeTicket?.messages.length])
+  }, [activeTicket?.id, activeTicket?.messages.length])
 
   const filteredTickets = tickets
     .filter(ticket => {
@@ -408,7 +408,7 @@ export default function AdminSupport({ store: _store }: { store: AdminStore }) {
               {/* ── Left: Ticket list ── */}
               <div
                 className={`
-                  fixed lg:static inset-y-0 left-0 z-20
+                  fixed lg:static inset-y-0 left-0 z-50
                   w-80 lg:w-96 bg-white dark:bg-neutral-900
                   border-r border-slate-100 dark:border-neutral-800
                   flex flex-col overflow-hidden transition-transform duration-300
