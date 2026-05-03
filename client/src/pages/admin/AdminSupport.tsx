@@ -38,7 +38,8 @@ function calcAvgResponse(tickets: SupportTicket[]): string {
   if (times.length === 0) return 'N/A'
   const avgMs = times.reduce((a, b) => a + b, 0) / times.length
   const totalMinutes = Math.round(avgMs / 60000)
-  if (totalMinutes < 60) return '< 1h'
+  if (totalMinutes === 0) return '< 1m'
+  if (totalMinutes < 60) return `${totalMinutes}m`
   const h = Math.floor(totalMinutes / 60)
   const m = totalMinutes % 60
   return m > 0 ? `${h}h ${m}m` : `${h}h`
@@ -193,10 +194,11 @@ function KnowledgeBaseTab({
             </h4>
 
             <div>
-              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-neutral-500 block mb-1.5">
+              <label htmlFor="faq-question" className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-neutral-500 block mb-1.5">
                 Question
               </label>
               <textarea
+                id="faq-question"
                 value={question}
                 onChange={e => setQuestion(e.target.value)}
                 rows={2}
@@ -207,10 +209,11 @@ function KnowledgeBaseTab({
             </div>
 
             <div>
-              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-neutral-500 block mb-1.5">
+              <label htmlFor="faq-answer" className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-neutral-500 block mb-1.5">
                 Answer
               </label>
               <textarea
+                id="faq-answer"
                 value={answer}
                 onChange={e => setAnswer(e.target.value)}
                 rows={3}
