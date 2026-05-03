@@ -24,6 +24,25 @@ export interface Student {
   attendance?: number
 }
 
+export interface SupportTicket {
+  id: string
+  studentName: string
+  studentAvatar: string
+  courseName: string
+  subject: string
+  status: 'open' | 'closed' | 'pending'
+  priority: 'low' | 'medium' | 'high'
+  lastMessageAt: string // ISO date string
+  messages: SupportMessage[]
+}
+
+export interface SupportMessage {
+  id: string
+  sender: 'student' | 'admin'
+  content: string
+  timestamp: string // ISO date string
+}
+
 export interface FinancialAidApp {
   id: string
   name: string
@@ -33,6 +52,12 @@ export interface FinancialAidApp {
   status: 'pending' | 'under_review' | 'accepted' | 'rejected'
   appliedAt: string
   notes?: string
+}
+
+export interface FAQEntry {
+  id: string
+  question: string
+  answer: string
 }
 
 export interface Instructor {
@@ -860,8 +885,8 @@ export const INITIAL_CMS_PAGES: CMSPage[] = [
 // ─── MOCK DATA ────────────────────────────────────────────────────────────────
 
 export const INITIAL_STUDENTS: Student[] = [
-  { id: 's1', name: 'Ahmed Ali', email: 'ahmed@gmail.com', phone: '+92 300 1234567', country: 'Pakistan', city: 'Karachi', courseId: 'c1', courseName: 'Business English', courseLevel: 'Intermediate', paymentMethod: 'Easypaisa', paymentAmount: 8000, paymentCurrency: 'PKR', paymentStatus: 'paid', enrolledAt: '2026-04-15', status: 'active', notes: '', avatar: 'AA' },
-  { id: 's2', name: 'Sara Khan', email: 'sara@gmail.com', phone: '+92 321 9876543', country: 'Pakistan', city: 'Lahore', courseId: 'c2', courseName: 'Spoken English', courseLevel: 'Beginner', paymentMethod: 'JazzCash', paymentAmount: 6000, paymentCurrency: 'PKR', paymentStatus: 'paid', enrolledAt: '2026-04-18', status: 'active', notes: '', avatar: 'SK' },
+  { id: 's1', name: 'Ahmed Ali', email: 'ahmed@gmail.com', phone: '+92 300 1234567', country: 'Pakistan', city: 'Karachi', courseId: 'c1', courseName: 'Business English', courseLevel: 'Intermediate', paymentMethod: 'Easypaisa', paymentAmount: 8000, paymentCurrency: 'PKR', paymentStatus: 'paid', enrolledAt: '2026-04-15', status: 'completed', notes: '', avatar: 'AA', attendance: 95 },
+  { id: 's2', name: 'Sara Khan', email: 'sara@gmail.com', phone: '+92 321 9876543', country: 'Pakistan', city: 'Lahore', courseId: 'c2', courseName: 'Spoken English', courseLevel: 'Beginner', paymentMethod: 'JazzCash', paymentAmount: 6000, paymentCurrency: 'PKR', paymentStatus: 'paid', enrolledAt: '2026-04-18', status: 'completed', notes: '', avatar: 'SK', attendance: 88, certificateId: 'EP-2026-SK001', certificateIssueDate: '2026-04-25' },
   { id: 's3', name: 'Omar Farooq', email: 'omar@gmail.com', phone: '+44 7700 123456', country: 'United Kingdom', city: 'London', courseId: 'c3', courseName: 'IELTS Prep', courseLevel: 'Advanced', paymentMethod: 'Bank Transfer (Intl)', paymentAmount: 150, paymentCurrency: 'USD', paymentStatus: 'paid', enrolledAt: '2026-04-20', status: 'active', notes: 'Prefers morning sessions', avatar: 'OF' },
   { id: 's4', name: 'Fatima Malik', email: 'fatima@gmail.com', phone: '+92 333 5556677', country: 'Pakistan', city: 'Islamabad', courseId: 'c1', courseName: 'Business English', courseLevel: 'Intermediate', paymentMethod: 'SadaPay', paymentAmount: 8000, paymentCurrency: 'PKR', paymentStatus: 'paid', enrolledAt: '2026-04-22', status: 'active', notes: '', avatar: 'FM' },
   { id: 's5', name: 'Zainab Hussain', email: 'zainab@gmail.com', phone: '+971 50 123 4567', country: 'UAE', city: 'Dubai', courseId: 'c2', courseName: 'Spoken English', courseLevel: 'Beginner', paymentMethod: 'NayaPay', paymentAmount: 6000, paymentCurrency: 'PKR', paymentStatus: 'pending', enrolledAt: '2026-04-25', status: 'inactive', notes: 'Payment pending verification', avatar: 'ZH' },
@@ -890,4 +915,73 @@ export const INITIAL_FINANCIAL_AID: FinancialAidApp[] = [
   { id: 'fa1', name: 'Zohaib Ahmed', email: 'zohaib@example.com', phone: '+92 300 9998888', reason: 'I am a university student and currently unable to pay the full fee. I want to learn English to get a better job.', status: 'pending', appliedAt: '2026-05-01' },
   { id: 'fa2', name: 'Mina Ali', email: 'mina@example.com', phone: '+92 333 1112222', reason: 'I lost my job recently and am looking to upgrade my skills to apply for remote roles.', status: 'under_review', appliedAt: '2026-04-28', notes: 'Scheduled a call for tomorrow' },
   { id: 'fa3', name: 'Khalid Mehmood', email: 'khalid@example.com', phone: '+92 345 7776666', reason: 'My father is a daily wage worker. I need this course to apply for a scholarship abroad.', status: 'accepted', appliedAt: '2026-04-15', notes: 'Enrolled in Spoken English' },
+]
+
+export const INITIAL_SUPPORT_TICKETS: SupportTicket[] = [
+  {
+    id: 'tkt1',
+    studentName: 'Ahmed Ali',
+    studentAvatar: 'AA',
+    courseName: 'Business English',
+    subject: 'Zoom link not working for Class 12',
+    status: 'open',
+    priority: 'high',
+    lastMessageAt: '2026-05-05T10:30:00Z',
+    messages: [
+      { id: 'msg1', sender: 'student', content: 'Hi, I am unable to join the class. The Zoom link seems to be broken. Can you please help?', timestamp: '2026-05-05T10:00:00Z' },
+      { id: 'msg2', sender: 'admin', content: 'Hello Ahmed. We are looking into the issue. Please try this new link: [new-zoom-link.com]', timestamp: '2026-05-05T10:15:00Z' },
+      { id: 'msg3', sender: 'student', content: 'Thank you, that worked! I\'m in the class now.', timestamp: '2026-05-05T10:30:00Z' },
+    ]
+  },
+  {
+    id: 'tkt2',
+    studentName: 'Fatima Malik',
+    studentAvatar: 'FM',
+    courseName: 'IELTS Preparation',
+    subject: 'Assignment submission issue',
+    status: 'pending',
+    priority: 'medium',
+    lastMessageAt: '2026-05-04T15:00:00Z',
+    messages: [
+      { id: 'msg4', sender: 'student', content: 'Hi, I\'m having trouble uploading my IELTS writing assignment. The file keeps failing to attach.', timestamp: '2026-05-04T14:45:00Z' },
+      { id: 'msg5', sender: 'admin', content: 'Hello Fatima. Could you please describe the file type and size? We might need to check the server logs.', timestamp: '2026-05-04T15:00:00Z' },
+    ]
+  },
+  {
+    id: 'tkt3',
+    studentName: 'Zainab Hussain',
+    studentAvatar: 'ZH',
+    courseName: 'Spoken English',
+    subject: 'Request for class recording',
+    status: 'closed',
+    priority: 'low',
+    lastMessageAt: '2026-05-03T11:00:00Z',
+    messages: [
+      { id: 'msg6', sender: 'student', content: 'I missed yesterday\'s spoken English class. Can I get access to the recording please?', timestamp: '2026-05-03T10:30:00Z' },
+      { id: 'msg7', sender: 'admin', content: 'Hi Zainab, the recording for class is available in your course materials section. Please check there. Let us know if you still have trouble.', timestamp: '2026-05-03T11:00:00Z' },
+    ]
+  },
+]
+
+export const INITIAL_FAQS: FAQEntry[] = [
+  {
+    id: 'faq1',
+    question: 'How do I join my Zoom class?',
+    answer: 'You can find the Zoom link for your class in the course materials section of your student dashboard. Click the link 5 minutes before the class starts.',
+  },
+  {
+    id: 'faq2',
+    question: 'Can I get a recording of a missed class?',
+    answer: 'Yes! Class recordings are uploaded to your course materials section within 24 hours of the class ending. Contact support if a recording is missing.',
+  },
+  {
+    id: 'faq3',
+    question: 'How do I submit my assignment?',
+    answer: 'Assignments are submitted through the course portal. Navigate to your course, open the relevant class, and use the "Submit Assignment" button. Supported file types: PDF, DOCX, JPG.',
+  },
+  {
+    id: 'faq4',
+    question: 'How do I get my certificate?',
+    answer: 'Certificates are issued automatically upon successful completion of your course (attendance ≥ 80% and passing the final assessment). You can download it from the Certificates section.',
+  },
 ]
