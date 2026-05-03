@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   ChartBar, Users, Chalkboard, BookOpen, CreditCard, PencilSimple,
   List, X, SignOut, Bell, MagnifyingGlass, Sun, Moon, GearSix,
-  Lock, Eye, EyeSlash, Handshake, Certificate
+  Lock, Eye, EyeSlash, Handshake, Certificate, ChatCircleDots
 } from '@phosphor-icons/react'
 import type { Student, Instructor, Course, CMSPage, FinancialAidApp } from './admin/adminData'
 import { INITIAL_STUDENTS, INITIAL_INSTRUCTORS, INITIAL_COURSES, INITIAL_CMS_PAGES, INITIAL_FINANCIAL_AID } from './admin/adminData'
@@ -15,14 +15,14 @@ import AdminInstructors from './admin/AdminInstructors'
 import AdminCourses from './admin/AdminCourses'
 import AdminCertificates from './admin/AdminCertificates'
 import AdminPaymentsView from './admin/AdminPaymentsView'
-import AdminPaymentsSetup from './admin/AdminPaymentsSetup'
 import AdminFinancialAid from './admin/AdminFinancialAid'
 import AdminCMS from './admin/AdminCMS'
 import AdminSettings from './admin/AdminSettings'
+import AdminSupport from './admin/AdminSupport'
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 
-export type AdminView = 'overview' | 'students' | 'instructors' | 'courses' | 'certificates' | 'payments' | 'payments-setup' | 'financial-aid' | 'cms' | 'settings'
+export type AdminView = 'overview' | 'students' | 'instructors' | 'courses' | 'certificates' | 'payments' | 'payments-setup' | 'financial-aid' | 'cms' | 'settings' | 'support'
 
 export interface AdminStore {
   students: Student[]
@@ -53,9 +53,10 @@ const NAV_MANAGEMENT: NavItem[] = [
   { view: 'courses',        label: 'Courses',       path: 'courses',        Icon: BookOpen as NavItem['Icon'] },
   { view: 'certificates',   label: 'Certificates',  path: 'certificates',   Icon: Certificate as NavItem['Icon'] },
   { view: 'payments',       label: 'Payments',      path: 'payments',       Icon: CreditCard as NavItem['Icon'] },
-  { view: 'cms',            label: 'CMS Editor',    path: 'cms',            Icon: PencilSimple as NavItem['Icon'] },
   { view: 'financial-aid',  label: 'Financial Aid', path: 'financial-aid',  Icon: Handshake as NavItem['Icon'] },
+  { view: 'cms',            label: 'CMS Editor',    path: 'cms',            Icon: PencilSimple as NavItem['Icon'] },
   { view: 'settings',       label: 'Settings',      path: 'settings',       Icon: GearSix as NavItem['Icon'] },
+  { view: 'support',        label: 'Support',       path: 'support',        Icon: ChatCircleDots as NavItem['Icon'] },
 ]
 
 // ─── LOGIN SCREEN ─────────────────────────────────────────────────────────────
@@ -400,6 +401,7 @@ export default function AdminPage() {
                 <Route path="/financial-aid" element={<AdminFinancialAid store={store} />} />
                 <Route path="/cms/*" element={<AdminCMS store={store} />} />
                 <Route path="/settings" element={<AdminSettings store={store} />} />
+                <Route path="/support" element={<AdminSupport store={store} />} />
                 <Route path="*" element={<Navigate to="/admin" replace />} />
               </Routes>
             </motion.div>
