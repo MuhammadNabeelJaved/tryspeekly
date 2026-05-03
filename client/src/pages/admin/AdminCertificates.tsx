@@ -245,23 +245,34 @@ export default function AdminCertificates({ store }: { store: AdminStore }) {
       <AnimatePresence>
         {modalType === 'issue' && selectedStudent && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-white dark:bg-neutral-900 rounded-[24px] w-full max-w-md border border-slate-100 dark:border-neutral-800 shadow-2xl overflow-hidden">
-              <form onSubmit={handleIssue}>
-                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-neutral-800">
-                  <h3 className="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
-                    <Certificate size={20} className="text-violet-600" weight="fill" /> Issue Certificate
-                  </h3>
-                  <button type="button" onClick={() => setModalType(null)} className="w-8 h-8 rounded-full bg-slate-100 dark:bg-neutral-800 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors"><X size={15} /></button>
-                </div>
-                
-                <div className="p-6">
-                  <div className="bg-slate-50 dark:bg-neutral-800/50 p-4 rounded-xl mb-5">
-                    <p className="text-xs text-slate-500 dark:text-neutral-400 uppercase font-bold mb-1">Recipient</p>
-                    <p className="text-sm font-black text-slate-900 dark:text-white">{selectedStudent.name}</p>
-                    <p className="text-xs text-slate-600 dark:text-neutral-300 mt-1">{selectedStudent.courseName}</p>
-                  </div>
-
-                  <div className="space-y-4">
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-white dark:bg-neutral-900 rounded-[24px] w-full max-w-4xl border border-slate-100 dark:border-neutral-800 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-neutral-800 shrink-0">
+                <h3 className="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
+                  <Certificate size={20} className="text-violet-600" weight="fill" /> Issue Certificate to {selectedStudent.name}
+                </h3>
+                <button type="button" onClick={() => setModalType(null)} className="w-8 h-8 rounded-full bg-slate-100 dark:bg-neutral-800 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors"><X size={15} /></button>
+              </div>
+              
+              <div className="flex flex-col lg:flex-row flex-1 overflow-hidden">
+                {/* Form Side */}
+                <div className="p-6 border-b lg:border-b-0 lg:border-r border-slate-100 dark:border-neutral-800 w-full lg:w-1/3 overflow-y-auto bg-slate-50 dark:bg-neutral-900/50">
+                  <form id="issue-cert-form" onSubmit={handleIssue} className="space-y-5">
+                    <div>
+                      <label className="text-[11px] font-bold text-slate-500 dark:text-neutral-400 uppercase tracking-wide block mb-1">Student Name</label>
+                      <input 
+                        value={selectedStudent.name}
+                        disabled
+                        className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-100 dark:bg-neutral-800/80 text-sm text-slate-500 dark:text-neutral-400 outline-none cursor-not-allowed"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-bold text-slate-500 dark:text-neutral-400 uppercase tracking-wide block mb-1">Course Name</label>
+                      <input 
+                        value={selectedStudent.courseName}
+                        disabled
+                        className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-100 dark:bg-neutral-800/80 text-sm text-slate-500 dark:text-neutral-400 outline-none cursor-not-allowed"
+                      />
+                    </div>
                     <div>
                       <label className="text-[11px] font-bold text-slate-500 dark:text-neutral-400 uppercase tracking-wide block mb-1">Certificate ID</label>
                       <input 
@@ -270,7 +281,7 @@ export default function AdminCertificates({ store }: { store: AdminStore }) {
                         onChange={e => setCertId(e.target.value)}
                         className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-sm font-mono text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors"
                       />
-                      <p className="text-[10px] text-slate-400 mt-1">Auto-generated unique ID. You can modify it if needed.</p>
+                      <p className="text-[10px] text-slate-400 mt-1">Auto-generated. You can edit if needed.</p>
                     </div>
                     <div>
                       <label className="text-[11px] font-bold text-slate-500 dark:text-neutral-400 uppercase tracking-wide block mb-1">Issue Date</label>
@@ -282,14 +293,43 @@ export default function AdminCertificates({ store }: { store: AdminStore }) {
                         className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-sm text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors"
                       />
                     </div>
-                  </div>
+                  </form>
                 </div>
 
-                <div className="flex gap-3 px-6 pb-6 pt-2 border-t border-slate-100 dark:border-neutral-800">
-                  <button type="button" onClick={() => setModalType(null)} className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-neutral-700 text-sm font-semibold text-slate-600 hover:bg-slate-50 dark:text-neutral-400 dark:hover:bg-neutral-800 transition-colors">Cancel</button>
-                  <button type="submit" className="flex-1 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-bold shadow-[0_4px_12px_rgba(124,58,237,0.3)] transition-colors">Generate Certificate</button>
+                {/* Live Preview Side */}
+                <div className="p-6 bg-slate-100 dark:bg-neutral-950 w-full lg:w-2/3 flex items-center justify-center overflow-hidden">
+                  <div className="w-full max-w-[600px] aspect-[4/3] bg-white p-6 sm:p-8 border-[8px] sm:border-[12px] border-[#1e1b4b] relative shadow-2xl flex flex-col justify-center text-center mx-auto transform scale-[0.8] sm:scale-100 origin-center">
+                    <div className="absolute inset-[10px] sm:inset-[16px] border-2 border-[#c4b5fd] pointer-events-none"></div>
+                    
+                    <h2 className="text-[#7c3aed] text-[10px] sm:text-xs font-black tracking-[0.2em] mb-2 sm:mb-4">ENGLISHPRO ACADEMY</h2>
+                    <h1 className="text-[#1e1b4b] text-xl sm:text-3xl font-serif font-bold italic mb-2 sm:mb-4 leading-tight">Certificate of Completion</h1>
+                    <p className="text-slate-500 text-[10px] sm:text-sm mb-2 sm:mb-4 font-medium">This is proudly presented to</p>
+                    <p className="text-[#7c3aed] text-2xl sm:text-4xl font-serif font-bold italic mb-3 sm:mb-5 border-b-2 border-slate-200 pb-1 sm:pb-2 px-4 sm:px-8 inline-block max-w-[90%] truncate">
+                      {selectedStudent.name}
+                    </p>
+                    <p className="text-slate-500 text-[10px] sm:text-sm mb-2 sm:mb-4 font-medium">for successfully completing the course</p>
+                    <p className="text-[#1e1b4b] text-base sm:text-xl font-bold mb-6 sm:mb-10 max-w-[90%] leading-snug mx-auto truncate">
+                      {selectedStudent.courseName}
+                    </p>
+                    
+                    <div className="flex justify-between w-full px-6 sm:px-12 mt-auto text-[8px] sm:text-xs text-slate-500 font-bold">
+                      <div className="text-center w-[40%]">
+                        <div className="border-b-2 border-slate-300 w-full mb-1 sm:mb-2"></div>
+                        <p>Date: {new Date(issueDate).toLocaleDateString() || 'Select Date'}</p>
+                      </div>
+                      <div className="text-center w-[40%]">
+                        <div className="border-b-2 border-slate-300 w-full mb-1 sm:mb-2"></div>
+                        <p>ID: {certId || 'Auto-generated'}</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </form>
+              </div>
+
+              <div className="flex gap-3 px-6 py-4 border-t border-slate-100 dark:border-neutral-800 bg-white dark:bg-neutral-900 shrink-0">
+                <button type="button" onClick={() => setModalType(null)} className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-neutral-700 text-sm font-semibold text-slate-600 hover:bg-slate-50 dark:text-neutral-400 dark:hover:bg-neutral-800 transition-colors">Cancel</button>
+                <button type="submit" form="issue-cert-form" className="flex-1 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-bold shadow-[0_4px_12px_rgba(124,58,237,0.3)] transition-colors">Confirm & Issue Certificate</button>
+              </div>
             </motion.div>
           </motion.div>
         )}
