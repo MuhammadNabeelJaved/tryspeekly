@@ -2,11 +2,12 @@ import { motion, AnimatePresence } from 'framer-motion'
 
 interface LoadingButtonProps {
   children: React.ReactNode
-  onClick: () => void
+  onClick?: () => void
   isLoading: boolean
   variant?: 'primary' | 'secondary'
   className?: string
   disabled?: boolean
+  type?: 'button' | 'submit' | 'reset'
 }
 
 export default function LoadingButton({
@@ -16,6 +17,7 @@ export default function LoadingButton({
   variant = 'primary',
   className = '',
   disabled = false,
+  type = 'button',
 }: LoadingButtonProps) {
   const isPrimary = variant === 'primary'
 
@@ -36,6 +38,7 @@ export default function LoadingButton({
 
   return (
     <button
+      type={type}
       onClick={onClick}
       disabled={isLoading || disabled}
       className={`${baseClasses} ${variantClasses} ${className}`}

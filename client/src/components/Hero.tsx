@@ -87,7 +87,7 @@ export default function Hero() {
                 whileTap={{ scale: 0.97 }}
                 className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-violet-600 to-purple-600 text-white font-bold px-8 py-4 rounded-2xl shadow-[0_8px_28px_rgba(124,58,237,0.35)] transition-all"
               >
-                Start Learning Free
+                Start Learning
                 <ArrowRight size={18} weight="bold" />
               </motion.button>
 

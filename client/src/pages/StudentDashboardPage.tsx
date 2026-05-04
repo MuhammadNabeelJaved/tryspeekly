@@ -1,19 +1,20 @@
-import React, { useState } from 'react'
+import React, { useState, Suspense, lazy } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import {
   House, BookOpen, CreditCard, Handshake, GearSix, ChatCircleDots,
   List, X, SignOut, Bell, Sun, Moon, Certificate
 } from '@phosphor-icons/react'
+import Loader from '@/components/Loader'
 
-import StudentOverview from './student/StudentOverview'
-import StudentCourses from './student/StudentCourses'
-import StudentCourseDetails from './student/StudentCourseDetails'
-import StudentCertificates from './student/StudentCertificates'
-import StudentPayments from './student/StudentPayments'
-import StudentFinancialAid from './student/StudentFinancialAid'
-import StudentSettings from './student/StudentSettings'
-import StudentSupport from './student/StudentSupport'
+const StudentOverview = lazy(() => import('./student/StudentOverview'))
+const StudentCourses = lazy(() => import('./student/StudentCourses'))
+const StudentCourseDetails = lazy(() => import('./student/StudentCourseDetails'))
+const StudentCertificates = lazy(() => import('./student/StudentCertificates'))
+const StudentPayments = lazy(() => import('./student/StudentPayments'))
+const StudentFinancialAid = lazy(() => import('./student/StudentFinancialAid'))
+const StudentSettings = lazy(() => import('./student/StudentSettings'))
+const StudentSupport = lazy(() => import('./student/StudentSupport'))
 
 import { MOCK_STUDENT } from './student/studentData'
 
@@ -204,16 +205,18 @@ export default function StudentDashboardPage() {
               transition={{ duration: 0.22, ease: [0.25, 0.46, 0.45, 0.94] }}
               className="max-w-6xl mx-auto h-full"
             >
-              <Routes>
-                <Route path="/" element={<StudentOverview onNavigate={handleNavigate} />} />
-                <Route path="/courses" element={<StudentCourses />} />
-                <Route path="/courses/:id" element={<StudentCourseDetails />} />
-                <Route path="/certificates" element={<StudentCertificates />} />
-                <Route path="/payments" element={<StudentPayments />} />
-                <Route path="/financial-aid" element={<StudentFinancialAid />} />
-                <Route path="/settings" element={<StudentSettings />} />
-                <Route path="/support" element={<StudentSupport />} />
-              </Routes>
+              <Suspense fallback={<Loader />}>
+                <Routes>
+                  <Route path="/" element={<StudentOverview onNavigate={handleNavigate} />} />
+                  <Route path="/courses" element={<StudentCourses />} />
+                  <Route path="/courses/:id" element={<StudentCourseDetails />} />
+                  <Route path="/certificates" element={<StudentCertificates />} />
+                  <Route path="/payments" element={<StudentPayments />} />
+                  <Route path="/financial-aid" element={<StudentFinancialAid />} />
+                  <Route path="/settings" element={<StudentSettings />} />
+                  <Route path="/support" element={<StudentSupport />} />
+                </Routes>
+              </Suspense>
             </motion.div>
           </AnimatePresence>
         </main>

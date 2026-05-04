@@ -48,9 +48,9 @@ export default function PasswordStrengthIndicator({
         </div>
         <div
           role="progressbar"
-          aria-valuenow={config.width}
-          aria-valuemin="0"
-          aria-valuemax="100"
+          aria-valuenow={parseInt(config.width)}
+          aria-valuemin={0}
+          aria-valuemax={100}
           className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-neutral-800"
         >
           <motion.div

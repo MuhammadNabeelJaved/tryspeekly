@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, Suspense, lazy } from 'react'
 import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -9,16 +9,18 @@ import {
 } from '@phosphor-icons/react'
 import type { Student, Instructor, Course, CMSPage, FinancialAidApp } from './admin/adminData'
 import { INITIAL_STUDENTS, INITIAL_INSTRUCTORS, INITIAL_COURSES, INITIAL_CMS_PAGES, INITIAL_FINANCIAL_AID } from './admin/adminData'
-import AdminOverview from './admin/AdminOverview'
-import AdminStudents from './admin/AdminStudents'
-import AdminInstructors from './admin/AdminInstructors'
-import AdminCourses from './admin/AdminCourses'
-import AdminCertificates from './admin/AdminCertificates'
-import AdminPaymentsView from './admin/AdminPaymentsView'
-import AdminFinancialAid from './admin/AdminFinancialAid'
-import AdminCMS from './admin/AdminCMS'
-import AdminSettings from './admin/AdminSettings'
-import AdminSupport from './admin/AdminSupport'
+import Loader from '@/components/Loader'
+
+const AdminOverview = lazy(() => import('./admin/AdminOverview'))
+const AdminStudents = lazy(() => import('./admin/AdminStudents'))
+const AdminInstructors = lazy(() => import('./admin/AdminInstructors'))
+const AdminCourses = lazy(() => import('./admin/AdminCourses'))
+const AdminCertificates = lazy(() => import('./admin/AdminCertificates'))
+const AdminPaymentsView = lazy(() => import('./admin/AdminPaymentsView'))
+const AdminFinancialAid = lazy(() => import('./admin/AdminFinancialAid'))
+const AdminCMS = lazy(() => import('./admin/AdminCMS'))
+const AdminSettings = lazy(() => import('./admin/AdminSettings'))
+const AdminSupport = lazy(() => import('./admin/AdminSupport'))
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 
@@ -391,19 +393,21 @@ export default function AdminPage() {
               transition={{ duration: 0.22, ease: [0.25, 0.46, 0.45, 0.94] }}
               className="h-full"
             >
-              <Routes>
-                <Route path="/" element={<AdminOverview store={store} onNavigate={handleNavigate} />} />
-                <Route path="/students" element={<AdminStudents store={store} />} />
-                <Route path="/instructors" element={<AdminInstructors store={store} />} />
-                <Route path="/courses" element={<AdminCourses store={store} />} />
-                <Route path="/certificates" element={<AdminCertificates store={store} />} />
-                <Route path="/payments" element={<AdminPaymentsView store={store} />} />
-                <Route path="/financial-aid" element={<AdminFinancialAid store={store} />} />
-                <Route path="/cms/*" element={<AdminCMS store={store} />} />
-                <Route path="/settings" element={<AdminSettings store={store} />} />
-                <Route path="/support" element={<AdminSupport store={store} />} />
-                <Route path="*" element={<Navigate to="/admin" replace />} />
-              </Routes>
+              <Suspense fallback={<Loader />}>
+                <Routes>
+                  <Route path="/" element={<AdminOverview store={store} onNavigate={handleNavigate} />} />
+                  <Route path="/students" element={<AdminStudents store={store} />} />
+                  <Route path="/instructors" element={<AdminInstructors store={store} />} />
+                  <Route path="/courses" element={<AdminCourses store={store} />} />
+                  <Route path="/certificates" element={<AdminCertificates store={store} />} />
+                  <Route path="/payments" element={<AdminPaymentsView store={store} />} />
+                  <Route path="/financial-aid" element={<AdminFinancialAid store={store} />} />
+                  <Route path="/cms/*" element={<AdminCMS store={store} />} />
+                  <Route path="/settings" element={<AdminSettings store={store} />} />
+                  <Route path="/support" element={<AdminSupport store={store} />} />
+                  <Route path="*" element={<Navigate to="/admin" replace />} />
+                </Routes>
+              </Suspense>
             </motion.div>
           </AnimatePresence>
         </main>
