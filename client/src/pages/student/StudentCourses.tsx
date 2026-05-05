@@ -39,7 +39,7 @@ export default function StudentCourses() {
                     </span>
                     <span className={`text-[10px] font-bold flex items-center gap-1 ${course.attendance >= 80 ? 'text-green-500' : 'text-amber-500'}`}>
                       <ShieldCheck size={14} weight="fill" />
-                      {course.attendance}% Attendance
+                      {course.attendance}% Attendance ({course.attendedClasses}/{course.totalClasses})
                     </span>
                   </div>
                   

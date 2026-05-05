@@ -153,7 +153,7 @@ export default function StudentOverview({ onNavigate }: { onNavigate: (view: Stu
                     <div className="flex justify-between items-center text-xs font-bold pt-2">
                       <span className="text-slate-500 dark:text-neutral-400">Attendance</span>
                       <span className={course.attendance >= 80 ? "text-green-600" : "text-amber-500"}>
-                        {course.attendance}%
+                        {course.attendance}% ({course.attendedClasses}/{course.totalClasses})
                       </span>
                     </div>
                   </div>

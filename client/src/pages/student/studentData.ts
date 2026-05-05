@@ -23,6 +23,7 @@ export interface EnrolledCourse {
   meetingId: string
   passcode: string
   attendance: number // Percentage 0-100
+  attendedClasses: number
   status: 'active' | 'completed' | 'paused'
   materialsUrl: string
   certificateUrl?: string
@@ -100,6 +101,7 @@ export const MOCK_ENROLLED_COURSES: EnrolledCourse[] = [
     meetingId: '123 456 789',
     passcode: 'ENGLISH',
     attendance: 92,
+    attendedClasses: 11,
     status: 'active',
     materialsUrl: '/materials/c_1'
   },
@@ -117,6 +119,7 @@ export const MOCK_ENROLLED_COURSES: EnrolledCourse[] = [
     meetingId: '987 654 321',
     passcode: 'IELTS9',
     attendance: 100,
+    attendedClasses: 4,
     status: 'active',
     materialsUrl: '/materials/c_3'
   },
@@ -134,6 +137,7 @@ export const MOCK_ENROLLED_COURSES: EnrolledCourse[] = [
     meetingId: '',
     passcode: '',
     attendance: 85,
+    attendedClasses: 10,
     status: 'completed',
     materialsUrl: '/materials/c_2',
     certificateUrl: '/certificates/cert_123.pdf',

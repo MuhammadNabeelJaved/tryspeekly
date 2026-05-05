@@ -22,6 +22,8 @@ export interface Student {
   certificateId?: string
   certificateIssueDate?: string
   attendance?: number
+  attendedClasses?: number
+  totalClasses?: number
 }
 
 export interface SupportTicket {

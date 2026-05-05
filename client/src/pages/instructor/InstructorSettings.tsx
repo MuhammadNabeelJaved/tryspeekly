@@ -1,0 +1,266 @@
+import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { User, Lock, Bell, PlugsConnected, Globe, DeviceMobile, ShieldCheck, VideoCamera, Calendar } from '@phosphor-icons/react'
+import { MOCK_INSTRUCTOR } from './instructorData'
+
+export default function InstructorSettings() {
+  const [activeTab, setActiveTab] = useState('profile')
+  
+  const { register, handleSubmit } = useForm({
+    defaultValues: {
+      name: MOCK_INSTRUCTOR.name,
+      email: MOCK_INSTRUCTOR.email,
+      phone: '+1 (555) 123-4567',
+      timezone: 'America/New_York',
+      bio: 'I am a certified IELTS examiner with over 10 years of experience teaching English to professionals and students worldwide.',
+    }
+  })
+
+  const onSubmit = (data: any) => {
+    console.log('Saved settings:', data)
+    alert('Settings saved successfully!')
+  }
+
+  return (
+    <div className="max-w-5xl mx-auto space-y-8">
+      <div>
+        <h1 className="text-2xl font-black text-slate-900 dark:text-white">Account Settings</h1>
+        <p className="text-sm text-slate-500 dark:text-neutral-400">Manage your profile, security, integrations, and notification preferences.</p>
+      </div>
+
+      <div className="flex flex-col md:flex-row gap-8">
+        {/* Sidebar Navigation */}
+        <div className="w-full md:w-64 flex-shrink-0 space-y-1">
+          <button 
+            onClick={() => setActiveTab('profile')}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-colors ${activeTab === 'profile' ? 'bg-violet-600 text-white shadow-md shadow-violet-600/20' : 'text-slate-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-neutral-800'}`}
+          >
+            <User size={18} weight={activeTab === 'profile' ? 'fill' : 'regular'} /> Profile Details
+          </button>
+          <button 
+            onClick={() => setActiveTab('security')}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-colors ${activeTab === 'security' ? 'bg-violet-600 text-white shadow-md shadow-violet-600/20' : 'text-slate-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-neutral-800'}`}
+          >
+            <Lock size={18} weight={activeTab === 'security' ? 'fill' : 'regular'} /> Security & Login
+          </button>
+          <button 
+            onClick={() => setActiveTab('notifications')}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-colors ${activeTab === 'notifications' ? 'bg-violet-600 text-white shadow-md shadow-violet-600/20' : 'text-slate-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-neutral-800'}`}
+          >
+            <Bell size={18} weight={activeTab === 'notifications' ? 'fill' : 'regular'} /> Notifications
+          </button>
+          <button 
+            onClick={() => setActiveTab('integrations')}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-colors ${activeTab === 'integrations' ? 'bg-violet-600 text-white shadow-md shadow-violet-600/20' : 'text-slate-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-neutral-800'}`}
+          >
+            <PlugsConnected size={18} weight={activeTab === 'integrations' ? 'fill' : 'regular'} /> Integrations
+          </button>
+        </div>
+
+        {/* Content Area */}
+        <div className="flex-1 space-y-6">
+          {activeTab === 'profile' && (
+            <div className="bg-white dark:bg-neutral-900 rounded-3xl border border-slate-200 dark:border-neutral-800 overflow-hidden shadow-sm">
+              <div className="border-b border-slate-200 dark:border-neutral-800 p-6 flex items-center gap-4 bg-slate-50/50 dark:bg-neutral-900/50">
+                <div className="w-12 h-12 rounded-xl bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 flex items-center justify-center">
+                  <User size={24} weight="fill" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-black text-slate-900 dark:text-white">Personal Information</h2>
+                  <p className="text-xs text-slate-500 dark:text-neutral-400">Update your basic profile details and contact info.</p>
+                </div>
+              </div>
+
+              <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-neutral-400 mb-2">Full Name</label>
+                    <input 
+                      {...register('name')}
+                      className="w-full px-4 py-3 bg-slate-50 dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 rounded-xl text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:border-violet-500 transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-neutral-400 mb-2">Email Address</label>
+                    <input 
+                      {...register('email')}
+                      type="email"
+                      className="w-full px-4 py-3 bg-slate-50 dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 rounded-xl text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:border-violet-500 transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-neutral-400 mb-2 flex items-center gap-1.5"><DeviceMobile size={14} /> Phone Number</label>
+                    <input 
+                      {...register('phone')}
+                      className="w-full px-4 py-3 bg-slate-50 dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 rounded-xl text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:border-violet-500 transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-neutral-400 mb-2 flex items-center gap-1.5"><Globe size={14} /> Timezone</label>
+                    <select 
+                      {...register('timezone')}
+                      className="w-full px-4 py-3 bg-slate-50 dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 rounded-xl text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:border-violet-500 transition-colors"
+                    >
+                      <option value="America/New_York">Eastern Time (US & Canada)</option>
+                      <option value="Europe/London">London (GMT)</option>
+                      <option value="Asia/Karachi">Pakistan Standard Time (PKT)</option>
+                      <option value="Asia/Dubai">Gulf Standard Time (GST)</option>
+                    </select>
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-neutral-400 mb-2">Professional Bio</label>
+                  <textarea 
+                    {...register('bio')}
+                    rows={4}
+                    className="w-full px-4 py-3 bg-slate-50 dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 rounded-xl text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:border-violet-500 transition-colors resize-none leading-relaxed"
+                  />
+                  <p className="text-[10px] text-slate-400 mt-2">Brief description for your profile. URLs are hyperlinked.</p>
+                </div>
+
+                <div className="flex justify-end pt-4 border-t border-slate-100 dark:border-neutral-800">
+                  <button type="submit" className="bg-violet-600 hover:bg-violet-700 text-white px-8 py-3 rounded-xl text-sm font-bold transition-colors shadow-md shadow-violet-600/20">
+                    Save Changes
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {activeTab === 'security' && (
+            <div className="space-y-6">
+              <div className="bg-white dark:bg-neutral-900 rounded-3xl border border-slate-200 dark:border-neutral-800 overflow-hidden shadow-sm">
+                <div className="border-b border-slate-200 dark:border-neutral-800 p-6 flex items-center gap-4 bg-slate-50/50 dark:bg-neutral-900/50">
+                  <div className="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                    <Lock size={24} weight="fill" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-black text-slate-900 dark:text-white">Change Password</h2>
+                    <p className="text-xs text-slate-500 dark:text-neutral-400">Update your password associated with your account.</p>
+                  </div>
+                </div>
+                <div className="p-6 space-y-4">
+                  <div>
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-neutral-400 mb-2">Current Password</label>
+                    <input type="password" placeholder="••••••••" className="w-full max-w-md px-4 py-3 bg-slate-50 dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 rounded-xl text-sm focus:outline-none focus:border-blue-500" />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-neutral-400 mb-2">New Password</label>
+                    <input type="password" placeholder="••••••••" className="w-full max-w-md px-4 py-3 bg-slate-50 dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 rounded-xl text-sm focus:outline-none focus:border-blue-500" />
+                  </div>
+                  <button className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-6 py-2.5 rounded-xl text-sm font-bold mt-2 hover:bg-slate-800 dark:hover:bg-slate-200 transition-colors">
+                    Update Password
+                  </button>
+                </div>
+              </div>
+
+              <div className="bg-white dark:bg-neutral-900 rounded-3xl border border-slate-200 dark:border-neutral-800 overflow-hidden shadow-sm">
+                <div className="border-b border-slate-200 dark:border-neutral-800 p-6 flex items-center justify-between bg-slate-50/50 dark:bg-neutral-900/50">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                      <ShieldCheck size={24} weight="fill" />
+                    </div>
+                    <div>
+                      <h2 className="text-lg font-black text-slate-900 dark:text-white">Two-Factor Authentication</h2>
+                      <p className="text-xs text-slate-500 dark:text-neutral-400">Add an extra layer of security to your account.</p>
+                    </div>
+                  </div>
+                  <span className="bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-400 px-3 py-1 text-xs font-bold rounded-lg">Disabled</span>
+                </div>
+                <div className="p-6">
+                  <p className="text-sm text-slate-600 dark:text-neutral-400 mb-4 max-w-2xl leading-relaxed">
+                    Two-factor authentication adds an additional layer of security to your account by requiring more than just a password to sign in.
+                  </p>
+                  <button className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-emerald-200 dark:hover:bg-emerald-900/50 transition-colors">
+                    Enable 2FA
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'notifications' && (
+            <div className="bg-white dark:bg-neutral-900 rounded-3xl border border-slate-200 dark:border-neutral-800 overflow-hidden shadow-sm">
+              <div className="border-b border-slate-200 dark:border-neutral-800 p-6 flex items-center gap-4 bg-slate-50/50 dark:bg-neutral-900/50">
+                <div className="w-12 h-12 rounded-xl bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+                  <Bell size={24} weight="fill" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-black text-slate-900 dark:text-white">Email Notifications</h2>
+                  <p className="text-xs text-slate-500 dark:text-neutral-400">Choose what updates you want to receive.</p>
+                </div>
+              </div>
+              <div className="p-0">
+                <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-neutral-800">
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-900 dark:text-white">Student Enrollments</h4>
+                    <p className="text-xs text-slate-500 mt-1">Get notified when a new student enrolls in your course.</p>
+                  </div>
+                  <div className="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
+                    <input type="checkbox" name="toggle" id="toggle1" defaultChecked className="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 border-violet-500 appearance-none cursor-pointer translate-x-6 transition-transform" style={{ right: 0 }} />
+                    <label htmlFor="toggle1" className="toggle-label block overflow-hidden h-6 rounded-full bg-violet-500 cursor-pointer"></label>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-neutral-800">
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-900 dark:text-white">Assignment Submissions</h4>
+                    <p className="text-xs text-slate-500 mt-1">Receive an email when a student submits an assignment.</p>
+                  </div>
+                  <div className="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
+                    <input type="checkbox" name="toggle" id="toggle2" defaultChecked className="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 border-violet-500 appearance-none cursor-pointer translate-x-6 transition-transform" style={{ right: 0 }} />
+                    <label htmlFor="toggle2" className="toggle-label block overflow-hidden h-6 rounded-full bg-violet-500 cursor-pointer"></label>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between p-6">
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-900 dark:text-white">Direct Messages</h4>
+                    <p className="text-xs text-slate-500 mt-1">Get emails for unread direct messages from students.</p>
+                  </div>
+                  <div className="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
+                    <input type="checkbox" name="toggle" id="toggle3" className="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 border-slate-300 appearance-none cursor-pointer transition-transform" />
+                    <label htmlFor="toggle3" className="toggle-label block overflow-hidden h-6 rounded-full bg-slate-300 cursor-pointer"></label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'integrations' && (
+            <div className="space-y-4">
+              <div className="bg-white dark:bg-neutral-900 rounded-3xl border border-slate-200 dark:border-neutral-800 p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm hover:border-violet-300 dark:hover:border-violet-800/50 transition-colors">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-2xl bg-blue-50 dark:bg-blue-900/20 text-blue-500 flex items-center justify-center">
+                    <VideoCamera size={28} weight="fill" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">Zoom <span className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider">Connected</span></h3>
+                    <p className="text-xs text-slate-500 mt-1">Automatically create and share Zoom meeting links for live classes.</p>
+                  </div>
+                </div>
+                <button className="bg-slate-100 hover:bg-red-50 text-slate-600 hover:text-red-600 dark:bg-neutral-800 dark:hover:bg-red-900/20 dark:text-neutral-300 dark:hover:text-red-400 px-4 py-2 rounded-xl text-xs font-bold transition-colors border border-transparent hover:border-red-200 dark:hover:border-red-900/50">
+                  Disconnect
+                </button>
+              </div>
+
+              <div className="bg-white dark:bg-neutral-900 rounded-3xl border border-slate-200 dark:border-neutral-800 p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm hover:border-violet-300 dark:hover:border-violet-800/50 transition-colors">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-2xl bg-amber-50 dark:bg-amber-900/20 text-amber-500 flex items-center justify-center">
+                    <Calendar size={28} weight="fill" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">Google Calendar</h3>
+                    <p className="text-xs text-slate-500 mt-1">Sync your class schedule and assignments with your calendar.</p>
+                  </div>
+                </div>
+                <button className="bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition-colors shadow-sm">
+                  Connect Account
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}

@@ -21,6 +21,7 @@ const FinancialAidPage = lazy(() => import('@/pages/FinancialAidPage'))
 const LoginPage = lazy(() => import('@/pages/LoginPage'))
 const SignupPage = lazy(() => import('@/pages/SignupPage'))
 const StudentDashboardPage = lazy(() => import('@/pages/StudentDashboardPage'))
+const InstructorDashboardPage = lazy(() => import('@/pages/InstructorDashboardPage'))
 const CertificateViewPage = lazy(() => import('@/pages/CertificateViewPage'))
 const AdminPage = lazy(() => import('@/pages/AdminPage'))
 
@@ -80,6 +81,7 @@ function App() {
         <Routes>
           <Route path="/admin/*" element={<AdminPage />} />
           <Route path="/dashboard/*" element={<StudentDashboardPage />} />
+          <Route path="/instructor/*" element={<InstructorDashboardPage />} />
           <Route path="/certificate/:id" element={<CertificateViewPage />} />
           <Route path="/*" element={<PublicLayout />} />
         </Routes>

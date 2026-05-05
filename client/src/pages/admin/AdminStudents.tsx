@@ -288,6 +288,8 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
                 <div className="col-span-2 border-t border-slate-100 dark:border-neutral-800 pt-4 mt-2">
                   <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-3">Academic Progress & Certification</h4>
                   <div className="grid grid-cols-2 gap-4">
+                    <Field label="Attended Classes"><Input register={register} name="attendedClasses" type="number" placeholder="10" valueAsNumber /></Field>
+                    <Field label="Total Classes"><Input register={register} name="totalClasses" type="number" placeholder="12" valueAsNumber /></Field>
                     <Field label="Attendance (%)"><Input register={register} name="attendance" type="number" placeholder="85" valueAsNumber /></Field>
                     <Field label="Certificate ID (Leave empty to auto-generate)"><Input register={register} name="certificateId" placeholder="EP-2026-1234X" /></Field>
                     <Field label="Certificate Issue Date"><Input register={register} name="certificateIssueDate" type="date" /></Field>
@@ -339,7 +341,7 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
                     { label: 'Country', value: `${viewStudent.city}, ${viewStudent.country}` },
                     { label: 'Course', value: viewStudent.courseName },
                     { label: 'Level', value: viewStudent.courseLevel },
-                    { label: 'Attendance', value: `${viewStudent.attendance || 0}%` },
+                    { label: 'Attendance', value: `${viewStudent.attendance || 0}% (${viewStudent.attendedClasses || 0} / ${viewStudent.totalClasses || 0})` },
                     { label: 'Cert ID', value: viewStudent.certificateId || 'Not issued' },
                     { label: 'Payment Method', value: viewStudent.paymentMethod },
                     { label: 'Amount', value: viewStudent.paymentCurrency === 'PKR' ? `₨${viewStudent.paymentAmount.toLocaleString()}` : `$${viewStudent.paymentAmount}` },
