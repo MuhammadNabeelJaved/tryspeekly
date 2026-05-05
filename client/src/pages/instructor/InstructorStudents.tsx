@@ -1,27 +1,55 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { INSTRUCTOR_STUDENTS } from './instructorData'
-import { MagnifyingGlass, FunnelSimple, Check, X, EnvelopeSimple, Phone, CalendarBlank, ChartBar, Star, BookOpen } from '@phosphor-icons/react'
+import { MagnifyingGlass, FunnelSimple, Check, X, EnvelopeSimple, Phone, CalendarBlank, ChartBar, Star, BookOpen, UserMinus, Clock } from '@phosphor-icons/react'
 
-type Student = typeof INSTRUCTOR_STUDENTS[0]
+type Student = typeof INSTRUCTOR_STUDENTS[0] & { todayStatus?: 'present' | 'absent' | 'late' }
 
 export default function InstructorStudents() {
-  const [students, setStudents] = useState(INSTRUCTOR_STUDENTS)
+  const [students, setStudents] = useState<Student[]>(INSTRUCTOR_STUDENTS)
   const [searchQuery, setSearchQuery] = useState('')
+  const [courseFilter, setCourseFilter] = useState('all')
+  const [statusFilter, setStatusFilter] = useState('all')
+  const [sortBy, setSortBy] = useState('name-asc')
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null)
 
-  const handleMarkPresent = (studentId: string) => {
+  const updateAttendance = (studentId: string, status: 'present' | 'absent' | 'late' | null) => {
+
     setStudents(students.map(s => {
-      if (s.id === studentId && s.attendedClasses < s.totalClasses) {
-        const newAttended = s.attendedClasses + 1
+      if (s.id === studentId) {
+        let newAttended = s.attendedClasses
+        const wasCredited = s.todayStatus === 'present' || s.todayStatus === 'late'
+        const nowCredited = status === 'present' || status === 'late'
+
+        if (!wasCredited && nowCredited) {
+          newAttended = Math.min(s.attendedClasses + 1, s.totalClasses)
+        } else if (wasCredited && !nowCredited) {
+          newAttended = Math.max(s.attendedClasses - 1, 0)
+        }
+
         const newPercentage = Math.round((newAttended / s.totalClasses) * 100)
-        return { ...s, attendedClasses: newAttended, attendance: newPercentage }
+        return { ...s, attendedClasses: newAttended, attendance: newPercentage, todayStatus: status || undefined }
       }
       return s
     }))
   }
 
-  const filteredStudents = students.filter(s => s.name.toLowerCase().includes(searchQuery.toLowerCase()))
+  const filteredStudents = students
+    .filter(s => {
+      const matchesSearch = s.name.toLowerCase().includes(searchQuery.toLowerCase())
+      const matchesCourse = courseFilter === 'all' || s.course === courseFilter
+      const matchesStatus = statusFilter === 'all' || s.status === statusFilter
+      return matchesSearch && matchesCourse && matchesStatus
+    })
+    .sort((a, b) => {
+      if (sortBy === 'name-asc') return a.name.localeCompare(b.name)
+      if (sortBy === 'name-desc') return b.name.localeCompare(a.name)
+      if (sortBy === 'attendance-desc') return b.attendance - a.attendance
+      if (sortBy === 'attendance-asc') return a.attendance - b.attendance
+      return 0
+    })
+
+  const courses = Array.from(new Set(students.map(s => s.course)))
 
   return (
     <div className="space-y-6">
@@ -34,21 +62,52 @@ export default function InstructorStudents() {
 
       <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200 dark:border-neutral-800 shadow-sm overflow-hidden">
         {/* Filters */}
-        <div className="p-4 border-b border-slate-200 dark:border-neutral-800 flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1">
-            <MagnifyingGlass size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input 
-              type="text" 
-              placeholder="Search students by name..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 rounded-xl text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-violet-500 transition-colors"
-            />
+        <div className="p-4 border-b border-slate-200 dark:border-neutral-800 space-y-4">
+          <div className="flex flex-col md:flex-row gap-3">
+            <div className="relative flex-1">
+              <MagnifyingGlass size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input 
+                type="text" 
+                placeholder="Search students by name..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 rounded-xl text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-violet-500 transition-colors"
+              />
+            </div>
+            
+            <div className="flex flex-wrap gap-2">
+              <select 
+                value={courseFilter}
+                onChange={(e) => setCourseFilter(e.target.value)}
+                className="bg-slate-50 dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 rounded-xl px-4 py-2 text-sm font-semibold text-slate-700 dark:text-neutral-300 focus:outline-none focus:border-violet-500 transition-colors cursor-pointer"
+              >
+                <option value="all">All Courses</option>
+                {courses.map(course => <option key={course} value={course}>{course}</option>)}
+              </select>
+
+              <select 
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="bg-slate-50 dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 rounded-xl px-4 py-2 text-sm font-semibold text-slate-700 dark:text-neutral-300 focus:outline-none focus:border-violet-500 transition-colors cursor-pointer"
+              >
+                <option value="all">All Status</option>
+                <option value="excellent">Excellent</option>
+                <option value="good">Good</option>
+                <option value="needs_attention">Needs Attention</option>
+              </select>
+
+              <select 
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="bg-slate-50 dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 rounded-xl px-4 py-2 text-sm font-semibold text-slate-700 dark:text-neutral-300 focus:outline-none focus:border-violet-500 transition-colors cursor-pointer"
+              >
+                <option value="name-asc">Name (A-Z)</option>
+                <option value="name-desc">Name (Z-A)</option>
+                <option value="attendance-desc">Highest Attendance</option>
+                <option value="attendance-asc">Lowest Attendance</option>
+              </select>
+            </div>
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 bg-slate-50 dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 rounded-xl text-sm font-semibold text-slate-700 dark:text-neutral-300 hover:bg-slate-100 dark:hover:bg-neutral-700 transition-colors">
-            <FunnelSimple size={16} />
-            Filter by Course
-          </button>
         </div>
 
         {/* Table */}
@@ -104,19 +163,49 @@ export default function InstructorStudents() {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-3">
-                      <button 
-                        onClick={() => handleMarkPresent(student.id)}
-                        disabled={student.attendedClasses >= student.totalClasses}
-                        className="flex items-center gap-1 text-xs font-bold bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:hover:bg-emerald-900/50 px-2 py-1 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <Check size={14} weight="bold" />
-                        Mark Present
-                      </button>
+                      
+                      {/* Attendance Actions */}
+                      <div className="flex bg-slate-100 dark:bg-neutral-800 rounded-lg p-1 gap-1">
+                        <button 
+                          onClick={() => updateAttendance(student.id, student.todayStatus === 'present' ? null : 'present')}
+                          title="Mark Present"
+                          className={`p-1.5 rounded-md flex items-center justify-center transition-all ${
+                            student.todayStatus === 'present' 
+                              ? 'bg-emerald-500 text-white shadow-sm' 
+                              : 'text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20'
+                          }`}
+                        >
+                          <Check size={16} weight="bold" />
+                        </button>
+                        <button 
+                          onClick={() => updateAttendance(student.id, student.todayStatus === 'late' ? null : 'late')}
+                          title="Mark Late"
+                          className={`p-1.5 rounded-md flex items-center justify-center transition-all ${
+                            student.todayStatus === 'late' 
+                              ? 'bg-amber-500 text-white shadow-sm' 
+                              : 'text-slate-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20'
+                          }`}
+                        >
+                          <Clock size={16} weight="bold" />
+                        </button>
+                        <button 
+                          onClick={() => updateAttendance(student.id, student.todayStatus === 'absent' ? null : 'absent')}
+                          title="Mark Absent"
+                          className={`p-1.5 rounded-md flex items-center justify-center transition-all ${
+                            student.todayStatus === 'absent' 
+                              ? 'bg-red-500 text-white shadow-sm' 
+                              : 'text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'
+                          }`}
+                        >
+                          <UserMinus size={16} weight="bold" />
+                        </button>
+                      </div>
+
                       <button 
                         onClick={() => setSelectedStudent(student)}
-                        className="text-violet-600 dark:text-violet-400 font-bold hover:underline text-sm"
+                        className="text-violet-600 dark:text-violet-400 font-bold hover:underline text-sm ml-2"
                       >
-                        View Profile
+                        Profile
                       </button>
                     </div>
                   </td>
@@ -219,16 +308,78 @@ export default function InstructorStudents() {
               </div>
               
               {/* Footer Actions */}
-              <div className="p-5 border-t border-slate-100 dark:border-neutral-800 bg-slate-50/50 dark:bg-neutral-900/50 flex gap-3">
+              <div className="p-5 border-t border-slate-100 dark:border-neutral-800 bg-slate-50/50 dark:bg-neutral-900/50 flex flex-col sm:flex-row gap-3">
                 <button onClick={() => alert('Opening message chat...')} className="flex-1 py-3 bg-white dark:bg-neutral-800 hover:bg-slate-50 dark:hover:bg-neutral-700 border border-slate-200 dark:border-neutral-700 text-slate-700 dark:text-white font-bold text-sm rounded-xl transition-colors shadow-sm">
                   Send Message
                 </button>
-                <button onClick={() => {
-                  handleMarkPresent(selectedStudent.id);
-                  setSelectedStudent({...selectedStudent, attendedClasses: Math.min(selectedStudent.attendedClasses + 1, selectedStudent.totalClasses), attendance: Math.round(((Math.min(selectedStudent.attendedClasses + 1, selectedStudent.totalClasses)) / selectedStudent.totalClasses) * 100)});
-                }} disabled={selectedStudent.attendedClasses >= selectedStudent.totalClasses} className="flex-1 py-3 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white font-bold text-sm rounded-xl transition-colors shadow-md shadow-violet-600/20">
-                  Mark Present Today
-                </button>
+                
+                <div className="flex-1 flex bg-slate-100 dark:bg-neutral-800 rounded-xl p-1 shadow-inner">
+                  <button 
+                    onClick={() => {
+                      updateAttendance(selectedStudent.id, selectedStudent.todayStatus === 'present' ? null : 'present');
+                      
+                      const willBePresent = selectedStudent.todayStatus !== 'present';
+                      const wasCredited = selectedStudent.todayStatus === 'present' || selectedStudent.todayStatus === 'late';
+                      let newAttended = selectedStudent.attendedClasses;
+                      
+                      if (!wasCredited && willBePresent) newAttended = Math.min(newAttended + 1, selectedStudent.totalClasses);
+                      else if (wasCredited && !willBePresent) newAttended = Math.max(newAttended - 1, 0);
+
+                      setSelectedStudent({
+                        ...selectedStudent, 
+                        todayStatus: willBePresent ? 'present' : undefined, 
+                        attendedClasses: newAttended,
+                        attendance: Math.round((newAttended / selectedStudent.totalClasses) * 100)
+                      });
+                    }} 
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold rounded-lg transition-all ${selectedStudent.todayStatus === 'present' ? 'bg-emerald-500 text-white shadow-sm' : 'text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20'}`}
+                  >
+                    <Check size={16} /> Present
+                  </button>
+                  <button 
+                    onClick={() => {
+                      updateAttendance(selectedStudent.id, selectedStudent.todayStatus === 'late' ? null : 'late');
+                      
+                      const willBeLate = selectedStudent.todayStatus !== 'late';
+                      const wasCredited = selectedStudent.todayStatus === 'present' || selectedStudent.todayStatus === 'late';
+                      let newAttended = selectedStudent.attendedClasses;
+                      
+                      if (!wasCredited && willBeLate) newAttended = Math.min(newAttended + 1, selectedStudent.totalClasses);
+                      else if (wasCredited && !willBeLate) newAttended = Math.max(newAttended - 1, 0);
+
+                      setSelectedStudent({
+                        ...selectedStudent, 
+                        todayStatus: willBeLate ? 'late' : undefined, 
+                        attendedClasses: newAttended,
+                        attendance: Math.round((newAttended / selectedStudent.totalClasses) * 100)
+                      });
+                    }} 
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold rounded-lg transition-all ${selectedStudent.todayStatus === 'late' ? 'bg-amber-500 text-white shadow-sm' : 'text-slate-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20'}`}
+                  >
+                    <Clock size={16} /> Late
+                  </button>
+                  <button 
+                    onClick={() => {
+                      updateAttendance(selectedStudent.id, selectedStudent.todayStatus === 'absent' ? null : 'absent');
+                      
+                      const willBeAbsent = selectedStudent.todayStatus !== 'absent';
+                      const wasCredited = selectedStudent.todayStatus === 'present' || selectedStudent.todayStatus === 'late';
+                      let newAttended = selectedStudent.attendedClasses;
+                      
+                      if (wasCredited && willBeAbsent) newAttended = Math.max(newAttended - 1, 0);
+
+                      setSelectedStudent({
+                        ...selectedStudent, 
+                        todayStatus: willBeAbsent ? 'absent' : undefined, 
+                        attendedClasses: newAttended,
+                        attendance: Math.round((newAttended / selectedStudent.totalClasses) * 100)
+                      });
+                    }} 
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold rounded-lg transition-all ${selectedStudent.todayStatus === 'absent' ? 'bg-red-500 text-white shadow-sm' : 'text-slate-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20'}`}
+                  >
+                    <UserMinus size={16} /> Absent
+                  </button>
+                </div>
               </div>
             </motion.div>
           </motion.div>

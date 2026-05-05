@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { INSTRUCTOR_COURSES } from './instructorData'
-import { Users, Clock, PlayCircle, X, Check, PencilSimple, Trash, ListDashes, DotsThreeVertical, CaretUp, CaretDown, VideoCamera, FilePdf, PresentationChart, ShareNetwork, CheckCircle } from '@phosphor-icons/react'
+import { Users, Clock, PlayCircle, X, Check, PencilSimple, Trash, ListDashes, DotsThreeVertical, CaretUp, CaretDown, VideoCamera, FilePdf, PresentationChart, ShareNetwork, CheckCircle, MagnifyingGlass } from '@phosphor-icons/react'
 
 type InstructorCourse = {
   id: string
@@ -24,6 +24,7 @@ type CompletedClass = {
   courseId: string
   courseTitle: string
   completedAt: string
+  timestamp: number
   link: string
   classNumber?: number
 }
@@ -47,19 +48,27 @@ type SyllabusTopic = {
 
 export default function InstructorLiveClasses() {
   const [courses, setCourses] = useState<InstructorCourse[]>(INSTRUCTOR_COURSES.filter(c => c.status === 'active'))
+  const [mainSearchTerm, setMainSearchTerm] = useState('')
   
   // Live Class State
   const [liveModalCourse, setLiveModalCourse] = useState<InstructorCourse | null>(null)
   const [liveUrlInput, setLiveUrlInput] = useState('')
   const [liveUrlError, setLiveUrlError] = useState('')
 
+  // Schedule State
+  const [scheduleModalCourse, setScheduleModalCourse] = useState<InstructorCourse | null>(null)
+  const [scheduleInput, setScheduleInput] = useState('')
+
   // Live Class History
   const [completedClasses, setCompletedClasses] = useState<CompletedClass[]>([
-    { id: 'hc_1', courseId: 'c1', courseTitle: 'IELTS Academic Prep', completedAt: new Date(Date.now() - 86400000).toLocaleString(), link: 'https://zoom.us/j/123456', classNumber: 13 },
-    { id: 'hc_2', courseId: 'c1', courseTitle: 'IELTS Academic Prep', completedAt: new Date(Date.now() - 172800000).toLocaleString(), link: 'https://zoom.us/j/654321', classNumber: 12 },
-    { id: 'hc_3', courseId: 'c2', courseTitle: 'Business English Basics', completedAt: new Date(Date.now() - 259200000).toLocaleString(), link: 'https://meet.google.com/abc-defg-hij', classNumber: 6 }
+    { id: 'hc_1', courseId: 'c1', courseTitle: 'IELTS Academic Prep', completedAt: new Date(Date.now() - 86400000).toLocaleString(), timestamp: Date.now() - 86400000, link: 'https://zoom.us/j/123456', classNumber: 13 },
+    { id: 'hc_2', courseId: 'c1', courseTitle: 'IELTS Academic Prep', completedAt: new Date(Date.now() - 172800000).toLocaleString(), timestamp: Date.now() - 172800000, link: 'https://zoom.us/j/654321', classNumber: 12 },
+    { id: 'hc_3', courseId: 'c2', courseTitle: 'Business English Basics', completedAt: new Date(Date.now() - 259200000).toLocaleString(), timestamp: Date.now() - 259200000, link: 'https://meet.google.com/abc-defg-hij', classNumber: 6 }
   ])
   const [historyModalOpen, setHistoryModalOpen] = useState(false)
+  const [historySearchTerm, setHistorySearchTerm] = useState('')
+  const [historySortBy, setHistorySortBy] = useState<'newest' | 'oldest' | 'class-asc' | 'class-desc'>('newest')
+  const [historyFilterCourse, setHistoryFilterCourse] = useState('all')
   
   // History editing / options
   const [activeDropdownId, setActiveDropdownId] = useState<string | null>(null)
@@ -200,6 +209,7 @@ export default function InstructorLiveClasses() {
       courseId: liveModalCourse.id,
       courseTitle: liveModalCourse.title,
       completedAt: new Date().toLocaleString(),
+      timestamp: Date.now(),
       link: liveUrlInput,
       classNumber: courseHistory.length + 1
     }
@@ -221,6 +231,25 @@ export default function InstructorLiveClasses() {
         : c
     ))
     setLiveModalCourse(null)
+  }
+
+  // Schedule Handlers
+  function openScheduleModal(course: InstructorCourse) {
+    setScheduleModalCourse(course)
+    setScheduleInput(course.nextClass !== 'TBD' ? course.nextClass : '')
+  }
+
+  function handleSaveSchedule() {
+    if (!scheduleModalCourse) return
+    const updatedValue = scheduleInput.trim() || 'TBD'
+    setCourses(courses.map(c => c.id === scheduleModalCourse.id ? { ...c, nextClass: updatedValue } : c))
+    setScheduleModalCourse(null)
+  }
+
+  function handleRemoveSchedule() {
+    if (!scheduleModalCourse) return
+    setCourses(courses.map(c => c.id === scheduleModalCourse.id ? { ...c, nextClass: 'TBD' } : c))
+    setScheduleModalCourse(null)
   }
 
   // History Edit Handlers
@@ -349,6 +378,44 @@ export default function InstructorLiveClasses() {
     setActiveSyllabusDropdownId(null)
   }
 
+  const filteredMainCourses = courses.filter(c => 
+    c.title.toLowerCase().includes(mainSearchTerm.toLowerCase())
+  )
+
+  // Group classes by course for the history view
+  const filteredHistory = completedClasses
+    .filter(cls => {
+      const search = historySearchTerm.toLowerCase();
+      const matchesSearch = (
+        cls.courseTitle.toLowerCase().includes(search) ||
+        cls.completedAt.toLowerCase().includes(search) ||
+        cls.link.toLowerCase().includes(search) ||
+        cls.classNumber?.toString().includes(search)
+      );
+      
+      const matchesCourse = historyFilterCourse === 'all' || cls.courseId === historyFilterCourse;
+      
+      return matchesSearch && matchesCourse;
+    })
+    .sort((a, b) => {
+      if (historySortBy === 'newest') return b.timestamp - a.timestamp;
+      if (historySortBy === 'oldest') return a.timestamp - b.timestamp;
+      if (historySortBy === 'class-asc') return (a.classNumber || 0) - (b.classNumber || 0);
+      if (historySortBy === 'class-desc') return (b.classNumber || 0) - (a.classNumber || 0);
+      return 0;
+    });
+
+  const groupedHistory = filteredHistory.reduce((acc, cls) => {
+    if (!acc[cls.courseId]) {
+      acc[cls.courseId] = {
+        title: cls.courseTitle,
+        classes: []
+      }
+    }
+    acc[cls.courseId].classes.push(cls)
+    return acc
+  }, {} as Record<string, { title: string, classes: CompletedClass[] }>)
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -356,14 +423,36 @@ export default function InstructorLiveClasses() {
           <h1 className="text-2xl font-black text-slate-900 dark:text-white">Live Classes Workspace</h1>
           <p className="text-sm text-slate-500 dark:text-neutral-400">Launch classes, share materials, and track history.</p>
         </div>
-        <button onClick={() => setHistoryModalOpen(true)} className="flex items-center justify-center gap-2 bg-slate-200 dark:bg-neutral-800 hover:bg-slate-300 dark:hover:bg-neutral-700 text-slate-900 dark:text-white px-4 py-2 rounded-xl text-sm font-bold transition-colors shadow-sm self-start sm:self-auto">
-          <ListDashes size={18} weight="bold" />
-          Class History
-        </button>
+        <div className="flex flex-col sm:flex-row gap-3 items-center">
+          <div className="relative group w-full sm:w-64">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-violet-500 transition-colors">
+              <MagnifyingGlass size={16} weight="bold" />
+            </div>
+            <input 
+              type="text" 
+              value={mainSearchTerm}
+              onChange={(e) => setMainSearchTerm(e.target.value)}
+              placeholder="Search active courses..."
+              className="w-full pl-9 pr-8 py-2 rounded-xl border border-slate-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-xs focus:border-violet-500 outline-none transition-all shadow-sm"
+            />
+            {mainSearchTerm && (
+              <button 
+                onClick={() => setMainSearchTerm('')}
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 rounded-md bg-slate-100 dark:bg-neutral-800 flex items-center justify-center text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors"
+              >
+                <X size={10} weight="bold" />
+              </button>
+            )}
+          </div>
+          <button onClick={() => setHistoryModalOpen(true)} className="flex items-center justify-center gap-2 bg-slate-200 dark:bg-neutral-800 hover:bg-slate-300 dark:hover:bg-neutral-700 text-slate-900 dark:text-white px-4 py-2 rounded-xl text-sm font-bold transition-colors shadow-sm self-start sm:self-auto">
+            <ListDashes size={18} weight="bold" />
+            Class History
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-        {courses.map(course => (
+        {filteredMainCourses.map(course => (
           <div key={course.id} className={`bg-white dark:bg-neutral-900 rounded-3xl border ${course.isLive ? 'border-red-200 dark:border-red-900/50 shadow-red-100 dark:shadow-red-900/20 shadow-lg scale-[1.01]' : 'border-slate-200 dark:border-neutral-800 shadow-sm hover:shadow-md hover:border-violet-300 dark:hover:border-violet-700'} overflow-hidden flex flex-col transition-all duration-300 relative`}>
             
             {/* Live Indicator Pulse Background */}
@@ -393,12 +482,21 @@ export default function InstructorLiveClasses() {
               </h3>
               
               <div className="space-y-3 mt-5">
-                <div className="flex items-center gap-3 text-sm text-slate-700 dark:text-neutral-300 bg-slate-50 dark:bg-neutral-800/50 p-3 rounded-xl border border-slate-100 dark:border-neutral-800">
-                  <Clock size={20} className="text-violet-500" />
-                  <div>
-                    <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wide">Next Class</p>
-                    <p className="font-semibold">{course.nextClass}</p>
+                <div className="flex items-center gap-3 text-sm text-slate-700 dark:text-neutral-300 bg-slate-50 dark:bg-neutral-800/50 p-3 rounded-xl border border-slate-100 dark:border-neutral-800 group/schedule">
+                  <div className="w-8 h-8 rounded-lg bg-violet-100 dark:bg-violet-900/20 text-violet-600 flex items-center justify-center shrink-0">
+                    <Clock size={18} weight="bold" />
                   </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wide">Next Class</p>
+                    <p className="font-semibold truncate">{course.nextClass !== 'TBD' ? course.nextClass : 'Not Scheduled'}</p>
+                  </div>
+                  <button 
+                    onClick={() => openScheduleModal(course)}
+                    className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-900/20 dark:hover:text-violet-400 transition-colors"
+                    title="Edit Schedule"
+                  >
+                    <PencilSimple size={16} />
+                  </button>
                 </div>
 
                 <div className="flex items-center justify-between text-sm text-slate-600 dark:text-neutral-400 px-1">
@@ -645,6 +743,62 @@ export default function InstructorLiveClasses() {
         )}
       </AnimatePresence>
 
+      {/* SCHEDULE MODAL */}
+      <AnimatePresence>
+        {scheduleModalCourse && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4 backdrop-blur-sm">
+            <motion.div initial={{ scale: 0.95, opacity: 0, y: 10 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 10 }} className="bg-white dark:bg-neutral-900 rounded-3xl w-full max-w-sm p-6 border border-slate-100 dark:border-neutral-800 shadow-2xl">
+              <div className="flex items-center gap-3 mb-5">
+                <div className="w-10 h-10 rounded-xl bg-violet-100 dark:bg-violet-900/30 text-violet-600 flex items-center justify-center">
+                  <Clock size={20} weight="bold" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-black text-slate-900 dark:text-white leading-tight">Update Schedule</h3>
+                  <p className="text-xs text-slate-500 truncate w-48">{scheduleModalCourse.title}</p>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wide block mb-1.5">Next Class (Day, Date & Time)</label>
+                  <input 
+                    type="text" 
+                    value={scheduleInput} 
+                    onChange={e => setScheduleInput(e.target.value)} 
+                    placeholder="e.g. Tomorrow, 4:00 PM"
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm font-medium text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors" 
+                  />
+                  <p className="text-[10px] text-slate-400 mt-2">This will be displayed to students on their dashboard.</p>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2 mt-8">
+                <button 
+                  onClick={handleSaveSchedule} 
+                  className="w-full py-3 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-bold shadow-md shadow-violet-600/20 transition-colors flex items-center justify-center gap-2"
+                >
+                  <Check size={16} /> Update Schedule
+                </button>
+                <div className="flex gap-2">
+                  <button 
+                    onClick={() => setScheduleModalCourse(null)} 
+                    className="flex-1 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-slate-700 dark:text-neutral-200 text-xs font-bold transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    onClick={handleRemoveSchedule} 
+                    className="flex-1 py-2.5 rounded-xl bg-red-50 hover:bg-red-100 dark:bg-red-900/10 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 text-xs font-bold transition-colors flex items-center justify-center gap-1.5"
+                  >
+                    <Trash size={14} /> Remove
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* COMPLETED CLASSES HISTORY MODAL */}
       <AnimatePresence>
         {historyModalOpen && (
@@ -660,7 +814,59 @@ export default function InstructorLiveClasses() {
                      <p className="text-xs text-slate-500 mt-1">Review past live sessions and links</p>
                   </div>
                 </div>
-                <button type="button" onClick={() => setHistoryModalOpen(false)} className="w-8 h-8 rounded-full bg-slate-200 dark:bg-neutral-800 flex items-center justify-center text-slate-500 hover:text-slate-700 transition-colors"><X size={15} /></button>
+                <button type="button" onClick={() => { setHistoryModalOpen(false); setHistorySearchTerm(''); setHistoryFilterCourse('all'); setHistorySortBy('newest'); }} className="w-8 h-8 rounded-full bg-slate-200 dark:bg-neutral-800 flex items-center justify-center text-slate-500 hover:text-slate-700 transition-colors"><X size={15} /></button>
+              </div>
+              
+              {/* Search & Filters Bar */}
+              <div className="px-6 py-4 border-b border-slate-100 dark:border-neutral-800 bg-white dark:bg-neutral-900 flex-shrink-0 space-y-4">
+                <div className="relative group">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-violet-500 transition-colors">
+                    <MagnifyingGlass size={20} weight="bold" />
+                  </div>
+                  <input 
+                    type="text" 
+                    value={historySearchTerm}
+                    onChange={(e) => setHistorySearchTerm(e.target.value)}
+                    placeholder="Search by date, course, link, or class number..."
+                    className="w-full pl-12 pr-4 py-3 rounded-2xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800/50 text-sm focus:bg-white dark:focus:bg-neutral-800 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 outline-none transition-all"
+                  />
+                  {historySearchTerm && (
+                    <button 
+                      onClick={() => setHistorySearchTerm('')}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-slate-200 dark:bg-neutral-800 flex items-center justify-center text-slate-500 hover:text-slate-700 transition-colors"
+                    >
+                      <X size={12} weight="bold" />
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Filter By:</span>
+                    <select 
+                      value={historyFilterCourse}
+                      onChange={(e) => setHistoryFilterCourse(e.target.value)}
+                      className="bg-slate-100 dark:bg-neutral-800 border-none rounded-xl px-4 py-2 text-xs font-bold text-slate-700 dark:text-neutral-300 outline-none focus:ring-2 focus:ring-violet-500/20 transition-all cursor-pointer"
+                    >
+                      <option value="all">All Courses</option>
+                      {courses.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
+                    </select>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Sort By:</span>
+                    <select 
+                      value={historySortBy}
+                      onChange={(e) => setHistorySortBy(e.target.value as any)}
+                      className="bg-slate-100 dark:bg-neutral-800 border-none rounded-xl px-4 py-2 text-xs font-bold text-slate-700 dark:text-neutral-300 outline-none focus:ring-2 focus:ring-violet-500/20 transition-all cursor-pointer"
+                    >
+                      <option value="newest">Recent Classes (Newest)</option>
+                      <option value="oldest">Oldest Classes</option>
+                      <option value="class-desc">Class Number (High to Low)</option>
+                      <option value="class-asc">Class Number (Low to High)</option>
+                    </select>
+                  </div>
+                </div>
               </div>
               
               <div className="p-6 overflow-y-auto flex-1">
@@ -672,74 +878,96 @@ export default function InstructorLiveClasses() {
                     <p className="font-semibold text-slate-700 dark:text-neutral-300">No completed classes yet.</p>
                     <p className="text-xs mt-1">Your class history will appear here once you complete a live session.</p>
                   </div>
+                ) : filteredHistory.length === 0 ? (
+                  <div className="text-center text-slate-500 dark:text-neutral-400 py-16">
+                    <div className="w-16 h-16 bg-slate-100 dark:bg-neutral-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                       <MagnifyingGlass size={24} className="opacity-50" />
+                    </div>
+                    <p className="font-semibold text-slate-700 dark:text-neutral-300">No matches found.</p>
+                    <p className="text-xs mt-1">Try adjusting your search criteria.</p>
+                  </div>
                 ) : (
-                  <div className="space-y-3" ref={dropdownRef}>
-                    {completedClasses.map((cls, index) => (
-                      <div key={cls.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-2xl border border-slate-100 dark:border-neutral-800 bg-white dark:bg-neutral-800/30 hover:border-violet-200 dark:hover:border-violet-800/50 transition-colors gap-4 shadow-sm hover:shadow-md">
-                        <div className="flex items-center gap-4">
-                           <div className="w-12 h-12 rounded-xl bg-slate-50 dark:bg-neutral-800 flex flex-col items-center justify-center flex-shrink-0">
-                              <span className="text-[10px] text-slate-400 font-bold uppercase">Class</span>
-                              <span className="font-black text-slate-700 dark:text-neutral-300 leading-none">#{cls.classNumber}</span>
-                           </div>
-                           <div>
-                             <p className="text-sm font-bold text-slate-900 dark:text-white mb-0.5">{cls.courseTitle}</p>
-                             <p className="text-xs text-slate-500 dark:text-neutral-400 flex items-center gap-1.5">
-                               <CheckCircle size={14} className="text-green-500" /> Completed: {cls.completedAt}
-                             </p>
-                           </div>
+                  <div className="space-y-10" ref={dropdownRef}>
+                    {Object.entries(groupedHistory).map(([courseId, group]) => (
+                      <div key={courseId} className="space-y-4">
+                        <div className="flex items-center gap-3 px-1 sticky top-0 bg-white dark:bg-neutral-900 py-2 z-10">
+                          <div className="w-1 bg-violet-500 rounded-full h-6" />
+                          <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider">{group.title}</h4>
+                          <span className="text-[10px] font-bold text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-900/20 px-2 py-0.5 rounded-md border border-violet-100 dark:border-violet-800/50">{group.classes.length} Sessions</span>
                         </div>
-                        <div className="flex items-center gap-2 relative self-end sm:self-auto">
-                          {cls.link && (
-                            <a 
-                              href={cls.link} 
-                              target="_blank" 
-                              rel="noopener noreferrer" 
-                              className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:text-white bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-600 dark:hover:bg-blue-600 px-4 py-2 rounded-xl transition-colors flex items-center gap-1.5"
-                            >
-                              <VideoCamera size={14} weight="bold" /> View Link
-                            </a>
-                          )}
-                          
-                          <button 
-                            onClick={() => setActiveDropdownId(activeDropdownId === cls.id ? null : cls.id)}
-                            className="w-8 h-8 rounded-xl flex items-center justify-center bg-slate-50 dark:bg-neutral-800 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-200 dark:hover:bg-neutral-700 transition-colors"
-                          >
-                            <DotsThreeVertical size={18} weight="bold" />
-                          </button>
+                        <div className="space-y-3">
+                          {group.classes.map((cls) => {
+                             const index = completedClasses.findIndex(c => c.id === cls.id);
+                             return (
+                               <div key={cls.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-2xl border border-slate-100 dark:border-neutral-800 bg-white dark:bg-neutral-800/30 hover:border-violet-200 dark:hover:border-violet-800/50 transition-colors gap-4 shadow-sm hover:shadow-md">
+                                 <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 rounded-xl bg-slate-50 dark:bg-neutral-800 flex flex-col items-center justify-center flex-shrink-0">
+                                       <span className="text-[10px] text-slate-400 font-bold uppercase">Class</span>
+                                       <span className="font-black text-slate-700 dark:text-neutral-300 leading-none">#{cls.classNumber}</span>
+                                    </div>
+                                    <div>
+                                      <p className="text-sm font-bold text-slate-900 dark:text-white mb-0.5">{cls.courseTitle}</p>
+                                      <p className="text-xs text-slate-500 dark:text-neutral-400 flex items-center gap-1.5">
+                                        <CheckCircle size={14} className="text-green-500" /> Completed: {cls.completedAt}
+                                      </p>
+                                    </div>
+                                 </div>
+                                 <div className="flex items-center gap-2 relative self-end sm:self-auto">
+                                   {cls.link && (
+                                     <a 
+                                       href={cls.link} 
+                                       target="_blank" 
+                                       rel="noopener noreferrer" 
+                                       className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:text-white bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-600 dark:hover:bg-blue-600 px-4 py-2 rounded-xl transition-colors flex items-center gap-1.5"
+                                     >
+                                       <VideoCamera size={14} weight="bold" /> View Link
+                                     </a>
+                                   )}
+                                   
+                                   <button 
+                                     onClick={() => setActiveDropdownId(activeDropdownId === cls.id ? null : cls.id)}
+                                     className="w-8 h-8 rounded-xl flex items-center justify-center bg-slate-50 dark:bg-neutral-800 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-200 dark:hover:bg-neutral-700 transition-colors"
+                                   >
+                                     <DotsThreeVertical size={18} weight="bold" />
+                                   </button>
 
-                          <AnimatePresence>
-                             {activeDropdownId === cls.id && (
-                               <motion.div initial={{ opacity: 0, scale: 0.95, y: -10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: -10 }} className="absolute right-0 top-10 w-40 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-700 rounded-xl shadow-xl overflow-hidden z-20">
-                                 <button 
-                                   onClick={() => { setEditingHistoryClass(cls); setActiveDropdownId(null) }} 
-                                   className="w-full text-left px-4 py-2.5 text-xs font-bold hover:bg-slate-50 dark:hover:bg-neutral-800 transition-colors flex items-center gap-2 text-slate-700 dark:text-neutral-300"
-                                 >
-                                   <PencilSimple size={14} /> Edit Record
-                                 </button>
-                                 <button 
-                                   onClick={() => handleMoveHistory(index, 'up')} 
-                                   disabled={index === 0} 
-                                   className="w-full text-left px-4 py-2.5 text-xs font-bold hover:bg-slate-50 dark:hover:bg-neutral-800 transition-colors flex items-center gap-2 text-slate-700 dark:text-neutral-300 disabled:opacity-50"
-                                 >
-                                   <CaretUp size={14} /> Move Up
-                                 </button>
-                                 <button 
-                                   onClick={() => handleMoveHistory(index, 'down')} 
-                                   disabled={index === completedClasses.length - 1} 
-                                   className="w-full text-left px-4 py-2.5 text-xs font-bold hover:bg-slate-50 dark:hover:bg-neutral-800 transition-colors flex items-center gap-2 text-slate-700 dark:text-neutral-300 disabled:opacity-50"
-                                 >
-                                   <CaretDown size={14} /> Move Down
-                                 </button>
-                                 <div className="h-px bg-slate-100 dark:bg-neutral-800 my-1" />
-                                 <button 
-                                   onClick={() => handleDeleteHistory(cls.id)} 
-                                   className="w-full text-left px-4 py-2.5 text-xs font-bold hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex items-center gap-2 text-red-600 dark:text-red-400"
-                                 >
-                                   <Trash size={14} /> Delete Record
-                                 </button>
-                               </motion.div>
-                             )}
-                          </AnimatePresence>
+                                   <AnimatePresence>
+                                      {activeDropdownId === cls.id && (
+                                        <motion.div initial={{ opacity: 0, scale: 0.95, y: -10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: -10 }} className="absolute right-0 top-10 w-40 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-700 rounded-xl shadow-xl overflow-hidden z-20">
+                                          <button 
+                                            onClick={() => { setEditingHistoryClass(cls); setActiveDropdownId(null) }} 
+                                            className="w-full text-left px-4 py-2.5 text-xs font-bold hover:bg-slate-50 dark:hover:bg-neutral-800 transition-colors flex items-center gap-2 text-slate-700 dark:text-neutral-300"
+                                          >
+                                            <PencilSimple size={14} /> Edit Record
+                                          </button>
+                                          <button 
+                                            onClick={() => handleMoveHistory(index, 'up')} 
+                                            disabled={index === 0} 
+                                            className="w-full text-left px-4 py-2.5 text-xs font-bold hover:bg-slate-50 dark:hover:bg-neutral-800 transition-colors flex items-center gap-2 text-slate-700 dark:text-neutral-300 disabled:opacity-50"
+                                          >
+                                            <CaretUp size={14} /> Move Up
+                                          </button>
+                                          <button 
+                                            onClick={() => handleMoveHistory(index, 'down')} 
+                                            disabled={index === completedClasses.length - 1} 
+                                            className="w-full text-left px-4 py-2.5 text-xs font-bold hover:bg-slate-50 dark:hover:bg-neutral-800 transition-colors flex items-center gap-2 text-slate-700 dark:text-neutral-300 disabled:opacity-50"
+                                          >
+                                            <CaretDown size={14} /> Move Down
+                                          </button>
+                                          <div className="h-px bg-slate-100 dark:bg-neutral-800 my-1" />
+                                          <button 
+                                            onClick={() => handleDeleteHistory(cls.id)} 
+                                            className="w-full text-left px-4 py-2.5 text-xs font-bold hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex items-center gap-2 text-red-600 dark:text-red-400"
+                                          >
+                                            <Trash size={14} /> Delete Record
+                                          </button>
+                                        </motion.div>
+                                      )}
+                                   </AnimatePresence>
+                                 </div>
+                               </div>
+                             );
+                          })}
                         </div>
                       </div>
                     ))}
@@ -864,7 +1092,7 @@ export default function InstructorLiveClasses() {
                    </div>
                    <div>
                      <label className="text-[11px] font-semibold text-slate-500 uppercase block mb-1.5">Status</label>
-                     <select value={syllabusStatusInput} onChange={e => setSyllabusStatusInput(e.target.value as any)} className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-sm outline-none focus:border-violet-500 transition-colors">
+                     <select value={syllabusStatusInput} onChange={e => setSyllabusStatusInput(e.target.value as 'pending' | 'in-progress' | 'completed')} className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-sm outline-none focus:border-violet-500 transition-colors">
                        <option value="pending">Pending</option>
                        <option value="in-progress">In Progress</option>
                        <option value="completed">Completed</option>
@@ -873,11 +1101,11 @@ export default function InstructorLiveClasses() {
                    <div className="flex gap-3 pt-2">
                      {editingSyllabus && (
                        <button onClick={() => { setEditingSyllabus(null); setSyllabusWeekInput(1); setSyllabusTitleInput(''); setSyllabusDescInput(''); setSyllabusStatusInput('pending'); }} className="px-6 py-2.5 bg-slate-200 dark:bg-neutral-700 hover:bg-slate-300 dark:hover:bg-neutral-600 text-slate-700 dark:text-neutral-200 text-xs font-bold rounded-xl transition-all">
-                         Cancel
+                         Cancel Edit
                        </button>
                      )}
                      <button onClick={handleSyllabusSubmit} className="flex-1 py-2.5 bg-violet-600 hover:bg-violet-700 text-white text-sm font-bold rounded-xl shadow-md shadow-violet-600/20 transition-all flex items-center justify-center gap-2">
-                       {editingSyllabus ? <><Check size={16} /> Update Topic</> : <><PresentationChart size={16} /> Add Topic</>}
+                       {editingSyllabus ? <><Check size={16} /> Update Topic</> : <><Plus size={16} /> Add Topic</>}
                      </button>
                    </div>
                  </div>
@@ -885,7 +1113,7 @@ export default function InstructorLiveClasses() {
                  {/* Syllabus List */}
                  <div>
                    <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-                     <ListDashes size={16} className="text-slate-400" /> Syllabus Outline
+                     <ListDashes size={16} className="text-slate-400" /> Course Timeline
                    </h4>
                    
                    {syllabusTopics.filter(t => t.courseId === syllabusOpen).length === 0 ? (
@@ -894,54 +1122,58 @@ export default function InstructorLiveClasses() {
                        <p className="text-sm font-medium text-slate-500">No syllabus topics added yet.</p>
                      </div>
                    ) : (
-                     <div className="space-y-3" ref={syllabusDropdownRef}>
+                     <div className="space-y-4" ref={syllabusDropdownRef}>
                        {syllabusTopics.filter(t => t.courseId === syllabusOpen).map((topic) => (
-                         <div key={topic.id} className="flex items-start justify-between p-4 rounded-xl border border-slate-100 dark:border-neutral-800 bg-white dark:bg-neutral-800/30 hover:border-violet-200 dark:hover:border-violet-800/50 transition-colors shadow-sm gap-4">
-                           <div className="flex items-start gap-4 flex-1">
-                             <div className="w-12 h-12 rounded-xl bg-slate-50 dark:bg-neutral-800 flex flex-col items-center justify-center flex-shrink-0">
-                               <span className="text-[10px] text-slate-400 font-bold uppercase">Week</span>
-                               <span className="font-black text-slate-700 dark:text-neutral-300 leading-none">{topic.week}</span>
-                             </div>
-                             <div className="flex-1">
-                               <div className="flex items-center gap-2 mb-1">
-                                 <p className="text-sm font-bold text-slate-900 dark:text-white">{topic.title}</p>
-                                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
-                                   topic.status === 'completed' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
-                                   topic.status === 'in-progress' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
-                                   'bg-slate-100 text-slate-600 dark:bg-neutral-800 dark:text-neutral-400'
+                         <div key={topic.id} className="relative pl-8 before:absolute before:left-3 before:top-0 before:bottom-0 before:w-px before:bg-slate-100 dark:before:bg-neutral-800 last:before:bottom-auto last:before:h-6">
+                           <div className={`absolute left-0 top-6 w-6 h-6 rounded-full border-4 border-white dark:border-neutral-900 z-10 flex items-center justify-center ${
+                             topic.status === 'completed' ? 'bg-green-500' : topic.status === 'in-progress' ? 'bg-violet-500' : 'bg-slate-200 dark:bg-neutral-700'
+                           }`}>
+                             {topic.status === 'completed' && <Check size={10} weight="bold" className="text-white" />}
+                           </div>
+                           
+                           <div className="p-4 rounded-2xl border border-slate-100 dark:border-neutral-800 bg-white dark:bg-neutral-800/30 hover:border-violet-200 dark:hover:border-violet-800/50 transition-colors shadow-sm group">
+                             <div className="flex justify-between items-start mb-2">
+                               <div>
+                                 <span className="text-[10px] font-black text-violet-500 uppercase tracking-wider mb-1 block">Week {topic.week}</span>
+                                 <h5 className="text-sm font-bold text-slate-900 dark:text-white">{topic.title}</h5>
+                               </div>
+                               <div className="flex items-center gap-2">
+                                 <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase ${
+                                   topic.status === 'completed' ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400' : 
+                                   topic.status === 'in-progress' ? 'bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400' : 
+                                   'bg-slate-100 text-slate-500 dark:bg-neutral-800 dark:text-neutral-400'
                                  }`}>
                                    {topic.status.replace('-', ' ')}
                                  </span>
+                                 <div className="relative">
+                                   <button 
+                                     onClick={() => setActiveSyllabusDropdownId(activeSyllabusDropdownId === topic.id ? null : topic.id)}
+                                     className="w-7 h-7 rounded-lg flex items-center justify-center bg-slate-50 dark:bg-neutral-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                                   >
+                                     <DotsThreeVertical size={14} weight="bold" />
+                                   </button>
+                                   <AnimatePresence>
+                                     {activeSyllabusDropdownId === topic.id && (
+                                       <motion.div initial={{ opacity: 0, scale: 0.95, y: -5 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: -5 }} className="absolute right-0 top-9 w-32 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-700 rounded-xl shadow-xl overflow-hidden z-20">
+                                         <button 
+                                           onClick={() => handleEditSyllabus(topic)} 
+                                           className="w-full text-left px-3 py-2 text-xs font-bold hover:bg-slate-50 dark:hover:bg-neutral-800 transition-colors flex items-center gap-2 text-slate-700 dark:text-neutral-300"
+                                         >
+                                           <PencilSimple size={12} /> Edit
+                                         </button>
+                                         <button 
+                                           onClick={() => handleDeleteSyllabus(topic.id)} 
+                                           className="w-full text-left px-3 py-2 text-xs font-bold hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex items-center gap-2 text-red-600 dark:text-red-400"
+                                         >
+                                           <Trash size={12} /> Delete
+                                         </button>
+                                       </motion.div>
+                                     )}
+                                   </AnimatePresence>
+                                 </div>
                                </div>
-                               <p className="text-xs text-slate-500 leading-relaxed">{topic.description}</p>
                              </div>
-                           </div>
-                           
-                           <div className="relative flex-shrink-0">
-                             <button 
-                               onClick={() => setActiveSyllabusDropdownId(activeSyllabusDropdownId === topic.id ? null : topic.id)}
-                               className="w-8 h-8 rounded-lg flex items-center justify-center bg-slate-50 dark:bg-neutral-800 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-200 dark:hover:bg-neutral-700 transition-colors"
-                             >
-                               <DotsThreeVertical size={16} weight="bold" />
-                             </button>
-                             <AnimatePresence>
-                               {activeSyllabusDropdownId === topic.id && (
-                                 <motion.div initial={{ opacity: 0, scale: 0.95, y: -5 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: -5 }} className="absolute right-0 top-10 w-36 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-700 rounded-xl shadow-xl overflow-hidden z-20">
-                                   <button 
-                                     onClick={() => handleEditSyllabus(topic)} 
-                                     className="w-full text-left px-4 py-2.5 text-xs font-bold hover:bg-slate-50 dark:hover:bg-neutral-800 transition-colors flex items-center gap-2 text-slate-700 dark:text-neutral-300"
-                                   >
-                                     <PencilSimple size={14} /> Edit
-                                   </button>
-                                   <button 
-                                     onClick={() => handleDeleteSyllabus(topic.id)} 
-                                     className="w-full text-left px-4 py-2.5 text-xs font-bold hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex items-center gap-2 text-red-600 dark:text-red-400"
-                                   >
-                                     <Trash size={14} /> Delete
-                                   </button>
-                                 </motion.div>
-                               )}
-                             </AnimatePresence>
+                             <p className="text-xs text-slate-500 dark:text-neutral-400 leading-relaxed">{topic.description}</p>
                            </div>
                          </div>
                        ))}
@@ -954,5 +1186,13 @@ export default function InstructorLiveClasses() {
         )}
       </AnimatePresence>
     </div>
+  )
+}
+
+function Plus({ size, className }: { size: number, className?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 256 256" className={className}>
+      <path fill="currentColor" d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"></path>
+    </svg>
   )
 }

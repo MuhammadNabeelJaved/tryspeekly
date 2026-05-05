@@ -1,11 +1,23 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { User, Lock, Bell, PlugsConnected, Globe, DeviceMobile, ShieldCheck, VideoCamera, Calendar } from '@phosphor-icons/react'
+import { User, Lock, Bell, PlugsConnected, Globe, DeviceMobile, ShieldCheck, VideoCamera, Calendar, MagnifyingGlass, X } from '@phosphor-icons/react'
 import { MOCK_INSTRUCTOR } from './instructorData'
 
 export default function InstructorSettings() {
   const [activeTab, setActiveTab] = useState('profile')
+  const [settingsSearch, setSettingsSearch] = useState('')
   
+  const tabs = [
+    { id: 'profile', label: 'Profile Details', icon: User },
+    { id: 'security', label: 'Security & Login', icon: Lock },
+    { id: 'notifications', label: 'Notifications', icon: Bell },
+    { id: 'integrations', label: 'Integrations', icon: PlugsConnected },
+  ]
+
+  const filteredTabs = tabs.filter(tab => 
+    tab.label.toLowerCase().includes(settingsSearch.toLowerCase())
+  )
+
   const { register, handleSubmit } = useForm({
     defaultValues: {
       name: MOCK_INSTRUCTOR.name,
@@ -30,31 +42,42 @@ export default function InstructorSettings() {
 
       <div className="flex flex-col md:flex-row gap-8">
         {/* Sidebar Navigation */}
-        <div className="w-full md:w-64 flex-shrink-0 space-y-1">
-          <button 
-            onClick={() => setActiveTab('profile')}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-colors ${activeTab === 'profile' ? 'bg-violet-600 text-white shadow-md shadow-violet-600/20' : 'text-slate-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-neutral-800'}`}
-          >
-            <User size={18} weight={activeTab === 'profile' ? 'fill' : 'regular'} /> Profile Details
-          </button>
-          <button 
-            onClick={() => setActiveTab('security')}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-colors ${activeTab === 'security' ? 'bg-violet-600 text-white shadow-md shadow-violet-600/20' : 'text-slate-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-neutral-800'}`}
-          >
-            <Lock size={18} weight={activeTab === 'security' ? 'fill' : 'regular'} /> Security & Login
-          </button>
-          <button 
-            onClick={() => setActiveTab('notifications')}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-colors ${activeTab === 'notifications' ? 'bg-violet-600 text-white shadow-md shadow-violet-600/20' : 'text-slate-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-neutral-800'}`}
-          >
-            <Bell size={18} weight={activeTab === 'notifications' ? 'fill' : 'regular'} /> Notifications
-          </button>
-          <button 
-            onClick={() => setActiveTab('integrations')}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-colors ${activeTab === 'integrations' ? 'bg-violet-600 text-white shadow-md shadow-violet-600/20' : 'text-slate-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-neutral-800'}`}
-          >
-            <PlugsConnected size={18} weight={activeTab === 'integrations' ? 'fill' : 'regular'} /> Integrations
-          </button>
+        <div className="w-full md:w-64 flex-shrink-0 space-y-4">
+          <div className="relative group">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-violet-500 transition-colors">
+              <MagnifyingGlass size={16} weight="bold" />
+            </div>
+            <input 
+              type="text" 
+              value={settingsSearch}
+              onChange={(e) => setSettingsSearch(e.target.value)}
+              placeholder="Search settings..."
+              className="w-full pl-9 pr-8 py-2 rounded-xl border border-slate-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-xs focus:border-violet-500 outline-none transition-all"
+            />
+            {settingsSearch && (
+              <button 
+                onClick={() => setSettingsSearch('')}
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 rounded-md bg-slate-100 dark:bg-neutral-800 flex items-center justify-center text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors"
+              >
+                <X size={10} weight="bold" />
+              </button>
+            )}
+          </div>
+
+          <div className="space-y-1">
+            {filteredTabs.map(tab => (
+              <button 
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-colors ${activeTab === tab.id ? 'bg-violet-600 text-white shadow-md shadow-violet-600/20' : 'text-slate-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-neutral-800'}`}
+              >
+                <tab.icon size={18} weight={activeTab === tab.id ? 'fill' : 'regular'} /> {tab.label}
+              </button>
+            ))}
+            {filteredTabs.length === 0 && (
+              <p className="text-xs text-center py-4 text-slate-400">No settings found.</p>
+            )}
+          </div>
         </div>
 
         {/* Content Area */}

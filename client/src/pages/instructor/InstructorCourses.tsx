@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { motion, AnimatePresence } from 'framer-motion'
 import { INSTRUCTOR_COURSES } from './instructorData'
-import { BookOpen, Users, Clock, Plus, X, Check, PencilSimple, Trash } from '@phosphor-icons/react'
+import { BookOpen, Users, Clock, Plus, X, Check, PencilSimple, Trash, MagnifyingGlass } from '@phosphor-icons/react'
 
 type InstructorCourse = {
   id: string
@@ -51,6 +51,10 @@ function Input({ register, name, type = 'text', placeholder, valueAsNumber }: { 
 
 export default function InstructorCourses() {
   const [courses, setCourses] = useState<InstructorCourse[]>(INSTRUCTOR_COURSES)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [statusFilter, setStatusFilter] = useState('all')
+  const [levelFilter, setLevelFilter] = useState('all')
+  const [sortBy, setSortBy] = useState('newest')
   const [modalType, setModalType] = useState<'add' | 'edit' | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   
@@ -82,6 +86,27 @@ export default function InstructorCourses() {
     setDeleteId(null)
   }
 
+  const filteredCourses = courses
+    .filter(c => {
+      const matchesSearch = 
+        c.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        c.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        c.level?.toLowerCase().includes(searchTerm.toLowerCase())
+      
+      const matchesStatus = statusFilter === 'all' || c.status === statusFilter
+      const matchesLevel = levelFilter === 'all' || c.level === levelFilter
+      
+      return matchesSearch && matchesStatus && matchesLevel
+    })
+    .sort((a, b) => {
+      if (sortBy === 'newest') return b.id.localeCompare(a.id)
+      if (sortBy === 'students') return b.students - a.students
+      if (sortBy === 'title') return a.title.localeCompare(b.title)
+      return 0
+    })
+
+  const levels = Array.from(new Set(courses.map(c => c.level).filter(Boolean))) as string[]
+
   // Derived stats
   const activeCount = courses.filter(c => c.status === 'active').length
   const draftCount = courses.filter(c => c.status === 'draft').length
@@ -98,6 +123,61 @@ export default function InstructorCourses() {
           <Plus size={18} weight="bold" />
           Propose New Course
         </button>
+      </div>
+
+      <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
+        <div className="relative group w-full lg:max-w-md">
+          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-violet-500 transition-colors">
+            <MagnifyingGlass size={18} weight="bold" />
+          </div>
+          <input 
+            type="text" 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Search courses by title, description, or level..."
+            className="w-full pl-11 pr-10 py-2.5 rounded-xl border border-slate-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-sm focus:border-violet-500 focus:ring-4 focus:ring-violet-500/5 outline-none transition-all shadow-sm"
+          />
+          {searchTerm && (
+            <button 
+              onClick={() => setSearchTerm('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-lg bg-slate-100 dark:bg-neutral-800 flex items-center justify-center text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors"
+            >
+              <X size={12} weight="bold" />
+            </button>
+          )}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+          <select 
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="flex-1 lg:flex-none bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-700 dark:text-neutral-300 focus:outline-none focus:border-violet-500 transition-colors cursor-pointer"
+          >
+            <option value="all">All Status</option>
+            <option value="active">Active</option>
+            <option value="upcoming">Upcoming</option>
+            <option value="draft">Draft</option>
+          </select>
+
+          <select 
+            value={levelFilter}
+            onChange={(e) => setLevelFilter(e.target.value)}
+            className="flex-1 lg:flex-none bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-700 dark:text-neutral-300 focus:outline-none focus:border-violet-500 transition-colors cursor-pointer"
+          >
+            <option value="all">All Levels</option>
+            {levels.map(l => <option key={l} value={l}>{l}</option>)}
+          </select>
+
+          <select 
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="flex-1 lg:flex-none bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-700 dark:text-neutral-300 focus:outline-none focus:border-violet-500 transition-colors cursor-pointer"
+          >
+            <option value="newest">Newest First</option>
+            <option value="students">Most Enrolled</option>
+            <option value="title">Title (A-Z)</option>
+          </select>
+        </div>
       </div>
 
       {/* Quick Stats Banner */}
@@ -132,7 +212,7 @@ export default function InstructorCourses() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {courses.map(course => (
+        {filteredCourses.map(course => (
           <div key={course.id} className="bg-white dark:bg-neutral-900 rounded-3xl border border-slate-200 dark:border-neutral-800 overflow-hidden shadow-sm flex flex-col hover:shadow-lg hover:border-violet-300 dark:hover:border-violet-700/50 transition-all duration-300 group">
             <div className="p-6 flex-1">
               <div className="flex items-start justify-between mb-4">
