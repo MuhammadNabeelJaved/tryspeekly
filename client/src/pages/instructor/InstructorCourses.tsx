@@ -2,7 +2,23 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { motion, AnimatePresence } from 'framer-motion'
 import { INSTRUCTOR_COURSES } from './instructorData'
-import { BookOpen, Users, Clock, Plus, X, Check, PencilSimple, Trash, MagnifyingGlass } from '@phosphor-icons/react'
+import { BookOpen, Users, Clock, Plus, X, Check, PencilSimple, Trash, MagnifyingGlass, CheckCircle, CaretDown, CaretUp, ListPlus } from '@phosphor-icons/react'
+
+type CourseItem = {
+  id: string
+  title: string
+  date: string
+  time: string
+  type: string
+  isFree: boolean
+}
+
+type CourseModule = {
+  id: string
+  title: string
+  duration: string
+  items: CourseItem[]
+}
 
 type InstructorCourse = {
   id: string
@@ -16,6 +32,17 @@ type InstructorCourse = {
   description?: string
   totalClasses?: number
   maxStudents?: number
+  category?: string
+  price?: string
+  originalPrice?: string
+  schedule?: string
+  startDate?: string
+  platform?: string
+  language?: string
+  image?: string
+  videoPreview?: string
+  whatYouWillLearn?: string
+  curriculum?: CourseModule[]
 }
 
 const EMPTY_COURSE: InstructorCourse = {
@@ -29,7 +56,18 @@ const EMPTY_COURSE: InstructorCourse = {
   duration: '',
   description: '',
   totalClasses: 12,
-  maxStudents: 15
+  maxStudents: 15,
+  category: 'Live Class',
+  price: '',
+  originalPrice: '',
+  schedule: '',
+  startDate: '',
+  platform: 'Zoom / Google Meet',
+  language: 'English',
+  image: '',
+  videoPreview: '',
+  whatYouWillLearn: '',
+  curriculum: []
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
@@ -56,19 +94,22 @@ export default function InstructorCourses() {
   const [levelFilter, setLevelFilter] = useState('all')
   const [sortBy, setSortBy] = useState('newest')
   const [modalType, setModalType] = useState<'add' | 'edit' | null>(null)
+  const [formTab, setFormTab] = useState<'basic' | 'logistics' | 'curriculum'>('basic')
   const [deleteId, setDeleteId] = useState<string | null>(null)
   
-  const { register, handleSubmit, reset } = useForm<InstructorCourse>({
+  const { register, handleSubmit, reset, watch, setValue } = useForm<InstructorCourse>({
     defaultValues: EMPTY_COURSE
   })
 
   function openAdd() {
-    reset({ ...EMPTY_COURSE, id: `c${Date.now()}` })
+    reset({ ...EMPTY_COURSE, id: `c${Date.now()}`, curriculum: [] })
+    setFormTab('basic')
     setModalType('add')
   }
 
   function openEdit(course: InstructorCourse) {
-    reset(course)
+    reset({ ...course, curriculum: course.curriculum || [] })
+    setFormTab('basic')
     setModalType('edit')
   }
 
@@ -84,6 +125,43 @@ export default function InstructorCourses() {
   function handleDelete(id: string) {
     setCourses(courses.filter(c => c.id !== id))
     setDeleteId(null)
+  }
+
+  // Curriculum Helpers
+  const currentCurriculum = watch('curriculum') || []
+
+  function handleAddModule() {
+    setValue('curriculum', [...currentCurriculum, { id: `m_${Date.now()}`, title: '', duration: '', items: [] }])
+  }
+
+  function handleUpdateModule(mIndex: number, field: keyof CourseModule, value: string) {
+    const newCur = [...currentCurriculum]
+    newCur[mIndex] = { ...newCur[mIndex], [field]: value }
+    setValue('curriculum', newCur)
+  }
+
+  function handleRemoveModule(mIndex: number) {
+    const newCur = [...currentCurriculum]
+    newCur.splice(mIndex, 1)
+    setValue('curriculum', newCur)
+  }
+
+  function handleAddLesson(mIndex: number) {
+    const newCur = [...currentCurriculum]
+    newCur[mIndex].items.push({ id: `l_${Date.now()}`, title: '', date: '', time: '', type: 'live', isFree: false })
+    setValue('curriculum', newCur)
+  }
+
+  function handleUpdateLesson(mIndex: number, lIndex: number, field: keyof CourseItem, value: any) {
+    const newCur = [...currentCurriculum]
+    newCur[mIndex].items[lIndex] = { ...newCur[mIndex].items[lIndex], [field]: value }
+    setValue('curriculum', newCur)
+  }
+
+  function handleRemoveLesson(mIndex: number, lIndex: number) {
+    const newCur = [...currentCurriculum]
+    newCur[mIndex].items.splice(lIndex, 1)
+    setValue('curriculum', newCur)
   }
 
   const filteredCourses = courses
@@ -212,7 +290,10 @@ export default function InstructorCourses() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredCourses.map(course => (
+        {filteredCourses.map(course => {
+          const completedCount = Math.round((course.progress / 100) * (course.totalClasses || 0))
+          
+          return (
           <div key={course.id} className="bg-white dark:bg-neutral-900 rounded-3xl border border-slate-200 dark:border-neutral-800 overflow-hidden shadow-sm flex flex-col hover:shadow-lg hover:border-violet-300 dark:hover:border-violet-700/50 transition-all duration-300 group">
             <div className="p-6 flex-1">
               <div className="flex items-start justify-between mb-4">
@@ -240,22 +321,43 @@ export default function InstructorCourses() {
                 </p>
               )}
               
-              {/* Enrollment Progress */}
-              <div className="mt-4 mb-4 bg-slate-50 dark:bg-neutral-800/50 p-3 rounded-xl border border-slate-100 dark:border-neutral-800">
-                <div className="flex justify-between items-end mb-2">
-                  <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-neutral-300">
-                    <Users size={14} className="text-violet-500" weight="bold" />
-                    {course.students} / {course.maxStudents || 15} Enrolled
+              <div className="space-y-3 mt-4 mb-4">
+                {/* Enrollment Progress */}
+                <div className="bg-slate-50 dark:bg-neutral-800/50 p-3 rounded-xl border border-slate-100 dark:border-neutral-800">
+                  <div className="flex justify-between items-end mb-2">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-neutral-300">
+                      <Users size={14} className="text-blue-500" weight="bold" />
+                      {course.students} / {course.maxStudents || 15} Enrolled
+                    </div>
+                    <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400">
+                      {Math.round((course.students / (course.maxStudents || 15)) * 100)}% Full
+                    </span>
                   </div>
-                  <span className="text-[10px] font-bold text-violet-600 dark:text-violet-400">
-                    {Math.round((course.students / (course.maxStudents || 15)) * 100)}% Full
-                  </span>
+                  <div className="h-1.5 bg-slate-200 dark:bg-neutral-700 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-blue-500 rounded-full" 
+                      style={{ width: `${Math.min((course.students / (course.maxStudents || 15)) * 100, 100)}%` }} 
+                    />
+                  </div>
                 </div>
-                <div className="h-1.5 bg-slate-200 dark:bg-neutral-700 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-violet-600 rounded-full" 
-                    style={{ width: `${Math.min((course.students / (course.maxStudents || 15)) * 100, 100)}%` }} 
-                  />
+
+                {/* Class Completion Progress */}
+                <div className="bg-slate-50 dark:bg-neutral-800/50 p-3 rounded-xl border border-slate-100 dark:border-neutral-800">
+                  <div className="flex justify-between items-end mb-2">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-neutral-300">
+                      <CheckCircle size={14} className="text-violet-500" weight="bold" />
+                      {completedCount} / {course.totalClasses || 0} Classes Completed
+                    </div>
+                    <span className="text-[10px] font-bold text-violet-600 dark:text-violet-400">
+                      {course.progress}%
+                    </span>
+                  </div>
+                  <div className="h-1.5 bg-slate-200 dark:bg-neutral-700 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-violet-600 rounded-full" 
+                      style={{ width: `${course.progress}%` }} 
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -264,7 +366,7 @@ export default function InstructorCourses() {
                   <Clock size={14} /> {course.duration || 'N/A'}
                 </div>
                 <div className="flex items-center gap-1.5 bg-slate-50 dark:bg-neutral-800/50 px-2 py-1.5 rounded-lg border border-slate-100 dark:border-neutral-800">
-                  <BookOpen size={14} /> {course.totalClasses || 0} Classes
+                  <BookOpen size={14} /> {course.totalClasses || 0} Total Classes
                 </div>
               </div>
             </div>
@@ -278,7 +380,7 @@ export default function InstructorCourses() {
               </button>
             </div>
           </div>
-        ))}
+        )})}
 
         {/* Add New Ghost Card */}
         <button onClick={openAdd} className="bg-slate-50 dark:bg-neutral-900/50 rounded-3xl border-2 border-dashed border-slate-200 dark:border-neutral-800 hover:border-violet-400 dark:hover:border-violet-600 flex flex-col items-center justify-center min-h-[300px] text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 transition-all group">
@@ -293,64 +395,198 @@ export default function InstructorCourses() {
       <AnimatePresence>
         {modalType && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-            <motion.form onSubmit={handleSubmit(onSave)} initial={{ scale: 0.95, opacity: 0, y: 10 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 10 }} className="bg-white dark:bg-neutral-900 rounded-[32px] w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-slate-100 dark:border-neutral-800 shadow-2xl">
-              <div className="flex items-center justify-between px-8 py-6 border-b border-slate-100 dark:border-neutral-800 sticky top-0 bg-white/90 dark:bg-neutral-900/90 backdrop-blur-md z-10">
+            <motion.form onSubmit={handleSubmit(onSave)} initial={{ scale: 0.95, opacity: 0, y: 10 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 10 }} className="bg-white dark:bg-neutral-900 rounded-[32px] w-full max-w-4xl h-[90vh] overflow-hidden border border-slate-100 dark:border-neutral-800 shadow-2xl flex flex-col">
+              <div className="flex items-center justify-between px-8 py-6 border-b border-slate-100 dark:border-neutral-800 bg-white dark:bg-neutral-900 z-10 flex-shrink-0">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 rounded-xl flex items-center justify-center">
                     <BookOpen size={20} weight="fill" />
                   </div>
                   <div>
                     <h3 className="text-lg font-black text-slate-900 dark:text-white leading-tight">{modalType === 'add' ? 'Propose New Course' : 'Edit Course Details'}</h3>
-                    <p className="text-xs text-slate-500 dark:text-neutral-400">Fill in the details below to submit your course to admins.</p>
+                    <p className="text-xs text-slate-500 dark:text-neutral-400">Fill in the comprehensive details to match the main website structure.</p>
                   </div>
                 </div>
                 <button type="button" onClick={() => setModalType(null)} className="w-8 h-8 rounded-full bg-slate-100 dark:bg-neutral-800 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors"><X size={15} /></button>
               </div>
-              
-              <div className="p-8 grid grid-cols-2 gap-6 bg-slate-50/50 dark:bg-neutral-900/50">
-                <div className="col-span-2"><Field label="Course Title"><Input register={register} name="title" placeholder="e.g. Master Business English" /></Field></div>
-                
-                <div className="col-span-2">
-                  <Field label="Description">
-                    <textarea {...register('description')} rows={3} placeholder="Describe what students will learn..." className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-sm font-medium text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:border-violet-500 transition-colors resize-none shadow-sm" />
-                  </Field>
-                </div>
 
-                <Field label="Level">
-                  <select {...register('level')} className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-sm font-medium text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors shadow-sm">
-                    {['Beginner', 'Intermediate', 'Advanced', 'Business', 'Kids'].map(l => <option key={l}>{l}</option>)}
-                  </select>
-                </Field>
+              {/* Tab Navigation */}
+              <div className="px-8 pt-4 bg-white dark:bg-neutral-900 border-b border-slate-100 dark:border-neutral-800 flex gap-6 flex-shrink-0 overflow-x-auto">
+                <button type="button" onClick={() => setFormTab('basic')} className={formTab === 'basic' ? "pb-3 border-b-2 border-violet-600 text-violet-600 font-bold text-sm whitespace-nowrap transition-colors" : "pb-3 border-b-2 border-transparent text-slate-500 font-medium text-sm hover:text-slate-700 dark:hover:text-slate-300 whitespace-nowrap transition-colors"}>Basic Info</button>
+                <button type="button" onClick={() => setFormTab('logistics')} className={formTab === 'logistics' ? "pb-3 border-b-2 border-violet-600 text-violet-600 font-bold text-sm whitespace-nowrap transition-colors" : "pb-3 border-b-2 border-transparent text-slate-500 font-medium text-sm hover:text-slate-700 dark:hover:text-slate-300 whitespace-nowrap transition-colors"}>Logistics & Media</button>
+                <button type="button" onClick={() => setFormTab('curriculum')} className={formTab === 'curriculum' ? "pb-3 border-b-2 border-violet-600 text-violet-600 font-bold text-sm whitespace-nowrap transition-colors" : "pb-3 border-b-2 border-transparent text-slate-500 font-medium text-sm hover:text-slate-700 dark:hover:text-slate-300 whitespace-nowrap transition-colors"}>Curriculum Builder</button>
+              </div>
+              
+              <div className="p-8 bg-slate-50/50 dark:bg-neutral-900/50 overflow-y-auto flex-1">
                 
-                <Field label="Duration (Weeks/Months)"><Input register={register} name="duration" placeholder="e.g. 12 Weeks" /></Field>
-                
-                <Field label="Total Classes"><Input register={register} name="totalClasses" type="number" placeholder="24" valueAsNumber /></Field>
-                <Field label="Max Students Limit"><Input register={register} name="maxStudents" type="number" placeholder="15" valueAsNumber /></Field>
-                
-                <Field label="Status">
-                  <select {...register('status')} className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-sm font-medium text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors shadow-sm">
-                    {['active', 'upcoming', 'draft'].map(s => <option key={s}>{s}</option>)}
-                  </select>
-                </Field>
-                
-                <div className="col-span-2 mt-4 bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30 rounded-xl p-4 flex gap-3">
-                  <Users size={20} className="text-blue-500 shrink-0" weight="fill" />
-                  <p className="text-xs text-blue-700 dark:text-blue-400 leading-relaxed">
-                    <strong>Note:</strong> Once proposed, the admin will review the course and make it live on the main website. Pricing and billing will be managed by the admin team.
-                  </p>
-                </div>
+                {formTab === 'basic' && (
+                  <div className="max-w-2xl space-y-6">
+                    <Field label="Course Title"><Input register={register} name="title" placeholder="e.g. General English Mastery: Live Interactive Cohort" /></Field>
+                    
+                    <div className="grid grid-cols-2 gap-6">
+                      <Field label="Category">
+                        <select {...register('category')} className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-sm font-medium text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors shadow-sm">
+                          <option value="Live Class">Live Class</option>
+                          <option value="Recorded Course">Recorded Course</option>
+                          <option value="Hybrid">Hybrid</option>
+                        </select>
+                      </Field>
+                      <Field label="Language"><Input register={register} name="language" placeholder="e.g. English" /></Field>
+                    </div>
+
+                    <Field label="Description">
+                      <textarea {...register('description')} rows={4} placeholder="Describe what students will learn and how the course is structured..." className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-sm font-medium text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:border-violet-500 transition-colors resize-none shadow-sm" />
+                    </Field>
+
+                    <Field label="What You Will Learn (One per line)">
+                      <textarea {...register('whatYouWillLearn')} rows={5} placeholder="Participate confidently in live conversations&#10;Receive real-time feedback&#10;Build robust vocabulary" className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-sm font-medium text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:border-violet-500 transition-colors resize-none shadow-sm leading-relaxed" />
+                    </Field>
+                  </div>
+                )}
+
+                {formTab === 'logistics' && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 max-w-4xl">
+                    <div className="space-y-6">
+                      <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider mb-2 border-b border-slate-200 dark:border-neutral-800 pb-2">Logistics</h4>
+                      <Field label="Level">
+                        <select {...register('level')} className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-sm font-medium text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors shadow-sm">
+                          {['Beginner', 'Beginner to Intermediate', 'Intermediate', 'Advanced', 'Business', 'Kids'].map(l => <option key={l}>{l}</option>)}
+                        </select>
+                      </Field>
+                      
+                      <Field label="Duration"><Input register={register} name="duration" placeholder="e.g. 12 Weeks (24 Live Sessions)" /></Field>
+                      <Field label="Start Date"><Input register={register} name="startDate" placeholder="e.g. May 10, 2026" /></Field>
+                      <Field label="Class Schedule"><Input register={register} name="schedule" placeholder="e.g. Tuesdays & Thursdays, 7:00 PM EST" /></Field>
+                      <Field label="Platform"><Input register={register} name="platform" placeholder="e.g. Zoom / Google Meet" /></Field>
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        <Field label="Total Classes"><Input register={register} name="totalClasses" type="number" placeholder="24" valueAsNumber /></Field>
+                        <Field label="Max Students"><Input register={register} name="maxStudents" type="number" placeholder="25" valueAsNumber /></Field>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-6">
+                      <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider mb-2 border-b border-slate-200 dark:border-neutral-800 pb-2">Media & Assets</h4>
+                      <Field label="Cover Image URL"><Input register={register} name="image" placeholder="https://images.unsplash.com/..." type="url" /></Field>
+                      <Field label="Video Preview URL"><Input register={register} name="videoPreview" placeholder="https://youtube.com/..." type="url" /></Field>
+
+                      <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider mb-2 border-b border-slate-200 dark:border-neutral-800 pb-2 mt-8">Pricing & Status</h4>
+                      <div className="grid grid-cols-2 gap-4">
+                        <Field label="Selling Price"><Input register={register} name="price" placeholder="e.g. $299" /></Field>
+                        <Field label="Original Price"><Input register={register} name="originalPrice" placeholder="e.g. $399" /></Field>
+                      </div>
+
+                      <Field label="Course Status">
+                        <select {...register('status')} className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-sm font-medium text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors shadow-sm">
+                          {['active', 'upcoming', 'draft'].map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
+                        </select>
+                      </Field>
+                      
+                      <div className="mt-4 bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30 rounded-xl p-4 flex gap-3">
+                        <CheckCircle size={20} className="text-blue-500 shrink-0" weight="fill" />
+                        <p className="text-xs text-blue-700 dark:text-blue-400 leading-relaxed">
+                          This comprehensive data will perfectly map to the main website's single course view page once approved.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {formTab === 'curriculum' && (
+                  <div className="max-w-4xl space-y-6">
+                    <div className="flex justify-between items-center bg-white dark:bg-neutral-900 p-4 rounded-2xl border border-slate-200 dark:border-neutral-800 shadow-sm">
+                      <div>
+                        <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider">Course Modules & Lessons</h4>
+                        <p className="text-xs text-slate-500 mt-1">Structure your course week-by-week or topic-by-topic.</p>
+                      </div>
+                      <button type="button" onClick={handleAddModule} className="bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400 px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 hover:bg-violet-200 dark:hover:bg-violet-900/50 transition-colors">
+                        <Plus size={14} weight="bold" /> Add Module
+                      </button>
+                    </div>
+
+                    <div className="space-y-6">
+                      {currentCurriculum.map((module, mIndex) => (
+                        <div key={module.id} className="bg-white dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 rounded-2xl p-5 shadow-sm">
+                           {/* Module Header */}
+                           <div className="flex gap-4 items-start mb-4">
+                             <div className="flex-1 space-y-4">
+                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                 <Field label={`Module ${mIndex + 1} Title`}>
+                                   <input type="text" value={module.title} onChange={e => handleUpdateModule(mIndex, 'title', e.target.value)} placeholder="e.g. Week 1-3: The Foundations of English" className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-900 text-sm outline-none focus:border-violet-500" />
+                                 </Field>
+                                 <Field label="Duration (Optional)">
+                                   <input type="text" value={module.duration} onChange={e => handleUpdateModule(mIndex, 'duration', e.target.value)} placeholder="e.g. 9 Hours Live" className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-900 text-sm outline-none focus:border-violet-500" />
+                                 </Field>
+                               </div>
+                             </div>
+                             <button type="button" onClick={() => handleRemoveModule(mIndex)} className="w-8 h-8 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/40 flex items-center justify-center shrink-0 mt-6 transition-colors">
+                               <Trash size={16} />
+                             </button>
+                           </div>
+
+                           {/* Lessons */}
+                           <div className="pl-2 sm:pl-6 border-l-2 border-slate-100 dark:border-neutral-700 space-y-3 mt-4">
+                             {module.items.map((lesson, lIndex) => (
+                               <div key={lesson.id} className="bg-slate-50 dark:bg-neutral-900/50 p-4 rounded-xl border border-slate-100 dark:border-neutral-800 flex gap-3 items-start relative group">
+                                 <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3">
+                                   <div className="lg:col-span-5">
+                                     <input type="text" value={lesson.title} onChange={e => handleUpdateLesson(mIndex, lIndex, 'title', e.target.value)} placeholder="Lesson Title (e.g. Orientation)" className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-xs outline-none focus:border-violet-500" />
+                                   </div>
+                                   <div className="lg:col-span-2">
+                                     <input type="text" value={lesson.date} onChange={e => handleUpdateLesson(mIndex, lIndex, 'date', e.target.value)} placeholder="Date (May 10)" className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-xs outline-none focus:border-violet-500" />
+                                   </div>
+                                   <div className="lg:col-span-2">
+                                     <input type="text" value={lesson.time} onChange={e => handleUpdateLesson(mIndex, lIndex, 'time', e.target.value)} placeholder="Time (7:00 PM)" className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-xs outline-none focus:border-violet-500" />
+                                   </div>
+                                   <div className="lg:col-span-2">
+                                     <select value={lesson.type} onChange={e => handleUpdateLesson(mIndex, lIndex, 'type', e.target.value)} className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-xs outline-none focus:border-violet-500">
+                                       <option value="live">Live</option>
+                                       <option value="video">Video</option>
+                                       <option value="quiz">Quiz</option>
+                                     </select>
+                                   </div>
+                                   <div className="lg:col-span-1 flex items-center justify-center pt-2 lg:pt-0">
+                                     <label className="flex flex-col items-center cursor-pointer">
+                                       <span className="text-[9px] font-bold text-slate-400 mb-1">Preview?</span>
+                                       <input type="checkbox" checked={lesson.isFree} onChange={e => handleUpdateLesson(mIndex, lIndex, 'isFree', e.target.checked)} className="w-4 h-4 rounded text-violet-600 focus:ring-violet-500" />
+                                     </label>
+                                   </div>
+                                 </div>
+                                 <button type="button" onClick={() => handleRemoveLesson(mIndex, lIndex)} className="w-6 h-6 absolute -right-2 -top-2 bg-white dark:bg-neutral-800 rounded-full border border-slate-200 dark:border-neutral-700 text-slate-400 hover:text-red-500 hover:border-red-200 flex items-center justify-center shrink-0 opacity-0 group-hover:opacity-100 transition-all shadow-sm">
+                                   <X size={12} weight="bold" />
+                                 </button>
+                               </div>
+                             ))}
+                             <button type="button" onClick={() => handleAddLesson(mIndex)} className="text-xs font-bold text-violet-600 dark:text-violet-400 flex items-center gap-1.5 hover:underline py-2 ml-2">
+                               <Plus size={12} weight="bold" /> Add Lesson / Session
+                             </button>
+                           </div>
+                        </div>
+                      ))}
+                      {currentCurriculum.length === 0 && (
+                        <div className="text-center py-12 bg-white dark:bg-neutral-800 rounded-2xl border border-dashed border-slate-300 dark:border-neutral-700">
+                          <p className="text-sm text-slate-500 dark:text-neutral-400 font-medium">No curriculum modules added yet.</p>
+                          <button type="button" onClick={handleAddModule} className="mt-4 bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400 px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-violet-200 dark:hover:bg-violet-900/50 transition-colors inline-flex items-center gap-2">
+                            <Plus size={16} weight="bold" /> Create First Module
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
 
-              <div className="flex gap-3 px-8 py-6 border-t border-slate-100 dark:border-neutral-800 bg-white dark:bg-neutral-900 rounded-b-[32px]">
+              <div className="flex gap-3 px-8 py-6 border-t border-slate-100 dark:border-neutral-800 bg-white dark:bg-neutral-900 rounded-b-[32px] flex-shrink-0">
                 <button type="button" onClick={() => setModalType(null)} className="flex-1 py-3.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-sm font-bold text-slate-700 dark:text-neutral-300 transition-colors">Cancel</button>
                 <button type="submit" className="flex-1 py-3.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-black flex items-center justify-center gap-2 shadow-lg shadow-violet-600/30 transition-colors">
-                  <Check size={18} weight="bold" /> {modalType === 'add' ? 'Submit Proposal' : 'Save Changes'}
+                  <Check size={18} weight="bold" /> {modalType === 'add' ? 'Submit Course Proposal' : 'Save Course Details'}
                 </button>
               </div>
             </motion.form>
           </motion.div>
         )}
       </AnimatePresence>
+
+
 
       {/* DELETE CONFIRM */}
       <AnimatePresence>
