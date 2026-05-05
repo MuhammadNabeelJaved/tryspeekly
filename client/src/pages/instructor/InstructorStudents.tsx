@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { INSTRUCTOR_STUDENTS } from './instructorData'
-import { MagnifyingGlass, FunnelSimple, Check, X, EnvelopeSimple, Phone, CalendarBlank, ChartBar, Star, BookOpen, UserMinus, Clock } from '@phosphor-icons/react'
+import { MagnifyingGlass, FunnelSimple, Check, X, EnvelopeSimple, Phone, CalendarBlank, ChartBar, Star, BookOpen, UserMinus, Clock, ChatCircleText } from '@phosphor-icons/react'
 
 type Student = typeof INSTRUCTOR_STUDENTS[0] & { todayStatus?: 'present' | 'absent' | 'late' }
 
@@ -309,8 +309,9 @@ export default function InstructorStudents() {
               
               {/* Footer Actions */}
               <div className="p-5 border-t border-slate-100 dark:border-neutral-800 bg-slate-50/50 dark:bg-neutral-900/50 flex flex-col sm:flex-row gap-3">
-                <button onClick={() => alert('Opening message chat...')} className="flex-1 py-3 bg-white dark:bg-neutral-800 hover:bg-slate-50 dark:hover:bg-neutral-700 border border-slate-200 dark:border-neutral-700 text-slate-700 dark:text-white font-bold text-sm rounded-xl transition-colors shadow-sm">
-                  Send Message
+                <button onClick={() => window.location.href = '/instructor/messages'} className="flex-1 py-3 flex items-center justify-center gap-2 bg-white dark:bg-neutral-800 hover:bg-slate-50 dark:hover:bg-neutral-700 border border-slate-200 dark:border-neutral-700 text-slate-700 dark:text-white font-bold text-sm rounded-xl transition-colors shadow-sm">
+                  <ChatCircleText size={18} weight="fill" className="text-violet-500" />
+                  Direct Message
                 </button>
                 
                 <div className="flex-1 flex bg-slate-100 dark:bg-neutral-800 rounded-xl p-1 shadow-inner">

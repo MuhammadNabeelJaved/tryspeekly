@@ -1,9 +1,9 @@
-import React, { useState, Suspense, lazy } from 'react'
+import React, { useState, Suspense, lazy, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import {
   House, BookOpen, CreditCard, Handshake, GearSix, ChatCircleDots,
-  List, X, SignOut, Bell, Sun, Moon, Certificate
+  List, X, SignOut, Bell, Sun, Moon, Certificate, CheckCircle
 } from '@phosphor-icons/react'
 import Loader from '@/components/Loader'
 
@@ -40,7 +40,30 @@ export default function StudentDashboardPage() {
   const location = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [darkMode, setDarkMode] = useState(() => document.documentElement.classList.contains('dark'))
-  const [notifications] = useState(1)
+  
+  // Notification State
+  const [showNotifications, setShowNotifications] = useState(false)
+  const [notifs, setNotifs] = useState([
+    { id: 1, text: 'Your assignment for Business English was graded', time: '1h ago', unread: true },
+    { id: 2, text: 'Live class: General English Mastery starts in 15 mins', time: '2h ago', unread: true },
+    { id: 3, text: 'Welcome to EnglishPro! Complete your profile.', time: '1d ago', unread: false },
+  ])
+  const unreadCount = notifs.filter(n => n.unread).length
+  const notifRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
+        setShowNotifications(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
+
+  const markAllAsRead = () => {
+    setNotifs(notifs.map(n => ({ ...n, unread: false })))
+  }
 
   // Determine active view from current URL path
   const currentPath = location.pathname.replace('/dashboard', '').replace(/^\//, '')
@@ -185,12 +208,62 @@ export default function StudentDashboardPage() {
             </button>
 
             {/* Notifications */}
-            <button className="relative w-8 h-8 rounded-lg bg-slate-50 dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 flex items-center justify-center text-slate-500 dark:text-neutral-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors">
-              <Bell size={15} />
-              {notifications > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">{notifications}</span>
-              )}
-            </button>
+            <div className="relative" ref={notifRef}>
+              <button 
+                onClick={() => setShowNotifications(!showNotifications)}
+                className={`relative w-8 h-8 rounded-lg border flex items-center justify-center transition-colors ${showNotifications ? 'bg-violet-50 dark:bg-violet-900/20 border-violet-200 dark:border-violet-800 text-violet-600 dark:text-violet-400' : 'bg-slate-50 dark:bg-neutral-800 border-slate-200 dark:border-neutral-700 text-slate-500 dark:text-neutral-400 hover:text-violet-600 dark:hover:text-violet-400'}`}
+              >
+                <Bell size={15} weight={showNotifications ? "fill" : "regular"} />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">{unreadCount}</span>
+                )}
+              </button>
+
+              <AnimatePresence>
+                {showNotifications && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute right-0 top-12 w-80 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl shadow-xl z-50 overflow-hidden"
+                  >
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-neutral-800 bg-slate-50/50 dark:bg-neutral-900/50">
+                      <h3 className="text-sm font-black text-slate-900 dark:text-white">Notifications</h3>
+                      {unreadCount > 0 && (
+                        <button onClick={markAllAsRead} className="text-[10px] font-bold text-violet-600 dark:text-violet-400 hover:underline">
+                          Mark all as read
+                        </button>
+                      )}
+                    </div>
+                    <div className="max-h-[300px] overflow-y-auto">
+                      {notifs.length === 0 ? (
+                        <div className="p-6 text-center text-slate-500 dark:text-neutral-400 text-sm">No notifications</div>
+                      ) : (
+                        <div className="divide-y divide-slate-50 dark:divide-neutral-800/50">
+                          {notifs.map(notif => (
+                            <div key={notif.id} className={`p-4 flex gap-3 hover:bg-slate-50 dark:hover:bg-neutral-800/50 transition-colors ${notif.unread ? 'bg-violet-50/30 dark:bg-violet-900/5' : ''}`}>
+                              <div className="w-8 h-8 rounded-full bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 flex items-center justify-center flex-shrink-0">
+                                {notif.unread ? <Bell size={14} weight="fill" /> : <CheckCircle size={14} />}
+                              </div>
+                              <div>
+                                <p className={`text-sm ${notif.unread ? 'font-bold text-slate-900 dark:text-white' : 'font-medium text-slate-600 dark:text-neutral-300'}`}>{notif.text}</p>
+                                <p className="text-[10px] text-slate-400 mt-1">{notif.time}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-2 border-t border-slate-100 dark:border-neutral-800 bg-slate-50/50 dark:bg-neutral-900/50">
+                      <button className="w-full py-2 text-xs font-bold text-slate-500 hover:text-slate-900 dark:text-neutral-400 dark:hover:text-white transition-colors">
+                        View All
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
         </header>
 

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { motion, AnimatePresence } from 'framer-motion'
 import { INSTRUCTOR_COURSES } from './instructorData'
-import { BookOpen, Users, Clock, Plus, X, Check, PencilSimple, Trash, MagnifyingGlass, CheckCircle, CaretDown, CaretUp, ListPlus } from '@phosphor-icons/react'
+import { BookOpen, Users, Clock, Plus, X, Check, PencilSimple, Trash, MagnifyingGlass, CheckCircle, CaretDown, CaretUp, ListPlus, CalendarBlank, ChartBar } from '@phosphor-icons/react'
 
 type CourseItem = {
   id: string
@@ -97,7 +97,7 @@ export default function InstructorCourses() {
   const [formTab, setFormTab] = useState<'basic' | 'logistics' | 'curriculum'>('basic')
   const [deleteId, setDeleteId] = useState<string | null>(null)
   
-  const { register, handleSubmit, reset, watch, setValue } = useForm<InstructorCourse>({
+  const { register, handleSubmit, reset, watch, setValue, getValues } = useForm<InstructorCourse>({
     defaultValues: EMPTY_COURSE
   })
 
@@ -131,36 +131,48 @@ export default function InstructorCourses() {
   const currentCurriculum = watch('curriculum') || []
 
   function handleAddModule() {
-    setValue('curriculum', [...currentCurriculum, { id: `m_${Date.now()}`, title: '', duration: '', items: [] }])
+    const cur = getValues('curriculum') || []
+    setValue('curriculum', [...cur, { id: `m_${Date.now()}_${Math.random()}`, title: '', duration: '', items: [] }])
   }
 
   function handleUpdateModule(mIndex: number, field: keyof CourseModule, value: string) {
-    const newCur = [...currentCurriculum]
+    const cur = getValues('curriculum') || []
+    const newCur = [...cur]
     newCur[mIndex] = { ...newCur[mIndex], [field]: value }
     setValue('curriculum', newCur)
   }
 
   function handleRemoveModule(mIndex: number) {
-    const newCur = [...currentCurriculum]
+    const cur = getValues('curriculum') || []
+    const newCur = [...cur]
     newCur.splice(mIndex, 1)
     setValue('curriculum', newCur)
   }
 
   function handleAddLesson(mIndex: number) {
-    const newCur = [...currentCurriculum]
-    newCur[mIndex].items.push({ id: `l_${Date.now()}`, title: '', date: '', time: '', type: 'live', isFree: false })
+    const cur = getValues('curriculum') || []
+    const newCur = [...cur]
+    const newItems = [...(newCur[mIndex].items || [])]
+    newItems.push({ id: `l_${Date.now()}_${Math.random()}`, title: '', date: '', time: '', type: 'live', isFree: false })
+    newCur[mIndex] = { ...newCur[mIndex], items: newItems }
     setValue('curriculum', newCur)
   }
 
   function handleUpdateLesson(mIndex: number, lIndex: number, field: keyof CourseItem, value: any) {
-    const newCur = [...currentCurriculum]
-    newCur[mIndex].items[lIndex] = { ...newCur[mIndex].items[lIndex], [field]: value }
+    const cur = getValues('curriculum') || []
+    const newCur = [...cur]
+    const newItems = [...newCur[mIndex].items]
+    newItems[lIndex] = { ...newItems[lIndex], [field]: value }
+    newCur[mIndex] = { ...newCur[mIndex], items: newItems }
     setValue('curriculum', newCur)
   }
 
   function handleRemoveLesson(mIndex: number, lIndex: number) {
-    const newCur = [...currentCurriculum]
-    newCur[mIndex].items.splice(lIndex, 1)
+    const cur = getValues('curriculum') || []
+    const newCur = [...cur]
+    const newItems = [...newCur[mIndex].items]
+    newItems.splice(lIndex, 1)
+    newCur[mIndex] = { ...newCur[mIndex], items: newItems }
     setValue('curriculum', newCur)
   }
 
@@ -295,23 +307,53 @@ export default function InstructorCourses() {
           
           return (
           <div key={course.id} className="bg-white dark:bg-neutral-900 rounded-3xl border border-slate-200 dark:border-neutral-800 overflow-hidden shadow-sm flex flex-col hover:shadow-lg hover:border-violet-300 dark:hover:border-violet-700/50 transition-all duration-300 group">
-            <div className="p-6 flex-1">
-              <div className="flex items-start justify-between mb-4">
-                <div className={`text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md ${
-                    course.status === 'active' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' :
-                    course.status === 'upcoming' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
-                    'bg-slate-100 text-slate-600 dark:bg-neutral-800 dark:text-neutral-400'
-                  }`}>
-                    {course.status}
+            
+            {/* Image Banner & Badges */}
+            <div className="relative h-48 bg-slate-100 dark:bg-neutral-800 overflow-hidden flex-shrink-0">
+              {course.image ? (
+                <img src={course.image} alt={course.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-violet-100 to-fuchsia-100 dark:from-violet-900/40 dark:to-fuchsia-900/40 flex items-center justify-center">
+                  <BookOpen size={48} className="text-violet-300 dark:text-violet-700/50" weight="duotone" />
                 </div>
-                {course.level && (
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-neutral-500">
-                    {course.level}
+              )}
+              
+              {/* Top Badges */}
+              <div className="absolute top-4 left-4 flex gap-2 flex-wrap">
+                <span className={`px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-widest backdrop-blur-md shadow-sm ${
+                  course.status === 'active' ? 'bg-emerald-500/90 text-white border border-emerald-400/50' :
+                  course.status === 'upcoming' ? 'bg-blue-500/90 text-white border border-blue-400/50' :
+                  'bg-slate-800/90 text-white border border-slate-700/50'
+                }`}>
+                  {course.status}
+                </span>
+                {course.category && (
+                  <span className="px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-widest bg-white/90 dark:bg-black/90 text-slate-900 dark:text-white backdrop-blur-md shadow-sm border border-white/20 dark:border-white/10">
+                    {course.category}
                   </span>
                 )}
               </div>
               
-              <h3 className="text-xl font-black text-slate-900 dark:text-white leading-tight mb-2 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">
+              {/* Bottom Right Price */}
+              {course.price && (
+                <div className="absolute bottom-4 right-4 px-3 py-1.5 rounded-xl bg-white/90 dark:bg-black/90 text-slate-900 dark:text-white font-black text-sm backdrop-blur-md shadow-sm border border-white/20 dark:border-white/10">
+                  {course.price}
+                </div>
+              )}
+            </div>
+
+            <div className="p-6 flex-1 flex flex-col">
+              <div className="flex items-center gap-3 text-xs font-bold text-slate-500 dark:text-neutral-400 mb-3">
+                {course.level && <span className="flex items-center gap-1.5"><ChartBar size={14} className="text-violet-500" /> {course.level}</span>}
+                {course.startDate && (
+                  <>
+                    <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-neutral-700" />
+                    <span className="flex items-center gap-1.5"><CalendarBlank size={14} className="text-blue-500" /> Starts {course.startDate}</span>
+                  </>
+                )}
+              </div>
+              
+              <h3 className="text-xl font-black text-slate-900 dark:text-white leading-tight mb-2 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors line-clamp-2">
                 {course.title}
               </h3>
 
@@ -321,7 +363,7 @@ export default function InstructorCourses() {
                 </p>
               )}
               
-              <div className="space-y-3 mt-4 mb-4">
+              <div className="space-y-3 mt-auto mb-4">
                 {/* Enrollment Progress */}
                 <div className="bg-slate-50 dark:bg-neutral-800/50 p-3 rounded-xl border border-slate-100 dark:border-neutral-800">
                   <div className="flex justify-between items-end mb-2">
@@ -335,7 +377,7 @@ export default function InstructorCourses() {
                   </div>
                   <div className="h-1.5 bg-slate-200 dark:bg-neutral-700 rounded-full overflow-hidden">
                     <div 
-                      className="h-full bg-blue-500 rounded-full" 
+                      className="h-full bg-blue-500 rounded-full transition-all duration-1000 ease-out" 
                       style={{ width: `${Math.min((course.students / (course.maxStudents || 15)) * 100, 100)}%` }} 
                     />
                   </div>
@@ -346,7 +388,7 @@ export default function InstructorCourses() {
                   <div className="flex justify-between items-end mb-2">
                     <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-neutral-300">
                       <CheckCircle size={14} className="text-violet-500" weight="bold" />
-                      {completedCount} / {course.totalClasses || 0} Classes Completed
+                      {completedCount} / {course.totalClasses || 0} Classes
                     </div>
                     <span className="text-[10px] font-bold text-violet-600 dark:text-violet-400">
                       {course.progress}%
@@ -354,7 +396,7 @@ export default function InstructorCourses() {
                   </div>
                   <div className="h-1.5 bg-slate-200 dark:bg-neutral-700 rounded-full overflow-hidden">
                     <div 
-                      className="h-full bg-violet-600 rounded-full" 
+                      className="h-full bg-violet-600 rounded-full transition-all duration-1000 ease-out" 
                       style={{ width: `${course.progress}%` }} 
                     />
                   </div>
@@ -362,16 +404,16 @@ export default function InstructorCourses() {
               </div>
 
               <div className="grid grid-cols-2 gap-2 text-xs font-medium text-slate-500 dark:text-neutral-400">
-                <div className="flex items-center gap-1.5 bg-slate-50 dark:bg-neutral-800/50 px-2 py-1.5 rounded-lg border border-slate-100 dark:border-neutral-800">
-                  <Clock size={14} /> {course.duration || 'N/A'}
+                <div className="flex items-center gap-1.5 bg-slate-50 dark:bg-neutral-800/50 px-2 py-1.5 rounded-lg border border-slate-100 dark:border-neutral-800 truncate">
+                  <Clock size={14} className="shrink-0" /> <span className="truncate">{course.duration || 'N/A'}</span>
                 </div>
-                <div className="flex items-center gap-1.5 bg-slate-50 dark:bg-neutral-800/50 px-2 py-1.5 rounded-lg border border-slate-100 dark:border-neutral-800">
-                  <BookOpen size={14} /> {course.totalClasses || 0} Total Classes
+                <div className="flex items-center gap-1.5 bg-slate-50 dark:bg-neutral-800/50 px-2 py-1.5 rounded-lg border border-slate-100 dark:border-neutral-800 truncate">
+                  <BookOpen size={14} className="shrink-0" /> <span className="truncate">{course.totalClasses || 0} Total Sessions</span>
                 </div>
               </div>
             </div>
             
-            <div className="p-4 border-t border-slate-100 dark:border-neutral-800 bg-slate-50/50 dark:bg-neutral-900/30 flex gap-2">
+            <div className="p-4 border-t border-slate-100 dark:border-neutral-800 bg-slate-50/50 dark:bg-neutral-900/30 flex gap-2 shrink-0">
               <button onClick={() => openEdit(course)} className="flex-1 flex items-center justify-center gap-1.5 bg-white dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 hover:bg-slate-50 dark:hover:bg-neutral-700 text-slate-700 dark:text-neutral-200 px-3 py-2.5 rounded-xl text-xs font-bold transition-all shadow-sm hover:shadow">
                 <PencilSimple size={16} /> Edit Details
               </button>
@@ -383,6 +425,7 @@ export default function InstructorCourses() {
         )})}
 
         {/* Add New Ghost Card */}
+
         <button onClick={openAdd} className="bg-slate-50 dark:bg-neutral-900/50 rounded-3xl border-2 border-dashed border-slate-200 dark:border-neutral-800 hover:border-violet-400 dark:hover:border-violet-600 flex flex-col items-center justify-center min-h-[300px] text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 transition-all group">
           <div className="w-14 h-14 bg-white dark:bg-neutral-800 rounded-full flex items-center justify-center shadow-sm mb-3 group-hover:scale-110 transition-transform">
             <Plus size={24} weight="bold" />
