@@ -81,4 +81,35 @@ describe('User Model', () => {
     expect(updatedUser!.name).toBe('Updated Name');
     expect(updatedUser!.password).toBe(originalHash); // Password hash should be unchanged
   });
+
+  it('should throw error when comparing password without selecting password field', async () => {
+    const user = await User.create({
+      name: 'Test User',
+      email: 'test@test.com',
+      password: 'Password123!',
+    });
+
+    const userWithoutPassword = await User.findById(user._id); // password not selected
+    await expect(userWithoutPassword!.comparePassword('Password123!'))
+      .rejects
+      .toThrow('comparePassword called on document without password field selected');
+  });
+
+  it('should reject invalid email format', async () => {
+    await expect(User.create({
+      name: 'Test User',
+      email: 'not-an-email',
+      password: 'Password123!',
+    })).rejects.toThrow(/Invalid email format/);
+  });
+
+  it('should trim and lowercase email', async () => {
+    const user = await User.create({
+      name: 'Test User',
+      email: '  TEST@TEST.COM  ',
+      password: 'Password123!',
+    });
+
+    expect(user.email).toBe('test@test.com');
+  });
 });

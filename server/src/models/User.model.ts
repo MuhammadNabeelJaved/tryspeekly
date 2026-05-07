@@ -1,6 +1,8 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import bcrypt from 'bcryptjs';
+import validator from 'validator';
 import { USER_ROLES } from '../config/constants';
+import env from '../config/env';
 
 export interface IUser extends Document {
   name: string;
@@ -23,7 +25,17 @@ export interface IUser extends Document {
 
 const userSchema = new Schema<IUser>({
   name: { type: String, required: true, trim: true },
-  email: { type: String, required: true, unique: true, lowercase: true },
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+    lowercase: true,
+    trim: true,
+    validate: {
+      validator: (value: string) => validator.isEmail(value),
+      message: 'Invalid email format'
+    }
+  },
   password: { type: String, required: true, select: false },
   phone: { type: String },
   country: { type: String },
@@ -44,12 +56,15 @@ const userSchema = new Schema<IUser>({
 userSchema.pre('save', async function(next) {
   if (!this.isModified('password')) return next();
 
-  const rounds = parseInt(process.env.BCRYPT_ROUNDS || '10');
+  const rounds = env.BCRYPT_ROUNDS;
   this.password = await bcrypt.hash(this.password, rounds);
   next();
 });
 
 userSchema.methods.comparePassword = async function(candidatePassword: string): Promise<boolean> {
+  if (!this.password) {
+    throw new Error('comparePassword called on document without password field selected');
+  }
   return bcrypt.compare(candidatePassword, this.password);
 };
 
