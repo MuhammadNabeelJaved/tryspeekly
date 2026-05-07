@@ -44,3 +44,11 @@ export const CURRENCIES = {
   PKR: 'PKR',
   USD: 'USD',
 } as const;
+
+export type UserRole = typeof USER_ROLES[keyof typeof USER_ROLES];
+export type CourseType = typeof COURSE_TYPES[keyof typeof COURSE_TYPES];
+export type CourseLevel = typeof COURSE_LEVELS[keyof typeof COURSE_LEVELS];
+export type CourseFocus = typeof COURSE_FOCUS[keyof typeof COURSE_FOCUS];
+export type PaymentStatus = typeof PAYMENT_STATUS[keyof typeof PAYMENT_STATUS];
+export type PaymentMethod = typeof PAYMENT_METHODS[keyof typeof PAYMENT_METHODS];
+export type Currency = typeof CURRENCIES[keyof typeof CURRENCIES];
