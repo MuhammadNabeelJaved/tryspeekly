@@ -62,4 +62,23 @@ describe('User Model', () => {
       password: 'Password456!',
     })).rejects.toThrow();
   });
+
+  it('should not rehash password when updating other fields', async () => {
+    const user = await User.create({
+      name: 'Test User',
+      email: 'test@test.com',
+      password: 'Password123!',
+    });
+
+    const userWithPassword = await User.findById(user._id).select('+password');
+    const originalHash = userWithPassword!.password;
+
+    // Update name without changing password
+    userWithPassword!.name = 'Updated Name';
+    await userWithPassword!.save();
+
+    const updatedUser = await User.findById(user._id).select('+password');
+    expect(updatedUser!.name).toBe('Updated Name');
+    expect(updatedUser!.password).toBe(originalHash); // Password hash should be unchanged
+  });
 });
