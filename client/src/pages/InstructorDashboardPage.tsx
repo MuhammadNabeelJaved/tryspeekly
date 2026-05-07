@@ -14,10 +14,11 @@ const InstructorStudents = lazy(() => import('./instructor/InstructorStudents'))
 const InstructorMessages = lazy(() => import('./instructor/InstructorMessages'))
 const InstructorSettings = lazy(() => import('./instructor/InstructorSettings'))
 const InstructorSupport = lazy(() => import('./instructor/InstructorSupport'))
+const InstructorNotifications = lazy(() => import('./instructor/InstructorNotifications'))
 
 import { MOCK_INSTRUCTOR } from './instructor/instructorData'
 
-export type InstructorView = 'overview' | 'courses' | 'live' | 'students' | 'messages' | 'assignments' | 'settings' | 'support'
+export type InstructorView = 'overview' | 'courses' | 'live' | 'students' | 'messages' | 'assignments' | 'settings' | 'support' | 'notifications'
 
 type NavItem = { view: InstructorView; label: string; path: string; Icon: React.FC<{ size?: number; weight?: string; className?: string }> }
 
@@ -30,6 +31,7 @@ const NAV_MAIN: NavItem[] = [
 ]
 
 const NAV_PREFS: NavItem[] = [
+  { view: 'notifications', label: 'Notifications', path: 'notifications', Icon: Bell as NavItem['Icon'] },
   { view: 'settings', label: 'Settings', path: 'settings', Icon: GearSix as NavItem['Icon'] },
   { view: 'support', label: 'Support & Help', path: 'support', Icon: Headset as NavItem['Icon'] },
 ]
@@ -253,7 +255,10 @@ export default function InstructorDashboardPage() {
                       )}
                     </div>
                     <div className="p-2 border-t border-slate-100 dark:border-neutral-800 bg-slate-50/50 dark:bg-neutral-900/50">
-                      <button className="w-full py-2 text-xs font-bold text-slate-500 hover:text-slate-900 dark:text-neutral-400 dark:hover:text-white transition-colors">
+                      <button 
+                        onClick={() => { navigate('/instructor/notifications'); setShowNotifications(false); }}
+                        className="w-full py-2 text-xs font-bold text-slate-500 hover:text-slate-900 dark:text-neutral-400 dark:hover:text-white transition-colors"
+                      >
                         View All
                       </button>
                     </div>
@@ -284,6 +289,7 @@ export default function InstructorDashboardPage() {
                   <Route path="/messages" element={<InstructorMessages />} />
                   <Route path="/settings" element={<InstructorSettings />} />
                   <Route path="/support" element={<InstructorSupport />} />
+                  <Route path="/notifications" element={<InstructorNotifications />} />
                 </Routes>
               </Suspense>
             </motion.div>

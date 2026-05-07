@@ -21,10 +21,11 @@ const AdminFinancialAid = lazy(() => import('./admin/AdminFinancialAid'))
 const AdminCMS = lazy(() => import('./admin/AdminCMS'))
 const AdminSettings = lazy(() => import('./admin/AdminSettings'))
 const AdminSupport = lazy(() => import('./admin/AdminSupport'))
+const AdminNotifications = lazy(() => import('./admin/AdminNotifications'))
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 
-export type AdminView = 'overview' | 'students' | 'instructors' | 'courses' | 'certificates' | 'payments' | 'payments-setup' | 'financial-aid' | 'cms' | 'settings' | 'support'
+export type AdminView = 'overview' | 'students' | 'instructors' | 'courses' | 'certificates' | 'payments' | 'payments-setup' | 'financial-aid' | 'cms' | 'settings' | 'support' | 'notifications'
 
 export interface AdminStore {
   students: Student[]
@@ -57,6 +58,7 @@ const NAV_MANAGEMENT: NavItem[] = [
   { view: 'payments',       label: 'Payments',      path: 'payments',       Icon: CreditCard as NavItem['Icon'] },
   { view: 'financial-aid',  label: 'Financial Aid', path: 'financial-aid',  Icon: Handshake as NavItem['Icon'] },
   { view: 'cms',            label: 'CMS Editor',    path: 'cms',            Icon: PencilSimple as NavItem['Icon'] },
+  { view: 'notifications',  label: 'Notifications', path: 'notifications', Icon: Bell as NavItem['Icon'] },
   { view: 'settings',       label: 'Settings',      path: 'settings',       Icon: GearSix as NavItem['Icon'] },
   { view: 'support',        label: 'Support',       path: 'support',        Icon: ChatCircleDots as NavItem['Icon'] },
 ]
@@ -160,11 +162,27 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
 export default function AdminPage() {
   const navigate = useNavigate()
   const location = useLocation()
-  
+  const notifRef = useRef(null);
+  const [showNotifications, setShowNotifications] = useState(false);
   const [authed, setAuthed] = useState(() => sessionStorage.getItem('admin_authed') === '1')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [darkMode, setDarkMode] = useState(() => document.documentElement.classList.contains('dark'))
   const [notifications] = useState(3)
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [notifs, setNotifs] = useState<{ id: number; text: string; time: string; unread: boolean }[]>([
+    { id: 1, text: 'New student registered: John Doe', time: '2 hours ago', unread: true },
+    { id: 2, text: 'Course "Advanced English" updated', time: '1 day ago', unread: true },
+    { id: 3, text: 'Payment reminder sent to Jane Smith', time: '3 days ago', unread: false },
+  ]);
+
+  useEffect(() => {
+    setUnreadCount(notifs.filter(n => n.unread).length);
+  }, [notifs]);
+
+  function markAllAsRead() {
+    setNotifs(notifs.map(n => ({ ...n, unread: false })));
+  }
+
 
   const currentPath = location.pathname.replace('/admin', '').replace(/^\//, '')
   const allNavItems = [...NAV_ANALYTICS, ...NAV_MANAGEMENT]
@@ -416,7 +434,10 @@ export default function AdminPage() {
                       )}
                     </div>
                     <div className="p-2 border-t border-slate-100 dark:border-neutral-800 bg-slate-50/50 dark:bg-neutral-900/50">
-                      <button className="w-full py-2 text-xs font-bold text-slate-500 hover:text-slate-900 dark:text-neutral-400 dark:hover:text-white transition-colors">
+                      <button 
+                        onClick={() => { navigate('/admin/notifications'); setShowNotifications(false); }}
+                        className="w-full py-2 text-xs font-bold text-slate-500 hover:text-slate-900 dark:text-neutral-400 dark:hover:text-white transition-colors"
+                      >
                         View All
                       </button>
                     </div>
@@ -453,8 +474,9 @@ export default function AdminPage() {
                   <Route path="/payments" element={<AdminPaymentsView store={store} />} />
                   <Route path="/financial-aid" element={<AdminFinancialAid store={store} />} />
                   <Route path="/cms/*" element={<AdminCMS store={store} />} />
-                  <Route path="/settings" element={<AdminSettings store={store} />} />
+                   <Route path="/settings" element={<AdminSettings store={store} />} />
                   <Route path="/support" element={<AdminSupport store={store} />} />
+                  <Route path="/notifications" element={<AdminNotifications />} />
                   <Route path="*" element={<Navigate to="/admin" replace />} />
                 </Routes>
               </Suspense>

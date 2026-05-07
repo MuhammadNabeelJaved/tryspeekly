@@ -15,10 +15,11 @@ const StudentPayments = lazy(() => import('./student/StudentPayments'))
 const StudentFinancialAid = lazy(() => import('./student/StudentFinancialAid'))
 const StudentSettings = lazy(() => import('./student/StudentSettings'))
 const StudentSupport = lazy(() => import('./student/StudentSupport'))
+const StudentNotifications = lazy(() => import('./student/StudentNotifications'))
 
 import { MOCK_STUDENT } from './student/studentData'
 
-export type StudentView = 'overview' | 'courses' | 'certificates' | 'payments' | 'financial-aid' | 'settings' | 'support'
+export type StudentView = 'overview' | 'courses' | 'certificates' | 'payments' | 'financial-aid' | 'settings' | 'support' | 'notifications'
 
 type NavItem = { view: StudentView; label: string; path: string; Icon: React.FC<{ size?: number; weight?: string; className?: string }> }
 
@@ -31,6 +32,7 @@ const NAV_MAIN: NavItem[] = [
 ]
 
 const NAV_PREFS: NavItem[] = [
+  { view: 'notifications', label: 'Notifications', path: 'notifications', Icon: Bell as NavItem['Icon'] },
   { view: 'support', label: 'Support', path: 'support', Icon: ChatCircleDots as NavItem['Icon'] },
   { view: 'settings', label: 'Settings', path: 'settings', Icon: GearSix as NavItem['Icon'] },
 ]
@@ -256,7 +258,10 @@ export default function StudentDashboardPage() {
                       )}
                     </div>
                     <div className="p-2 border-t border-slate-100 dark:border-neutral-800 bg-slate-50/50 dark:bg-neutral-900/50">
-                      <button className="w-full py-2 text-xs font-bold text-slate-500 hover:text-slate-900 dark:text-neutral-400 dark:hover:text-white transition-colors">
+                      <button 
+                        onClick={() => { navigate('/dashboard/notifications'); setShowNotifications(false); }}
+                        className="w-full py-2 text-xs font-bold text-slate-500 hover:text-slate-900 dark:text-neutral-400 dark:hover:text-white transition-colors"
+                      >
                         View All
                       </button>
                     </div>
@@ -288,6 +293,7 @@ export default function StudentDashboardPage() {
                   <Route path="/financial-aid" element={<StudentFinancialAid />} />
                   <Route path="/settings" element={<StudentSettings />} />
                   <Route path="/support" element={<StudentSupport />} />
+                  <Route path="/notifications" element={<StudentNotifications />} />
                 </Routes>
               </Suspense>
             </motion.div>
