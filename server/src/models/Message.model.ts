@@ -1,34 +1,56 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IMessage extends Document {
-  room: string;
   sender: mongoose.Types.ObjectId;
+  receiver: mongoose.Types.ObjectId;
   content: string;
-  type: 'group' | 'private' | 'support';
-  readBy: mongoose.Types.ObjectId[];
+  isRead: boolean;
+  readAt?: Date;
+  isDeleted: boolean;
+  deletedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
 
 const messageSchema = new Schema<IMessage>({
-  room: { type: String, required: true, index: true },
   sender: {
     type: Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    required: true,
+    index: true
   },
-  content: { type: String, required: true },
-  type: {
-    type: String,
-    enum: ['group', 'private', 'support'],
-    required: true
-  },
-  readBy: [{
+  receiver: {
     type: Schema.Types.ObjectId,
-    ref: 'User'
-  }],
+    ref: 'User',
+    required: true,
+    index: true
+  },
+  content: {
+    type: String,
+    required: true,
+    maxlength: 2000
+  },
+  isRead: {
+    type: Boolean,
+    default: false
+  },
+  readAt: {
+    type: Date
+  },
+  isDeleted: {
+    type: Boolean,
+    default: false
+  },
+  deletedAt: {
+    type: Date
+  }
 }, { timestamps: true });
 
-messageSchema.index({ room: 1, createdAt: -1 });
+// Compound index for conversation queries
+messageSchema.index({ sender: 1, receiver: 1, createdAt: -1 });
+messageSchema.index({ receiver: 1, sender: 1, createdAt: -1 });
+
+// Index for unread messages
+messageSchema.index({ receiver: 1, isRead: 1 });
 
 export default mongoose.model<IMessage>('Message', messageSchema);
