@@ -90,7 +90,7 @@ export const usersService = {
    * Get public user profile by ID (limited fields)
    */
   async getUserById(userId: string) {
-    const user = await User.findById(userId).select('name email role bio photo specializations createdAt');
+    const user = await User.findById(userId).select('name email role bio photo specializations isActive createdAt');
 
     if (!user || !user.isActive) {
       throw new ApiError(404, 'User not found', 'USER_NOT_FOUND');
