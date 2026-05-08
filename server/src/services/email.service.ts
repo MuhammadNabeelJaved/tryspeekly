@@ -6,7 +6,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 interface EmailOptions {
   to: string | string[];
   subject: string;
-  html?: string;
+  html: string;
   text?: string;
 }
 
@@ -17,7 +17,7 @@ export const sendEmail = async (options: EmailOptions): Promise<void> => {
       to: Array.isArray(options.to) ? options.to : [options.to],
       subject: options.subject,
       html: options.html,
-      text: options.text,
+      ...(options.text && { text: options.text }),
     });
 
     if (error) {
