@@ -40,8 +40,8 @@ const paymentSchema = new Schema<IPayment>({
     enum: Object.values(PAYMENT_METHODS),
     required: true
   },
-  transactionId: { type: String, required: true },
-  screenshotUrl: { type: String, required: true },
+  transactionId: { type: String, default: '' },
+  screenshotUrl: { type: String, default: '' },
   amount: { type: Number, required: true, min: 0 },
   currency: {
     type: String,

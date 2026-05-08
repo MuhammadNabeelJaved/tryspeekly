@@ -5,8 +5,7 @@ export * from './users.service';
 export * from './courses.service';
 export * from './enrollments.service';
 export * from './messages.service';
-// TODO: Export other services as they are migrated to MVC
-// export * from './payments.service';
+export * from './payments.service';
 
 // Existing shared utilities
 export * from './email.service';

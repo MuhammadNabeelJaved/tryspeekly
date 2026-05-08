@@ -7,5 +7,4 @@ export * from './users.controller';
 export * from './courses.controller';
 export * from './enrollments.controller';
 export * from './messages.controller';
-// TODO: Export other controllers as they are migrated to MVC
-// export * from './payments.controller';
+export * from './payments.controller';
