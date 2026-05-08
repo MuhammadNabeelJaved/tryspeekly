@@ -75,7 +75,7 @@ export const messagesService = {
         content: message.content,
         createdAt: message.createdAt,
       });
-    } catch (error) {
+    } catch {
       // Socket not initialized (e.g., in tests) - continue without emitting
     }
 

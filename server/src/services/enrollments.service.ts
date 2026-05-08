@@ -4,10 +4,6 @@ import Payment from '../models/Payment.model';
 import { ApiError } from '../utils/ApiError';
 import mongoose from 'mongoose';
 
-interface EnrollmentStatus {
-  status?: 'active' | 'cancelled' | 'completed';
-}
-
 export const enrollmentsService = {
   /**
    * Enroll student in a course (student only)
@@ -94,7 +90,7 @@ export const enrollmentsService = {
    * Get all enrollments for a student with optional status filter
    */
   async getEnrollments(studentId: string, status?: string) {
-    const query: any = { student: studentId };
+    const query: Record<string, unknown> = { student: studentId };
 
     if (status === 'active') {
       query.isActive = true;

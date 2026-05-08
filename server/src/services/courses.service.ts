@@ -89,16 +89,17 @@ export const coursesService = {
     } = filters;
 
     // Build filter query
-    const query: any = { status: 'published' };
+    const query: Record<string, unknown> = { status: 'published' };
 
     if (level) query.level = level;
     if (type) query.type = type;
     if (focus) query.focus = focus;
 
     if (minPrice !== undefined || maxPrice !== undefined) {
-      query.price = {};
-      if (minPrice !== undefined) query.price.$gte = minPrice;
-      if (maxPrice !== undefined) query.price.$lte = maxPrice;
+      const priceFilter: Record<string, number> = {};
+      if (minPrice !== undefined) priceFilter.$gte = minPrice;
+      if (maxPrice !== undefined) priceFilter.$lte = maxPrice;
+      query.price = priceFilter;
     }
 
     // Calculate pagination

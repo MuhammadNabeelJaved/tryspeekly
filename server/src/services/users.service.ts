@@ -1,7 +1,5 @@
 import User from '../models/User.model';
 import { ApiError } from '../utils/ApiError';
-import bcrypt from 'bcryptjs';
-import env from '../config/env';
 
 export const usersService = {
   /**

@@ -150,7 +150,7 @@ export const paymentsService = {
    * Get all payments for a user with optional status filter
    */
   async getPayments(userId: string, status?: string) {
-    const query: any = { student: userId };
+    const query: Record<string, unknown> = { student: userId };
 
     if (status) {
       query.status = status;
@@ -305,19 +305,20 @@ export const paymentsService = {
     startDate?: Date,
     endDate?: Date
   ) {
-    const query: any = {
+    const query: Record<string, unknown> = {
       teacher: teacherId,
       status: 'approved',
     };
 
     if (startDate || endDate) {
-      query.verifiedAt = {};
+      const dateFilter: Record<string, Date> = {};
       if (startDate) {
-        query.verifiedAt.$gte = startDate;
+        dateFilter.$gte = startDate;
       }
       if (endDate) {
-        query.verifiedAt.$lte = endDate;
+        dateFilter.$lte = endDate;
       }
+      query.verifiedAt = dateFilter;
     }
 
     const payments = await Payment.find(query).lean();
