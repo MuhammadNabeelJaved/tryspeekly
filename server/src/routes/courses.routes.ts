@@ -1,7 +1,9 @@
 import { Router } from 'express';
 import { coursesController } from '../controllers/courses.controller';
+import { enrollmentsController } from '../controllers/enrollments.controller';
 import { validateJoi } from '../middleware/validateJoi';
 import { coursesValidation } from '../validations/courses.validation';
+import { enrollmentsValidation } from '../validations/enrollments.validation';
 import { authenticate } from '../middleware/authenticate';
 import { authorize } from '../middleware/authorize';
 
@@ -70,6 +72,14 @@ router.post(
   authorize('teacher'),
   validateJoi(coursesValidation.archive),
   coursesController.archiveCourse
+);
+
+// Get students enrolled in a course (teacher only, own courses)
+router.get(
+  '/:courseId/students',
+  authorize('teacher'),
+  validateJoi(enrollmentsValidation.getStudents),
+  enrollmentsController.getCourseStudents
 );
 
 export default router;
