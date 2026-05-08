@@ -23,7 +23,7 @@ describe('Auth API Integration Tests', () => {
           name: 'John Doe',
           email: 'john@example.com',
           password: 'Password123!',
-          phone: '+1234567890',
+          phone: '+12025550123',
           country: 'USA',
         });
 

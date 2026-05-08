@@ -15,7 +15,7 @@ export const authValidation = {
   ],
 
   refresh: [
-    body('refreshToken').notEmpty().withMessage('Refresh token required'),
+    body('refreshToken').optional(),
   ],
 
   forgotPassword: [

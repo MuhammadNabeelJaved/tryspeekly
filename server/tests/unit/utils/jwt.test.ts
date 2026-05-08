@@ -47,5 +47,9 @@ describe('JWT Utilities', () => {
 
       expect(decoded.userId).toBe(payload.userId);
     });
+
+    it('should throw on invalid refresh token', () => {
+      expect(() => verifyRefreshToken('invalid')).toThrow();
+    });
   });
 });

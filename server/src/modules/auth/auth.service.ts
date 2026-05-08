@@ -118,7 +118,7 @@ export const authService = {
   },
 
   async logout(userId: string) {
-    await User.findByIdAndUpdate(userId, { refreshToken: undefined });
+    await User.findByIdAndUpdate(userId, { $unset: { refreshToken: 1 } });
     return { message: 'Logged out successfully' };
   },
 };
