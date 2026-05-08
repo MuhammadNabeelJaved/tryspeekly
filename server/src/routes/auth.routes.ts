@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { authController } from '../controllers/auth.controller';
-import { validate } from '../middleware/validate';
+import { validateJoi } from '../middleware/validateJoi';
 import { authValidation } from '../validations/auth.validation';
 import { authLimiter } from '../middleware/rateLimiter';
 import { authenticate } from '../middleware/authenticate';
@@ -9,30 +9,30 @@ const router = Router();
 
 router.post('/register',
   authLimiter,
-  validate(authValidation.register),
+  validateJoi(authValidation.register),
   authController.register
 );
 
 router.post('/login',
   authLimiter,
-  validate(authValidation.login),
+  validateJoi(authValidation.login),
   authController.login
 );
 
 router.post('/refresh',
-  validate(authValidation.refresh),
+  validateJoi(authValidation.refresh),
   authController.refreshTokens
 );
 
 router.post('/forgot-password',
   authLimiter,
-  validate(authValidation.forgotPassword),
+  validateJoi(authValidation.forgotPassword),
   authController.requestPasswordReset
 );
 
 router.post('/reset-password',
   authLimiter,
-  validate(authValidation.resetPassword),
+  validateJoi(authValidation.resetPassword),
   authController.resetPassword
 );
 

@@ -1,4 +1,4 @@
-import { authService } from '../../../src/modules/auth/auth.service';
+import { authService } from '../../../src/services/auth.service';
 import User from '../../../src/models/User.model';
 import { ApiError } from '../../../src/utils/ApiError';
 import { connectTestDB, disconnectTestDB, clearTestDB } from '../../helpers/testDb';

@@ -13,7 +13,9 @@ export const authValidation = {
         .messages({
           'string.pattern.base': 'Password must contain at least one uppercase letter, one lowercase letter, and one number'
         }),
-      role: Joi.string().valid('student', 'teacher').default('student')
+      role: Joi.string().valid('student', 'teacher').default('student'),
+      phone: Joi.string().optional(),
+      country: Joi.string().optional()
     })
   },
 
@@ -26,8 +28,8 @@ export const authValidation = {
 
   refresh: {
     body: Joi.object({
-      refreshToken: Joi.string().required()
-    })
+      refreshToken: Joi.string().optional()
+    }).unknown(true)
   },
 
   forgotPassword: {
@@ -38,11 +40,15 @@ export const authValidation = {
 
   resetPassword: {
     body: Joi.object({
-      token: Joi.string().required(),
-      password: Joi.string()
+      email: Joi.string().email().required(),
+      otp: Joi.string().required(),
+      newPassword: Joi.string()
         .min(8)
         .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
         .required()
+        .messages({
+          'string.pattern.base': 'Password must contain at least one uppercase letter, one lowercase letter, and one number'
+        })
     })
   }
 };

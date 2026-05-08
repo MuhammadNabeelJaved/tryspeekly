@@ -44,7 +44,7 @@ export const authController = {
   }),
 
   refreshTokens: asyncHandler(async (req: Request, res: Response) => {
-    const { refreshToken } = req.cookies;
+    const refreshToken = req.cookies.refreshToken || req.body.refreshToken;
     const result = await authService.refreshTokens(refreshToken);
 
     res.cookie('refreshToken', result.refreshToken, {
@@ -73,8 +73,8 @@ export const authController = {
   }),
 
   resetPassword: asyncHandler(async (req: Request, res: Response) => {
-    const { token, password } = req.body;
-    await authService.resetPassword(token, password);
+    const { email, otp, newPassword } = req.body;
+    await authService.resetPassword(email, otp, newPassword);
 
     res.status(200).json({
       success: true,
