@@ -23,7 +23,7 @@ export const initializeSocket = (server: HTTPServer): Server => {
       const decoded = verifyAccessToken(token);
       socket.data.user = decoded;
       next();
-    } catch (error) {
+    } catch {
       next(new Error('Invalid token'));
     }
   });
@@ -70,10 +70,10 @@ export const getIO = (): Server => {
   return io;
 };
 
-export const emitToUser = (userId: string, event: string, data: any): void => {
+export const emitToUser = (userId: string, event: string, data: unknown): void => {
   getIO().to(`user:${userId}`).emit(event, data);
 };
 
-export const emitToRoom = (roomId: string, event: string, data: any): void => {
+export const emitToRoom = (roomId: string, event: string, data: unknown): void => {
   getIO().to(roomId).emit(event, data);
 };

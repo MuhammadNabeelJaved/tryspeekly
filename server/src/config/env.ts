@@ -6,7 +6,7 @@ dotenv.config();
 const envSchema = Joi.object({
   NODE_ENV: Joi.string().valid('development', 'production', 'test').default('development'),
   PORT: Joi.number().default(5000),
-  CLIENT_URL: Joi.string().uri().required(),
+  CLIENT_URL: Joi.string().uri().required() || `http://localhost:5173`,
 
   MONGODB_URI_DEV: Joi.string().when('NODE_ENV', {
     is: 'development',
@@ -34,7 +34,7 @@ const envSchema = Joi.object({
   CLOUDINARY_API_SECRET: Joi.string().required(),
 
   RESEND_API_KEY: Joi.string().required(),
-  EMAIL_FROM: Joi.string().email().required(),
+  EMAIL_FROM: Joi.string().required(),
 
   BCRYPT_ROUNDS: Joi.number().default(10),
   RATE_LIMIT_WINDOW_MS: Joi.number().default(900000),

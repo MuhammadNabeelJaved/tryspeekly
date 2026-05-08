@@ -1,4 +1,3 @@
-import mongoose from 'mongoose';
 import User from '../models/User.model';
 import { USER_ROLES } from '../config/constants';
 import { connectDatabase } from '../config/database';

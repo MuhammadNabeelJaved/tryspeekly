@@ -12,7 +12,7 @@ interface EmailOptions {
 
 export const sendEmail = async (options: EmailOptions): Promise<void> => {
   try {
-    const { data, error } = await resend.emails.send({
+    const { error } = await resend.emails.send({
       from: process.env.EMAIL_FROM || 'English LMS <noreply@yourdomain.com>',
       to: Array.isArray(options.to) ? options.to : [options.to],
       subject: options.subject,

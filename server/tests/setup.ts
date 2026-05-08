@@ -25,3 +25,7 @@ process.env.EMAIL_FROM = 'test@example.com';
 process.env.BCRYPT_ROUNDS = '10';
 process.env.RATE_LIMIT_WINDOW_MS = '900000';
 process.env.RATE_LIMIT_MAX_REQUESTS = '100';
+
+// Admin Seed
+process.env.ADMIN_EMAIL = 'admin@example.com';
+process.env.ADMIN_PASSWORD = 'TestAdminPassword123!';

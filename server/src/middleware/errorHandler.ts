@@ -2,11 +2,18 @@ import { Request, Response, NextFunction } from 'express';
 import { ApiError } from '../utils/ApiError';
 import logger from '../services/logger.service';
 
+interface MongoError extends Error {
+  code?: number;
+  keyPattern?: Record<string, unknown>;
+  errors?: Record<string, { path: string; message: string }>;
+}
+
 export const errorHandler = (
   err: Error | ApiError,
   req: Request,
   res: Response,
-  next: NextFunction
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _next: NextFunction
 ): void => {
   logger.error({
     message: err.message,
@@ -28,14 +35,17 @@ export const errorHandler = (
   }
 
   if (err.name === 'ValidationError') {
+    const mongoErr = err as MongoError;
     res.status(400).json({
       success: false,
       error: 'Validation failed',
       code: 'VALIDATION_ERROR',
-      fields: Object.values((err as any).errors).map((e: any) => ({
-        field: e.path,
-        message: e.message,
-      })),
+      fields: mongoErr.errors
+        ? Object.values(mongoErr.errors).map((e) => ({
+            field: e.path,
+            message: e.message,
+          }))
+        : [],
     });
     return;
   }
@@ -58,8 +68,9 @@ export const errorHandler = (
     return;
   }
 
-  if ((err as any).code === 11000) {
-    const field = Object.keys((err as any).keyPattern)[0];
+  const mongoErr = err as MongoError;
+  if (mongoErr.code === 11000) {
+    const field = mongoErr.keyPattern ? Object.keys(mongoErr.keyPattern)[0] : 'field';
     res.status(409).json({
       success: false,
       error: `${field} already exists`,
