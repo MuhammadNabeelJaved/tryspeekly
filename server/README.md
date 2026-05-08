@@ -158,7 +158,7 @@ server/
 - ESLint + Prettier
 - Jest + Supertest for testing
 - 75%+ code coverage
-- Comprehensive test suite with 75%+ coverage
+- Comprehensive test suite
 
 ## License
 
