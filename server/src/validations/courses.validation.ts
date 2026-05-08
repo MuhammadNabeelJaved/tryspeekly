@@ -8,9 +8,9 @@ export const coursesValidation = {
       description: Joi.string().min(10).required(),
       price: Joi.number().min(0).required(),
       currency: Joi.string().valid('PKR', 'USD').required(),
-      type: Joi.string().valid('one-on-one', 'group').required(),
+      type: Joi.string().valid('one-to-one', 'group', 'hybrid').required(),
       level: Joi.string().valid('beginner', 'intermediate', 'advanced').required(),
-      focus: Joi.string().valid('grammar', 'speaking', 'writing', 'listening', 'reading', 'vocabulary').required(),
+      focus: Joi.string().valid('speaking', 'grammar', 'ielts', 'business', 'general').required(),
       totalSessions: Joi.number().min(1).required(),
       sessionDuration: Joi.number().min(30).required(),
       thumbnail: Joi.string().uri().optional()
@@ -25,9 +25,9 @@ export const coursesValidation = {
       title: Joi.string().min(3).max(200),
       description: Joi.string().min(10),
       price: Joi.number().min(0),
-      type: Joi.string().valid('one-on-one', 'group'),
+      type: Joi.string().valid('one-to-one', 'group', 'hybrid'),
       level: Joi.string().valid('beginner', 'intermediate', 'advanced'),
-      focus: Joi.string().valid('grammar', 'speaking', 'writing', 'listening', 'reading', 'vocabulary'),
+      focus: Joi.string().valid('speaking', 'grammar', 'ielts', 'business', 'general'),
       totalSessions: Joi.number().min(1),
       sessionDuration: Joi.number().min(30),
       thumbnail: Joi.string().uri()
@@ -43,8 +43,8 @@ export const coursesValidation = {
   list: {
     query: Joi.object({
       level: Joi.string().valid('beginner', 'intermediate', 'advanced'),
-      type: Joi.string().valid('one-on-one', 'group'),
-      focus: Joi.string().valid('grammar', 'speaking', 'writing', 'listening', 'reading', 'vocabulary'),
+      type: Joi.string().valid('one-to-one', 'group', 'hybrid'),
+      focus: Joi.string().valid('speaking', 'grammar', 'ielts', 'business', 'general'),
       minPrice: Joi.number().min(0),
       maxPrice: Joi.number().min(0),
       page: Joi.number().min(1).default(1),
