@@ -16,7 +16,7 @@ Production-ready Node.js + Express + TypeScript backend for English Learning LMS
 
 ## Features
 
-- Multi-role authentication (Student, Teacher, Admin)
+- Multi-role authentication (Student, Instructor, Admin)
 - JWT-based auth with refresh tokens
 - Password reset via OTP
 - Comprehensive security middleware
@@ -67,6 +67,8 @@ For local development, ensure MongoDB is running:
 mongod
 ```
 
+On Windows, MongoDB typically runs as a service. Use `net start MongoDB` or start from Services.
+
 For production, create MongoDB Atlas cluster and use connection string.
 
 ### Seed Admin User
@@ -115,6 +117,8 @@ npm start
 
 - `GET /health` - Server health status
 
+Note: Additional endpoints (courses, payments, enrollments) will be added in subsequent phases.
+
 ## Project Structure
 
 ```
@@ -125,7 +129,7 @@ server/
 │   ├── utils/           # Utilities (ApiError, asyncHandler, JWT)
 │   ├── models/          # Mongoose models
 │   ├── middleware/      # Express middleware
-│   ├── modules/         # Feature modules (auth, courses, payments, etc.)
+│   ├── modules/         # Feature modules (currently: auth; courses, payments planned for Phase 2)
 │   ├── scripts/         # Utility scripts (seed admin)
 │   ├── app.ts           # Express app setup
 │   └── server.ts        # Server entry point
@@ -154,7 +158,7 @@ server/
 - ESLint + Prettier
 - Jest + Supertest for testing
 - 75%+ code coverage
-- TDD approach
+- Comprehensive test suite with 75%+ coverage
 
 ## License
 
