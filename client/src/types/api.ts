@@ -1,12 +1,12 @@
 // User types
 export interface User {
-  _id: string;
+  id: string;
   name: string;
   email: string;
   role: 'student' | 'teacher' | 'admin';
   phone?: string;
   country?: string;
-  avatar?: string;
+  photo?: string;
   createdAt: string;
 }
 
@@ -27,10 +27,7 @@ export interface RegisterDto {
 
 export interface AuthResponse {
   user: User;
-  tokens: {
-    access: string;
-    refresh: string;
-  };
+  accessToken: string;
 }
 
 export interface RefreshResponse {
