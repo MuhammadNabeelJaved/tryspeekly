@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, PencilSimple, Trash, X, Check, Users, Clock, CurrencyCircleDollar } from '@phosphor-icons/react'
+import { Plus, PencilSimple, Trash, X, Check, Users, Clock, CurrencyCircleDollar, CheckCircle, XCircle, Eye } from '@phosphor-icons/react'
 import type { AdminStore } from '../AdminPage'
 import type { Course } from './adminData'
 
@@ -23,7 +23,9 @@ const LEVEL_COLORS: Record<string, string> = {
 const STATUS_COLORS: Record<string, string> = {
   active: 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400',
   inactive: 'bg-slate-100 dark:bg-neutral-800 text-slate-500 dark:text-neutral-400',
-  draft: 'bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400',
+  draft: 'bg-slate-200 dark:bg-neutral-700 text-slate-700 dark:text-neutral-300',
+  pending: 'bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400',
+  rejected: 'bg-red-100 dark:bg-red-950/40 text-red-700 dark:text-red-400',
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
@@ -46,9 +48,11 @@ function Input({ register, name, type = 'text', placeholder, valueAsNumber }: { 
 export default function AdminCourses({ store }: { store: AdminStore }) {
   const { courses, setCourses, instructors } = store
   const [modalType, setModalType] = useState<'add' | 'edit' | null>(null)
+  const [reviewCourse, setReviewCourse] = useState<Course | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState('All')
+  const [activeTab, setActiveTab] = useState<'manage' | 'pending'>('manage')
 
   const { register, handleSubmit, reset, setValue } = useForm<Course & { featuresInput: string }>({
     defaultValues: { ...EMPTY, featuresInput: '' }
@@ -57,8 +61,13 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
   const filtered = courses.filter(c => {
     const q = search.toLowerCase()
     const matchQ = !q || c.title.toLowerCase().includes(q) || c.instructorName.toLowerCase().includes(q)
-    const matchS = filterStatus === 'All' || c.status === filterStatus
-    return matchQ && matchS
+    
+    if (activeTab === 'pending') {
+      return matchQ && c.status === 'pending'
+    } else {
+      const matchS = filterStatus === 'All' ? c.status !== 'pending' : c.status === filterStatus
+      return matchQ && matchS
+    }
   })
 
   function openAdd() {
@@ -69,6 +78,16 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
   function openEdit(course: Course) {
     reset({ ...course, featuresInput: course.features.join(', ') })
     setModalType('edit')
+  }
+
+  function openReview(course: Course) {
+    setReviewCourse(course)
+  }
+
+  function handleReviewAction(courseId: string, action: 'accept' | 'reject') {
+    const newStatus = action === 'accept' ? 'active' : 'rejected'
+    setCourses(courses.map(c => c.id === courseId ? { ...c, status: newStatus } : c))
+    setReviewCourse(null)
   }
 
   function onSave(data: Course & { featuresInput: string }) {
@@ -97,9 +116,10 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
 
   const totalEnrolled = courses.reduce((a, c) => a + c.totalStudents, 0)
   const totalRevenue = courses.reduce((a, c) => a + c.price * c.totalStudents, 0)
+  const pendingCount = courses.filter(c => c.status === 'pending').length
 
   return (
-    <div className="p-4 sm:p-6">
+    <div className="p-4 sm:p-6 flex flex-col h-full">
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
@@ -113,7 +133,7 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
       </div>
 
       {/* Summary stats */}
-      <div className="grid grid-cols-3 gap-3 mb-5">
+      <div className="grid grid-cols-3 gap-3 mb-5 flex-shrink-0">
         {[
           { label: 'Total Courses', value: courses.length, Icon: CurrencyCircleDollar, color: 'from-violet-500 to-purple-600' },
           { label: 'Total Enrolled', value: totalEnrolled, Icon: Users, color: 'from-blue-500 to-blue-700' },
@@ -131,38 +151,77 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
         ))}
       </div>
 
+      {/* Tabs */}
+      <div className="flex gap-2 border-b border-slate-200 dark:border-neutral-800 mb-5 flex-shrink-0">
+        <button
+          onClick={() => setActiveTab('manage')}
+          className={`pb-3 px-1 text-sm font-bold transition-colors border-b-2 ${
+            activeTab === 'manage' 
+              ? 'border-violet-600 text-violet-600 dark:text-violet-400 dark:border-violet-400' 
+              : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-neutral-400 dark:hover:text-white'
+          }`}
+        >
+          Manage Courses
+        </button>
+        <button
+          onClick={() => setActiveTab('pending')}
+          className={`pb-3 px-1 text-sm font-bold transition-colors border-b-2 flex items-center gap-1.5 ${
+            activeTab === 'pending' 
+              ? 'border-violet-600 text-violet-600 dark:text-violet-400 dark:border-violet-400' 
+              : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-neutral-400 dark:hover:text-white'
+          }`}
+        >
+          Pending Approvals
+          {pendingCount > 0 && (
+            <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-black ${
+              activeTab === 'pending' 
+                ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300' 
+                : 'bg-slate-100 text-slate-500 dark:bg-neutral-800 dark:text-neutral-300'
+            }`}>
+              {pendingCount}
+            </span>
+          )}
+        </button>
+      </div>
+
       {/* Filters */}
-      <div className="flex gap-3 mb-5">
+      <div className="flex gap-3 mb-5 flex-shrink-0">
         <div className="relative flex-1">
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search courses…"
             className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-sm text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-neutral-600 outline-none focus:border-violet-500 transition-colors"
           />
         </div>
-        <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-sm text-slate-700 dark:text-neutral-300 outline-none focus:border-violet-500 transition-colors">
-          {['All', 'active', 'inactive', 'draft'].map(v => <option key={v}>{v}</option>)}
-        </select>
+        {activeTab === 'manage' && (
+          <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-sm text-slate-700 dark:text-neutral-300 outline-none focus:border-violet-500 transition-colors">
+            {['All', 'active', 'inactive', 'draft', 'rejected'].map(v => <option key={v}>{v}</option>)}
+          </select>
+        )}
       </div>
 
       {/* Course cards */}
-      <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
-        {filtered.map((course, idx) => {
+      <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4 pb-10">
+        {filtered.length === 0 ? (
+           <div className="col-span-full py-12 text-center border-2 border-dashed border-slate-200 dark:border-neutral-800 rounded-[20px]">
+             <p className="text-slate-400 dark:text-neutral-500 text-sm">No courses found.</p>
+           </div>
+        ) : filtered.map((course, idx) => {
           const fillPct = course.maxStudents > 0 ? Math.min((course.totalStudents / course.maxStudents) * 100, 100) : 0
           return (
             <motion.div key={course.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.05 }}
-              className="bg-white dark:bg-neutral-900 rounded-[20px] border border-slate-100 dark:border-neutral-800 overflow-hidden hover:border-violet-200 dark:hover:border-violet-800 hover:shadow-lg hover:shadow-violet-100/30 dark:hover:shadow-violet-950/20 transition-all duration-200"
+              className="bg-white dark:bg-neutral-900 rounded-[20px] border border-slate-100 dark:border-neutral-800 overflow-hidden hover:border-violet-200 dark:hover:border-violet-800 hover:shadow-lg hover:shadow-violet-100/30 dark:hover:shadow-violet-950/20 transition-all duration-200 flex flex-col"
             >
               {/* Header */}
-              <div className="p-5 pb-4">
+              <div className="p-5 pb-4 flex-1">
                 <div className="flex items-start justify-between mb-3">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${LEVEL_COLORS[course.level] ?? 'bg-slate-100 text-slate-500'}`}>{course.level}</span>
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${STATUS_COLORS[course.status]}`}>{course.status}</span>
+                  <div className="flex-1 min-w-0 pr-2">
+                    <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap ${LEVEL_COLORS[course.level] ?? 'bg-slate-100 text-slate-500'}`}>{course.level}</span>
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap ${STATUS_COLORS[course.status]}`}>{course.status}</span>
                     </div>
-                    <h3 className="text-sm font-black text-slate-900 dark:text-white">{course.title}</h3>
-                    <p className="text-[11px] text-slate-400 dark:text-neutral-500 mt-0.5">{course.instructorName}</p>
+                    <h3 className="text-sm font-black text-slate-900 dark:text-white truncate">{course.title}</h3>
+                    <p className="text-[11px] text-slate-400 dark:text-neutral-500 mt-0.5 truncate">{course.instructorName}</p>
                   </div>
-                  <p className="text-base font-black text-violet-600 dark:text-violet-400 flex-shrink-0 ml-2">₨{course.price.toLocaleString()}</p>
+                  <p className="text-base font-black text-violet-600 dark:text-violet-400 flex-shrink-0">₨{course.price.toLocaleString()}</p>
                 </div>
                 <p className="text-xs text-slate-500 dark:text-neutral-400 leading-relaxed mb-3 line-clamp-2">{course.description}</p>
                 <div className="flex items-center gap-3 text-[11px] text-slate-400 dark:text-neutral-600 mb-3">
@@ -189,28 +248,38 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
                 </div>
               )}
               {/* Actions */}
-              <div className="flex border-t border-slate-100 dark:border-neutral-800">
-                <button onClick={() => openEdit(course)} className="flex-1 py-2.5 text-xs font-semibold text-slate-500 dark:text-neutral-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-slate-50 dark:hover:bg-neutral-800/50 flex items-center justify-center gap-1.5 transition-colors">
-                  <PencilSimple size={13} />Edit
-                </button>
-                <div className="w-px bg-slate-100 dark:bg-neutral-800" />
-                <button onClick={() => setDeleteId(course.id)} className="flex-1 py-2.5 text-xs font-semibold text-slate-500 dark:text-neutral-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-slate-50 dark:hover:bg-neutral-800/50 flex items-center justify-center gap-1.5 transition-colors">
-                  <Trash size={13} />Delete
-                </button>
+              <div className="flex border-t border-slate-100 dark:border-neutral-800 mt-auto">
+                {activeTab === 'pending' ? (
+                  <button onClick={() => openReview(course)} className="flex-1 py-3 text-xs font-semibold text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-900/20 flex items-center justify-center gap-1.5 transition-colors">
+                    <Eye size={15} /> Review & Approve
+                  </button>
+                ) : (
+                  <>
+                    <button onClick={() => openEdit(course)} className="flex-1 py-2.5 text-xs font-semibold text-slate-500 dark:text-neutral-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-slate-50 dark:hover:bg-neutral-800/50 flex items-center justify-center gap-1.5 transition-colors">
+                      <PencilSimple size={13} />Edit
+                    </button>
+                    <div className="w-px bg-slate-100 dark:bg-neutral-800" />
+                    <button onClick={() => setDeleteId(course.id)} className="flex-1 py-2.5 text-xs font-semibold text-slate-500 dark:text-neutral-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-slate-50 dark:hover:bg-neutral-800/50 flex items-center justify-center gap-1.5 transition-colors">
+                      <Trash size={13} />Delete
+                    </button>
+                  </>
+                )}
               </div>
             </motion.div>
           )
         })}
 
         {/* Add card */}
-        <motion.button initial={{ opacity: 0 }} animate={{ opacity: 1 }} onClick={openAdd}
-          className="border-2 border-dashed border-slate-200 dark:border-neutral-800 rounded-[20px] p-8 flex flex-col items-center justify-center gap-3 text-slate-300 dark:text-neutral-700 hover:border-violet-300 dark:hover:border-violet-700 hover:text-violet-400 dark:hover:text-violet-500 transition-all min-h-[200px]"
-        >
-          <div className="w-12 h-12 rounded-2xl border-2 border-dashed border-current flex items-center justify-center">
-            <Plus size={20} />
-          </div>
-          <p className="text-sm font-semibold">Add Course</p>
-        </motion.button>
+        {activeTab === 'manage' && (
+          <motion.button initial={{ opacity: 0 }} animate={{ opacity: 1 }} onClick={openAdd}
+            className="border-2 border-dashed border-slate-200 dark:border-neutral-800 rounded-[20px] p-8 flex flex-col items-center justify-center gap-3 text-slate-300 dark:text-neutral-700 hover:border-violet-300 dark:hover:border-violet-700 hover:text-violet-400 dark:hover:text-violet-500 transition-all min-h-[200px]"
+          >
+            <div className="w-12 h-12 rounded-2xl border-2 border-dashed border-current flex items-center justify-center">
+              <Plus size={20} />
+            </div>
+            <p className="text-sm font-semibold">Add Course</p>
+          </motion.button>
+        )}
       </div>
 
       {/* ADD / EDIT MODAL */}
@@ -240,7 +309,7 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
                 </Field>
                 <Field label="Status">
                   <select {...register('status')} className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors">
-                    {['active', 'inactive', 'draft'].map(s => <option key={s}>{s}</option>)}
+                    {['active', 'inactive', 'draft', 'pending', 'rejected'].map(s => <option key={s}>{s}</option>)}
                   </select>
                 </Field>
                 <Field label="Start Date"><Input register={register} name="startDate" type="date" /></Field>
@@ -273,6 +342,69 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
                 </button>
               </div>
             </motion.form>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* REVIEW MODAL */}
+      <AnimatePresence>
+        {reviewCourse && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-white dark:bg-neutral-900 rounded-[24px] w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-slate-100 dark:border-neutral-800 shadow-2xl">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-neutral-800 sticky top-0 bg-white dark:bg-neutral-900 z-10">
+                <h3 className="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
+                  Review Course Proposal
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${STATUS_COLORS[reviewCourse.status]}`}>{reviewCourse.status}</span>
+                </h3>
+                <button type="button" onClick={() => setReviewCourse(null)} className="w-8 h-8 rounded-full bg-slate-100 dark:bg-neutral-800 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors"><X size={15} /></button>
+              </div>
+              <div className="p-6">
+                <div className="grid grid-cols-2 gap-y-6 gap-x-4">
+                  <div className="col-span-2">
+                    <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-1">Title</p>
+                    <p className="text-base font-black text-slate-900 dark:text-white">{reviewCourse.title}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-1">Instructor</p>
+                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">{reviewCourse.instructorName}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-1">Level</p>
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold inline-block mt-0.5 ${LEVEL_COLORS[reviewCourse.level] ?? 'bg-slate-100 text-slate-500'}`}>{reviewCourse.level}</span>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-1">Price</p>
+                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">₨{reviewCourse.price.toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-1">Duration & Schedule</p>
+                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">{reviewCourse.duration} · {reviewCourse.schedule}</p>
+                  </div>
+                  <div className="col-span-2">
+                    <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-1">Description</p>
+                    <p className="text-sm text-slate-600 dark:text-neutral-400 leading-relaxed bg-slate-50 dark:bg-neutral-800/50 p-3 rounded-xl">{reviewCourse.description}</p>
+                  </div>
+                  {reviewCourse.features.length > 0 && (
+                    <div className="col-span-2">
+                      <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-2">Features</p>
+                      <div className="flex flex-wrap gap-2">
+                        {reviewCourse.features.map((f, i) => (
+                          <span key={i} className="px-2 py-1 bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-300 text-xs rounded-lg font-medium">{f}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="flex gap-3 px-6 pb-6 border-t border-slate-100 dark:border-neutral-800 pt-4">
+                <button type="button" onClick={() => handleReviewAction(reviewCourse.id, 'reject')} className="flex-1 py-3 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-950/30 dark:hover:bg-red-900/40 dark:text-red-400 text-sm font-bold flex items-center justify-center gap-2 transition-colors">
+                  <XCircle size={18} weight="fill" /> Reject Course
+                </button>
+                <button type="button" onClick={() => handleReviewAction(reviewCourse.id, 'accept')} className="flex-1 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-bold flex items-center justify-center gap-2 shadow-[0_4px_12px_rgba(16,185,129,0.3)] transition-colors">
+                  <CheckCircle size={18} weight="fill" /> Approve & Publish
+                </button>
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

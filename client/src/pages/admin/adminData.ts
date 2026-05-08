@@ -91,7 +91,7 @@ export interface Course {
   instructorName: string
   totalStudents: number
   maxStudents: number
-  status: 'active' | 'inactive' | 'draft'
+  status: 'active' | 'inactive' | 'draft' | 'pending' | 'rejected'
   description: string
   startDate: string
   schedule: string
@@ -911,6 +911,8 @@ export const INITIAL_COURSES: Course[] = [
   { id: 'c3', title: 'IELTS Preparation', level: 'Advanced', duration: '2 months', price: 10000, currency: 'PKR', instructorId: 'i1', instructorName: 'Dr. Sarah Johnson', totalStudents: 38, maxStudents: 10, status: 'active', description: 'Targeted IELTS coaching for 7+ band score with expert certified examiner.', startDate: '2026-05-15', schedule: 'Daily · 8–9 PM PKT', features: ['All 4 modules', 'Mock tests', 'Band score analysis', 'Personalized feedback'] },
   { id: 'c4', title: 'Kids English', level: 'Kids', duration: '3 months', price: 5000, currency: 'PKR', instructorId: 'i2', instructorName: 'Mr. James Williams', totalStudents: 28, maxStudents: 8, status: 'active', description: 'Fun, interactive English for children aged 6–12 years.', startDate: '2026-05-08', schedule: 'Sat/Sun · 10–11 AM PKT', features: ['Storytelling', 'Phonics', 'Games & activities', 'Reading & writing'] },
   { id: 'c5', title: 'Grammar Mastery', level: 'Beginner', duration: '6 weeks', price: 4500, currency: 'PKR', instructorId: 'i3', instructorName: 'Ms. Amna Raza', totalStudents: 0, maxStudents: 15, status: 'draft', description: 'Zero to hero grammar course — tenses, sentence structure, and more.', startDate: '2026-06-01', schedule: 'Mon/Wed · 5–6 PM PKT', features: ['All tenses', 'Sentence structure', 'Common mistakes', 'Practice exercises'] },
+  { id: 'c6', title: 'Advanced Conversation', level: 'Advanced', duration: '2 months', price: 9000, currency: 'PKR', instructorId: 'i2', instructorName: 'Mr. James Williams', totalStudents: 0, maxStudents: 10, status: 'pending', description: 'Advanced conversational strategies, debating, and spontaneous speaking.', startDate: '2026-06-15', schedule: 'Fri/Sat · 8–9 PM PKT', features: ['Debating', 'Public Speaking', 'Idioms', 'Accent Reduction'] },
+  { id: 'c7', title: 'Dummy Pending Course', level: 'Intermediate', duration: '4 weeks', price: 1500, currency: 'PKR', instructorId: 'i1', instructorName: 'Dr. Sarah Johnson', totalStudents: 0, maxStudents: 20, status: 'pending', description: 'This is a dummy course added for testing the admin approval and rejection flow. It contains placeholder content.', startDate: '2026-07-01', schedule: 'Sat/Sun · 2–3 PM PKT', features: ['Test Feature 1', 'Test Feature 2'] },
 ]
 
 export const INITIAL_FINANCIAL_AID: FinancialAidApp[] = [

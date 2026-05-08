@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { MagnifyingGlass, PaperPlaneRight, DotsThreeVertical, CaretLeft, CheckCircle, Clock } from '@phosphor-icons/react'
+import { MagnifyingGlass, PaperPlaneRight, DotsThreeVertical, CaretLeft, CheckCircle } from '@phosphor-icons/react'
 
 type Message = {
   id: string

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { motion, AnimatePresence } from 'framer-motion'
 import { INSTRUCTOR_COURSES } from './instructorData'
-import { BookOpen, Users, Clock, Plus, X, Check, PencilSimple, Trash, MagnifyingGlass, CheckCircle, CaretDown, CaretUp, ListPlus, CalendarBlank, ChartBar } from '@phosphor-icons/react'
+import { BookOpen, Users, Clock, Plus, X, Check, PencilSimple, Trash, MagnifyingGlass, CheckCircle, CalendarBlank, ChartBar } from '@phosphor-icons/react'
 
 type CourseItem = {
   id: string

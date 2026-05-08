@@ -167,7 +167,6 @@ export default function AdminPage() {
   const [authed, setAuthed] = useState(() => sessionStorage.getItem('admin_authed') === '1')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [darkMode, setDarkMode] = useState(() => document.documentElement.classList.contains('dark'))
-  const [notifications] = useState(3)
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifs, setNotifs] = useState<{ id: number; text: string; time: string; unread: boolean }[]>([
     { id: 1, text: 'New student registered: John Doe', time: '2 hours ago', unread: true },
@@ -241,6 +240,7 @@ export default function AdminPage() {
 
   const paymentAlerts = students.filter(s => s.paymentStatus === 'pending' || s.paymentStatus === 'failed').length
   const aidPending = financialAidApps.filter(a => a.status === 'pending' || a.status === 'under_review').length
+  const pendingCourses = courses.filter(c => c.status === 'pending').length
 
   const renderNavItem = ({ view, label, path, Icon }: NavItem) => {
     const active = activeView === view
@@ -248,6 +248,7 @@ export default function AdminPage() {
       view === 'students' ? students.length :
       view === 'payments' && paymentAlerts > 0 ? paymentAlerts :
       view === 'financial-aid' && aidPending > 0 ? aidPending :
+      view === 'courses' && pendingCourses > 0 ? pendingCourses :
       null
 
     return (

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { INSTRUCTOR_STUDENTS } from './instructorData'
-import { MagnifyingGlass, FunnelSimple, Check, X, EnvelopeSimple, Phone, CalendarBlank, ChartBar, Star, BookOpen, UserMinus, Clock, ChatCircleText } from '@phosphor-icons/react'
+import { MagnifyingGlass, Check, X, CalendarBlank, ChartBar, Star, BookOpen, UserMinus, Clock, ChatCircleText } from '@phosphor-icons/react'
 
 type Student = typeof INSTRUCTOR_STUDENTS[0] & { todayStatus?: 'present' | 'absent' | 'late' }
 

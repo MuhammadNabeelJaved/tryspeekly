@@ -1,6 +1,6 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Bell, CheckCircle, Trash, Clock, Info, Warning, Star } from '@phosphor-icons/react'
+import { Bell, CheckCircle, Trash, Clock, Info, Warning } from '@phosphor-icons/react'
 
 interface Notification {
   id: number
