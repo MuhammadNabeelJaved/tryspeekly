@@ -7,7 +7,7 @@ import { apiLimiter } from './middleware/rateLimiter';
 import { sanitizeInput } from './middleware/sanitize';
 import { errorHandler } from './middleware/errorHandler';
 
-import authRoutes from './modules/auth/auth.routes';
+import routes from './routes';
 
 const app = express();
 
@@ -27,7 +27,7 @@ app.use(sanitizeInput);
 
 app.use('/api', apiLimiter);
 
-app.use('/api/auth', authRoutes);
+app.use('/api', routes);
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
