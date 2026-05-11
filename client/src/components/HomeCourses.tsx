@@ -1,11 +1,11 @@
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { ArrowRight, Star, Users, Clock, GraduationCap } from '@phosphor-icons/react'
-import { COURSES } from './Courses' // Importing from the Courses component
+import { FALLBACK_COURSES } from './Courses' // Importing from the Courses component
 
 export default function HomeCourses() {
   // Take only the first 3 courses to show on the landing page
-  const featuredCourses = COURSES.slice(0, 3)
+  const featuredCourses = FALLBACK_COURSES.slice(0, 3)
 
   return (
     <section className="py-20 lg:py-28 bg-slate-50 dark:bg-neutral-950 transition-colors duration-300">

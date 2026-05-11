@@ -10,6 +10,7 @@ import {
 import type { Student, Instructor, Course, CMSPage, FinancialAidApp } from './admin/adminData'
 import { INITIAL_STUDENTS, INITIAL_INSTRUCTORS, INITIAL_COURSES, INITIAL_CMS_PAGES, INITIAL_FINANCIAL_AID } from './admin/adminData'
 import Loader from '@/components/Loader'
+import { useAuth } from '../context/AuthContext'
 
 const AdminOverview = lazy(() => import('./admin/AdminOverview'))
 const AdminStudents = lazy(() => import('./admin/AdminStudents'))
@@ -164,9 +165,10 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
 export default function AdminPage() {
   const navigate = useNavigate()
   const location = useLocation()
+  const { isAuthenticated, user, logout } = useAuth()
+  const isAdmin = isAuthenticated && user?.role === 'admin'
   const notifRef = useRef(null);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [authed, setAuthed] = useState(() => sessionStorage.getItem('admin_authed') === '1')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [darkMode, setDarkMode] = useState(() => document.documentElement.classList.contains('dark'))
   const [unreadCount, setUnreadCount] = useState(0);
@@ -224,13 +226,12 @@ export default function AdminPage() {
   useEffect(() => { localStorage.setItem('admin_financial_aid', JSON.stringify(financialAidApps)) }, [financialAidApps])
 
   function handleLogin() {
-    sessionStorage.setItem('admin_authed', '1')
-    setAuthed(true)
+    navigate('/login')
   }
 
   function handleLogout() {
-    sessionStorage.removeItem('admin_authed')
-    setAuthed(false)
+    logout()
+    navigate('/')
   }
 
   function toggleDark() {
@@ -238,7 +239,11 @@ export default function AdminPage() {
     setDarkMode(d => !d)
   }
 
-  if (!authed) return <LoginScreen onLogin={handleLogin} />
+  if (!isAdmin) {
+    // Redirect to login if not authenticated at all, or redirect to their own dashboard
+    if (!isAuthenticated) return <LoginScreen onLogin={handleLogin} />
+    return <Navigate to="/" replace />
+  }
 
   const paymentAlerts = students.filter(s => s.paymentStatus === 'pending' || s.paymentStatus === 'failed').length
   const aidPending = financialAidApps.filter(a => a.status === 'pending' || a.status === 'under_review').length

@@ -6,6 +6,7 @@ import {
   List, X, SignOut, Bell, Sun, Moon, Certificate, CheckCircle
 } from '@phosphor-icons/react'
 import Loader from '@/components/Loader'
+import { useAuth } from '../context/AuthContext'
 
 const StudentOverview = lazy(() => import('./student/StudentOverview'))
 const StudentCourses = lazy(() => import('./student/StudentCourses'))
@@ -16,8 +17,6 @@ const StudentFinancialAid = lazy(() => import('./student/StudentFinancialAid'))
 const StudentSettings = lazy(() => import('./student/StudentSettings'))
 const StudentSupport = lazy(() => import('./student/StudentSupport'))
 const StudentNotifications = lazy(() => import('./student/StudentNotifications'))
-
-import { MOCK_STUDENT } from './student/studentData'
 
 export type StudentView = 'overview' | 'courses' | 'certificates' | 'payments' | 'financial-aid' | 'settings' | 'support' | 'notifications'
 
@@ -40,6 +39,7 @@ const NAV_PREFS: NavItem[] = [
 export default function StudentDashboardPage() {
   const navigate = useNavigate()
   const location = useLocation()
+  const { user, logout } = useAuth()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [darkMode, setDarkMode] = useState(() => document.documentElement.classList.contains('dark'))
   
@@ -77,7 +77,8 @@ export default function StudentDashboardPage() {
   }
 
   function handleLogout() {
-    window.location.href = '/'
+    logout()
+    navigate('/')
   }
 
   // Wrap the navigation function so child components can still "navigate" 
@@ -169,11 +170,11 @@ export default function StudentDashboardPage() {
             {/* Profile card */}
             <div className="flex items-center gap-3 bg-slate-50 dark:bg-neutral-800 rounded-2xl px-3 py-2.5 mb-3">
               <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-600 to-purple-600 flex items-center justify-center text-white text-sm font-black flex-shrink-0 shadow-[0_4px_12px_rgba(124,58,237,0.4)]">
-                {MOCK_STUDENT.avatar}
+                {user?.name?.charAt(0)?.toUpperCase() || 'S'}
               </div>
               <div className="min-w-0">
-                <p className="text-sm font-black text-slate-900 dark:text-white leading-none truncate">{MOCK_STUDENT.name}</p>
-                <p className="text-[10px] text-slate-400 dark:text-neutral-400 mt-0.5 truncate">{MOCK_STUDENT.email}</p>
+                <p className="text-sm font-black text-slate-900 dark:text-white leading-none truncate">{user?.name || 'Student'}</p>
+                <p className="text-[10px] text-slate-400 dark:text-neutral-400 mt-0.5 truncate">{user?.email || 'student@englishpro.com'}</p>
               </div>
             </div>
             <button
@@ -197,7 +198,7 @@ export default function StudentDashboardPage() {
 
           <div className="flex-1 min-w-0">
             <h1 className="text-base font-black text-slate-900 dark:text-white truncate">{activeLabel}</h1>
-            <p className="text-[11px] text-slate-400 dark:text-neutral-500 hidden sm:block">Welcome back, {MOCK_STUDENT.name.split(' ')[0]} 👋</p>
+            <p className="text-[11px] text-slate-400 dark:text-neutral-500 hidden sm:block">Welcome back, {user?.name?.split(' ')[0] || 'Student'}</p>
           </div>
 
           <div className="flex items-center gap-2">

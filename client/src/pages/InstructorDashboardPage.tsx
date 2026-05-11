@@ -16,8 +16,6 @@ const InstructorSettings = lazy(() => import('./instructor/InstructorSettings'))
 const InstructorSupport = lazy(() => import('./instructor/InstructorSupport'))
 const InstructorNotifications = lazy(() => import('./instructor/InstructorNotifications'))
 
-import { MOCK_INSTRUCTOR } from './instructor/instructorData'
-
 export type InstructorView = 'overview' | 'courses' | 'live' | 'students' | 'messages' | 'assignments' | 'settings' | 'support' | 'notifications'
 
 type NavItem = { view: InstructorView; label: string; path: string; Icon: React.FC<{ size?: number; weight?: string; className?: string }> }
@@ -39,6 +37,7 @@ const NAV_PREFS: NavItem[] = [
 export default function InstructorDashboardPage() {
   const navigate = useNavigate()
   const location = useLocation()
+  const { user, logout } = useAuth()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [darkMode, setDarkMode] = useState(() => document.documentElement.classList.contains('dark'))
   
@@ -76,7 +75,8 @@ export default function InstructorDashboardPage() {
   }
 
   function handleLogout() {
-    window.location.href = '/'
+    logout()
+    navigate('/')
   }
 
   function handleNavigate(view: InstructorView) {
@@ -166,11 +166,11 @@ export default function InstructorDashboardPage() {
             {/* Profile card */}
             <div className="flex items-center gap-3 bg-slate-50 dark:bg-neutral-800 rounded-2xl px-3 py-2.5 mb-3">
               <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-600 to-purple-600 flex items-center justify-center text-white text-sm font-black flex-shrink-0 shadow-[0_4px_12px_rgba(124,58,237,0.4)]">
-                {MOCK_INSTRUCTOR.avatar}
+                {user?.name?.charAt(0)?.toUpperCase() || 'T'}
               </div>
               <div className="min-w-0">
-                <p className="text-sm font-black text-slate-900 dark:text-white leading-none truncate">{MOCK_INSTRUCTOR.name}</p>
-                <p className="text-[10px] text-slate-400 dark:text-neutral-400 mt-0.5 truncate">{MOCK_INSTRUCTOR.role}</p>
+                <p className="text-sm font-black text-slate-900 dark:text-white leading-none truncate">{user?.name || 'Instructor'}</p>
+                <p className="text-[10px] text-slate-400 dark:text-neutral-400 mt-0.5 truncate">{user?.email || 'teacher@englishpro.com'}</p>
               </div>
             </div>
             <button
@@ -194,7 +194,7 @@ export default function InstructorDashboardPage() {
 
           <div className="flex-1 min-w-0">
             <h1 className="text-base font-black text-slate-900 dark:text-white truncate">{activeLabel}</h1>
-            <p className="text-[11px] text-slate-400 dark:text-neutral-500 hidden sm:block">Good morning, {MOCK_INSTRUCTOR.name.split(' ')[0]}</p>
+            <p className="text-[11px] text-slate-400 dark:text-neutral-500 hidden sm:block">Good morning, {user?.name?.split(' ')[0] || 'Instructor'}</p>
           </div>
 
           <div className="flex items-center gap-2">
