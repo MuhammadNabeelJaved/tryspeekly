@@ -19,13 +19,14 @@ const AdminCertificates = lazy(() => import('./admin/AdminCertificates'))
 const AdminPaymentsView = lazy(() => import('./admin/AdminPaymentsView'))
 const AdminFinancialAid = lazy(() => import('./admin/AdminFinancialAid'))
 const AdminCMS = lazy(() => import('./admin/AdminCMS'))
+const AdminBlog = lazy(() => import('./admin/AdminBlog'))
 const AdminSettings = lazy(() => import('./admin/AdminSettings'))
 const AdminSupport = lazy(() => import('./admin/AdminSupport'))
 const AdminNotifications = lazy(() => import('./admin/AdminNotifications'))
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 
-export type AdminView = 'overview' | 'students' | 'instructors' | 'courses' | 'certificates' | 'payments' | 'payments-setup' | 'financial-aid' | 'cms' | 'settings' | 'support' | 'notifications'
+export type AdminView = 'overview' | 'students' | 'instructors' | 'courses' | 'certificates' | 'payments' | 'payments-setup' | 'financial-aid' | 'cms' | 'blog' | 'settings' | 'support' | 'notifications'
 
 export interface AdminStore {
   students: Student[]
@@ -58,6 +59,7 @@ const NAV_MANAGEMENT: NavItem[] = [
   { view: 'payments',       label: 'Payments',      path: 'payments',       Icon: CreditCard as NavItem['Icon'] },
   { view: 'financial-aid',  label: 'Financial Aid', path: 'financial-aid',  Icon: Handshake as NavItem['Icon'] },
   { view: 'cms',            label: 'CMS Editor',    path: 'cms',            Icon: PencilSimple as NavItem['Icon'] },
+  { view: 'blog',           label: 'Blog Manager',  path: 'blog',           Icon: PencilSimple as NavItem['Icon'] },
   { view: 'notifications',  label: 'Notifications', path: 'notifications', Icon: Bell as NavItem['Icon'] },
   { view: 'settings',       label: 'Settings',      path: 'settings',       Icon: GearSix as NavItem['Icon'] },
   { view: 'support',        label: 'Support',       path: 'support',        Icon: ChatCircleDots as NavItem['Icon'] },
@@ -475,6 +477,7 @@ export default function AdminPage() {
                   <Route path="/payments" element={<AdminPaymentsView store={store} />} />
                   <Route path="/financial-aid" element={<AdminFinancialAid store={store} />} />
                   <Route path="/cms/*" element={<AdminCMS store={store} />} />
+                  <Route path="/blog" element={<AdminBlog />} />
                    <Route path="/settings" element={<AdminSettings store={store} />} />
                   <Route path="/support" element={<AdminSupport store={store} />} />
                   <Route path="/notifications" element={<AdminNotifications />} />

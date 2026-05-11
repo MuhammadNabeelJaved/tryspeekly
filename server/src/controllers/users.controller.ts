@@ -63,6 +63,21 @@ export const usersController = {
   }),
 
   /**
+   * GET /api/users
+   * Get all users with filters (admin only)
+   */
+  getAllUsers: asyncHandler(async (req: Request, res: Response) => {
+    const filters = req.query;
+    const result = await usersService.getAllUsers(filters);
+
+    res.status(200).json({
+      success: true,
+      data: result.data,
+      pagination: result.pagination,
+    });
+  }),
+
+  /**
    * DELETE /api/users/account
    * Delete authenticated user's account
    */

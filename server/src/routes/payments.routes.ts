@@ -41,6 +41,13 @@ router.get(
   paymentsController.getPayments
 );
 
+// Get all payments (admin only)
+router.get(
+  '/all',
+  authorize('admin'),
+  paymentsController.listAllPayments
+);
+
 // Get single payment by ID (student or teacher)
 router.get(
   '/:id',

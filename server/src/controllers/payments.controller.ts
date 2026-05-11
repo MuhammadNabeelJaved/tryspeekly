@@ -97,6 +97,26 @@ export const paymentsController = {
     }
   },
 
+  async listAllPayments(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { status, page, limit } = req.query;
+
+      const result = await paymentsService.listAllPayments({
+        status: status as string,
+        page: page ? parseInt(page as string) : undefined,
+        limit: limit ? parseInt(limit as string) : undefined,
+      });
+
+      res.status(200).json({
+        success: true,
+        data: result.data,
+        pagination: result.pagination,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
   async getEarnings(req: Request, res: Response, next: NextFunction) {
     try {
       const teacherId = req.user!.userId;

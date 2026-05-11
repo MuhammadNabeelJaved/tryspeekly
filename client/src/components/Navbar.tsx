@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { List, X, Phone } from '@phosphor-icons/react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { ThemeToggle } from './ThemeToggle'
+import { useAuth } from '../context/AuthContext'
 
 // Create a motion-enabled Link component
 const MotionLink = motion.create(Link)
@@ -20,6 +21,19 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const location = useLocation()
+  const navigate = useNavigate()
+  const { isAuthenticated, user, logout } = useAuth()
+
+  const handleLogout = async () => {
+    await logout()
+    navigate('/')
+  }
+
+  const dashboardLink = user
+    ? user.role === 'admin' ? '/admin'
+    : user.role === 'teacher' ? '/instructor'
+    : '/dashboard'
+    : null
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40)
@@ -127,20 +141,34 @@ export default function Navbar() {
 
             <div className="w-px h-6 bg-slate-200 dark:bg-neutral-800 hidden xl:block"></div>
 
-            <Link to="/login" className="text-sm font-bold text-slate-600 dark:text-neutral-300 hover:text-violet-600 dark:hover:text-violet-300 transition-colors">
-              Login
-            </Link>
-            
-            <Link to="/dashboard" className="text-sm font-bold text-slate-600 dark:text-neutral-300 hover:text-violet-600 dark:hover:text-violet-300 transition-colors">
-              Dashboard
-            </Link>
-            
-            <Link
-              to="/signup"
-              className="hidden xl:inline-flex items-center justify-center rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-bold text-white shadow-[0_4px_14px_rgba(124,58,237,0.3)] transition hover:bg-violet-700"
-            >
-              Sign Up
-            </Link>
+            {isAuthenticated ? (
+              <>
+                {dashboardLink && (
+                  <Link to={dashboardLink} className="text-sm font-bold text-slate-600 dark:text-neutral-300 hover:text-violet-600 dark:hover:text-violet-300 transition-colors">
+                    Dashboard
+                  </Link>
+                )}
+                <button
+                  onClick={handleLogout}
+                  className="hidden xl:inline-flex items-center justify-center rounded-xl bg-slate-100 dark:bg-neutral-800 px-5 py-2.5 text-sm font-bold text-slate-600 dark:text-neutral-300 hover:text-red-500 transition-colors"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <Link to="/login" className="text-sm font-bold text-slate-600 dark:text-neutral-300 hover:text-violet-600 dark:hover:text-violet-300 transition-colors">
+                  Login
+                </Link>
+
+                <Link
+                  to="/signup"
+                  className="hidden xl:inline-flex items-center justify-center rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-bold text-white shadow-[0_4px_14px_rgba(124,58,237,0.3)] transition hover:bg-violet-700"
+                >
+                  Sign Up
+                </Link>
+              </>
+            )}
 
             <div className="ml-1">
               <ThemeToggle />
@@ -197,18 +225,33 @@ export default function Navbar() {
                     <span className="text-sm font-bold tracking-tight">+801 555 645 45</span>
                   </a>
                   
+                  {isAuthenticated ? (
                   <div className="grid grid-cols-2 gap-3 mt-1">
-                    <Link to="/login" onClick={() => setMenuOpen(false)} className="bg-slate-100 dark:bg-neutral-800 hover:bg-slate-200 dark:hover:bg-neutral-700 text-slate-700 dark:text-white text-sm font-bold py-3 rounded-xl text-center transition-colors">
-                      Login
-                    </Link>
-                    <Link to="/dashboard" onClick={() => setMenuOpen(false)} className="bg-violet-50 dark:bg-violet-900/20 hover:bg-violet-100 dark:hover:bg-violet-900/40 text-violet-700 dark:text-violet-300 text-sm font-bold py-3 rounded-xl text-center transition-colors">
-                      Dashboard
-                    </Link>
+                    {dashboardLink && (
+                      <Link to={dashboardLink} onClick={() => setMenuOpen(false)} className="bg-violet-50 dark:bg-violet-900/20 hover:bg-violet-100 dark:hover:bg-violet-900/40 text-violet-700 dark:text-violet-300 text-sm font-bold py-3 rounded-xl text-center transition-colors">
+                        Dashboard
+                      </Link>
+                    )}
+                    <button onClick={() => { handleLogout(); setMenuOpen(false); }} className="bg-slate-100 dark:bg-neutral-800 hover:bg-slate-200 dark:hover:bg-neutral-700 text-slate-700 dark:text-white text-sm font-bold py-3 rounded-xl text-center transition-colors">
+                      Logout
+                    </button>
                   </div>
-                  
-                  <Link to="/signup" onClick={() => setMenuOpen(false)} className="bg-violet-600 hover:bg-violet-700 text-white text-sm font-bold py-3.5 rounded-xl text-center shadow-[0_4px_12px_rgba(124,58,237,0.3)] transition-colors mt-1">
-                    Create Account
-                  </Link>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-2 gap-3 mt-1">
+                      <Link to="/login" onClick={() => setMenuOpen(false)} className="bg-slate-100 dark:bg-neutral-800 hover:bg-slate-200 dark:hover:bg-neutral-700 text-slate-700 dark:text-white text-sm font-bold py-3 rounded-xl text-center transition-colors">
+                        Login
+                      </Link>
+                      <Link to="/dashboard" onClick={() => setMenuOpen(false)} className="bg-violet-50 dark:bg-violet-900/20 hover:bg-violet-100 dark:hover:bg-violet-900/40 text-violet-700 dark:text-violet-300 text-sm font-bold py-3 rounded-xl text-center transition-colors">
+                        Dashboard
+                      </Link>
+                    </div>
+
+                    <Link to="/signup" onClick={() => setMenuOpen(false)} className="bg-violet-600 hover:bg-violet-700 text-white text-sm font-bold py-3.5 rounded-xl text-center shadow-[0_4px_12px_rgba(124,58,237,0.3)] transition-colors mt-1">
+                      Create Account
+                    </Link>
+                  </>
+                )}
                 </div>
               </div>
             </motion.div>

@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Sparkle, UserCircle, GraduationCap } from '@phosphor-icons/react'
 import FormInput from '../components/auth/FormInput'
@@ -8,6 +8,7 @@ import SocialLoginButtons from '../components/auth/SocialLoginButtons'
 import FloatingCard from '../components/auth/FloatingCard'
 import PasswordStrengthIndicator from '../components/auth/PasswordStrengthIndicator'
 import { isValidEmail, isStrongPassword } from '../utils/validation'
+import { useAuth } from '../context/AuthContext'
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -20,11 +21,13 @@ const itemVariants = {
 }
 
 export default function SignupPage() {
+  const navigate = useNavigate()
+  const { register: registerUser } = useAuth()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [errors, setErrors] = useState({ name: '', email: '', password: '', confirmPassword: '' })
+  const [errors, setErrors] = useState({ name: '', email: '', password: '', confirmPassword: '', general: '' })
   const [isLoading, setIsLoading] = useState(false)
 
   const validateName = () => {
@@ -86,12 +89,33 @@ export default function SignupPage() {
     if (!nameValid || !emailValid || !passwordValid || !confirmValid) return
 
     setIsLoading(true)
+    setErrors({ name: '', email: '', password: '', confirmPassword: '', general: '' })
 
-    // Mock API call
-    setTimeout(() => {
+    try {
+      await registerUser({
+        name,
+        email,
+        password,
+        role: 'student',
+      })
+      navigate('/dashboard', { replace: true })
+    } catch (error: any) {
+      const data = error?.response?.data
+      const message = data?.error || error?.message || 'Registration failed. Please try again.'
+
+      // Handle field-level validation errors from backend
+      if (data?.fields) {
+        const fieldErrors: Record<string, string> = { general: '' }
+        data.fields.forEach((f: { field: string; message: string }) => {
+          fieldErrors[f.field] = f.message
+        })
+        setErrors(prev => ({ ...prev, ...fieldErrors }))
+      } else {
+        setErrors(prev => ({ ...prev, general: message }))
+      }
+    } finally {
       setIsLoading(false)
-      alert(`Account created for ${name}`)
-    }, 1500)
+    }
   }
 
   const handleSocialLogin = (provider: 'google' | 'github') => {
@@ -234,6 +258,10 @@ export default function SignupPage() {
                 <LoadingButton type="submit" isLoading={isLoading} className="w-full">
                   {isLoading ? 'Creating account...' : 'Create account'}
                 </LoadingButton>
+
+                {errors.general && (
+                  <p className="text-red-500 text-sm font-medium text-center bg-red-50 dark:bg-red-950/30 rounded-xl px-4 py-3">{errors.general}</p>
+                )}
               </form>
 
               <div className="mt-8 rounded-3xl bg-slate-50 p-5 text-sm text-slate-600 dark:bg-neutral-900/80 dark:text-neutral-300">

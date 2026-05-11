@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { useEffect, Suspense, lazy } from 'react'
+import { AuthProvider } from '@/context/AuthContext'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import ScrollToTop from '@/components/ScrollToTop'
@@ -54,6 +55,7 @@ function PublicLayout() {
             <Route path="/instructors" element={<InstructorsPage />} />
             <Route path="/blog" element={<BlogPage />} />
             <Route path="/blog/:id" element={<BlogPostPage />} />
+            <Route path="/blog/slug/:slug" element={<BlogPostPage />} />
             <Route path="/courses" element={<CoursesPage />} />
             <Route path="/courses/:id" element={<CourseDetailsPage />} />
             <Route path="/login" element={<LoginPage />} />
@@ -76,16 +78,18 @@ function PublicLayout() {
 function App() {
   return (
     <BrowserRouter>
-      <ScrollHandler />
-      <Suspense fallback={<Loader fullScreen />}>
-        <Routes>
-          <Route path="/admin/*" element={<AdminPage />} />
-          <Route path="/dashboard/*" element={<StudentDashboardPage />} />
-          <Route path="/instructor/*" element={<InstructorDashboardPage />} />
-          <Route path="/certificate/:id" element={<CertificateViewPage />} />
-          <Route path="/*" element={<PublicLayout />} />
-        </Routes>
-      </Suspense>
+      <AuthProvider>
+        <ScrollHandler />
+        <Suspense fallback={<Loader fullScreen />}>
+          <Routes>
+            <Route path="/admin/*" element={<AdminPage />} />
+            <Route path="/dashboard/*" element={<StudentDashboardPage />} />
+            <Route path="/instructor/*" element={<InstructorDashboardPage />} />
+            <Route path="/certificate/:id" element={<CertificateViewPage />} />
+            <Route path="/*" element={<PublicLayout />} />
+          </Routes>
+        </Suspense>
+      </AuthProvider>
     </BrowserRouter>
   )
 }

@@ -6,6 +6,8 @@ import {
   CaretDown, CheckCircle, Funnel, Play
 } from '@phosphor-icons/react'
 import { useState, useEffect, useRef } from 'react'
+import { coursesService } from '../services/courses.service'
+import type { Course } from '../types/api'
 
 // Animated Counter Component
 function AnimatedCounter({ from, to, duration = 1.5, format }: { from: number, to: number, duration?: number, format?: (val: number) => string }) {
@@ -37,7 +39,31 @@ function AnimatedCounter({ from, to, duration = 1.5, format }: { from: number, t
 
 const CATEGORIES = ['All', 'General English', 'IELTS Prep', 'Business English', 'Kids & Teens', 'Speaking']
 
-export const COURSES = [
+// Map backend focus -> frontend category
+const FOCUS_TO_CATEGORY: Record<string, string> = {
+  speaking: 'Speaking',
+  grammar: 'General English',
+  ielts: 'IELTS Prep',
+  business: 'Business English',
+  general: 'General English',
+}
+
+export interface CourseCard {
+  id: string
+  title: string
+  category: string
+  description: string
+  level: string
+  duration: string
+  rating: number
+  students: number
+  image: string | undefined
+  price: string
+  popular: boolean
+}
+
+// Fallback hardcoded courses when API is unavailable
+export const FALLBACK_FALLBACK_COURSES: CourseCard[] = [
   {
     id: 1,
     title: 'General English Mastery',
@@ -240,7 +266,7 @@ const FAQS = [
   },
 ]
 
-function HeroCard({ course }: { course: (typeof COURSES)[0] }) {
+function HeroCard({ course }: { course: CourseCard }) {
   return (
     <>
       <div className="flex items-center justify-between mb-4">
@@ -272,8 +298,41 @@ export default function Courses() {
   const [searchQuery, setSearchQuery] = useState('')
   const [openFaq, setOpenFaq] = useState<number | null>(null)
   const [cardsHovered, setCardsHovered] = useState(false)
+  const [apiCourses, setApiCourses] = useState<CourseCard[] | null>(null)
 
-  const filteredCourses = COURSES.filter(course => {
+  // Fetch courses from the API on mount
+  useEffect(() => {
+    let mounted = true
+    const fetchCourses = async () => {
+      try {
+        const response = await coursesService.getAllCourses({ status: 'published' })
+        if (!mounted) return
+        const mapped: CourseCard[] = response.data.map((course) => ({
+          id: course._id,
+          title: course.title,
+          category: FOCUS_TO_CATEGORY[course.focus] || 'General English',
+          description: course.description,
+          level: course.level.charAt(0).toUpperCase() + course.level.slice(1),
+          duration: `${course.totalSessions} sessions`,
+          rating: 4.8,
+          students: course.enrolledStudents?.length || 0,
+          image: course.thumbnail,
+          price: course.currency === 'PKR' ? `Rs.${course.price.toLocaleString()}` : `$${course.price}`,
+          popular: false,
+        }))
+        setApiCourses(mapped)
+      } catch {
+        // API unavailable — fallback to hardcoded data
+        console.warn('Courses API unavailable, using fallback data')
+      }
+    }
+    fetchCourses()
+    return () => { mounted = false }
+  }, [])
+
+  const courses = apiCourses || FALLBACK_FALLBACK_COURSES
+
+  const filteredCourses = courses.filter(course => {
     const matchesCategory = activeCategory === 'All' || course.category === activeCategory
     const matchesSearch =
       course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -407,7 +466,7 @@ export default function Courses() {
                   transition={{ type: 'spring', stiffness: 280, damping: 22 }}
                   className="absolute top-0 left-0 w-[380px] bg-white dark:bg-neutral-900 border border-slate-100 dark:border-neutral-800 rounded-3xl shadow-sm p-7 z-0"
                 >
-                  <HeroCard course={COURSES[4]} />
+                  <HeroCard course={FALLBACK_COURSES[4]} />
                 </motion.div>
 
                 {/* Card 4 (Top Right) */}
@@ -420,7 +479,7 @@ export default function Courses() {
                   transition={{ type: 'spring', stiffness: 280, damping: 22 }}
                   className="absolute top-0 left-0 w-[380px] bg-white dark:bg-neutral-900 border border-slate-100 dark:border-neutral-800 rounded-3xl shadow-sm p-7 z-[5]"
                 >
-                  <HeroCard course={COURSES[3]} />
+                  <HeroCard course={FALLBACK_COURSES[3]} />
                 </motion.div>
 
                 {/* Card 3 (Bottom Left) */}
@@ -433,7 +492,7 @@ export default function Courses() {
                   transition={{ type: 'spring', stiffness: 280, damping: 22 }}
                   className="absolute top-0 left-0 w-[380px] bg-white dark:bg-neutral-900 border border-slate-100 dark:border-neutral-800 rounded-3xl shadow-md p-7 z-10"
                 >
-                  <HeroCard course={COURSES[0]} />
+                  <HeroCard course={FALLBACK_COURSES[0]} />
                 </motion.div>
 
                 {/* Card 2 (Bottom Right) */}
@@ -446,7 +505,7 @@ export default function Courses() {
                   transition={{ type: 'spring', stiffness: 280, damping: 22 }}
                   className="absolute top-0 left-0 w-[380px] bg-white dark:bg-neutral-900 border border-slate-100 dark:border-neutral-800 rounded-3xl shadow-lg p-7 z-20"
                 >
-                  <HeroCard course={COURSES[2]} />
+                  <HeroCard course={FALLBACK_COURSES[2]} />
                 </motion.div>
 
                 {/* Card 1 (Center Front) */}
@@ -459,7 +518,7 @@ export default function Courses() {
                   transition={{ type: 'spring', stiffness: 280, damping: 22 }}
                   className="absolute top-0 left-0 w-[380px] bg-white dark:bg-neutral-900 border border-slate-100 dark:border-neutral-800 rounded-3xl shadow-2xl p-7 z-30"
                 >
-                  <HeroCard course={COURSES[1]} />
+                  <HeroCard course={FALLBACK_COURSES[1]} />
                 </motion.div>
               </motion.div>
             </div>
@@ -468,7 +527,7 @@ export default function Courses() {
         </div>
       </section>
 
-      {/* ─── COURSES GRID ─────────────────────────────────────── */}
+      {/* ─── FALLBACK_COURSES GRID ─────────────────────────────────────── */}
       <section className="py-20 lg:py-28">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 

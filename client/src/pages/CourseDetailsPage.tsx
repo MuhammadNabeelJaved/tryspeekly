@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Link } from 'react-router-dom'
+import { Link, useParams, useNavigate } from 'react-router-dom'
 import {
   Star, Users, Clock, GraduationCap, CheckCircle,
   PlayCircle, Certificate, FileText, CaretDown,
@@ -9,6 +9,9 @@ import {
   Calendar, VideoCamera, UsersThree, ChalkboardTeacher, Laptop,
   CreditCard, Bank, PaypalLogo, ShieldCheck, Phone, Globe
 } from '@phosphor-icons/react'
+import { coursesService } from '../services/courses.service'
+import { enrollmentsService } from '../services/enrollments.service'
+import { useAuth } from '../context/AuthContext'
 
 // Dummy Data for the specific course
 const COURSE = {
@@ -309,18 +312,46 @@ function MethodLogo({ method }: { method: PaymentMethod }) {
 
 
 export default function CourseDetailsPage() {
+  const { id } = useParams()
+  const navigate = useNavigate()
+  const { isAuthenticated, user } = useAuth()
   const [openModule, setOpenModule] = useState<number | null>(0)
   const [showMobileNav, setShowMobileNav] = useState(false)
   const [currentReviewPage, setCurrentReviewPage] = useState(1)
+  const [apiCourse, setApiCourse] = useState<any>(null)
 
   // New states for enrollment modal
   const [showEnrollmentModal, setShowEnrollmentModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'local' | 'international'>('local');
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (id) {
+      coursesService.getCourseById(id).then(res => setApiCourse(res.data)).catch(() => {})
+    }
+  }, [id])
 
-  const totalReviewPages = Math.ceil(COURSE.reviewsList.length / REVIEWS_PER_PAGE)
-  const currentReviews = COURSE.reviewsList.slice(
+  // Merge API data into COURSE object for display
+  const activeCourse = apiCourse
+    ? {
+        ...COURSE,
+        id: apiCourse._id,
+        title: apiCourse.title,
+        description: apiCourse.description,
+        price: apiCourse.currency === 'PKR' ? `Rs.${apiCourse.price.toLocaleString()}` : `$${apiCourse.price}`,
+        level: apiCourse.level.charAt(0).toUpperCase() + apiCourse.level.slice(1),
+        duration: `${apiCourse.totalSessions} Sessions`,
+        image: apiCourse.thumbnail || activeCourse.image,
+        students: apiCourse.enrolledStudents?.length || 0,
+        instructor: {
+          ...activeCourse.instructor,
+          name: apiCourse.teacher?.name || activeCourse.instructor.name,
+        },
+      }
+    : COURSE
+
+  const totalReviewPages = Math.ceil(activeCourse.reviewsList.length / REVIEWS_PER_PAGE)
+  const currentReviews = activeCourse.reviewsList.slice(
     (currentReviewPage - 1) * REVIEWS_PER_PAGE,
     currentReviewPage * REVIEWS_PER_PAGE
   )
@@ -335,6 +366,10 @@ export default function CourseDetailsPage() {
 
   // New function to scroll to payment section
   const openEnrollmentModal = () => {
+    if (!isAuthenticated) {
+      navigate('/login', { state: { from: { pathname: `/courses/${id}` } } });
+      return;
+    }
     setShowEnrollmentModal(true);
   };
 
@@ -427,8 +462,8 @@ export default function CourseDetailsPage() {
             { label: 'Account Title', value: 'EnglishPro Academy' },
             { label: 'Account / IBAN', value: 'PK36 MEZN 0001 2345 0100 6543' }, // Dummy IBAN
             { label: 'Bank Name', value: 'Meezan Bank Ltd.' },
-            { label: 'Reference', value: 'Your Full Name / Course ID: ' + COURSE.id },
-            { label: 'Amount', value: COURSE.price },
+            { label: 'Reference', value: 'Your Full Name / Course ID: ' + activeCourse.id },
+            { label: 'Amount', value: activeCourse.price },
           ].map(({ label, value }) => (
             <div key={label} className="bg-slate-50 dark:bg-neutral-800/60 rounded-2xl px-4 py-3">
               <p className="text-[10px] font-semibold text-slate-400 dark:text-neutral-500 uppercase tracking-wide mb-1">{label}</p>
@@ -498,41 +533,41 @@ export default function CourseDetailsPage() {
                   Bestseller
                 </span>
                 <span className="px-3 py-1 bg-white/5 border border-white/10 text-slate-300 text-xs font-bold rounded-lg uppercase tracking-wider backdrop-blur-sm">
-                  {COURSE.category}
+                  {activeCourse.category}
                 </span>
               </div>
 
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-black leading-[1.1] mb-6 tracking-tight text-white drop-shadow-sm">
-                {COURSE.title}
+                {activeCourse.title}
               </h1>
 
               <p className="text-slate-300 text-lg md:text-xl leading-relaxed mb-8 max-w-2xl font-light">
-                {COURSE.description}
+                {activeCourse.description}
               </p>
 
               <div className="flex flex-wrap items-center gap-x-8 gap-y-4 text-sm">
                 <div className="flex items-center gap-2.5">
                   <div className="flex items-center gap-1 text-yellow-400 font-bold bg-yellow-400/10 px-2 py-1 rounded">
                     <Star size={16} weight="fill" />
-                    <span className="text-base">{COURSE.rating}</span>
+                    <span className="text-base">{activeCourse.rating}</span>
                   </div>
                   <button onClick={() => {
                     document.getElementById('reviews-section')?.scrollIntoView({ behavior: 'smooth' })
                   }} className="text-slate-300 border-b border-slate-600 border-dashed pb-0.5 cursor-pointer hover:text-white transition-colors">
-                    ({COURSE.reviews.toLocaleString()} reviews)
+                    ({activeCourse.reviews.toLocaleString()} reviews)
                   </button>
                 </div>
                 <div className="flex items-center gap-2 text-slate-300">
                   <UsersThree size={18} className="text-violet-400" />
-                  <span><strong>Max {COURSE.maxStudents}</strong> per cohort</span>
+                  <span><strong>Max {activeCourse.maxStudents}</strong> per cohort</span>
                 </div>
                 <div className="flex items-center gap-2 text-slate-300">
                   <Calendar size={18} className="text-emerald-400" />
-                  <span>Starts: <strong>{COURSE.startDate}</strong></span>
+                  <span>Starts: <strong>{activeCourse.startDate}</strong></span>
                 </div>
                 <div className="flex items-center gap-2 text-slate-300">
                   <VideoCamera size={18} className="text-blue-400" />
-                  <span>{COURSE.platform}</span>
+                  <span>{activeCourse.platform}</span>
                 </div>
               </div>
             </motion.div>
@@ -554,7 +589,7 @@ export default function CourseDetailsPage() {
                 animate={{ opacity: 1, y: 0 }}
                 className="lg:hidden relative rounded-3xl overflow-hidden aspect-video shadow-2xl border border-slate-200 dark:border-neutral-800 bg-slate-900 group"
               >
-                <img src={COURSE.videoPreview} alt="Course preview" className="w-full h-full object-cover opacity-80 group-hover:opacity-60 transition-opacity duration-500" />
+                <img src={activeCourse.videoPreview} alt="Course preview" className="w-full h-full object-cover opacity-80 group-hover:opacity-60 transition-opacity duration-500" />
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="relative">
                     <div className="absolute inset-0 bg-violet-600 rounded-full animate-ping opacity-40"></div>
@@ -578,7 +613,7 @@ export default function CourseDetailsPage() {
                   What you'll learn
                 </h2>
                 <div className="grid sm:grid-cols-2 gap-4">
-                  {COURSE.whatYouWillLearn.map((item, i) => (
+                  {activeCourse.whatYouWillLearn.map((item, i) => (
                     <motion.div
                       key={i}
                       initial={{ opacity: 0, scale: 0.95 }}
@@ -611,7 +646,7 @@ export default function CourseDetailsPage() {
                       Live Session Schedule
                     </h2>
                     <p className="text-slate-500 dark:text-neutral-400 text-sm font-medium ml-13">
-                      {COURSE.schedule} • {COURSE.duration}
+                      {activeCourse.schedule} • {activeCourse.duration}
                     </p>
                   </div>
                   <button className="text-sm font-bold text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 transition-colors bg-violet-50 dark:bg-violet-900/20 px-4 py-2 rounded-lg">
@@ -620,7 +655,7 @@ export default function CourseDetailsPage() {
                 </div>
 
                 <div className="space-y-4">
-                  {COURSE.curriculum.map((module, i) => (
+                  {activeCourse.curriculum.map((module, i) => (
                     <div key={i} className="bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
                       <button
                         onClick={() => setOpenModule(openModule === i ? null : i)}
@@ -719,36 +754,36 @@ export default function CourseDetailsPage() {
                   <div className="relative group">
                     <div className="absolute -inset-1 bg-gradient-to-r from-violet-600 to-purple-600 rounded-full blur opacity-25 group-hover:opacity-50 transition duration-500"></div>
                     <img
-                      src={COURSE.instructor.image}
-                      alt={COURSE.instructor.name}
+                      src={activeCourse.instructor.image}
+                      alt={activeCourse.instructor.name}
                       className="relative w-36 h-36 rounded-full object-cover border-4 border-white dark:border-neutral-900 shadow-xl"
                     />
                     <div className="absolute -bottom-2 -right-2 bg-yellow-400 text-yellow-950 text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1 shadow-lg">
-                      <Star size={12} weight="fill" /> {COURSE.instructor.rating}
+                      <Star size={12} weight="fill" /> {activeCourse.instructor.rating}
                     </div>
                   </div>
 
                   <div className="flex-1">
-                    <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-1 group-hover:text-violet-600 transition-colors">{COURSE.instructor.name}</h3>
-                    <p className="text-violet-600 dark:text-violet-400 font-bold text-sm mb-5 uppercase tracking-wider">{COURSE.instructor.role}</p>
+                    <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-1 group-hover:text-violet-600 transition-colors">{activeCourse.instructor.name}</h3>
+                    <p className="text-violet-600 dark:text-violet-400 font-bold text-sm mb-5 uppercase tracking-wider">{activeCourse.instructor.role}</p>
 
                     <div className="flex flex-wrap gap-5 mb-5 pb-5 border-b border-slate-100 dark:border-neutral-800">
                       <div className="flex items-center gap-2 text-sm text-slate-700 dark:text-neutral-300 font-semibold">
                         <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-neutral-800 flex items-center justify-center text-slate-500 dark:text-neutral-400">
                           <Users size={16} weight="fill" />
                         </div>
-                        {COURSE.instructor.students} Students
+                        {activeCourse.instructor.students} Students
                       </div>
                       <div className="flex items-center gap-2 text-sm text-slate-700 dark:text-neutral-300 font-semibold">
                         <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-neutral-800 flex items-center justify-center text-slate-500 dark:text-neutral-400">
                           <PlayCircle size={16} weight="fill" />
                         </div>
-                        {COURSE.instructor.courses} Courses
+                        {activeCourse.instructor.courses} Courses
                       </div>
                     </div>
 
                     <p className="text-slate-600 dark:text-neutral-400 text-base leading-relaxed italic border-l-4 border-violet-200 dark:border-violet-900/50 pl-4">
-                      "{COURSE.instructor.bio}"
+                      "{activeCourse.instructor.bio}"
                     </p>
                   </div>
                 </div>
@@ -773,12 +808,12 @@ export default function CourseDetailsPage() {
                     <div className="flex items-center gap-3 ml-13">
                       <div className="flex gap-1 text-yellow-400">
                         {[1, 2, 3, 4, 5].map((s) => (
-                          <Star key={s} size={18} weight={s <= Math.floor(COURSE.rating) ? "fill" : "regular"} />
+                          <Star key={s} size={18} weight={s <= Math.floor(activeCourse.rating) ? "fill" : "regular"} />
                         ))}
                       </div>
-                      <span className="font-bold text-slate-900 dark:text-white">{COURSE.rating} Course Rating</span>
+                      <span className="font-bold text-slate-900 dark:text-white">{activeCourse.rating} Course Rating</span>
                       <span className="text-slate-400 dark:text-neutral-500">•</span>
-                      <span className="text-slate-500 dark:text-neutral-400">{COURSE.reviews.toLocaleString()} reviews</span>
+                      <span className="text-slate-500 dark:text-neutral-400">{activeCourse.reviews.toLocaleString()} reviews</span>
                     </div>
                   </div>
                 </div>
@@ -875,7 +910,7 @@ export default function CourseDetailsPage() {
               >
                 {/* Video Preview */}
                 <div className="relative aspect-video bg-slate-100 dark:bg-neutral-800 group cursor-pointer overflow-hidden m-2 rounded-2xl">
-                  <img src={COURSE.videoPreview} alt="Course preview" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 opacity-90 group-hover:opacity-70" />
+                  <img src={activeCourse.videoPreview} alt="Course preview" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 opacity-90 group-hover:opacity-70" />
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/20 to-transparent flex items-center justify-center">
                     <div className="relative">
                       <div className="absolute inset-0 bg-white rounded-full animate-ping opacity-20"></div>
@@ -893,8 +928,8 @@ export default function CourseDetailsPage() {
                   {/* Pricing Details */}
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-end gap-3">
-                      <span className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">{COURSE.price}</span>
-                      <span className="text-lg text-slate-400 dark:text-neutral-500 line-through mb-1 font-semibold">{COURSE.originalPrice}</span>
+                      <span className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">{activeCourse.price}</span>
+                      <span className="text-lg text-slate-400 dark:text-neutral-500 line-through mb-1 font-semibold">{activeCourse.originalPrice}</span>
                     </div>
                     <div className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-xs font-bold px-2.5 py-1 rounded-md flex items-center gap-1">
                       <Tag size={12} weight="fill" />
@@ -925,7 +960,7 @@ export default function CourseDetailsPage() {
                     <ul className="space-y-4">
                       {[
                         { icon: VideoCamera, text: '24 Interactive Live Sessions' },
-                        { icon: UsersThree, text: `Intimate cohort (Max ${COURSE.maxStudents})` },
+                        { icon: UsersThree, text: `Intimate cohort (Max ${activeCourse.maxStudents})` },
                         { icon: ChalkboardTeacher, text: 'Real-time teacher feedback' },
                         { icon: Laptop, text: 'Access to session recordings' },
                         { icon: Certificate, text: 'Certificate of completion' }
@@ -942,19 +977,19 @@ export default function CourseDetailsPage() {
                   <div className="space-y-3">
                     <div className="flex justify-between items-center text-sm border-b border-slate-100 dark:border-neutral-800 pb-3">
                       <span className="text-slate-500 dark:text-neutral-400">Skill Level</span>
-                      <span className="font-bold text-slate-900 dark:text-white">{COURSE.level}</span>
+                      <span className="font-bold text-slate-900 dark:text-white">{activeCourse.level}</span>
                     </div>
                     <div className="flex justify-between items-center text-sm border-b border-slate-100 dark:border-neutral-800 pb-3">
                       <span className="text-slate-500 dark:text-neutral-400">Platform</span>
-                      <span className="font-bold text-slate-900 dark:text-white">{COURSE.platform}</span>
+                      <span className="font-bold text-slate-900 dark:text-white">{activeCourse.platform}</span>
                     </div>
                     <div className="flex justify-between items-center text-sm border-b border-slate-100 dark:border-neutral-800 pb-3">
                       <span className="text-slate-500 dark:text-neutral-400">Starts</span>
-                      <span className="font-bold text-slate-900 dark:text-white">{COURSE.startDate}</span>
+                      <span className="font-bold text-slate-900 dark:text-white">{activeCourse.startDate}</span>
                     </div>
                     <div className="flex justify-between items-center text-sm">
                       <span className="text-slate-500 dark:text-neutral-400">Language</span>
-                      <span className="font-bold text-slate-900 dark:text-white">{COURSE.language}</span>
+                      <span className="font-bold text-slate-900 dark:text-white">{activeCourse.language}</span>
                     </div>
                   </div>
 
@@ -1011,34 +1046,34 @@ export default function CourseDetailsPage() {
                   <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
                     <div className="mb-6">
                       <p className="text-sm uppercase tracking-[0.32em] text-violet-600 dark:text-violet-400 font-bold mb-3">Course overview</p>
-                      <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-3">{COURSE.title}</h3>
-                      <p className="text-sm text-slate-600 dark:text-neutral-400 leading-relaxed">{COURSE.description}</p>
+                      <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-3">{activeCourse.title}</h3>
+                      <p className="text-sm text-slate-600 dark:text-neutral-400 leading-relaxed">{activeCourse.description}</p>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                       <div className="rounded-3xl bg-slate-100 dark:bg-neutral-800/60 p-4">
                         <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500 dark:text-neutral-500 mb-3">Instructor</p>
                         <div className="flex items-center gap-3">
-                          <img src={COURSE.instructor.image} alt={COURSE.instructor.name} className="w-12 h-12 rounded-2xl object-cover" />
+                          <img src={activeCourse.instructor.image} alt={activeCourse.instructor.name} className="w-12 h-12 rounded-2xl object-cover" />
                           <div className="min-w-0">
-                            <p className="text-sm font-semibold text-slate-900 dark:text-white leading-none">{COURSE.instructor.name}</p>
-                            <p className="text-xs text-slate-500 dark:text-neutral-400">{COURSE.instructor.role}</p>
+                            <p className="text-sm font-semibold text-slate-900 dark:text-white leading-none">{activeCourse.instructor.name}</p>
+                            <p className="text-xs text-slate-500 dark:text-neutral-400">{activeCourse.instructor.role}</p>
                           </div>
                         </div>
                       </div>
                       <div className="rounded-3xl bg-slate-100 dark:bg-neutral-800/60 p-4">
                         <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500 dark:text-neutral-500 mb-3">At a glance</p>
                         <div className="space-y-3 text-sm text-slate-700 dark:text-neutral-300">
-                          <div className="flex items-center justify-between"><span>Rating</span><strong>{COURSE.rating}</strong></div>
-                          <div className="flex items-center justify-between"><span>Reviews</span><strong>{COURSE.reviews}</strong></div>
-                          <div className="flex items-center justify-between"><span>Live seats</span><strong>{COURSE.maxStudents}</strong></div>
+                          <div className="flex items-center justify-between"><span>Rating</span><strong>{activeCourse.rating}</strong></div>
+                          <div className="flex items-center justify-between"><span>Reviews</span><strong>{activeCourse.reviews}</strong></div>
+                          <div className="flex items-center justify-between"><span>Live seats</span><strong>{activeCourse.maxStudents}</strong></div>
                         </div>
                       </div>
                     </div>
 
                     <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">What you'll learn</h3>
                     <ul className="grid gap-3 mb-8 text-sm text-slate-700 dark:text-neutral-300">
-                      {COURSE.whatYouWillLearn.slice(0, 5).map((item, index) => (
+                      {activeCourse.whatYouWillLearn.slice(0, 5).map((item, index) => (
                         <li key={index} className="flex items-start gap-3">
                           <span className="mt-1 shrink-0 text-violet-600 dark:text-violet-400">•</span>
                           <span>{item}</span>
@@ -1051,27 +1086,27 @@ export default function CourseDetailsPage() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-slate-700 dark:text-neutral-300">
                         <div className="flex items-center gap-3">
                           <CheckCircle size={20} className="text-emerald-500" weight="fill" />
-                          <span><strong>Category:</strong> {COURSE.category}</span>
+                          <span><strong>Category:</strong> {activeCourse.category}</span>
                         </div>
                         <div className="flex items-center gap-3">
                           <CheckCircle size={20} className="text-emerald-500" weight="fill" />
-                          <span><strong>Level:</strong> {COURSE.level}</span>
+                          <span><strong>Level:</strong> {activeCourse.level}</span>
                         </div>
                         <div className="flex items-center gap-3">
                           <CheckCircle size={20} className="text-emerald-500" weight="fill" />
-                          <span><strong>Duration:</strong> {COURSE.duration}</span>
+                          <span><strong>Duration:</strong> {activeCourse.duration}</span>
                         </div>
                         <div className="flex items-center gap-3">
                           <CheckCircle size={20} className="text-emerald-500" weight="fill" />
-                          <span><strong>Starts:</strong> {COURSE.startDate}</span>
+                          <span><strong>Starts:</strong> {activeCourse.startDate}</span>
                         </div>
                         <div className="flex items-center gap-3">
                           <CheckCircle size={20} className="text-emerald-500" weight="fill" />
-                          <span><strong>Price:</strong> {COURSE.price}</span>
+                          <span><strong>Price:</strong> {activeCourse.price}</span>
                         </div>
                         <div className="flex items-center gap-3">
                           <CheckCircle size={20} className="text-emerald-500" weight="fill" />
-                          <span><strong>Platform:</strong> {COURSE.platform}</span>
+                          <span><strong>Platform:</strong> {activeCourse.platform}</span>
                         </div>
                       </div>
                     </div>
@@ -1245,9 +1280,18 @@ export default function CourseDetailsPage() {
                             whileTap={{ scale: 0.98 }}
                             onClick={() => {
                               // Handle enrollment completion
-                              alert('Enrollment completed! You will receive a confirmation email shortly.');
-                              setShowEnrollmentModal(false);
-                              setSelectedPaymentMethod(null);
+                              if (!isAuthenticated) {
+                                navigate('/login');
+                                return;
+                              }
+                              try {
+                                await enrollmentsService.enroll({ courseId: activeCourse.id, paymentId: 'pending' });
+                                setShowEnrollmentModal(false);
+                                setSelectedPaymentMethod(null);
+                                alert('Enrollment successful! Check your dashboard for details.');
+                              } catch (err: any) {
+                                alert(err?.response?.data?.error || 'Enrollment failed. Please try again.');
+                              }
                             }}
                             className="w-full mt-6 bg-gradient-to-r from-violet-600 to-purple-600 text-white font-bold py-4 rounded-2xl shadow-[0_8px_28px_rgba(124,58,237,0.35)] transition-all text-lg flex items-center justify-center gap-2"
                           >
@@ -1282,8 +1326,8 @@ export default function CourseDetailsPage() {
           >
             <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
               <div>
-                <div className="text-xs text-slate-500 dark:text-neutral-400 font-bold mb-0.5 line-through">{COURSE.originalPrice}</div>
-                <div className="text-2xl font-black text-slate-900 dark:text-white">{COURSE.price}</div>
+                <div className="text-xs text-slate-500 dark:text-neutral-400 font-bold mb-0.5 line-through">{activeCourse.originalPrice}</div>
+                <div className="text-2xl font-black text-slate-900 dark:text-white">{activeCourse.price}</div>
               </div>
               <button
                 onClick={openEnrollmentModal} // Open enrollment modal

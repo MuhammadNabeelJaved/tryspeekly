@@ -3,6 +3,7 @@ import { usersController } from '../controllers/users.controller';
 import { validateJoi } from '../middleware/validateJoi';
 import { usersValidation } from '../validations/users.validation';
 import { authenticate } from '../middleware/authenticate';
+import { authorize } from '../middleware/authorize';
 
 const router = Router();
 
@@ -31,6 +32,13 @@ router.delete(
   '/account',
   validateJoi(usersValidation.deleteAccount),
   usersController.deleteAccount
+);
+
+// List all users (admin only)
+router.get(
+  '/',
+  authorize('admin'),
+  usersController.getAllUsers
 );
 
 // Get public user profile by ID (must be after other routes to avoid conflicts)

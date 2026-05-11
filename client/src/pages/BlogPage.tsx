@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Link } from 'react-router-dom'
@@ -6,112 +6,41 @@ import {
   MagnifyingGlass, CalendarBlank, Clock, ArrowRight, 
   Article, TrendUp, EnvelopeSimple, BookmarkSimple, Funnel
 } from '@phosphor-icons/react'
+import { blogService } from '../services/blog.service'
+import type { Blog } from '../types/api'
 
 const CATEGORIES = ['All', 'Study Tips', 'Grammar', 'IELTS Prep', 'Vocabulary', 'Career']
-
-const FEATURED_POST = {
-  id: 1,
-  title: '10 Proven Strategies to Achieve a Band 8 in IELTS Speaking',
-  excerpt: 'Discover the exact techniques, vocabulary structures, and mindset shifts you need to impress examiners and score an 8.0+ in your IELTS speaking test.',
-  category: 'IELTS Prep',
-  readTime: '8 min read',
-  date: 'May 12, 2026',
-  image: 'https://images.unsplash.com/photo-1543269865-cbf427effbad?q=80&w=1200&auto=format&fit=crop',
-  author: {
-    name: 'Sarah Johnson',
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=150&auto=format&fit=crop',
-    role: 'IELTS Examiner'
-  }
-}
-
-const POSTS = [
-  {
-    id: 2,
-    title: 'Mastering the Perfect Tenses: A Complete Guide',
-    excerpt: 'Stop confusing Present Perfect and Past Simple. This guide breaks down English perfect tenses with real-world examples.',
-    category: 'Grammar',
-    readTime: '6 min read',
-    date: 'May 08, 2026',
-    image: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?q=80&w=800&auto=format&fit=crop',
-    author: {
-      name: 'David Wilson',
-      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=150&auto=format&fit=crop'
-    }
-  },
-  {
-    id: 3,
-    title: 'Business English: 50 Phrases for Professional Emails',
-    excerpt: 'Sound more professional at work with these essential email phrases for negotiating, apologizing, and following up.',
-    category: 'Career',
-    readTime: '5 min read',
-    date: 'May 05, 2026',
-    image: 'https://images.unsplash.com/photo-1552664730-d307ca884978?q=80&w=800&auto=format&fit=crop',
-    author: {
-      name: 'Mark Williams',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=150&auto=format&fit=crop'
-    }
-  },
-  {
-    id: 4,
-    title: 'How to Learn English Passively While Watching Netflix',
-    excerpt: 'Turn your binge-watching sessions into productive language learning time with the active-passive observation method.',
-    category: 'Study Tips',
-    readTime: '4 min read',
-    date: 'April 28, 2026',
-    image: 'https://images.unsplash.com/photo-1522869635100-9f4c5e86aa37?q=80&w=800&auto=format&fit=crop',
-    author: {
-      name: 'Emily Chen',
-      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=150&auto=format&fit=crop'
-    }
-  },
-  {
-    id: 5,
-    title: 'Phrasal Verbs: The Secret to Sounding Like a Native',
-    excerpt: 'Native speakers use phrasal verbs constantly. Here are the top 20 you need to know to sound natural in casual conversations.',
-    category: 'Vocabulary',
-    readTime: '7 min read',
-    date: 'April 22, 2026',
-    image: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?q=80&w=800&auto=format&fit=crop',
-    author: {
-      name: 'Michael Brown',
-      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=150&auto=format&fit=crop'
-    }
-  },
-  {
-    id: 6,
-    title: 'Common Pronunciation Mistakes and How to Fix Them',
-    excerpt: 'Are you mispronouncing these everyday words? Learn the correct tongue placement and stress patterns.',
-    category: 'Study Tips',
-    readTime: '5 min read',
-    date: 'April 15, 2026',
-    image: 'https://images.unsplash.com/photo-1475721027187-402ad2989a3b?q=80&w=800&auto=format&fit=crop',
-    author: {
-      name: 'Emily Chen',
-      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=150&auto=format&fit=crop'
-    }
-  },
-  {
-    id: 7,
-    title: 'IELTS Writing Task 2: Structuring Your Essay',
-    excerpt: 'A foolproof template for organizing your thoughts and writing a high-scoring essay under time pressure.',
-    category: 'IELTS Prep',
-    readTime: '9 min read',
-    date: 'April 10, 2026',
-    image: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?q=80&w=800&auto=format&fit=crop',
-    author: {
-      name: 'Sarah Johnson',
-      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=150&auto=format&fit=crop'
-    }
-  }
-]
 
 export default function BlogPage() {
   const [activeCategory, setActiveCategory] = useState('All')
   const [searchQuery, setSearchQuery] = useState('')
+  const [blogs, setBlogs] = useState<Blog[]>([])
+  const [loading, setLoading] = useState(true)
   
   const { register, handleSubmit, reset, formState: { errors } } = useForm({
     defaultValues: { email: '' }
   })
+
+  useEffect(() => {
+    const fetchBlogs = async () => {
+      setLoading(true)
+      try {
+        const params: any = { status: 'published' }
+        if (activeCategory !== 'All') params.tag = activeCategory
+        if (searchQuery) params.search = searchQuery
+        
+        const response = await blogService.getAllBlogs(params)
+        setBlogs(response.data)
+      } catch (error) {
+        console.error('Failed to fetch blogs', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    const timer = setTimeout(fetchBlogs, 300)
+    return () => clearTimeout(timer)
+  }, [activeCategory, searchQuery])
 
   const onSubmit = (data: any) => {
     alert("Subscribed " + data.email)
@@ -119,19 +48,14 @@ export default function BlogPage() {
   }
 
   // Scroll to top on mount
-  useState(() => {
+  useEffect(() => {
     if (typeof window !== 'undefined') {
-      window.scrollTo({ top: 0, behavior: 'instant' })
+      window.scrollTo({ top: 0, behavior: 'smooth' })
     }
-  })
+  }, [])
 
-  const filteredPosts = POSTS.filter(post => {
-    const matchesCategory = activeCategory === 'All' || post.category === activeCategory
-    const matchesSearch = 
-      post.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      post.excerpt.toLowerCase().includes(searchQuery.toLowerCase())
-    return matchesCategory && matchesSearch
-  })
+  const featuredPost = blogs[0]
+  const otherPosts = blogs.slice(1)
 
   return (
     <div className="bg-slate-50 dark:bg-neutral-950 min-h-screen pt-[72px] lg:pt-[80px] selection:bg-violet-200 dark:selection:bg-violet-900/50">
@@ -177,7 +101,13 @@ export default function BlogPage() {
       </section>
 
       {/* ─── FEATURED POST ──────────────────────────────────────── */}
-      {(activeCategory === 'All' && !searchQuery) && (
+      {loading ? (
+        <section className="py-12 lg:py-16">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="h-[400px] rounded-[2rem] bg-white dark:bg-neutral-900 animate-pulse border border-slate-100 dark:border-neutral-800" />
+          </div>
+        </section>
+      ) : (blogs.length > 0 && activeCategory === 'All' && !searchQuery) && (
         <section className="py-12 lg:py-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <motion.div 
@@ -189,14 +119,14 @@ export default function BlogPage() {
               {/* Image Side */}
               <div className="relative h-64 sm:h-80 lg:h-full overflow-hidden">
                 <img 
-                  src={FEATURED_POST.image} 
-                  alt={FEATURED_POST.title} 
+                  src={featuredPost.coverImage || 'https://images.unsplash.com/photo-1543269865-cbf427effbad?q=80&w=1200&auto=format&fit=crop'} 
+                  alt={featuredPost.title} 
                   className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent lg:hidden" />
                 <div className="absolute top-6 left-6 lg:hidden">
                   <span className="px-3 py-1 bg-violet-600 text-white text-xs font-bold rounded-lg uppercase tracking-wider shadow-lg">
-                    {FEATURED_POST.category}
+                    {featuredPost.tags[0] || 'English'}
                   </span>
                 </div>
               </div>
@@ -208,29 +138,33 @@ export default function BlogPage() {
                     <TrendUp size={14} weight="bold" /> Trending
                   </span>
                   <span className="text-sm font-bold text-slate-400 dark:text-neutral-500">
-                    {FEATURED_POST.category}
+                    {featuredPost.tags[0]}
                   </span>
                 </div>
 
                 <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-white leading-tight mb-4 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">
-                  <Link to={`/blog/${FEATURED_POST.id}`} className="hover:underline decoration-violet-500/30 underline-offset-4">
-                    {FEATURED_POST.title}
+                  <Link to={`/blog/slug/${featuredPost.slug}`} className="hover:underline decoration-violet-500/30 underline-offset-4">
+                    {featuredPost.title}
                   </Link>
                 </h2>
                 
                 <p className="text-slate-500 dark:text-neutral-400 text-lg leading-relaxed mb-8 flex-1">
-                  {FEATURED_POST.excerpt}
+                  {featuredPost.excerpt}
                 </p>
 
                 <div className="flex items-center justify-between pt-6 border-t border-slate-100 dark:border-neutral-800">
                   <div className="flex items-center gap-3">
-                    <img src={FEATURED_POST.author.avatar} alt={FEATURED_POST.author.name} className="w-10 h-10 rounded-full object-cover" />
+                    <div className="w-10 h-10 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center text-sm font-black text-violet-600 dark:text-violet-400">
+                      {featuredPost.author.name.charAt(0)}
+                    </div>
                     <div>
-                      <div className="text-sm font-bold text-slate-900 dark:text-white">{FEATURED_POST.author.name}</div>
-                      <div className="text-xs text-slate-500 dark:text-neutral-400">{FEATURED_POST.date}</div>
+                      <div className="text-sm font-bold text-slate-900 dark:text-white">{featuredPost.author.name}</div>
+                      <div className="text-xs text-slate-500 dark:text-neutral-400">
+                        {new Date(featuredPost.publishedAt || featuredPost.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
+                      </div>
                     </div>
                   </div>
-                  <Link to={`/blog/${FEATURED_POST.id}`} className="flex items-center gap-2 text-sm font-bold text-violet-600 dark:text-violet-400">
+                  <Link to={`/blog/slug/${featuredPost.slug}`} className="flex items-center gap-2 text-sm font-bold text-violet-600 dark:text-violet-400">
                     Read Article <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
                   </Link>
                 </div>
@@ -286,10 +220,15 @@ export default function BlogPage() {
           {/* Posts Grid */}
           <motion.div layout className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             <AnimatePresence mode="popLayout">
-              {filteredPosts.map((post, idx) => (
+              {loading ? (
+                [1, 2, 3, 4, 5, 6].map(i => (
+                  <div key={i} className="h-96 rounded-3xl bg-white dark:bg-neutral-900 animate-pulse border border-slate-100 dark:border-neutral-800" />
+                ))
+              ) : (
+                (activeCategory === 'All' && !searchQuery ? otherPosts : blogs).map((post, idx) => (
                 <motion.article
                   layout
-                  key={post.id}
+                  key={post._id}
                   initial={{ opacity: 0, y: 24 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95 }}
@@ -297,16 +236,16 @@ export default function BlogPage() {
                   className="group flex flex-col bg-white dark:bg-neutral-900 rounded-3xl overflow-hidden border border-slate-100 dark:border-neutral-800 hover:shadow-xl hover:shadow-violet-600/5 hover:-translate-y-1 transition-all duration-400 cursor-pointer"
                 >
                   <div className="relative h-56 overflow-hidden flex-shrink-0">
-                    <Link to={`/blog/${post.id}`}>
+                    <Link to={`/blog/slug/${post.slug}`}>
                       <img 
-                        src={post.image} 
+                        src={post.coverImage || 'https://images.unsplash.com/photo-1455390582262-044cdead277a?q=80&w=800&auto=format&fit=crop'} 
                         alt={post.title} 
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                       />
                     </Link>
                     <div className="absolute top-4 left-4">
                       <span className="px-3 py-1 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-sm text-violet-600 dark:text-violet-400 text-xs font-bold rounded-lg shadow-sm">
-                        {post.category}
+                        {post.tags[0] || 'English'}
                       </span>
                     </div>
                     <button className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-white hover:text-violet-600 transition-colors opacity-0 group-hover:opacity-100">
@@ -316,33 +255,35 @@ export default function BlogPage() {
 
                   <div className="p-6 flex flex-col flex-1">
                     <div className="flex items-center gap-4 text-xs font-bold text-slate-400 dark:text-neutral-500 mb-3">
-                      <div className="flex items-center gap-1.5"><CalendarBlank size={14} /> {post.date}</div>
+                      <div className="flex items-center gap-1.5"><CalendarBlank size={14} /> {new Date(post.publishedAt || post.createdAt).toLocaleDateString('en-GB')}</div>
                       <div className="w-1 h-1 rounded-full bg-slate-300 dark:bg-neutral-700" />
-                      <div className="flex items-center gap-1.5"><Clock size={14} /> {post.readTime}</div>
+                      <div className="flex items-center gap-1.5"><Clock size={14} /> 5 min read</div>
                     </div>
 
-                    <Link to={`/blog/${post.id}`}>
+                    <Link to={`/blog/slug/${post.slug}`}>
                       <h3 className="text-xl font-bold text-slate-900 dark:text-white leading-snug mb-3 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">
                         {post.title}
                       </h3>
                     </Link>
                     
-                    <p className="text-slate-500 dark:text-neutral-400 text-sm leading-relaxed mb-6 flex-1">
+                    <p className="text-slate-500 dark:text-neutral-400 text-sm leading-relaxed mb-6 flex-1 line-clamp-3">
                       {post.excerpt}
                     </p>
 
                     <div className="flex items-center gap-3 pt-5 border-t border-slate-50 dark:border-neutral-800/50 mt-auto">
-                      <img src={post.author.avatar} alt={post.author.name} className="w-8 h-8 rounded-full object-cover" />
+                      <div className="w-8 h-8 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center text-xs font-black text-violet-600 dark:text-violet-400">
+                        {post.author.name.charAt(0)}
+                      </div>
                       <span className="text-sm font-bold text-slate-700 dark:text-neutral-300">{post.author.name}</span>
                     </div>
                   </div>
                 </motion.article>
-              ))}
+              )))}
             </AnimatePresence>
           </motion.div>
 
           {/* Empty state */}
-          {filteredPosts.length === 0 && (
+          {!loading && blogs.length === 0 && (
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -363,7 +304,7 @@ export default function BlogPage() {
           )}
 
           {/* Pagination / Load More */}
-          {filteredPosts.length > 0 && (
+          {!loading && blogs.length > 0 && (
             <div className="mt-16 text-center">
               <motion.button 
                 whileHover={{ scale: 1.03 }}

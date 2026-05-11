@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
+import { useAuth } from '../context/AuthContext'
 import { ShieldCheck, Sparkle, Star } from '@phosphor-icons/react'
 import FormInput from '../components/auth/FormInput'
 import LoadingButton from '../components/auth/LoadingButton'
@@ -19,10 +20,13 @@ const itemVariants = {
 }
 
 export default function LoginPage() {
+  const navigate = useNavigate()
+  const location = useLocation()
+  const { login } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [remember, setRemember] = useState(false)
-  const [errors, setErrors] = useState({ email: '', password: '' })
+  const [errors, setErrors] = useState({ email: '', password: '', general: '' })
   const [isLoading, setIsLoading] = useState(false)
 
   const validateEmail = () => {
@@ -56,12 +60,29 @@ export default function LoginPage() {
     if (!emailValid || !passwordValid) return
 
     setIsLoading(true)
+    setErrors({ email: '', password: '', general: '' })
 
-    // Mock API call
-    setTimeout(() => {
+    try {
+      const result = await login({ email, password })
+      const from = (location.state as any)?.from?.pathname
+
+      // Redirect based on role
+      if (from && from !== '/login' && from !== '/signup') {
+        navigate(from, { replace: true })
+      } else {
+        const redirectMap: Record<string, string> = {
+          student: '/dashboard',
+          teacher: '/instructor',
+          admin: '/admin',
+        }
+        navigate(redirectMap[result.user.role] || '/', { replace: true })
+      }
+    } catch (error: any) {
+      const message = error?.response?.data?.error || error?.message || 'Login failed. Please try again.'
+      setErrors(prev => ({ ...prev, general: message }))
+    } finally {
       setIsLoading(false)
-      alert(`Logged in as ${email}`)
-    }, 1500)
+    }
   }
 
   const handleSocialLogin = (provider: 'google' | 'github') => {
@@ -184,6 +205,10 @@ export default function LoginPage() {
                 <LoadingButton type="submit" isLoading={isLoading} className="w-full">
                   {isLoading ? 'Signing in...' : 'Sign in'}
                 </LoadingButton>
+
+                {errors.general && (
+                  <p className="text-red-500 text-sm font-medium text-center bg-red-50 dark:bg-red-950/30 rounded-xl px-4 py-3">{errors.general}</p>
+                )}
               </form>
 
               <div className="mt-8 rounded-3xl bg-slate-50 p-5 text-sm text-slate-600 dark:bg-neutral-900/80 dark:text-neutral-300">

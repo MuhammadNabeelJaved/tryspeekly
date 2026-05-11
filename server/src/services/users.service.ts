@@ -107,6 +107,44 @@ export const usersService = {
   },
 
   /**
+   * Get all users with optional role filter and pagination (admin only)
+   */
+  async getAllUsers(filters: { role?: string; page?: number; limit?: number; search?: string }) {
+    const { role, page = 1, limit = 20, search } = filters;
+    const query: Record<string, any> = {};
+
+    if (role) query.role = role;
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } },
+      ];
+    }
+
+    const skip = (page - 1) * limit;
+
+    const [users, total] = await Promise.all([
+      User.find(query)
+        .select('name email role phone country photo bio isActive createdAt')
+        .skip(skip)
+        .limit(limit)
+        .sort({ createdAt: -1 })
+        .lean(),
+      User.countDocuments(query),
+    ]);
+
+    return {
+      data: users,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  },
+
+  /**
    * Delete user account (soft delete by setting isActive to false)
    */
   async deleteAccount(userId: string, password: string) {

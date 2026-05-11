@@ -297,6 +297,40 @@ export const paymentsService = {
   },
 
   /**
+   * Get all payments with filters (admin only)
+   */
+  async listAllPayments(filters: { status?: string; page?: number; limit?: number }) {
+    const { status, page = 1, limit = 20 } = filters;
+    const query: Record<string, any> = {};
+
+    if (status) query.status = status;
+
+    const skip = (page - 1) * limit;
+
+    const [payments, total] = await Promise.all([
+      Payment.find(query)
+        .populate('student', 'name email')
+        .populate('course', 'title')
+        .populate('teacher', 'name')
+        .skip(skip)
+        .limit(limit)
+        .sort({ createdAt: -1 })
+        .lean(),
+      Payment.countDocuments(query),
+    ]);
+
+    return {
+      data: payments,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  },
+
+  /**
    * Get teacher earnings (teacher only)
    * Calculates earnings with 80/20 split (teacher gets 80%)
    */

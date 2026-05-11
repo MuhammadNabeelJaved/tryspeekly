@@ -6,6 +6,7 @@ import coursesRoutes from './courses.routes';
 import enrollmentsRoutes from './enrollments.routes';
 import messagesRoutes from './messages.routes';
 import paymentsRoutes from './payments.routes';
+import blogRoutes from './blog.routes';
 
 const router = Router();
 
@@ -16,5 +17,6 @@ router.use('/courses', coursesRoutes);
 router.use('/enrollments', enrollmentsRoutes);
 router.use('/messages', messagesRoutes);
 router.use('/payments', paymentsRoutes);
+router.use('/blogs', blogRoutes);
 
 export default router;
