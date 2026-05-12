@@ -6,6 +6,7 @@ import {
   List, X, SignOut, Bell, Sun, Moon, Headset, Chats, CheckCircle
 } from '@phosphor-icons/react'
 import Loader from '@/components/Loader'
+import { useAuth } from '@/context/AuthContext'
 
 const InstructorOverview = lazy(() => import('./instructor/InstructorOverview'))
 const InstructorCourses = lazy(() => import('./instructor/InstructorCourses'))

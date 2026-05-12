@@ -4,7 +4,7 @@ import { CalendarBlank, CheckCircle, CreditCard, Clock, VideoCamera, HandWaving,
 import { useAuth } from '../../context/AuthContext'
 import { enrollmentsService } from '../../services/enrollments.service'
 import { paymentsService } from '../../services/payments.service'
-import { MOCK_STUDENT as FALLBACK_STUDENT, MOCK_ENROLLED_COURSES as FALLBACK_ENROLLED_COURSES, MOCK_PAYMENTS as FALLBACK_PAYMENTS, MOCK_ANNOUNCEMENTS, MOCK_ASSIGNMENTS as FALLBACK_ASSIGNMENTS } from './studentData'
+import { MOCK_STUDENT, MOCK_ENROLLED_COURSES, MOCK_PAYMENTS, MOCK_ANNOUNCEMENTS, MOCK_ASSIGNMENTS } from './studentData'
 import type { StudentView } from '../StudentDashboardPage'
 import type { EnrolledCourse, PaymentRecord } from './studentData'
 import type { Enrollment, Payment } from '../../types/api'
