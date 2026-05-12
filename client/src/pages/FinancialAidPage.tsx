@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { motion } from 'framer-motion'
 import { Heart, Handshake, VideoCamera, CheckCircle, WarningCircle, CaretRight, ShieldCheck, GraduationCap, Question, CaretDown, Star, Certificate, Target } from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
+import PhoneInput from '@/components/auth/PhoneInput'
 
 export default function FinancialAidPage() {
-  const { register, handleSubmit, formState: { errors }, reset } = useForm({
+  const { register, handleSubmit, control, formState: { errors }, reset } = useForm({
     defaultValues: { name: '', email: '', phone: '', reason: '', agree: false }
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -221,15 +222,20 @@ export default function FinancialAidPage() {
                     </div>
 
                     <div>
-                      <label htmlFor="phone" className="block text-sm font-bold text-slate-700 dark:text-neutral-300 mb-2">WhatsApp Number <span className="text-rose-500">*</span></label>
-                      <input 
-                        type="tel" 
-                        id="phone" 
-                        {...register('phone', { required: 'Phone number is required' })}
-                        className="w-full bg-slate-50 dark:bg-neutral-950 border border-slate-200 dark:border-neutral-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent dark:text-white transition-shadow"
-                        placeholder="+1 234 567 890"
+                      <label className="block text-sm font-bold text-slate-700 dark:text-neutral-300 mb-2">WhatsApp Number <span className="text-rose-500">*</span></label>
+                      <Controller
+                        name="phone"
+                        control={control}
+                        rules={{ required: 'Phone number is required' }}
+                        render={({ field }) => (
+                          <PhoneInput
+                            {...field}
+                            placeholder="Enter phone number"
+                            error={errors.phone?.message as string}
+                          />
+                        )}
                       />
-                      {errors.phone ? <p className="text-xs text-red-500 mt-1">{errors.phone.message as string}</p> : <p className="text-xs text-slate-500 mt-2">Required for scheduling the verification call.</p>}
+                      {!errors.phone && <p className="text-xs text-slate-500 mt-2">Required for scheduling the verification call.</p>}
                     </div>
 
                     <div>

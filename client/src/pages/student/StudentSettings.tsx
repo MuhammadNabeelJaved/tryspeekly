@@ -1,8 +1,9 @@
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { MOCK_STUDENT } from './studentData'
+import PhoneInput from '@/components/auth/PhoneInput'
 
 export default function StudentSettings() {
-  const { register, handleSubmit } = useForm({
+  const { register, handleSubmit, control } = useForm({
     defaultValues: {
       name: MOCK_STUDENT.name,
       email: MOCK_STUDENT.email,
@@ -14,7 +15,7 @@ export default function StudentSettings() {
 
   function onSubmit(data: any) {
     alert('Profile updated successfully! (Mock)')
-    console.log(data)
+    console.log('Updated data:', data)
   }
 
   return (
@@ -57,10 +58,16 @@ export default function StudentSettings() {
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-500 dark:text-neutral-400 uppercase tracking-wide mb-1.5">Phone Number</label>
-              <input 
-                {...register('phone')}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-slate-900 dark:text-white text-sm outline-none focus:border-violet-500 transition-colors"
+              <Controller
+                name="phone"
+                control={control}
+                render={({ field }) => (
+                  <PhoneInput
+                    {...field}
+                    label="Phone Number"
+                    placeholder="Enter phone number"
+                  />
+                )}
               />
             </div>
             <div>

@@ -167,6 +167,11 @@ export default function AdminPage() {
   const location = useLocation()
   const { isAuthenticated, user, logout } = useAuth()
   const isAdmin = isAuthenticated && user?.role === 'admin'
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(() => {
+    // Dev mode: auto-authenticate
+    if (import.meta.env.DEV) return true
+    return localStorage.getItem('admin_auth') === 'true'
+  })
   const notifRef = useRef(null);
   const [showNotifications, setShowNotifications] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -225,11 +230,22 @@ export default function AdminPage() {
   useEffect(() => { localStorage.setItem('admin_cms', JSON.stringify(cmsPages)) }, [cmsPages])
   useEffect(() => { localStorage.setItem('admin_financial_aid', JSON.stringify(financialAidApps)) }, [financialAidApps])
 
+  // Force admin auth in dev mode
+  useEffect(() => {
+    if (import.meta.env.DEV) {
+      setIsAdminAuthenticated(true)
+      localStorage.setItem('admin_auth', 'true')
+    }
+  }, [])
+
   function handleLogin() {
-    navigate('/login')
+    setIsAdminAuthenticated(true)
+    localStorage.setItem('admin_auth', 'true')
   }
 
   function handleLogout() {
+    setIsAdminAuthenticated(false)
+    localStorage.removeItem('admin_auth')
     logout()
     navigate('/')
   }
@@ -239,10 +255,15 @@ export default function AdminPage() {
     setDarkMode(d => !d)
   }
 
-  if (!isAdmin) {
+  if (!isAdmin && !import.meta.env.DEV) {
     // Redirect to login if not authenticated at all, or redirect to their own dashboard
-    if (!isAuthenticated) return <LoginScreen onLogin={handleLogin} />
+    if (!isAdminAuthenticated) return <LoginScreen onLogin={handleLogin} />
     return <Navigate to="/" replace />
+  }
+
+  // In dev mode, bypass auth check but still show login screen for visual
+  if (import.meta.env.DEV && !isAdminAuthenticated) {
+    return <LoginScreen onLogin={handleLogin} />
   }
 
   const paymentAlerts = students.filter(s => s.paymentStatus === 'pending' || s.paymentStatus === 'failed').length
