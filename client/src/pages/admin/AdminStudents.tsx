@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, MagnifyingGlass, PencilSimple, Trash, X, Check, Eye, FunnelSimple, Handshake, Certificate } from '@phosphor-icons/react'
 import type { AdminStore } from '../AdminPage'
 import type { Student } from './adminData'
+import { axiosClient } from '../../lib/axiosClient'
 
 const EMPTY: Student = {
   id: '', name: '', email: '', phone: '', country: '', city: '',
@@ -59,6 +60,40 @@ function Select({ register, name, options }: { register: any; name: string; opti
 export default function AdminStudents({ store }: { store: AdminStore }) {
   const { students, setStudents } = store
 
+  const [apiStudents, setApiStudents] = useState<Student[] | null>(null)
+
+  useEffect(() => {
+    async function fetchStudents() {
+      try {
+        const res = await axiosClient.get('/users', { params: { role: 'student', limit: 200 } })
+        const users: any[] = res.data?.data ?? []
+        const mapped: Student[] = users.map((u: any, idx: number) => ({
+          id: u._id ?? u.id ?? `api-s${idx}`,
+          name: u.name ?? '',
+          email: u.email ?? '',
+          phone: u.phone ?? '',
+          country: u.country ?? '',
+          city: '',
+          courseId: '',
+          courseName: '',
+          courseLevel: '',
+          paymentMethod: '',
+          paymentAmount: 0,
+          paymentCurrency: 'PKR',
+          paymentStatus: 'paid' as const,
+          enrolledAt: u.createdAt?.split('T')[0] ?? '',
+          status: 'active' as const,
+          notes: '',
+          avatar: (u.name ?? '').split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2),
+        }))
+        setApiStudents(mapped)
+      } catch {
+        // Fallback to store data
+      }
+    }
+    fetchStudents()
+  }, [])
+
   const [search, setSearch] = useState('')
   const [filterCountry, setFilterCountry] = useState('All')
   const [filterPayStatus, setFilterPayStatus] = useState('All')
@@ -72,8 +107,9 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
     defaultValues: EMPTY
   })
 
-  const countries = ['All', ...Array.from(new Set(students.map(s => s.country))).sort()]
-  const filtered = students.filter(s => {
+  const displayStudents = apiStudents ?? students
+  const countries = ['All', ...Array.from(new Set(displayStudents.map(s => s.country))).sort()]
+  const filtered = displayStudents.filter(s => {
     const q = search.toLowerCase()
     const matchSearch = !q || s.name.toLowerCase().includes(q) || s.email.toLowerCase().includes(q) || s.country.toLowerCase().includes(q) || s.courseName.toLowerCase().includes(q)
     const matchCountry = filterCountry === 'All' || s.country === filterCountry

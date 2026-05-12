@@ -1,7 +1,10 @@
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Users, BookOpen, CreditCard, TrendUp, Globe, ChartPieSlice, ArrowRight, Student, Handshake } from '@phosphor-icons/react'
 import type { AdminStore } from '../AdminPage'
 import type { AdminView } from '../AdminPage'
+import { axiosClient } from '../../lib/axiosClient'
+import { coursesService } from '../../services/courses.service'
 
 const FLAG_MAP: Record<string, string> = {
   'Pakistan': '🇵🇰',
@@ -34,6 +37,32 @@ const card = { initial: { opacity: 0, y: 16 }, animate: { opacity: 1, y: 0 } }
 
 export default function AdminOverview({ store, onNavigate }: { store: AdminStore; onNavigate: (v: AdminView) => void }) {
   const { students, instructors, courses, financialAidApps } = store
+
+  const [apiStudentCount, setApiStudentCount] = useState<number | null>(null)
+  const [apiCourseCount, setApiCourseCount] = useState<number | null>(null)
+  const [apiInstructorCount, setApiInstructorCount] = useState<number | null>(null)
+
+  useEffect(() => {
+    async function fetchStats() {
+      try {
+        const [usersRes, coursesRes] = await Promise.all([
+          axiosClient.get('/users'),
+          coursesService.getAllCourses(),
+        ])
+        const users = usersRes.data?.data
+        if (Array.isArray(users)) {
+          setApiStudentCount(users.filter((u: any) => u.role === 'student').length)
+          setApiInstructorCount(users.filter((u: any) => u.role === 'teacher').length)
+        }
+        if (coursesRes.success && Array.isArray(coursesRes.data)) {
+          setApiCourseCount(coursesRes.data.length)
+        }
+      } catch {
+        // Fallback to store data
+      }
+    }
+    fetchStats()
+  }, [])
   const now = new Date()
 
   const totalRevenuePKR = students
@@ -64,7 +93,7 @@ export default function AdminOverview({ store, onNavigate }: { store: AdminStore
   const statCards = [
     {
       label: 'Total Students',
-      value: students.length,
+      value: apiStudentCount ?? students.length,
       sub: `${activeStudents} active`,
       Icon: Users,
       variant: 'gradient' as const,
@@ -75,7 +104,7 @@ export default function AdminOverview({ store, onNavigate }: { store: AdminStore
     },
     {
       label: 'Total Courses',
-      value: courses.filter(c => c.status === 'active').length,
+      value: apiCourseCount ?? courses.filter(c => c.status === 'active').length,
       sub: `${courses.length} total`,
       Icon: BookOpen,
       variant: 'normal' as const,
@@ -86,7 +115,7 @@ export default function AdminOverview({ store, onNavigate }: { store: AdminStore
     },
     {
       label: 'Instructors',
-      value: instructors.length,
+      value: apiInstructorCount ?? instructors.length,
       sub: `${instructors.filter(i => i.status === 'active').length} active`,
       Icon: Student,
       variant: 'normal' as const,

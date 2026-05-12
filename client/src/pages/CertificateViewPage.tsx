@@ -1,12 +1,64 @@
+import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { ArrowLeft, CheckCircle, Certificate } from '@phosphor-icons/react'
+import { useAuth } from '../context/AuthContext'
+import { enrollmentsService } from '../services/enrollments.service'
 import { MOCK_ENROLLED_COURSES, MOCK_STUDENT } from './student/studentData'
+
+interface CertificateCourse {
+  title: string
+  level: string
+  instructorName: string
+  certificateId: string
+  issueDate: string
+}
 
 export default function CertificateViewPage() {
   const { id } = useParams()
-  
-  // In a real application, this would be an API call fetching certificate details by ID
-  const course = MOCK_ENROLLED_COURSES.find(c => c.certificateId === id)
+  const { user } = useAuth()
+  const [course, setCourse] = useState<CertificateCourse | undefined>(undefined)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!id) {
+      // Fallback: show first completed mock course
+      setCourse(MOCK_ENROLLED_COURSES.find(c => c.certificateId))
+      setLoading(false)
+      return
+    }
+
+    // Try fetching real enrollment data
+    enrollmentsService
+      .getEnrollmentById(id)
+      .then((res) => {
+        const enrollment = res.data
+        // Cast for optional server fields not in the strict type
+        const eAny = enrollment as any
+        setCourse({
+          title: enrollment.course.title,
+          level: eAny.course?.level ?? 'Beginner',
+          instructorName: enrollment.teacher.name,
+          certificateId: id,
+          issueDate: enrollment.createdAt,
+        })
+      })
+      .catch(() => {
+        // Fallback to mock data
+        const mock = MOCK_ENROLLED_COURSES.find(c => c.certificateId === id) ?? MOCK_ENROLLED_COURSES.find(c => c.certificateId)
+        setCourse(mock)
+      })
+      .finally(() => setLoading(false))
+  }, [id])
+
+  const studentName = user?.name ?? MOCK_STUDENT.name
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4 text-center">
+        <div className="w-10 h-10 border-4 border-violet-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
+  }
 
   if (!course) {
     return (
@@ -54,7 +106,7 @@ export default function CertificateViewPage() {
               <p className="text-slate-500 text-sm sm:text-base mb-4 font-medium">This is proudly presented to</p>
               
               <p className="text-[#7c3aed] text-3xl sm:text-4xl font-serif font-bold italic mb-6 border-b-2 border-slate-200 pb-2 px-8 inline-block">
-                {MOCK_STUDENT.name}
+                {studentName}
               </p>
               
               <p className="text-slate-500 text-sm sm:text-base mb-4 font-medium">for successfully completing the course</p>
@@ -88,7 +140,7 @@ export default function CertificateViewPage() {
             <div className="p-5 space-y-4 text-sm">
               <div>
                 <p className="text-xs text-slate-500 font-bold uppercase tracking-wide mb-1">Recipient</p>
-                <p className="font-bold text-slate-900">{MOCK_STUDENT.name}</p>
+                <p className="font-bold text-slate-900">{studentName}</p>
               </div>
               <div>
                 <p className="text-xs text-slate-500 font-bold uppercase tracking-wide mb-1">Issue Date</p>

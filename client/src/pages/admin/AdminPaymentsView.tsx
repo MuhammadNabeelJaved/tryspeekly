@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { CreditCard, CheckCircle, WarningCircle, XCircle, MagnifyingGlass, FunnelSimple } from '@phosphor-icons/react'
 import type { AdminStore } from '../AdminPage'
+import { axiosClient } from '../../lib/axiosClient'
 
 export default function AdminPaymentsView({ store }: { store: AdminStore }) {
   const { students, setStudents } = store
@@ -9,9 +10,46 @@ export default function AdminPaymentsView({ store }: { store: AdminStore }) {
   const [filterStatus, setFilterStatus] = useState('All')
   const [filterMethod, setFilterMethod] = useState('All')
 
-  const allMethods = ['All', ...Array.from(new Set(students.map(s => s.paymentMethod))).sort()]
+  // Try to fetch real payments; fallback to students from store
+  const [apiPayments, setApiPayments] = useState<typeof students | null>(null)
 
-  const filtered = students.filter(s => {
+  useEffect(() => {
+    async function fetchPayments() {
+      try {
+        const res = await axiosClient.get('/payments/all', { params: { limit: 200 } })
+        const payments: any[] = res.data?.data ?? []
+        const mapped: typeof students = payments.map((p: any, idx: number) => ({
+          id: p._id ?? p.id ?? `api-p${idx}`,
+          name: p.student?.name ?? 'Unknown',
+          email: p.student?.email ?? '',
+          phone: '',
+          country: '',
+          city: '',
+          courseId: p.course?._id ?? '',
+          courseName: p.course?.title ?? '',
+          courseLevel: '',
+          paymentMethod: p.method ?? '',
+          paymentAmount: p.amount ?? 0,
+          paymentCurrency: p.currency ?? 'PKR',
+          paymentStatus: (p.status === 'approved' ? 'paid' : p.status === 'rejected' ? 'failed' : 'pending') as 'paid' | 'pending' | 'failed',
+          enrolledAt: p.createdAt?.split('T')[0] ?? '',
+          status: 'active' as const,
+          notes: p.adminNote ?? '',
+          avatar: (p.student?.name ?? '').split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2) || '?',
+        }))
+        setApiPayments(mapped)
+      } catch {
+        // Fallback to store data
+      }
+    }
+    fetchPayments()
+  }, [])
+
+  const displayPayments = apiPayments ?? students
+
+  const allMethods = ['All', ...Array.from(new Set(displayPayments.map(s => s.paymentMethod))).sort()]
+
+  const filtered = displayPayments.filter(s => {
     const q = search.toLowerCase()
     const mQ = !q || s.name.toLowerCase().includes(q) || s.email.toLowerCase().includes(q) || s.paymentMethod.toLowerCase().includes(q)
     const mS = filterStatus === 'All' || s.paymentStatus === filterStatus
@@ -19,11 +57,11 @@ export default function AdminPaymentsView({ store }: { store: AdminStore }) {
     return mQ && mS && mM
   })
 
-  const totalPKR = students.filter(s => s.paymentStatus === 'paid' && s.paymentCurrency === 'PKR').reduce((a, s) => a + s.paymentAmount, 0)
-  const totalUSD = students.filter(s => s.paymentStatus === 'paid' && s.paymentCurrency !== 'PKR').reduce((a, s) => a + s.paymentAmount, 0)
-  const paidCount = students.filter(s => s.paymentStatus === 'paid').length
-  const pendingCount = students.filter(s => s.paymentStatus === 'pending').length
-  const failedCount = students.filter(s => s.paymentStatus === 'failed').length
+  const totalPKR = displayPayments.filter(s => s.paymentStatus === 'paid' && s.paymentCurrency === 'PKR').reduce((a, s) => a + s.paymentAmount, 0)
+  const totalUSD = displayPayments.filter(s => s.paymentStatus === 'paid' && s.paymentCurrency !== 'PKR').reduce((a, s) => a + s.paymentAmount, 0)
+  const paidCount = displayPayments.filter(s => s.paymentStatus === 'paid').length
+  const pendingCount = displayPayments.filter(s => s.paymentStatus === 'pending').length
+  const failedCount = displayPayments.filter(s => s.paymentStatus === 'failed').length
 
   function updateStatus(id: string, status: 'paid' | 'pending' | 'failed') {
     setStudents(students.map(s => s.id === id ? { ...s, paymentStatus: status } : s))

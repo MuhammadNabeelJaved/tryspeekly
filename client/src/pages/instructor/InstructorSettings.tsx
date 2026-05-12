@@ -1,17 +1,21 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { useAuth } from '../../context/AuthContext'
+import { usersService } from '../../services/users.service'
 import { User, Lock, Bell, PlugsConnected, Globe, DeviceMobile, ShieldCheck, VideoCamera, Calendar, MagnifyingGlass, X } from '@phosphor-icons/react'
-import { MOCK_INSTRUCTOR } from './instructorData'
+import { MOCK_INSTRUCTOR as FALLBACK_INSTRUCTOR } from './instructorData'
 
 export default function InstructorSettings() {
+  const { user } = useAuth()
   const [activeTab, setActiveTab] = useState('profile')
   const [settingsSearch, setSettingsSearch] = useState('')
-  
+  const [saving, setSaving] = useState(false)
+
   // Notification Toggle States
   const [notifyEnrollments, setNotifyEnrollments] = useState(true)
   const [notifyAssignments, setNotifyAssignments] = useState(true)
   const [notifyMessages, setNotifyMessages] = useState(false)
-  
+
   const tabs = [
     { id: 'profile', label: 'Profile Details', icon: User },
     { id: 'security', label: 'Security & Login', icon: Lock },
@@ -19,23 +23,36 @@ export default function InstructorSettings() {
     { id: 'integrations', label: 'Integrations', icon: PlugsConnected },
   ]
 
-  const filteredTabs = tabs.filter(tab => 
+  const filteredTabs = tabs.filter(tab =>
     tab.label.toLowerCase().includes(settingsSearch.toLowerCase())
   )
 
-  const { register, handleSubmit } = useForm({
+  const defaultName = user?.name || FALLBACK_INSTRUCTOR.name
+  const defaultEmail = user?.email || FALLBACK_INSTRUCTOR.email
+
+  const { register, handleSubmit, reset: resetForm } = useForm({
     defaultValues: {
-      name: MOCK_INSTRUCTOR.name,
-      email: MOCK_INSTRUCTOR.email,
-      phone: '+1 (555) 123-4567',
+      name: defaultName,
+      email: defaultEmail,
+      phone: user?.phone || '+1 (555) 123-4567',
       timezone: 'America/New_York',
-      bio: 'I am a certified IELTS examiner with over 10 years of experience teaching English to professionals and students worldwide.',
+      bio: user?.bio || 'I am a certified IELTS examiner with over 10 years of experience teaching English to professionals and students worldwide.',
     }
   })
 
-  const onSubmit = (data: any) => {
-    console.log('Saved settings:', data)
-    alert('Settings saved successfully!')
+  const onSubmit = async (data: any) => {
+    setSaving(true)
+    try {
+      await usersService.updateProfile({
+        name: data.name,
+        phone: data.phone,
+        bio: data.bio,
+      })
+      alert('Settings saved successfully!')
+    } catch {
+      alert('Failed to save settings. Please try again.')
+    }
+    setSaving(false)
   }
 
   return (
@@ -171,14 +188,36 @@ export default function InstructorSettings() {
                 <div className="p-6 space-y-4">
                   <div>
                     <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-neutral-400 mb-2">Current Password</label>
-                    <input type="password" placeholder="••••••••" className="w-full max-w-md px-4 py-3 bg-slate-50 dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 rounded-xl text-sm focus:outline-none focus:border-blue-500" />
+                    <input
+                      id="currentPassword"
+                      type="password" placeholder="••••••••"
+                      className="w-full max-w-md px-4 py-3 bg-slate-50 dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 rounded-xl text-sm focus:outline-none focus:border-blue-500"
+                    />
                   </div>
                   <div>
                     <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-neutral-400 mb-2">New Password</label>
-                    <input type="password" placeholder="••••••••" className="w-full max-w-md px-4 py-3 bg-slate-50 dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 rounded-xl text-sm focus:outline-none focus:border-blue-500" />
+                    <input
+                      id="newPassword"
+                      type="password" placeholder="••••••••"
+                      className="w-full max-w-md px-4 py-3 bg-slate-50 dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 rounded-xl text-sm focus:outline-none focus:border-blue-500"
+                    />
                   </div>
                   <div className="pt-2">
-                    <button className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-slate-800 dark:hover:bg-slate-200 transition-colors w-full sm:w-auto text-center">
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const current = (document.getElementById('currentPassword') as HTMLInputElement)?.value
+                        const next = (document.getElementById('newPassword') as HTMLInputElement)?.value
+                        if (!current || !next) { alert('Please fill in both password fields.'); return }
+                        try {
+                          await usersService.changePassword({ currentPassword: current, newPassword: next })
+                          alert('Password updated successfully!')
+                          ;(document.getElementById('currentPassword') as HTMLInputElement).value = ''
+                          ;(document.getElementById('newPassword') as HTMLInputElement).value = ''
+                        } catch { alert('Failed to update password. Please check your current password.') }
+                      }}
+                      className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-slate-800 dark:hover:bg-slate-200 transition-colors w-full sm:w-auto text-center"
+                    >
                       Update Password
                     </button>
                   </div>

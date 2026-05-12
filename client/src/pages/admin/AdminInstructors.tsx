@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, PencilSimple, Trash, X, Check, Star, Eye } from '@phosphor-icons/react'
 import type { AdminStore } from '../AdminPage'
 import type { Instructor } from './adminData'
+import { axiosClient } from '../../lib/axiosClient'
 
 const EMPTY: Instructor = {
   id: '', name: '', email: '', phone: '', country: '', specialization: '',
@@ -39,6 +40,41 @@ function Input({ register, name, type = 'text', placeholder, valueAsNumber, step
 
 export default function AdminInstructors({ store }: { store: AdminStore }) {
   const { instructors, setInstructors } = store
+
+  const [apiInstructors, setApiInstructors] = useState<Instructor[] | null>(null)
+
+  useEffect(() => {
+    async function fetchInstructors() {
+      try {
+        const res = await axiosClient.get('/users', { params: { role: 'teacher', limit: 200 } })
+        const users: any[] = res.data?.data ?? []
+        const mapped: Instructor[] = users.map((u: any, idx: number) => ({
+          id: u._id ?? u.id ?? `api-i${idx}`,
+          name: u.name ?? '',
+          email: u.email ?? '',
+          phone: u.phone ?? '',
+          country: u.country ?? '',
+          specialization: '',
+          experience: '',
+          courses: [],
+          totalStudents: 0,
+          rating: 5.0,
+          status: 'active' as const,
+          bio: u.bio ?? '',
+          joinedAt: u.createdAt?.split('T')[0] ?? '',
+          avatar: (u.name ?? '').split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2),
+          salary: 0,
+        }))
+        setApiInstructors(mapped)
+      } catch {
+        // Fallback to store data
+      }
+    }
+    fetchInstructors()
+  }, [])
+
+  const displayInstructors = apiInstructors ?? instructors
+
   const [modalType, setModalType] = useState<'add' | 'edit' | 'view' | null>(null)
   const [viewInst, setViewInst] = useState<Instructor | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
@@ -48,7 +84,7 @@ export default function AdminInstructors({ store }: { store: AdminStore }) {
     defaultValues: { ...EMPTY, coursesInput: '' }
   })
 
-  const filtered = instructors.filter(i => {
+  const filtered = displayInstructors.filter(i => {
     const q = search.toLowerCase()
     return !q || i.name.toLowerCase().includes(q) || i.specialization.toLowerCase().includes(q) || i.email.toLowerCase().includes(q)
   })
@@ -96,7 +132,7 @@ export default function AdminInstructors({ store }: { store: AdminStore }) {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
         <div className="flex-1">
-          <h2 className="text-lg font-black text-slate-900 dark:text-white">Instructors <span className="text-slate-400 dark:text-neutral-500 font-medium text-base">({instructors.length})</span></h2>
+          <h2 className="text-lg font-black text-slate-900 dark:text-white">Instructors <span className="text-slate-400 dark:text-neutral-500 font-medium text-base">({displayInstructors.length})</span></h2>
           <p className="text-xs text-slate-400 dark:text-neutral-500 mt-0.5">Manage teaching staff and their courses</p>
         </div>
         <button onClick={openAdd} className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-sm font-bold shadow-[0_4px_12px_rgba(124,58,237,0.3)] transition-colors">

@@ -1,17 +1,56 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { INSTRUCTOR_STUDENTS } from './instructorData'
+import { coursesService } from '../../services/courses.service'
+import { INSTRUCTOR_STUDENTS as FALLBACK_STUDENTS } from './instructorData'
 import { MagnifyingGlass, Check, X, CalendarBlank, ChartBar, Star, BookOpen, UserMinus, Clock, ChatCircleText } from '@phosphor-icons/react'
 
-type Student = typeof INSTRUCTOR_STUDENTS[0] & { todayStatus?: 'present' | 'absent' | 'late' }
+type FallbackStudent = typeof FALLBACK_STUDENTS[0]
+type Student = FallbackStudent & { todayStatus?: 'present' | 'absent' | 'late' }
 
 export default function InstructorStudents() {
-  const [students, setStudents] = useState<Student[]>(INSTRUCTOR_STUDENTS)
+  const [students, setStudents] = useState<Student[]>(FALLBACK_STUDENTS)
   const [searchQuery, setSearchQuery] = useState('')
   const [courseFilter, setCourseFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
   const [sortBy, setSortBy] = useState('name-asc')
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null)
+
+  useEffect(() => {
+    const fetchStudents = async () => {
+      try {
+        const coursesRes = await coursesService.getTeacherCourses()
+        if (coursesRes.success && coursesRes.data.length > 0) {
+          const allStudents: Student[] = []
+          for (const c of coursesRes.data) {
+            try {
+              const studentsRes = await coursesService.getCourseStudents(c._id)
+              if (studentsRes.success && studentsRes.data.length > 0) {
+                studentsRes.data.forEach((s: any) => {
+                  allStudents.push({
+                    id: s._id || s.id || `s_${Math.random()}`,
+                    name: s.name || s.email || 'Unknown',
+                    course: c.title,
+                    status: 'good',
+                    attendance: s.progress?.sessionsAttended && s.progress?.totalSessions
+                      ? Math.round((s.progress.sessionsAttended / s.progress.totalSessions) * 100)
+                      : 0,
+                    attendedClasses: s.progress?.sessionsAttended || 0,
+                    totalClasses: s.progress?.totalSessions || 0,
+                  })
+                })
+              }
+            } catch {
+              // skip course if fetch fails
+            }
+          }
+          if (allStudents.length > 0) setStudents(allStudents)
+        }
+      } catch {
+        // fallback to default (FALLBACK_STUDENTS already set)
+      }
+    }
+    fetchStudents()
+  }, [])
 
   const updateAttendance = (studentId: string, status: 'present' | 'absent' | 'late' | null) => {
 

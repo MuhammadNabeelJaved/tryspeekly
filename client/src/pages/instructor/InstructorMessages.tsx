@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
+import { messagesService } from '../../services/messages.service'
 import { MagnifyingGlass, PaperPlaneRight, DotsThreeVertical, CaretLeft, CheckCircle } from '@phosphor-icons/react'
+import type { Conversation } from '../../types/api'
 
 type Message = {
   id: string
@@ -19,7 +21,7 @@ type Chat = {
   messages: Message[]
 }
 
-const MOCK_CHATS: Chat[] = [
+const FALLBACK_CHATS: Chat[] = [
   {
     id: 's1',
     studentName: 'Ali Khan',
@@ -68,36 +70,94 @@ const MOCK_CHATS: Chat[] = [
   }
 ]
 
+function conversationToChat(conv: Conversation): Chat {
+  return {
+    id: conv.user._id,
+    studentName: conv.user.name,
+    courseName: conv.user.role === 'admin' ? 'Support' : 'Student',
+    avatar: conv.user.name.charAt(0).toUpperCase(),
+    isOnline: false,
+    unreadCount: conv.unreadCount,
+    messages: conv.lastMessage
+      ? [{
+          id: 'last',
+          senderId: conv.user._id,
+          text: conv.lastMessage.content,
+          time: conv.lastMessage.createdAt
+            ? new Date(conv.lastMessage.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            : '',
+          isRead: conv.lastMessage.isRead,
+        }]
+      : [],
+  }
+}
+
 export default function InstructorMessages() {
-  const [chats, setChats] = useState<Chat[]>(MOCK_CHATS)
+  const [chats, setChats] = useState<Chat[]>(FALLBACK_CHATS)
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [inputMessage, setInputMessage] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
+  // Fetch conversations on mount
+  useEffect(() => {
+    const fetchConversations = async () => {
+      try {
+        const res = await messagesService.getConversations()
+        if (res.success && res.data.length > 0) {
+          setChats(res.data.map(conversationToChat))
+        }
+      } catch {
+        // fallback to mock data
+      }
+    }
+    fetchConversations()
+  }, [])
+
+  // Fetch full messages when a conversation is selected
+  useEffect(() => {
+    if (!selectedChatId) return
+    const fetchMessages = async () => {
+      try {
+        const res = await messagesService.getConversation(selectedChatId)
+        if (res.success && res.data.length > 0) {
+          setChats(prev => prev.map(chat => {
+            if (chat.id === selectedChatId) {
+              return {
+                ...chat,
+                messages: res.data.map((m: any) => ({
+                  id: m._id,
+                  senderId: m.sender?._id === selectedChatId ? selectedChatId : 'instructor',
+                  text: m.content,
+                  time: new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                  isRead: m.isRead,
+                })),
+                unreadCount: 0,
+              }
+            }
+            return chat
+          }))
+        }
+      } catch {
+        // fallback to existing messages
+      }
+    }
+    fetchMessages()
+  }, [selectedChatId])
+
   const selectedChat = chats.find(c => c.id === selectedChatId)
 
-  // Scroll to bottom when a chat is selected or new message is added
+  // Scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'auto' })
-    
-    // Mark messages as read when opening a chat
-    if (selectedChatId) {
-      setChats(prevChats => prevChats.map(chat => {
-        if (chat.id === selectedChatId && chat.unreadCount > 0) {
-          return { ...chat, unreadCount: 0 }
-        }
-        return chat
-      }))
-    }
-  }, [selectedChatId, chats[chats.findIndex(c => c.id === selectedChatId)]?.messages.length])
+  }, [chats])
 
-  const filteredChats = chats.filter(chat => 
+  const filteredChats = chats.filter(chat =>
     chat.studentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
     chat.courseName.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!inputMessage.trim() || !selectedChatId) return
 
@@ -109,13 +169,20 @@ export default function InstructorMessages() {
       isRead: true
     }
 
+    // Try API first
+    try {
+      await messagesService.sendMessage({ receiverId: selectedChatId, content: inputMessage })
+    } catch {
+      // Fallback: just update locally
+    }
+
     setChats(prevChats => prevChats.map(chat => {
       if (chat.id === selectedChatId) {
         return { ...chat, messages: [...chat.messages, newMessage] }
       }
       return chat
     }))
-    
+
     setInputMessage('')
   }
 

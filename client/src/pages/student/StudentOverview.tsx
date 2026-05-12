@@ -1,8 +1,13 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { CalendarBlank, CheckCircle, CreditCard, Clock, VideoCamera, HandWaving, Megaphone, ClipboardText, ChartLineUp, Certificate, ArrowRight } from '@phosphor-icons/react'
-import { MOCK_STUDENT, MOCK_ENROLLED_COURSES, MOCK_PAYMENTS, MOCK_ANNOUNCEMENTS, MOCK_ASSIGNMENTS } from './studentData'
+import { useAuth } from '../../context/AuthContext'
+import { enrollmentsService } from '../../services/enrollments.service'
+import { paymentsService } from '../../services/payments.service'
+import { MOCK_STUDENT as FALLBACK_STUDENT, MOCK_ENROLLED_COURSES as FALLBACK_ENROLLED_COURSES, MOCK_PAYMENTS as FALLBACK_PAYMENTS, MOCK_ANNOUNCEMENTS, MOCK_ASSIGNMENTS as FALLBACK_ASSIGNMENTS } from './studentData'
 import type { StudentView } from '../StudentDashboardPage'
+import type { EnrolledCourse, PaymentRecord } from './studentData'
+import type { Enrollment, Payment } from '../../types/api'
 import StudentAssignmentModal from './StudentAssignmentModal'
 
 export default function StudentOverview({ onNavigate }: { onNavigate: (view: StudentView) => void }) {

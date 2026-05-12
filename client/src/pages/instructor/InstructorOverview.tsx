@@ -1,43 +1,84 @@
-import { useState } from 'react'
-import { MOCK_INSTRUCTOR, INSTRUCTOR_COURSES, RECENT_ASSIGNMENTS } from './instructorData'
+import { useState, useEffect } from 'react'
+import { useAuth } from '../../context/AuthContext'
+import { coursesService } from '../../services/courses.service'
+import { paymentsService } from '../../services/payments.service'
+import { MOCK_INSTRUCTOR as FALLBACK_INSTRUCTOR, INSTRUCTOR_COURSES as FALLBACK_COURSES, RECENT_ASSIGNMENTS as FALLBACK_ASSIGNMENTS } from './instructorData'
 import { BookOpen, Users, Star, CurrencyDollar, ArrowRight, MagnifyingGlass, X } from '@phosphor-icons/react'
 import type { InstructorView } from '../InstructorDashboardPage'
 
 export default function InstructorOverview({ onNavigate }: { onNavigate: (view: InstructorView) => void }) {
+  const { user } = useAuth()
   const [searchTerm, setSearchTerm] = useState('')
-  
-  const activeCourses = INSTRUCTOR_COURSES.filter(c => 
-    c.status === 'active' && 
-    (c.title.toLowerCase().includes(searchTerm.toLowerCase()))
+  const [instructor, setInstructor] = useState(FALLBACK_INSTRUCTOR)
+  const [courses, setCourses] = useState(FALLBACK_COURSES)
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [coursesRes, earningsRes] = await Promise.allSettled([
+          coursesService.getTeacherCourses(),
+          paymentsService.getEarnings(),
+        ])
+
+        if (coursesRes.status === 'fulfilled' && coursesRes.value.success) {
+          const mapped = coursesRes.value.data.map((c) => ({
+            id: c._id,
+            title: c.title,
+            students: c.enrolledStudents?.length || 0,
+            status: c.status === 'published' ? 'active' : c.status === 'archived' ? 'draft' : c.status,
+            nextClass: c.recurringSchedule?.[0] ? `${c.recurringSchedule[0].day}, ${c.recurringSchedule[0].time}` : 'TBD',
+            progress: 0,
+          }))
+          if (mapped.length > 0) setCourses(mapped)
+        }
+
+        if (earningsRes.status === 'fulfilled' && earningsRes.value.success) {
+          setInstructor((prev) => ({ ...prev, earnings: earningsRes.value.data.totalEarnings ?? prev.earnings }))
+        }
+      } catch {
+        // Fallback to mock data on error
+      }
+    }
+    fetchData()
+  }, [])
+
+  const displayName = user?.name || FALLBACK_INSTRUCTOR.name
+
+  const activeCourses = courses.filter((c) =>
+    c.status === 'active' &&
+    c.title.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
-  const filteredAssignments = RECENT_ASSIGNMENTS.filter(a => 
-    a.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    a.course.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredAssignments = FALLBACK_ASSIGNMENTS.filter((a) =>
+    a.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    a.course.toLowerCase().includes(searchTerm.toLowerCase()),
   )
+
+  const totalStudents = courses.reduce((sum, c) => sum + (c.students || 0), 0) || FALLBACK_INSTRUCTOR.studentsCount
+  const activeCount = courses.filter((c) => c.status === 'active').length || FALLBACK_INSTRUCTOR.coursesCount
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-slate-900 dark:text-white">Welcome back, {MOCK_INSTRUCTOR.name}!</h1>
+          <h1 className="text-2xl font-black text-slate-900 dark:text-white">Welcome back, {displayName}!</h1>
           <p className="text-sm text-slate-500 dark:text-neutral-400">Here's what's happening with your courses and students today.</p>
         </div>
-        
+
         {/* Global Overview Search */}
         <div className="relative group w-full md:w-80">
           <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-violet-500 transition-colors">
             <MagnifyingGlass size={18} weight="bold" />
           </div>
-          <input 
-            type="text" 
+          <input
+            type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search courses or assignments..."
             className="w-full pl-11 pr-10 py-2.5 rounded-xl border border-slate-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-sm focus:border-violet-500 focus:ring-4 focus:ring-violet-500/5 outline-none transition-all shadow-sm"
           />
           {searchTerm && (
-            <button 
+            <button
               onClick={() => setSearchTerm('')}
               className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-lg bg-slate-100 dark:bg-neutral-800 flex items-center justify-center text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors"
             >
@@ -56,7 +97,7 @@ export default function InstructorOverview({ onNavigate }: { onNavigate: (view: 
             </div>
             <div>
               <p className="text-sm font-bold text-slate-500 dark:text-neutral-400">Total Students</p>
-              <p className="text-2xl font-black text-slate-900 dark:text-white">{MOCK_INSTRUCTOR.studentsCount}</p>
+              <p className="text-2xl font-black text-slate-900 dark:text-white">{totalStudents}</p>
             </div>
           </div>
         </div>
@@ -68,7 +109,7 @@ export default function InstructorOverview({ onNavigate }: { onNavigate: (view: 
             </div>
             <div>
               <p className="text-sm font-bold text-slate-500 dark:text-neutral-400">Active Courses</p>
-              <p className="text-2xl font-black text-slate-900 dark:text-white">{MOCK_INSTRUCTOR.coursesCount}</p>
+              <p className="text-2xl font-black text-slate-900 dark:text-white">{activeCount}</p>
             </div>
           </div>
         </div>
@@ -80,7 +121,7 @@ export default function InstructorOverview({ onNavigate }: { onNavigate: (view: 
             </div>
             <div>
               <p className="text-sm font-bold text-slate-500 dark:text-neutral-400">Avg Rating</p>
-              <p className="text-2xl font-black text-slate-900 dark:text-white">{MOCK_INSTRUCTOR.rating}</p>
+              <p className="text-2xl font-black text-slate-900 dark:text-white">{instructor.rating}</p>
             </div>
           </div>
         </div>
@@ -92,7 +133,7 @@ export default function InstructorOverview({ onNavigate }: { onNavigate: (view: 
             </div>
             <div>
               <p className="text-sm font-bold text-slate-500 dark:text-neutral-400">Monthly Earnings</p>
-              <p className="text-2xl font-black text-slate-900 dark:text-white">${MOCK_INSTRUCTOR.earnings}</p>
+              <p className="text-2xl font-black text-slate-900 dark:text-white">${instructor.earnings}</p>
             </div>
           </div>
         </div>

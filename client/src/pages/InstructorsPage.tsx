@@ -1,7 +1,21 @@
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Star, Globe, Play, TwitterLogo, LinkedinLogo, Certificate, ChalkboardTeacher, ChatCircle } from '@phosphor-icons/react'
+import { axiosClient } from '../lib/axiosClient'
 
-const INSTRUCTORS = [
+interface Instructor {
+  name: string
+  role: string
+  experience: string
+  students: string
+  rating: number
+  specialty: string
+  image: string
+  bio: string
+  social: { twitter: string; linkedin: string }
+}
+
+const FALLBACK_INSTRUCTORS: Instructor[] = [
   {
     name: 'Sarah Johnson',
     role: 'IELTS Expert & Trainer',
@@ -89,6 +103,33 @@ const FEATURES = [
 ]
 
 export default function InstructorsPage() {
+  const [instructors, setInstructors] = useState<Instructor[]>(FALLBACK_INSTRUCTORS)
+
+  useEffect(() => {
+    axiosClient
+      .get('/users', { params: { role: 'teacher' } })
+      .then((res) => {
+        const data = res.data?.data ?? res.data
+        if (Array.isArray(data) && data.length > 0) {
+          const mapped: Instructor[] = data.map((t: any) => ({
+            name: t.name,
+            role: t.bio ?? 'English Instructor',
+            experience: `${t.experience ?? 5}+ Years`,
+            students: `${t.studentCount ?? 500}+`,
+            rating: t.rating ?? 4.9,
+            specialty: (t.specializations ?? ['General English'])[0],
+            image: t.photo ?? 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=400&auto=format&fit=crop',
+            bio: t.bio ?? 'Experienced English instructor dedicated to your success.',
+            social: { twitter: '#', linkedin: '#' },
+          }))
+          setInstructors(mapped)
+        }
+      })
+      .catch(() => {
+        // Keep fallback data on failure
+      })
+  }, [])
+
   const pageVariants = {
     initial: { opacity: 0 },
     animate: {
@@ -165,7 +206,7 @@ export default function InstructorsPage() {
       <section className="py-20 lg:py-28">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {INSTRUCTORS.map((ins, i) => (
+            {instructors.map((ins, i) => (
               <motion.div
                 key={ins.name}
                 initial={{ opacity: 0, y: 30 }}

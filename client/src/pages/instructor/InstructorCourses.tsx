@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { motion, AnimatePresence } from 'framer-motion'
-import { INSTRUCTOR_COURSES } from './instructorData'
+import { coursesService } from '../../services/courses.service'
+import { INSTRUCTOR_COURSES as FALLBACK_COURSES } from './instructorData'
 import { BookOpen, Users, Clock, Plus, X, Check, PencilSimple, Trash, MagnifyingGlass, CheckCircle, CalendarBlank, ChartBar } from '@phosphor-icons/react'
 
 type CourseItem = {
@@ -70,6 +71,28 @@ const EMPTY_COURSE: InstructorCourse = {
   curriculum: []
 }
 
+function mapBackendCourse(c: any): InstructorCourse {
+  const statusMap: Record<string, string> = { published: 'active', archived: 'draft', draft: 'draft' }
+  return {
+    id: c._id,
+    title: c.title,
+    students: c.enrolledStudents?.length || 0,
+    status: statusMap[c.status] || c.status,
+    nextClass: c.recurringSchedule?.[0] ? `${c.recurringSchedule[0].day}, ${c.recurringSchedule[0].time}` : 'TBD',
+    progress: 0,
+    totalClasses: c.totalSessions,
+    maxStudents: c.maxStudents,
+    level: c.level ? c.level.charAt(0).toUpperCase() + c.level.slice(1) : 'Beginner',
+    duration: c.type,
+    description: c.description,
+    category: c.focus,
+    price: c.price ? `${c.currency === 'PKR' ? 'Rs' : '$'}${c.price}` : '',
+    startDate: c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '',
+    image: c.thumbnail,
+    language: 'English',
+  }
+}
+
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
@@ -88,7 +111,7 @@ function Input({ register, name, type = 'text', placeholder, valueAsNumber }: { 
 }
 
 export default function InstructorCourses() {
-  const [courses, setCourses] = useState<InstructorCourse[]>(INSTRUCTOR_COURSES)
+  const [courses, setCourses] = useState<InstructorCourse[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [levelFilter, setLevelFilter] = useState('all')
@@ -96,7 +119,23 @@ export default function InstructorCourses() {
   const [modalType, setModalType] = useState<'add' | 'edit' | null>(null)
   const [formTab, setFormTab] = useState<'basic' | 'logistics' | 'curriculum'>('basic')
   const [deleteId, setDeleteId] = useState<string | null>(null)
-  
+
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        const res = await coursesService.getTeacherCourses()
+        if (res.success && res.data.length > 0) {
+          setCourses(res.data.map(mapBackendCourse))
+        } else {
+          setCourses(FALLBACK_COURSES)
+        }
+      } catch {
+        setCourses(FALLBACK_COURSES)
+      }
+    }
+    fetchCourses()
+  }, [])
+
   const { register, handleSubmit, reset, watch, setValue, getValues } = useForm<InstructorCourse>({
     defaultValues: EMPTY_COURSE
   })
@@ -113,16 +152,48 @@ export default function InstructorCourses() {
     setModalType('edit')
   }
 
-  function onSave(data: InstructorCourse) {
-    if (modalType === 'add') {
-      setCourses([...courses, data])
-    } else {
-      setCourses(courses.map(c => c.id === data.id ? data : c))
+  async function onSave(data: InstructorCourse) {
+    try {
+      if (modalType === 'add') {
+        const res = await coursesService.createCourse({
+          title: data.title,
+          description: data.description || '',
+          price: parseFloat(data.price?.replace(/[^0-9.]/g, '') || '0'),
+          currency: 'USD',
+          type: (data.category === 'Recorded Course' ? 'one-to-one' : data.category === 'Hybrid' ? 'hybrid' : 'group') as 'group' | 'one-to-one' | 'hybrid',
+          level: (data.level?.toLowerCase() || 'beginner') as 'beginner' | 'intermediate' | 'advanced',
+          focus: 'general',
+          thumbnail: data.image || undefined,
+          totalSessions: data.totalClasses || 12,
+          sessionDuration: 60,
+          maxStudents: data.maxStudents,
+        })
+        if (res.success) setCourses([...courses, mapBackendCourse(res.data)])
+      } else {
+        const res = await coursesService.updateCourse(data.id, {
+          title: data.title,
+          description: data.description,
+          price: parseFloat(data.price?.replace(/[^0-9.]/g, '') || '0'),
+        })
+        if (res.success) setCourses(courses.map(c => c.id === data.id ? mapBackendCourse(res.data) : c))
+      }
+    } catch {
+      // Fallback: update locally
+      if (modalType === 'add') {
+        setCourses([...courses, data])
+      } else {
+        setCourses(courses.map(c => c.id === data.id ? data : c))
+      }
     }
     setModalType(null)
   }
 
-  function handleDelete(id: string) {
+  async function handleDelete(id: string) {
+    try {
+      await coursesService.deleteCourse(id)
+    } catch {
+      // Fallback: remove locally
+    }
     setCourses(courses.filter(c => c.id !== id))
     setDeleteId(null)
   }

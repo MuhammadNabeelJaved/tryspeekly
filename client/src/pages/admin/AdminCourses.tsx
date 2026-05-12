@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, PencilSimple, Trash, X, Check, Users, Clock, CurrencyCircleDollar, CheckCircle, XCircle, Eye } from '@phosphor-icons/react'
 import type { AdminStore } from '../AdminPage'
 import type { Course } from './adminData'
+import { coursesService } from '../../services/courses.service'
 
 const EMPTY: Course = {
   id: '', title: '', level: 'Beginner', duration: '', price: 0, currency: 'PKR',
@@ -47,6 +48,41 @@ function Input({ register, name, type = 'text', placeholder, valueAsNumber }: { 
 
 export default function AdminCourses({ store }: { store: AdminStore }) {
   const { courses, setCourses, instructors } = store
+
+  const [apiCourses, setApiCourses] = useState<Course[] | null>(null)
+
+  useEffect(() => {
+    async function fetchCourses() {
+      try {
+        const res = await coursesService.getAllCourses({ limit: 200 })
+        const apiData: any[] = res.data ?? []
+        const mapped: Course[] = apiData.map((c: any, idx: number) => ({
+          id: c._id ?? c.id ?? `api-c${idx}`,
+          title: c.title ?? '',
+          level: c.level ?? 'Beginner',
+          duration: '',
+          price: c.price ?? 0,
+          currency: c.currency ?? 'PKR',
+          instructorId: c.teacher?._id ?? '',
+          instructorName: c.teacher?.name ?? '',
+          totalStudents: (c.enrolledStudents ?? []).length,
+          maxStudents: c.maxStudents ?? 15,
+          status: c.status === 'published' ? 'active' as const : c.status === 'archived' ? 'inactive' as const : 'draft' as const,
+          description: c.description ?? '',
+          startDate: '',
+          schedule: '',
+          features: [],
+        }))
+        setApiCourses(mapped)
+      } catch {
+        // Fallback to store data
+      }
+    }
+    fetchCourses()
+  }, [])
+
+  const displayCourses = apiCourses ?? courses
+
   const [modalType, setModalType] = useState<'add' | 'edit' | null>(null)
   const [reviewCourse, setReviewCourse] = useState<Course | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
@@ -58,10 +94,10 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
     defaultValues: { ...EMPTY, featuresInput: '' }
   })
 
-  const filtered = courses.filter(c => {
+  const filtered = displayCourses.filter(c => {
     const q = search.toLowerCase()
     const matchQ = !q || c.title.toLowerCase().includes(q) || c.instructorName.toLowerCase().includes(q)
-    
+
     if (activeTab === 'pending') {
       return matchQ && c.status === 'pending'
     } else {
@@ -114,9 +150,9 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
     setValue('instructorName', inst?.name ?? '')
   }
 
-  const totalEnrolled = courses.reduce((a, c) => a + c.totalStudents, 0)
-  const totalRevenue = courses.reduce((a, c) => a + c.price * c.totalStudents, 0)
-  const pendingCount = courses.filter(c => c.status === 'pending').length
+  const totalEnrolled = displayCourses.reduce((a, c) => a + c.totalStudents, 0)
+  const totalRevenue = displayCourses.reduce((a, c) => a + c.price * c.totalStudents, 0)
+  const pendingCount = displayCourses.filter(c => c.status === 'pending').length
 
   return (
     <div className="p-4 sm:p-6 flex flex-col h-full">
@@ -124,7 +160,7 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
         <div className="flex-1">
-          <h2 className="text-lg font-black text-slate-900 dark:text-white">Courses <span className="text-slate-400 dark:text-neutral-500 font-medium text-base">({courses.length})</span></h2>
+          <h2 className="text-lg font-black text-slate-900 dark:text-white">Courses <span className="text-slate-400 dark:text-neutral-500 font-medium text-base">({displayCourses.length})</span></h2>
           <p className="text-xs text-slate-400 dark:text-neutral-500 mt-0.5">Manage course catalog and enrollment</p>
         </div>
         <button onClick={openAdd} className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-sm font-bold shadow-[0_4px_12px_rgba(124,58,237,0.3)] transition-colors self-start">
@@ -135,7 +171,7 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
       {/* Summary stats */}
       <div className="grid grid-cols-3 gap-3 mb-5 flex-shrink-0">
         {[
-          { label: 'Total Courses', value: courses.length, Icon: CurrencyCircleDollar, color: 'from-violet-500 to-purple-600' },
+          { label: 'Total Courses', value: displayCourses.length, Icon: CurrencyCircleDollar, color: 'from-violet-500 to-purple-600' },
           { label: 'Total Enrolled', value: totalEnrolled, Icon: Users, color: 'from-blue-500 to-blue-700' },
           { label: 'Est. Revenue', value: `₨${totalRevenue.toLocaleString()}`, Icon: Clock, color: 'from-emerald-500 to-emerald-700' },
         ].map(({ label, value, Icon, color }) => (

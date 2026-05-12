@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
+import { messagesService } from '../../services/messages.service'
+import { useAuth } from '../../context/AuthContext'
 import { Headset, PaperPlaneRight, Info } from '@phosphor-icons/react'
 
 type Message = {
@@ -8,12 +10,16 @@ type Message = {
   time: string
 }
 
+const FALLBACK_MESSAGES: Message[] = [
+  { id: '1', sender: 'admin', text: 'Hello! Welcome to Instructor Support. How can we help you today?', time: '10:00 AM' },
+  { id: '2', sender: 'instructor', text: 'Hi, I need help updating my bank details for payout.', time: '10:05 AM' },
+  { id: '3', sender: 'admin', text: 'Sure! You can update your bank details from the Settings > Integrations page, or if you need a manual update, please provide the new IBAN here securely.', time: '10:15 AM' },
+]
+
 export default function InstructorSupport() {
-  const [messages, setMessages] = useState<Message[]>([
-    { id: '1', sender: 'admin', text: 'Hello! Welcome to Instructor Support. How can we help you today?', time: '10:00 AM' },
-    { id: '2', sender: 'instructor', text: 'Hi, I need help updating my bank details for payout.', time: '10:05 AM' },
-    { id: '3', sender: 'admin', text: 'Sure! You can update your bank details from the Settings > Integrations page, or if you need a manual update, please provide the new IBAN here securely.', time: '10:15 AM' },
-  ])
+  const { user } = useAuth()
+  const [messages, setMessages] = useState<Message[]>(FALLBACK_MESSAGES)
+  const [supportUserId, setSupportUserId] = useState<string | null>(null)
   const [input, setInput] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
@@ -21,25 +27,63 @@ export default function InstructorSupport() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
+  // Fetch conversations and find support/admin user
+  useEffect(() => {
+    const fetchSupport = async () => {
+      try {
+        const res = await messagesService.getConversations()
+        if (res.success && res.data.length > 0) {
+          // Find admin/support user
+          const support = res.data.find(c => c.user.role === 'admin')
+          if (support) {
+            setSupportUserId(support.user._id)
+            // Fetch support conversation messages
+            const msgsRes = await messagesService.getConversation(support.user._id)
+            if (msgsRes.success && msgsRes.data.length > 0) {
+              setMessages(msgsRes.data.map((m: any) => ({
+                id: m._id,
+                sender: m.sender?._id === user?.id ? 'instructor' : ('admin' as 'instructor' | 'admin'),
+                text: m.content,
+                time: new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              })))
+            }
+          }
+        }
+      } catch {
+        // fallback to mock data
+      }
+    }
+    fetchSupport()
+  }, [user])
+
   useEffect(() => {
     scrollToBottom()
   }, [messages])
 
-  const handleSend = (e: React.FormEvent) => {
+  const handleSend = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!input.trim()) return
-    
+
     const newMsg: Message = {
       id: Date.now().toString(),
       sender: 'instructor',
       text: input,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
-    
+
     setMessages([...messages, newMsg])
     setInput('')
-    
-    // Simulate admin reply
+
+    // Try to send via API
+    if (supportUserId) {
+      try {
+        await messagesService.sendMessage({ receiverId: supportUserId, content: input })
+      } catch {
+        // fallback - just keep local message
+      }
+    }
+
+    // Simulate admin reply (always keep this for UX)
     setTimeout(() => {
       setMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),
