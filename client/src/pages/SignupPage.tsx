@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Sparkle, UserCircle, GraduationCap } from '@phosphor-icons/react'
 import FormInput from '../components/auth/FormInput'
+import PhoneInput from '../components/auth/PhoneInput'
 import LoadingButton from '../components/auth/LoadingButton'
 import SocialLoginButtons from '../components/auth/SocialLoginButtons'
 import FloatingCard from '../components/auth/FloatingCard'
@@ -25,9 +26,9 @@ export default function SignupPage() {
   const { register: registerUser } = useAuth()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
+  const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [errors, setErrors] = useState({ name: '', email: '', password: '', confirmPassword: '', general: '' })
+  const [errors, setErrors] = useState({ name: '', email: '', phone: '', password: '', general: '' })
   const [isLoading, setIsLoading] = useState(false)
 
   const validateName = () => {
@@ -52,6 +53,20 @@ export default function SignupPage() {
     return true
   }
 
+  const validatePhone = () => {
+    if (!phone) {
+      setErrors(prev => ({ ...prev, phone: 'Phone number is required' }))
+      return false
+    }
+    const phoneWithoutCode = phone.replace(/^\+\d+/, '')
+    if (phoneWithoutCode.length < 7) {
+      setErrors(prev => ({ ...prev, phone: 'Please enter a valid phone number' }))
+      return false
+    }
+    setErrors(prev => ({ ...prev, phone: '' }))
+    return true
+  }
+
   const validatePassword = () => {
     if (!password) {
       setErrors(prev => ({ ...prev, password: 'Password is required' }))
@@ -65,36 +80,24 @@ export default function SignupPage() {
     return true
   }
 
-  const validateConfirmPassword = () => {
-    if (!confirmPassword) {
-      setErrors(prev => ({ ...prev, confirmPassword: 'Please confirm your password' }))
-      return false
-    }
-    if (password !== confirmPassword) {
-      setErrors(prev => ({ ...prev, confirmPassword: 'Passwords do not match' }))
-      return false
-    }
-    setErrors(prev => ({ ...prev, confirmPassword: '' }))
-    return true
-  }
-
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
     const nameValid = validateName()
     const emailValid = validateEmail()
+    const phoneValid = validatePhone()
     const passwordValid = validatePassword()
-    const confirmValid = validateConfirmPassword()
 
-    if (!nameValid || !emailValid || !passwordValid || !confirmValid) return
+    if (!nameValid || !emailValid || !phoneValid || !passwordValid) return
 
     setIsLoading(true)
-    setErrors({ name: '', email: '', password: '', confirmPassword: '', general: '' })
+    setErrors({ name: '', email: '', phone: '', password: '', general: '' })
 
     try {
       await registerUser({
         name,
         email,
+        phone,
         password,
         role: 'student',
       })
@@ -221,19 +224,25 @@ export default function SignupPage() {
                   disabled={isLoading}
                 />
 
+                <PhoneInput
+                  value={phone}
+                  onChange={(val) => {
+                    setPhone(val)
+                    if (val) {
+                      setErrors(prev => ({ ...prev, phone: '' }))
+                    }
+                  }}
+                  error={errors.phone}
+                  label="Phone number"
+                  placeholder="300 1234567"
+                />
+
                 <div>
                   <FormInput
                     label="Password"
                     type="password"
                     value={password}
-                    onChange={(val) => {
-                      setPassword(val)
-                      if (confirmPassword && val !== confirmPassword) {
-                        setErrors(prev => ({ ...prev, confirmPassword: 'Passwords do not match' }))
-                      } else if (confirmPassword) {
-                        setErrors(prev => ({ ...prev, confirmPassword: '' }))
-                      }
-                    }}
+                    onChange={setPassword}
                     onBlur={validatePassword}
                     error={errors.password}
                     placeholder="Create a secure password"
@@ -242,18 +251,6 @@ export default function SignupPage() {
                   />
                   <PasswordStrengthIndicator password={password} />
                 </div>
-
-                <FormInput
-                  label="Confirm password"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={setConfirmPassword}
-                  onBlur={validateConfirmPassword}
-                  error={errors.confirmPassword}
-                  placeholder="Repeat your password"
-                  required
-                  disabled={isLoading}
-                />
 
                 <LoadingButton type="submit" isLoading={isLoading} className="w-full">
                   {isLoading ? 'Creating account...' : 'Create account'}
