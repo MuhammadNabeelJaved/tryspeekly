@@ -1,0 +1,10 @@
+{
+  "watch": ["index.js", "app.js", "src/**/*"],
+  "ignore": ["node_modules/**", ".git/**"],
+  "ext": "js,json,mjs",
+  "exec": "node index.js",
+  "env": {
+    "NODE_ENV": "development"
+  },
+  "delay": "1000"
+}

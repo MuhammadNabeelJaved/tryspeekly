@@ -1,7 +1,8 @@
-const express = require('express')
+import express from 'express'
+import asyncHandler from '../utils/asyncHandler.js'
+import * as authController from '../controllers/auth.controller.js'
+
 const router = express.Router()
-const { asyncHandler } = require('../utils/asyncHandler')
-const authController = require('../controllers/auth.controller')
 
 router.post('/register', asyncHandler(authController.register))
 router.post('/login', asyncHandler(authController.login))
@@ -12,4 +13,4 @@ router.post('/reset-password/:token', asyncHandler(authController.resetPassword)
 router.post('/verify-email/:token', asyncHandler(authController.verifyEmail))
 router.post('/resend-verification', asyncHandler(authController.resendVerification))
 
-module.exports = router
+export default router

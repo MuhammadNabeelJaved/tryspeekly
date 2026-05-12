@@ -2,17 +2,16 @@
   "name": "server",
   "version": "1.0.0",
   "description": "English learning platform backend API",
-  "main": "src/index.js",
-  "types": "module",
+  "main": "index.js",
   "scripts": {
-    "dev": "nodemon src/index.js",
-    "start": "node src/index.js",
-    "check": "node -e \"require('./src/app')\""
+    "dev": "nodemon index.js",
+    "start": "node index.js",
+    "check": "node -e \"import('./app')\""
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
   "dependencies": {
     "bcrypt": "^6.0.0",
     "bcryptjs": "^3.0.3",

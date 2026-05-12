@@ -1,7 +1,7 @@
-const mongoose = require('mongoose')
-const validator = require('validator')
-const bcrypt = require('bcryptjs')
-const jwt = require('jsonwebtoken')
+import mongoose from 'mongoose'
+import validator from 'validator'
+import bcrypt from 'bcryptjs'
+import jwt from 'jsonwebtoken'
 
 const { Schema, model } = mongoose
 
@@ -160,4 +160,4 @@ userSchema.pre(/^find/, function (next) {
 
 const User = mongoose.models.User || model('User', userSchema)
 
-module.exports = User
+export default User

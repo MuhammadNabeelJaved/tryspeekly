@@ -1,9 +1,9 @@
-const { asyncHandler } = require('../utils/asyncHandler')
-const { UnauthorizedError } = require('../utils/apiErrors')
-const User = require('../models/user.model')
-const bcrypt = require('bcryptjs')
+import asyncHandler from '../utils/asyncHandler.js'
+import { UnauthorizedError } from '../utils/apiErrors.js'
+import User from '../models/user.model.js'
+import bcrypt from 'bcryptjs'
 
-exports.getProfile = asyncHandler(async (req, res) => {
+export const getProfile = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user?.userId).select('-password')
   if (!user) {
     throw new UnauthorizedError('User not found')
@@ -11,7 +11,7 @@ exports.getProfile = asyncHandler(async (req, res) => {
   res.json({ success: true, data: { user } })
 })
 
-exports.updateProfile = asyncHandler(async (req, res) => {
+export const updateProfile = asyncHandler(async (req, res) => {
   const { name, phone, bio, country, city, timezone } = req.body
   const user = await User.findByIdAndUpdate(
     req.user?.userId,
@@ -22,7 +22,7 @@ exports.updateProfile = asyncHandler(async (req, res) => {
   res.json({ success: true, data: { user } })
 })
 
-exports.updatePassword = asyncHandler(async (req, res) => {
+export const updatePassword = asyncHandler(async (req, res) => {
   const { currentPassword, newPassword } = req.body
 
   if (!currentPassword || !newPassword) {
@@ -51,7 +51,7 @@ exports.updatePassword = asyncHandler(async (req, res) => {
   res.json({ success: true, message: 'Password updated successfully' })
 })
 
-exports.deleteAccount = asyncHandler(async (req, res) => {
+export const deleteAccount = asyncHandler(async (req, res) => {
   await User.findByIdAndDelete(req.user?.userId)
   res.clearCookie('refreshToken').json({ 
     success: true, 

@@ -1,57 +1,66 @@
-import dotenv from 'dotenv';
-import express from 'express';
-import cors from 'cors';
-import mongoose from 'mongoose';
-import connectDB from './database/db.js';
-import userRoutes from './routes/user.routes.js';
-import rateLimit from 'express-rate-limit';
-import helmet from 'helmet';
-import { crossOriginResourcePolicy, crossOriginEmbedderPolicy, crossOriginOpenerPolicy, frameguard, hidePoweredBy } from 'helmet';
+import express from 'express'
+import cors from 'cors'
+import helmet from 'helmet'
+import compression from 'compression'
+import morgan from 'morgan'
+import cookieParser from 'cookie-parser'
+import rateLimit from 'express-rate-limit'
+import { errorHandler } from './src/utils/apiErrors.js'
 
+const app = express()
 
-dotenv.config();
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' }
+}))
 
-const app = express();
-const PORT = process.env.PORT || 5000;
+app.use(cors({
+  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+}))
 
-// Middleware
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(helmet(
-    crossOriginResourcePolicy, { policy: "cross-origin" },
-    crossOriginEmbedderPolicy, { policy: "require-corp" },
-    crossOriginOpenerPolicy, { policy: "same-origin" },
-    crossOriginResourcePolicy, { policy: "cross-origin" },
-    frameguard, { action: "deny" },
-    hidePoweredBy,
-));
+app.use(compression())
 
-// Connect to MongoDB
-connectDB();
+app.use(express.json({ limit: '10mb' }))
+app.use(express.urlencoded({ extended: true, limit: '10mb' }))
 
-// Rate limiting middleware
-app.use(rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // limit each IP to 100 requests per windowMs
-    message: 'Too many requests from this IP, please try again later.',
-}));
+app.use(cookieParser())
 
+if (process.env.NODE_ENV === 'development') {
+  app.use(morgan('dev'))
+} else {
+  app.use(morgan('combined'))
+}
 
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: { success: false, error: { message: 'Too many requests, please try again later.' } }
+})
+app.use(globalLimiter)
 
-// Routes
-app.use('/api/users', userRoutes);
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ 
+    success: true, 
+    message: 'Server is healthy',
+    timestamp: new Date().toISOString() 
+  })
+})
 
+import authRoutes from './src/routes/auth.route.js'
+import userRoutes from './src/routes/user.route.js'
 
-// Global error handler
-app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).json({ success: false, error: { message: 'Server Error' } });
-});
+app.use('/api/v1/auth', authRoutes)
+app.use('/api/v1/users', userRoutes)
 
-// Start the server
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
+app.use((req, res) => {
+  res.status(404).json({ 
+    success: false, 
+    error: { message: 'Route not found' } 
+  })
+})
 
-export default app;
+app.use(errorHandler)
+
+export default app

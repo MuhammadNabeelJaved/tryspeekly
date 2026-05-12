@@ -1,8 +1,8 @@
-const { asyncHandler } = require('../utils/asyncHandler')
-const { BadRequestError, UnauthorizedError } = require('../utils/apiErrors')
-const User = require('../models/user.model')
-const jwt = require('jsonwebtoken')
-const bcrypt = require('bcryptjs')
+import asyncHandler from '../utils/asyncHandler.js'
+import { BadRequestError, UnauthorizedError } from '../utils/apiErrors.js'
+import User from '../models/user.model.js'
+import jwt from 'jsonwebtoken'
+import bcrypt from 'bcryptjs'
 
 const generateTokens = (userId) => {
   const accessToken = jwt.sign({ userId }, process.env.JWT_ACCESS_SECRET, {
@@ -14,7 +14,7 @@ const generateTokens = (userId) => {
   return { accessToken, refreshToken }
 }
 
-exports.register = asyncHandler(async (req, res) => {
+export const register = asyncHandler(async (req, res) => {
   const { name, email, phone, password, role } = req.body
 
   if (!name || !email || !phone || !password) {
@@ -57,7 +57,7 @@ exports.register = asyncHandler(async (req, res) => {
     })
 })
 
-exports.login = asyncHandler(async (req, res) => {
+export const login = asyncHandler(async (req, res) => {
   const { email, password } = req.body
 
   if (!email || !password) {
@@ -94,14 +94,14 @@ exports.login = asyncHandler(async (req, res) => {
     })
 })
 
-exports.logout = asyncHandler(async (req, res) => {
+export const logout = asyncHandler(async (req, res) => {
   res.clearCookie('refreshToken').json({
     success: true,
     message: 'Logged out successfully'
   })
 })
 
-exports.refreshToken = asyncHandler(async (req, res) => {
+export const refreshToken = asyncHandler(async (req, res) => {
   const refreshToken = req.cookies.refreshToken || req.body.refreshToken
 
   if (!refreshToken) {
@@ -129,18 +129,18 @@ exports.refreshToken = asyncHandler(async (req, res) => {
     .json({ success: true, data: { accessToken } })
 })
 
-exports.forgotPassword = asyncHandler(async (req, res) => {
+export const forgotPassword = asyncHandler(async (req, res) => {
   res.json({ success: true, message: 'Password reset link sent to email' })
 })
 
-exports.resetPassword = asyncHandler(async (req, res) => {
+export const resetPassword = asyncHandler(async (req, res) => {
   res.json({ success: true, message: 'Password reset successfully' })
 })
 
-exports.verifyEmail = asyncHandler(async (req, res) => {
+export const verifyEmail = asyncHandler(async (req, res) => {
   res.json({ success: true, message: 'Email verified successfully' })
 })
 
-exports.resendVerification = asyncHandler(async (req, res) => {
+export const resendVerification = asyncHandler(async (req, res) => {
   res.json({ success: true, message: 'Verification email sent' })
 })
