@@ -21,6 +21,7 @@ const PaymentsPage = lazy(() => import('@/pages/PaymentsPage'))
 const FinancialAidPage = lazy(() => import('@/pages/FinancialAidPage'))
 const LoginPage = lazy(() => import('@/pages/LoginPage'))
 const SignupPage = lazy(() => import('@/pages/SignupPage'))
+const EmailVerificationPage = lazy(() => import('@/pages/EmailVerificationPage'))
 const StudentDashboardPage = lazy(() => import('@/pages/StudentDashboardPage'))
 const InstructorDashboardPage = lazy(() => import('@/pages/InstructorDashboardPage'))
 const CertificateViewPage = lazy(() => import('@/pages/CertificateViewPage'))
@@ -60,6 +61,7 @@ function PublicLayout() {
             <Route path="/courses/:id" element={<CourseDetailsPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
+            <Route path="/verify-email" element={<EmailVerificationPage />} />
             <Route path="/contact" element={<ContactPage />} />
             <Route path="/privacy" element={<PrivacyPolicyPage />} />
             <Route path="/terms" element={<TermsOfServicePage />} />

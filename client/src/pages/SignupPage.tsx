@@ -98,7 +98,7 @@ export default function SignupPage() {
         password,
         role: 'student',
       })
-      navigate('/dashboard', { replace: true })
+      navigate('/verify-email', { state: { email }, replace: true })
     } catch (error: any) {
       const data = error?.response?.data
       const message = data?.error || error?.message || 'Registration failed. Please try again.'
