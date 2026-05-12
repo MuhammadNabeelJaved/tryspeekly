@@ -1,6 +1,6 @@
 # English Website Backend
 
-Professional Express + TypeScript backend using an MVC-style structure:
+Professional Express + Node.js backend using a classic MVC-style structure:
 
 - `routes/` wires endpoints and middleware.
 - `controllers/` handles HTTP request/response concerns.
@@ -13,7 +13,7 @@ Professional Express + TypeScript backend using an MVC-style structure:
 
 ```bash
 npm run dev
-npm run build
+npm run check
 npm start
 ```
 
