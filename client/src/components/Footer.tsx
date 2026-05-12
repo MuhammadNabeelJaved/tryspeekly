@@ -83,12 +83,12 @@ export default function Footer() {
                 </div>
                 hello@englishlms.com
               </a>
-              <p className="flex items-start gap-3 text-slate-600 dark:text-neutral-400 text-sm font-medium">
+              <div className="flex items-start gap-3 text-slate-600 dark:text-neutral-400 text-sm font-medium">
                 <div className="w-8 h-8 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center flex-shrink-0 mt-0.5">
                   <MapPin size={14} weight="fill" className="text-violet-600 dark:text-violet-400" />
                 </div>
-                123 Business Ave, New York
-              </p>
+                <span>123 Business Ave, New York</span>
+              </div>
             </div>
 
             {/* Social */}

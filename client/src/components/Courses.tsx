@@ -63,7 +63,7 @@ export interface CourseCard {
 }
 
 // Fallback hardcoded courses when API is unavailable
-export const FALLBACK_FALLBACK_COURSES: CourseCard[] = [
+export const FALLBACK_COURSES: CourseCard[] = [
   {
     id: 1,
     title: 'General English Mastery',
@@ -330,7 +330,7 @@ export default function Courses() {
     return () => { mounted = false }
   }, [])
 
-  const courses = apiCourses || FALLBACK_FALLBACK_COURSES
+  const courses = apiCourses || FALLBACK_COURSES
 
   const filteredCourses = courses.filter(course => {
     const matchesCategory = activeCategory === 'All' || course.category === activeCategory
