@@ -1,7 +1,6 @@
 import asyncHandler from '../utils/asyncHandler.js'
-import { UnauthorizedError } from '../utils/apiErrors.js'
 import User from '../models/user.model.js'
-import bcrypt from 'bcryptjs'
+
 
 // Create a new user
 export const createUser = asyncHandler(async (req, res) => {
@@ -19,21 +18,12 @@ export const createUser = asyncHandler(async (req, res) => {
 
 
     const user = new User({ name, email, password, phone, role })
-
-    if (!user) {
-      return res.status(400).json({ success: false, error: { message: 'Invalid user data' } })
-    }
-
-    // Generate 6 digit OTP
-    const otp = user.generateOTP()
-    if (!otp) {
-      return res.status(500).json({ success: false, error: { message: 'Failed to generate OTP' } })
-    }
-
-    user.verificationToken = otp
+    user.generateVerificationToken()
 
     await user.save()
-    res.status(201).json(user)
+    // TODO: send OTP to user.email via your email service
+
+    res.status(201).json({ success: true, message: 'Registration successful. OTP sent to email.' })
   } catch (error) {
     res.status(400).json({ success: false, error: { message: error.message } })
   }
@@ -84,7 +74,7 @@ export const loginUser = asyncHandler(async (req, res) => {
       return res.status(400).json({ success: false, error: { message: 'Email and password are required' } })
     }
 
-    const user = await User.findOne({ email })
+    const user = await User.findOne({ email }).select('+password')
     if (!user) {
       return res.status(404).json({ success: false, error: { message: 'User not found' } })
     }

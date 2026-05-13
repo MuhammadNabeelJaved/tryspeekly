@@ -134,24 +134,15 @@ userSchema.methods.toJSON = function () {
   return user
 }
 
-userSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) return next()
+userSchema.pre('save', async function () {
+  if (!this.isModified('password')) return
   const salt = await bcrypt.genSalt(parseInt(process.env.BCRYPT_ROUNDS) || 10)
   this.password = await bcrypt.hash(this.password, salt)
-  next()
 })
 
 userSchema.methods.comparePassword = async function (candidatePassword) {
   return bcrypt.compare(candidatePassword, this.password)
 }
-
-userSchema.post('save', function (error, doc, next) {
-  if (error.code === 11000) {
-    next(new Error('Email already exists'))
-  } else {
-    next(error)
-  }
-})
 
 // Generate JWT access token
 userSchema.methods.generateAccessToken = function () {
@@ -203,9 +194,8 @@ userSchema.methods.clearResetPasswordToken = function () {
   this.resetPasswordExpires = undefined
 }
 
-userSchema.pre(/^find/, function (next) {
-  this.find({ isDeleted: false })
-  next()
+userSchema.pre(/^find/, function () {
+  this.where({ isDeleted: false })
 })
 
 const User = mongoose.models.User || model('User', userSchema)
