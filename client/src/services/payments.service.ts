@@ -1,67 +1,47 @@
 import { axiosClient } from '../lib/axiosClient';
-import type { Payment, CreatePaymentDto, VerifyPaymentDto } from '../types/api';
+import type { Payment, CreatePaymentDto, ApiResponse, ApiPaginatedResponse } from '../types/api';
 
 export const paymentsService = {
-  async createPayment(
-    dto: CreatePaymentDto
-  ): Promise<{ success: boolean; data: Payment }> {
+  async createPayment(dto: CreatePaymentDto): Promise<{ success: boolean; data: Payment }> {
+    const form = new FormData();
+    form.append('courseId', dto.courseId);
+    form.append('teacherId', dto.teacherId);
+    form.append('method', dto.method);
+    form.append('amount', String(dto.amount));
+    form.append('currency', dto.currency || 'PKR');
+    if (dto.transactionId) form.append('transactionId', dto.transactionId);
+    form.append('screenshot', dto.screenshot);
+
     const response = await axiosClient.post<{ success: boolean; data: Payment }>(
-      '/payments/create',
-      dto
+      '/payments',
+      form,
+      { headers: { 'Content-Type': 'multipart/form-data' } }
     );
     return response.data;
   },
 
-  async verifyPayment(
-    dto: VerifyPaymentDto
-  ): Promise<{ success: boolean; data: Payment }> {
-    const response = await axiosClient.post<{ success: boolean; data: Payment }>(
-      '/payments/verify',
-      dto
+  async getMyPayments(): Promise<{ success: boolean; data: Payment[] }> {
+    const response = await axiosClient.get<{ success: boolean; data: Payment[] }>('/payments/my');
+    return response.data;
+  },
+
+  async getAllPayments(params?: { page?: number; limit?: number; status?: string }): Promise<ApiPaginatedResponse<Payment>> {
+    const response = await axiosClient.get<ApiPaginatedResponse<Payment>>('/payments', { params });
+    return response.data;
+  },
+
+  async approvePayment(id: string, adminNote?: string): Promise<{ success: boolean; data: Payment }> {
+    const response = await axiosClient.patch<{ success: boolean; data: Payment }>(
+      `/payments/${id}/approve`,
+      { adminNote }
     );
     return response.data;
   },
 
-  async getPayments(params?: {
-    status?: string;
-    page?: number;
-    limit?: number;
-  }): Promise<{ success: boolean; data: Payment[]; pagination?: any }> {
-    const response = await axiosClient.get<{
-      success: boolean;
-      data: Payment[];
-      pagination?: any;
-    }>('/payments', { params });
-    return response.data;
-  },
-
-  async getPaymentById(
-    id: string
-  ): Promise<{ success: boolean; data: Payment }> {
-    const response = await axiosClient.get<{ success: boolean; data: Payment }>(
-      `/payments/${id}`
-    );
-    return response.data;
-  },
-
-  async requestRefund(
-    id: string,
-    reason: string
-  ): Promise<{ success: boolean; data: Payment }> {
-    const response = await axiosClient.post<{ success: boolean; data: Payment }>(
-      `/payments/${id}/refund`,
-      { reason }
-    );
-    return response.data;
-  },
-
-  async getEarnings(params?: {
-    startDate?: string;
-    endDate?: string;
-  }): Promise<{ success: boolean; data: any }> {
-    const response = await axiosClient.get<{ success: boolean; data: any }>(
-      '/payments/earnings',
-      { params }
+  async rejectPayment(id: string, rejectionReason: string): Promise<{ success: boolean; data: Payment }> {
+    const response = await axiosClient.patch<{ success: boolean; data: Payment }>(
+      `/payments/${id}/reject`,
+      { rejectionReason }
     );
     return response.data;
   },

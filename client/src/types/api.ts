@@ -19,31 +19,38 @@ export interface ApiPaginatedResponse<T> {
 
 export interface ApiErrorResponse {
   success: false;
-  error: string;
-  code?: string;
+  error: { message: string; code?: string };
   fields?: Array<{ field: string; message: string }>;
 }
 
-// ─── User Types ─────────────────────────────────────────────────────────────
+// ─── User Types ──────────────────────────────────────────────────────────────
 
 export interface User {
-  id: string;
+  _id: string;
+  /** Alias kept for component compatibility */
+  id?: string;
   name: string;
   email: string;
   role: 'student' | 'teacher' | 'admin';
   phone?: string;
   country?: string;
+  city?: string;
+  timezone?: string;
+  profileImage?: string;
+  /** Alias kept for component compatibility */
   photo?: string;
   bio?: string;
-  specializations?: string[];
+  isVerified?: boolean;
   createdAt: string;
+  updatedAt: string;
 }
 
 export interface UpdateProfileDto {
   name?: string;
   phone?: string;
   country?: string;
-  photo?: string;
+  city?: string;
+  timezone?: string;
   bio?: string;
 }
 
@@ -52,7 +59,7 @@ export interface ChangePasswordDto {
   newPassword: string;
 }
 
-// ─── Auth Types ─────────────────────────────────────────────────────────────
+// ─── Auth Types ──────────────────────────────────────────────────────────────
 
 export interface LoginDto {
   email: string;
@@ -63,18 +70,19 @@ export interface RegisterDto {
   name: string;
   email: string;
   password: string;
-  phone?: string;
-  country?: string;
+  phone: string;
   role: 'student' | 'teacher';
+}
+
+export interface VerifyEmailDto {
+  email: string;
+  otp: string;
 }
 
 export interface AuthResponse {
   user: User;
   accessToken: string;
-}
-
-export interface RefreshResponse {
-  accessToken: string;
+  refreshToken: string;
 }
 
 export interface ForgotPasswordDto {
@@ -85,9 +93,10 @@ export interface ResetPasswordDto {
   email: string;
   otp: string;
   newPassword: string;
+  confirmPassword: string;
 }
 
-// ─── Course Types ───────────────────────────────────────────────────────────
+// ─── Course Types ─────────────────────────────────────────────────────────────
 
 export interface Course {
   _id: string;
@@ -102,12 +111,7 @@ export interface Course {
   totalSessions: number;
   sessionDuration: number;
   status: 'draft' | 'published' | 'archived';
-  teacher: {
-    _id: string;
-    name: string;
-    email: string;
-    photo?: string;
-  };
+  teacher: { _id: string; name: string; profileImage?: string; bio?: string };
   enrolledStudents: string[];
   recurringSchedule?: { day: string; time: string }[];
   meetLink?: string;
@@ -124,7 +128,6 @@ export interface CreateCourseDto {
   type: 'group' | 'one-to-one' | 'hybrid';
   level: 'beginner' | 'intermediate' | 'advanced';
   focus: 'speaking' | 'grammar' | 'ielts' | 'business' | 'general';
-  thumbnail?: string;
   totalSessions: number;
   sessionDuration: number;
   recurringSchedule?: { day: string; time: string }[];
@@ -132,17 +135,14 @@ export interface CreateCourseDto {
   maxStudents?: number;
 }
 
-export interface UpdateCourseDto extends Partial<CreateCourseDto> {}
+export interface UpdateCourseDto extends Partial<CreateCourseDto> {
+  status?: 'draft' | 'published' | 'archived';
+}
 
 export interface CourseListResponse {
   success: boolean;
   data: Course[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
+  pagination: { page: number; limit: number; total: number; totalPages: number };
 }
 
 export interface CourseSingleResponse {
@@ -150,45 +150,37 @@ export interface CourseSingleResponse {
   data: Course;
 }
 
-// ─── Enrollment Types ───────────────────────────────────────────────────────
+// ─── Enrollment Types ─────────────────────────────────────────────────────────
 
 export interface Enrollment {
   _id: string;
-  student: { _id: string; name: string; email: string; photo?: string };
-  course: { _id: string; title: string; thumbnail?: string };
-  teacher: { _id: string; name: string; email: string };
-  payment: string;
+  student: { _id: string; name: string; email: string; profileImage?: string };
+  course: { _id: string; title: string; thumbnail?: string; totalSessions?: number };
+  teacher: { _id: string; name: string; profileImage?: string };
+  payment?: string;
   enrolledAt: string;
-  expiresAt?: string;
-  isActive: boolean;
-  progress: {
-    sessionsAttended: number;
-    totalSessions: number;
-    lastAttendedAt?: string;
-  };
+  attendance: Array<{ sessionNumber: number; duration?: number; date: string }>;
+  progress: { sessionsAttended: number; totalSessions: number; lastAttendedAt?: string };
   createdAt: string;
   updatedAt: string;
 }
 
 export interface CreateEnrollmentDto {
   courseId: string;
-  paymentId: string;
+  paymentId?: string;
 }
 
 export interface EnrollmentListResponse {
   success: boolean;
   data: Enrollment[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
+  pagination?: { page: number; limit: number; total: number; totalPages: number };
 }
 
-// ─── Payment Types ──────────────────────────────────────────────────────────
+// ─── Payment Types ────────────────────────────────────────────────────────────
 
-export type PaymentMethod = 'jazzcash' | 'easypaisa' | 'nayapay' | 'sadapay' | 'zindigi' | 'bank_local' | 'bank_international';
+export type PaymentMethod =
+  | 'jazzcash' | 'easypaisa' | 'nayapay' | 'sadapay'
+  | 'zindigi' | 'bank_local' | 'bank_international';
 export type PaymentStatus = 'pending' | 'approved' | 'rejected';
 
 export interface Payment {
@@ -197,7 +189,7 @@ export interface Payment {
   course: { _id: string; title: string };
   teacher: { _id: string; name: string };
   method: PaymentMethod;
-  transactionId: string;
+  transactionId?: string;
   screenshotUrl: string;
   amount: number;
   currency: 'PKR' | 'USD';
@@ -210,23 +202,20 @@ export interface Payment {
 
 export interface CreatePaymentDto {
   courseId: string;
+  teacherId: string;
   method: PaymentMethod;
+  transactionId?: string;
   amount: number;
-  currency: 'PKR' | 'USD';
+  currency?: 'PKR' | 'USD';
+  screenshot: File;
 }
 
-export interface VerifyPaymentDto {
-  paymentId: string;
-  transactionId: string;
-  screenshotUrl?: string;
-}
-
-// ─── Message Types ──────────────────────────────────────────────────────────
+// ─── Message Types ────────────────────────────────────────────────────────────
 
 export interface Message {
   _id: string;
-  sender: { _id: string; name: string; photo?: string };
-  receiver: { _id: string; name: string; photo?: string };
+  sender: { _id: string; name: string; profileImage?: string };
+  receiver: { _id: string; name: string; profileImage?: string };
   content: string;
   isRead: boolean;
   readAt?: string;
@@ -234,12 +223,8 @@ export interface Message {
 }
 
 export interface Conversation {
-  user: { _id: string; name: string; photo?: string; role: string };
-  lastMessage: {
-    content: string;
-    createdAt: string;
-    isRead: boolean;
-  };
+  _id: { s: string; r: string };
+  lastMessage: Message;
   unreadCount: number;
 }
 
@@ -248,7 +233,7 @@ export interface SendMessageDto {
   content: string;
 }
 
-// ─── Blog Types ─────────────────────────────────────────────────────────────
+// ─── Blog Types ───────────────────────────────────────────────────────────────
 
 export interface Blog {
   _id: string;
@@ -257,11 +242,7 @@ export interface Blog {
   content: string;
   excerpt?: string;
   coverImage?: string;
-  author: {
-    _id: string;
-    name: string;
-    photo?: string;
-  };
+  author: { _id: string; name: string; profileImage?: string; bio?: string };
   tags: string[];
   status: 'draft' | 'published' | 'archived';
   publishedAt?: string;
@@ -273,7 +254,6 @@ export interface CreateBlogDto {
   title: string;
   content: string;
   excerpt?: string;
-  coverImage?: string;
   tags?: string[];
   status?: 'draft' | 'published' | 'archived';
 }
@@ -283,12 +263,7 @@ export interface UpdateBlogDto extends Partial<CreateBlogDto> {}
 export interface BlogListResponse {
   success: boolean;
   data: Blog[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
+  pagination: { page: number; limit: number; total: number; totalPages: number };
 }
 
 export interface BlogSingleResponse {
@@ -296,11 +271,162 @@ export interface BlogSingleResponse {
   data: Blog;
 }
 
-// ─── Contact Types ──────────────────────────────────────────────────────────
+// ─── Certificate Types ────────────────────────────────────────────────────────
+
+export interface Certificate {
+  _id: string;
+  certificateId: string;
+  enrollment: string;
+  student: { _id: string; name: string };
+  course: { _id: string; title: string; thumbnail?: string };
+  issueDate: string;
+  credentialUrl?: string;
+  status: 'issued' | 'revoked';
+  revokedAt?: string;
+  createdAt: string;
+}
+
+// ─── Notification Types ───────────────────────────────────────────────────────
+
+export interface Notification {
+  _id: string;
+  recipient: string;
+  title: string;
+  message: string;
+  type: 'system' | 'user' | 'payment' | 'security' | 'course' | 'message';
+  severity: 'low' | 'medium' | 'high';
+  read: boolean;
+  readAt?: string;
+  relatedId?: string;
+  relatedType?: string;
+  createdAt: string;
+}
+
+// ─── Support Types ────────────────────────────────────────────────────────────
+
+export interface SupportMessage {
+  _id: string;
+  sender: 'student' | 'admin';
+  senderId: string;
+  content: string;
+  createdAt: string;
+}
+
+export interface SupportTicket {
+  _id: string;
+  student: { _id: string; name: string; email: string; profileImage?: string };
+  course?: { _id: string; title: string };
+  subject: string;
+  description: string;
+  status: 'open' | 'pending' | 'closed';
+  priority: 'low' | 'medium' | 'high';
+  messages: SupportMessage[];
+  lastMessageAt: string;
+  closedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateTicketDto {
+  courseId?: string;
+  subject: string;
+  description: string;
+  priority?: 'low' | 'medium' | 'high';
+}
+
+// ─── Financial Aid Types ──────────────────────────────────────────────────────
+
+export interface FinancialAid {
+  _id: string;
+  student: { _id: string; name: string; email: string };
+  course?: { _id: string; title: string };
+  name: string;
+  email: string;
+  phone?: string;
+  reason: string;
+  status: 'pending' | 'under_review' | 'accepted' | 'rejected';
+  appliedAt: string;
+  decidedAt?: string;
+  notes?: string;
+  approvedAmount?: number;
+  createdAt: string;
+}
+
+export interface ApplyFinancialAidDto {
+  courseId?: string;
+  name: string;
+  email: string;
+  phone?: string;
+  reason: string;
+}
+
+// ─── FAQ Types ────────────────────────────────────────────────────────────────
+
+export interface FAQ {
+  _id: string;
+  question: string;
+  answer: string;
+  category?: string;
+  order: number;
+  isActive: boolean;
+  createdAt: string;
+}
+
+// ─── Announcement Types ───────────────────────────────────────────────────────
+
+export interface Announcement {
+  _id: string;
+  title: string;
+  content: string;
+  type: 'info' | 'alert' | 'success';
+  visibleTo: ('student' | 'teacher' | 'admin')[];
+  expiredAt?: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
+// ─── Contact Types ────────────────────────────────────────────────────────────
 
 export interface ContactDto {
   name: string;
   email: string;
   subject: string;
   message: string;
+}
+
+// ─── Site Settings Types ──────────────────────────────────────────────────────
+
+export interface SiteSettings {
+  _id: string;
+  site: { name?: string; tagline?: string; logoText?: string; footerCopyright?: string };
+  contact: { phone?: string; email?: string; whatsapp?: string; address?: string; workingHours?: string };
+  social: { facebook?: string; instagram?: string; twitter?: string; linkedin?: string; youtube?: string };
+  seo: { metaTitle?: string; metaDescription?: string; keywords?: string };
+  logoUrl?: string;
+  bannerUrl?: string;
+  updatedAt: string;
+}
+
+// ─── Assignment Types ─────────────────────────────────────────────────────────
+
+export interface Submission {
+  _id: string;
+  enrollment: string;
+  student: { _id: string; name: string };
+  submittedAt: string;
+  fileUrl: string;
+  status: 'submitted' | 'graded';
+  grade?: number;
+  feedback?: string;
+  gradedAt?: string;
+}
+
+export interface Assignment {
+  _id: string;
+  course: { _id: string; title: string };
+  title: string;
+  description: string;
+  dueDate: string;
+  submissions: Submission[];
+  createdAt: string;
 }

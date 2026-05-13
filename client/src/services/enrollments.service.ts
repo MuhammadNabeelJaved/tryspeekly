@@ -1,53 +1,34 @@
 import { axiosClient } from '../lib/axiosClient';
-import type { Enrollment, CreateEnrollmentDto, EnrollmentListResponse } from '../types/api';
+import type { Enrollment, CreateEnrollmentDto, EnrollmentListResponse, ApiResponse } from '../types/api';
 
 export const enrollmentsService = {
   async enroll(dto: CreateEnrollmentDto): Promise<{ success: boolean; data: Enrollment }> {
-    const response = await axiosClient.post<{ success: boolean; data: Enrollment }>(
-      '/enrollments',
-      dto
-    );
+    const response = await axiosClient.post<{ success: boolean; data: Enrollment }>('/enrollments', dto);
     return response.data;
   },
 
-  async getEnrollments(params?: {
-    status?: string;
-    page?: number;
-    limit?: number;
-  }): Promise<EnrollmentListResponse> {
-    const response = await axiosClient.get<EnrollmentListResponse>('/enrollments', { params });
+  async getMyEnrollments(): Promise<{ success: boolean; data: Enrollment[] }> {
+    const response = await axiosClient.get<{ success: boolean; data: Enrollment[] }>('/enrollments/my');
+    return response.data;
+  },
+
+  async getTeacherEnrollments(): Promise<{ success: boolean; data: Enrollment[] }> {
+    const response = await axiosClient.get<{ success: boolean; data: Enrollment[] }>('/enrollments/teacher/my');
     return response.data;
   },
 
   async getEnrollmentById(id: string): Promise<{ success: boolean; data: Enrollment }> {
-    const response = await axiosClient.get<{ success: boolean; data: Enrollment }>(
-      `/enrollments/${id}`
-    );
+    const response = await axiosClient.get<{ success: boolean; data: Enrollment }>(`/enrollments/${id}`);
     return response.data;
   },
 
-  async cancelEnrollment(id: string): Promise<{ success: boolean; data: Enrollment }> {
-    const response = await axiosClient.patch<{ success: boolean; data: Enrollment }>(
-      `/enrollments/${id}/cancel`
-    );
+  async getAllEnrollments(params?: { page?: number; limit?: number }): Promise<EnrollmentListResponse> {
+    const response = await axiosClient.get<EnrollmentListResponse>('/enrollments', { params });
     return response.data;
   },
 
-  async completeSession(
-    id: string
-  ): Promise<{ success: boolean; data: Enrollment }> {
-    const response = await axiosClient.patch<{ success: boolean; data: Enrollment }>(
-      `/enrollments/${id}/complete-session`
-    );
-    return response.data;
-  },
-
-  async getCourseStudents(
-    courseId: string
-  ): Promise<{ success: boolean; data: any[] }> {
-    const response = await axiosClient.get<{ success: boolean; data: any[] }>(
-      `/courses/${courseId}/students`
-    );
+  async markAttendance(id: string, dto: { sessionNumber: number; duration?: number }): Promise<ApiResponse<any>> {
+    const response = await axiosClient.patch<ApiResponse<any>>(`/enrollments/${id}/attendance`, dto);
     return response.data;
   },
 };

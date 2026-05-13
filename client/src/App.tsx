@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { useEffect, Suspense, lazy } from 'react'
 import { AuthProvider } from '@/context/AuthContext'
+import { SocketProvider } from '@/context/SocketContext'
+import ProtectedRoute from '@/components/auth/ProtectedRoute'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import ScrollToTop from '@/components/ScrollToTop'
@@ -55,8 +57,7 @@ function PublicLayout() {
             <Route path="/about" element={<AboutPage />} />
             <Route path="/instructors" element={<InstructorsPage />} />
             <Route path="/blog" element={<BlogPage />} />
-            <Route path="/blog/:id" element={<BlogPostPage />} />
-            <Route path="/blog/slug/:slug" element={<BlogPostPage />} />
+            <Route path="/blog/:slug" element={<BlogPostPage />} />
             <Route path="/courses" element={<CoursesPage />} />
             <Route path="/courses/:id" element={<CourseDetailsPage />} />
             <Route path="/login" element={<LoginPage />} />
@@ -81,16 +82,39 @@ function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <ScrollHandler />
-        <Suspense fallback={<Loader fullScreen />}>
-          <Routes>
-            <Route path="/admin/*" element={<AdminPage />} />
-            <Route path="/dashboard/*" element={<StudentDashboardPage />} />
-            <Route path="/instructor/*" element={<InstructorDashboardPage />} />
-            <Route path="/certificate/:id" element={<CertificateViewPage />} />
-            <Route path="/*" element={<PublicLayout />} />
-          </Routes>
-        </Suspense>
+        <SocketProvider>
+          <ScrollHandler />
+          <Suspense fallback={<Loader fullScreen />}>
+            <Routes>
+              <Route
+                path="/admin/*"
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/*"
+                element={
+                  <ProtectedRoute allowedRoles={['student']}>
+                    <StudentDashboardPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/instructor/*"
+                element={
+                  <ProtectedRoute allowedRoles={['teacher']}>
+                    <InstructorDashboardPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="/certificate/:id" element={<CertificateViewPage />} />
+              <Route path="/*" element={<PublicLayout />} />
+            </Routes>
+          </Suspense>
+        </SocketProvider>
       </AuthProvider>
     </BrowserRouter>
   )

@@ -9,8 +9,10 @@ import {
     refreshToken,
     getUserProfile,
     getAllUsers,
+    getUserById,
     updateUserProfile,
     updateProfileImage,
+    changePassword,
     requestPasswordReset,
     resetPassword,
     deleteUser,
@@ -31,12 +33,14 @@ router.route('/logout').post(authenticate, logoutUser)
 router.route('/profile')
     .get(authenticate, getUserProfile)
     .patch(authenticate, updateUserProfile)
-
 router.route('/profile/image')
     .patch(authenticate, uploadProfileImage, handleMulterError, updateProfileImage)
+router.route('/change-password').post(authenticate, changePassword)
 
 // ─── Admin only routes ─────────────────────────────────────────────────────────
 router.route('/').get(authenticate, authorize('admin'), getAllUsers)
-router.route('/:id').delete(authenticate, authorize('admin'), deleteUser)
+router.route('/:id')
+    .get(authenticate, authorize('admin'), getUserById)
+    .delete(authenticate, authorize('admin'), deleteUser)
 
 export default router

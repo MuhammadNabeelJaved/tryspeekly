@@ -1278,19 +1278,18 @@ export default function CourseDetailsPage() {
                             transition={{ delay: 0.3 }}
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
-                            onClick={() => {
-                              // Handle enrollment completion
+                            onClick={async () => {
                               if (!isAuthenticated) {
                                 navigate('/login');
                                 return;
                               }
                               try {
-                                await enrollmentsService.enroll({ courseId: activeCourse.id, paymentId: 'pending' });
+                                await enrollmentsService.enroll({ courseId: activeCourse.id });
                                 setShowEnrollmentModal(false);
                                 setSelectedPaymentMethod(null);
                                 alert('Enrollment successful! Check your dashboard for details.');
                               } catch (err: any) {
-                                alert(err?.response?.data?.error || 'Enrollment failed. Please try again.');
+                                alert(err?.response?.data?.error?.message || 'Enrollment failed. Please try again.');
                               }
                             }}
                             className="w-full mt-6 bg-gradient-to-r from-violet-600 to-purple-600 text-white font-bold py-4 rounded-2xl shadow-[0_8px_28px_rgba(124,58,237,0.35)] transition-all text-lg flex items-center justify-center gap-2"

@@ -1,40 +1,45 @@
 import { axiosClient } from '../lib/axiosClient';
 import type {
-  LoginDto,
-  RegisterDto,
-  ForgotPasswordDto,
-  ResetPasswordDto,
-  AuthResponse,
-  ApiResponse,
+  LoginDto, RegisterDto, VerifyEmailDto,
+  ForgotPasswordDto, ResetPasswordDto,
+  AuthResponse, ApiResponse,
 } from '../types/api';
 
 export const authService = {
-  async login(dto: LoginDto): Promise<AuthResponse> {
-    const response = await axiosClient.post<ApiResponse<AuthResponse>>('/auth/login', dto);
+  async register(dto: RegisterDto): Promise<{ message: string }> {
+    const response = await axiosClient.post<ApiResponse<null>>('/users/register', dto);
+    return { message: response.data.message || 'Registration successful' };
+  },
+
+  async verifyEmail(dto: VerifyEmailDto): Promise<AuthResponse> {
+    const response = await axiosClient.post<ApiResponse<AuthResponse>>('/users/verify-email', dto);
     return response.data.data;
   },
 
-  async register(dto: RegisterDto): Promise<AuthResponse> {
-    const response = await axiosClient.post<ApiResponse<AuthResponse>>('/auth/register', dto);
+  async login(dto: LoginDto): Promise<AuthResponse> {
+    const response = await axiosClient.post<ApiResponse<AuthResponse>>('/users/login', dto);
     return response.data.data;
   },
 
   async logout(): Promise<void> {
-    await axiosClient.post('/auth/logout');
+    await axiosClient.post('/users/logout');
   },
 
-  async refreshToken(): Promise<{ accessToken: string }> {
-    const response = await axiosClient.post<ApiResponse<{ accessToken: string }>>('/auth/refresh');
+  async refreshToken(token: string): Promise<{ accessToken: string }> {
+    const response = await axiosClient.post<ApiResponse<{ accessToken: string }>>(
+      '/users/refresh-token',
+      { refreshToken: token }
+    );
     return response.data.data;
   },
 
   async forgotPassword(dto: ForgotPasswordDto): Promise<{ message: string }> {
-    const response = await axiosClient.post<ApiResponse<{ message: string }>>('/auth/forgot-password', dto);
-    return response.data;
+    const response = await axiosClient.post<ApiResponse<null>>('/users/forgot-password', dto);
+    return { message: response.data.message || 'OTP sent' };
   },
 
   async resetPassword(dto: ResetPasswordDto): Promise<{ message: string }> {
-    const response = await axiosClient.post<ApiResponse<{ message: string }>>('/auth/reset-password', dto);
-    return response.data;
+    const response = await axiosClient.post<ApiResponse<null>>('/users/reset-password', dto);
+    return { message: response.data.message || 'Password reset successful' };
   },
 };
