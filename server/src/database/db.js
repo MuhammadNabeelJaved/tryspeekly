@@ -1,21 +1,34 @@
-// Setup and connect to the database using mongoose and try-catch for error handling
-import mongoose from 'mongoose';
-import dotenv from 'dotenv';
-
-dotenv.config();
+/**
+ * MongoDB connection helper.
+ *
+ * Connects to MongoDB Atlas using the connection URI and database name
+ * from environment variables.  On failure the process exits with code 1
+ * so the container/process manager can restart the service.
+ *
+ * Required environment variables:
+ *   MONGO_URI – MongoDB Atlas SRV connection string (without the database name)
+ *   DB_NAME   – Target database name appended to the URI
+ *
+ * Usage:
+ *   import connectDB from './database/database.js';
+ *   await connectDB();
+ */
+import mongoose from "mongoose";
 
 const connectDB = async () => {
+    const uri = `${process.env.MONGO_URI}/${process.env.DB_NAME}`;
+    console.log(`Connecting to MongoDB: ${uri}`);
+
     try {
-        await mongoose.connect(process.env.MONGO_URI, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
-        });
-        console.log('Connected to MongoDB');
+        await mongoose.connect(uri);
+
+        console.log("MongoDB Connected Securely");
     } catch (error) {
-        console.error('Error connecting to MongoDB:', error.message);
+        console.error("MongoDB Error:", error.message);
+        console.error("Full error:", error);
+        // Exit the process so the host can restart with a clean state
         process.exit(1);
     }
 };
 
 export default connectDB;
-
