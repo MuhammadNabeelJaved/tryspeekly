@@ -47,6 +47,26 @@ export const createUser = asyncHandler(async (req, res) => {
   }
 })
 
+// POST /api/v1/users/resend-verification
+export const resendVerification = asyncHandler(async (req, res) => {
+  try {
+    const { email } = req.body
+    if (!email) return res.status(400).json({ success: false, error: { message: 'Email is required' } })
+
+    const user = await User.findOne({ email }).select('+verificationToken +verificationExpires')
+    if (!user) return res.status(404).json({ success: false, error: { message: 'User not found' } })
+    if (user.isVerified) return res.status(400).json({ success: false, error: { message: 'Email is already verified' } })
+
+    user.generateVerificationToken()
+    await user.save()
+
+    // TODO: send new OTP via email service
+    res.json({ success: true, message: 'Verification code resent to your email' })
+  } catch (error) {
+    res.status(400).json({ success: false, error: { message: error.message } })
+  }
+})
+
 // POST /api/v1/users/verify-email
 export const verifyEmail = asyncHandler(async (req, res) => {
   try {

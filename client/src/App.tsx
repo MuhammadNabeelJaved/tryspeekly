@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
-import { useEffect, Suspense, lazy } from 'react'
+import { useEffect, Suspense, lazy, Component, type ReactNode } from 'react'
 import { AuthProvider } from '@/context/AuthContext'
 import { SocketProvider } from '@/context/SocketContext'
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
@@ -30,6 +30,33 @@ const CertificateViewPage = lazy(() => import('@/pages/CertificateViewPage'))
 const AdminPage = lazy(() => import('@/pages/AdminPage'))
 
 import './App.css'
+
+class AppErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
+  state = { error: null }
+  static getDerivedStateFromError(error: Error) { return { error } }
+  componentDidCatch(error: Error) {
+    console.error('[AppErrorBoundary]', error)
+  }
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-white dark:bg-neutral-950 px-4">
+          <div className="text-center max-w-md">
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Something went wrong</h1>
+            <p className="text-slate-500 dark:text-neutral-400 mb-6">An unexpected error occurred. Please reload.</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-6 py-3 bg-violet-600 text-white rounded-xl font-semibold hover:bg-violet-700 transition-colors"
+            >
+              Reload page
+            </button>
+          </div>
+        </div>
+      )
+    }
+    return this.props.children
+  }
+}
 
 function ScrollHandler() {
   const { pathname, hash } = useLocation()
@@ -80,6 +107,7 @@ function PublicLayout() {
 
 function App() {
   return (
+    <AppErrorBoundary>
     <BrowserRouter>
       <AuthProvider>
         <SocketProvider>
@@ -117,6 +145,7 @@ function App() {
         </SocketProvider>
       </AuthProvider>
     </BrowserRouter>
+    </AppErrorBoundary>
   )
 }
 

@@ -21,7 +21,22 @@ interface AuthContextValue {
   setUser: (user: User | null) => void;
 }
 
-const AuthContext = createContext<AuthContextValue | null>(null);
+// Default value keeps isLoading:true so ProtectedRoute shows a loader
+// (instead of crashing) if a consumer renders before the provider mounts,
+// which can happen transiently during Vite HMR module graph updates.
+const defaultValue: AuthContextValue = {
+  user: null,
+  isAuthenticated: false,
+  isLoading: true,
+  login: () => Promise.reject(new Error('AuthProvider not mounted')),
+  register: () => Promise.reject(new Error('AuthProvider not mounted')),
+  verifyEmail: () => Promise.reject(new Error('AuthProvider not mounted')),
+  logout: () => Promise.resolve(),
+  updateProfile: () => Promise.reject(new Error('AuthProvider not mounted')),
+  setUser: () => undefined,
+};
+
+const AuthContext = createContext<AuthContextValue>(defaultValue);
 
 const persistAuth = (data: AuthResponse) => {
   localStorage.setItem('accessToken', data.accessToken);
@@ -66,7 +81,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const register = useCallback(async (dto: RegisterDto): Promise<{ message: string }> => {
     return authService.register(dto);
-    // Registration does NOT auto-login — user must verify email first
   }, []);
 
   const verifyEmail = useCallback(async (dto: VerifyEmailDto): Promise<void> => {
@@ -98,7 +112,5 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 }
 
 export function useAuth(): AuthContextValue {
-  const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuth must be used within an AuthProvider');
-  return context;
+  return useContext(AuthContext);
 }

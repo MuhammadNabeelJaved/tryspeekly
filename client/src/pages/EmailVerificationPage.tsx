@@ -1,9 +1,11 @@
-import { useState, useRef, useEffect, type KeyboardEvent, type ChangeEvent } from 'react'
+import { useState, useRef, useEffect, type KeyboardEvent, type ClipboardEvent } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { EnvelopeSimple, ArrowLeft, ArrowRight, Timer, Check } from '@phosphor-icons/react'
 import FloatingCard from '../components/auth/FloatingCard'
 import LoadingButton from '../components/auth/LoadingButton'
+import { useAuth } from '../context/AuthContext'
+import { authService } from '../services/auth.service'
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -18,6 +20,7 @@ const itemVariants = {
 export default function EmailVerificationPage() {
   const navigate = useNavigate()
   const location = useLocation()
+  const { verifyEmail } = useAuth()
   const email = location.state?.email || ''
 
   const [code, setCode] = useState(['', '', '', '', '', ''])
@@ -75,7 +78,7 @@ export default function EmailVerificationPage() {
     }
   }
 
-  const handlePaste = (e: ChangeEvent<HTMLInputElement>) => {
+  const handlePaste = (e: ClipboardEvent<HTMLInputElement>) => {
     e.preventDefault()
     const pastedData = e.clipboardData.getData('text').slice(0, 6)
     if (!/^\d+$/.test(pastedData)) return
@@ -95,24 +98,29 @@ export default function EmailVerificationPage() {
   }
 
   const handleVerify = async (fullCode: string) => {
+    if (!fullCode || fullCode.length !== 6) return
     setIsLoading(true)
     setError('')
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500))
-
-      if (fullCode === '123456') {
-        setIsVerified(true)
-        setTimeout(() => {
-          navigate('/dashboard', { replace: true })
-        }, 1500)
-      } else {
-        setError('Invalid verification code. Please try again.')
-        setCode(['', '', '', '', '', ''])
-        inputRefs.current[0]?.focus()
-      }
-    } catch {
-      setError('Verification failed. Please try again.')
+      await verifyEmail({ email, otp: fullCode })
+      setIsVerified(true)
+      const stored = JSON.parse(localStorage.getItem('user') || '{}')
+      const role = stored?.role
+      setTimeout(() => {
+        if (role === 'admin') navigate('/admin', { replace: true })
+        else if (role === 'teacher') navigate('/instructor', { replace: true })
+        else navigate('/dashboard', { replace: true })
+      }, 1500)
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { error?: { message?: string } } }; message?: string }
+      const message =
+        axiosErr?.response?.data?.error?.message ||
+        axiosErr?.message ||
+        'Invalid verification code. Please try again.'
+      setError(message)
+      setCode(['', '', '', '', '', ''])
+      inputRefs.current[0]?.focus()
     } finally {
       setIsLoading(false)
     }
@@ -123,10 +131,11 @@ export default function EmailVerificationPage() {
     setError('')
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      await authService.resendVerification(email)
       setResendTimer(60)
-    } catch {
-      setError('Failed to resend code. Please try again.')
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { error?: { message?: string } } } }
+      setError(axiosErr?.response?.data?.error?.message || 'Failed to resend code. Please try again.')
     } finally {
       setIsResending(false)
     }

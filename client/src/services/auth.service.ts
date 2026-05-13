@@ -16,6 +16,11 @@ export const authService = {
     return response.data.data;
   },
 
+  async resendVerification(email: string): Promise<{ message: string }> {
+    const response = await axiosClient.post<ApiResponse<null>>('/users/resend-verification', { email });
+    return { message: response.data.message || 'Code resent' };
+  },
+
   async login(dto: LoginDto): Promise<AuthResponse> {
     const response = await axiosClient.post<ApiResponse<AuthResponse>>('/users/login', dto);
     return response.data.data;

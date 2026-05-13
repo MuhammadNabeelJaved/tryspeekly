@@ -4,6 +4,7 @@ import { uploadProfileImage, handleMulterError } from '../middlewares/multer.js'
 import {
     createUser,
     verifyEmail,
+    resendVerification,
     loginUser,
     logoutUser,
     refreshToken,
@@ -23,6 +24,7 @@ const router = express.Router()
 // ─── Public routes ─────────────────────────────────────────────────────────────
 router.route('/register').post(createUser)
 router.route('/verify-email').post(verifyEmail)
+router.route('/resend-verification').post(resendVerification)
 router.route('/login').post(loginUser)
 router.route('/refresh-token').post(refreshToken)
 router.route('/forgot-password').post(requestPasswordReset)

@@ -58,8 +58,8 @@ export default function SignupPage() {
       setErrors(prev => ({ ...prev, phone: 'Phone number is required' }))
       return false
     }
-    const phoneWithoutCode = phone.replace(/^\+\d+/, '')
-    if (phoneWithoutCode.length < 7) {
+    const digits = phone.replace(/\D/g, '')
+    if (digits.length < 7 || digits.length > 15) {
       setErrors(prev => ({ ...prev, phone: 'Please enter a valid phone number' }))
       return false
     }
