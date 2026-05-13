@@ -48,17 +48,17 @@ export const verifyEmail = asyncHandler(async (req, res) => {
       return res.status(400).json({ success: false, error: { message: 'Email and OTP are required' } })
     }
 
-    const user = await User.findOne({ email })
+    const user = await User.findOne({ email }).select('+verificationToken +verificationExpires')
     if (!user) {
       return res.status(404).json({ success: false, error: { message: 'User not found' } })
     }
 
-    if (otp !== user.verificationToken) {
-      return res.status(400).json({ success: false, error: { message: 'Invalid OTP' } })
+    if (!user.isVerificationTokenValid(otp)) {
+      return res.status(400).json({ success: false, error: { message: 'Invalid or expired OTP' } })
     }
 
     user.isVerified = true
-    user.verificationToken = undefined
+    user.clearVerificationToken()
     await user.save()
 
     // Generate access and refresh tokens
@@ -168,17 +168,53 @@ export const getAllUsers = asyncHandler(async (req, res) => {
 // Update user profile
 export const updateUserProfile = asyncHandler(async (req, res) => {
   try {
-    const { name, phone } = req.body
+    const { name, phone, profileImage, bio, country, city, timezone } = req.body
+
     const user = await User.findById(req.user.id)
     if (!user) {
       return res.status(404).json({ success: false, error: { message: 'User not found' } })
     }
 
-    user.name = name || user.name
-    user.phone = phone || user.phone
+    if (name !== undefined) user.name = name
+    if (phone !== undefined) user.phone = phone
+    if (profileImage !== undefined) user.profileImage = profileImage
+    if (bio !== undefined) user.bio = bio
+    if (country !== undefined) user.country = country
+    if (city !== undefined) user.city = city
+    if (timezone !== undefined) user.timezone = timezone
+
     await user.save()
 
     res.json({ success: true, message: 'Profile updated successfully', user })
+  } catch (error) {
+    res.status(400).json({ success: false, error: { message: error.message } })
+  }
+})
+
+// Password reset request
+export const requestPasswordReset = asyncHandler(async (req, res) => {
+  try {
+    const { email } = req.body
+
+    if (!email) {
+      return res.status(400).json({ success: false, error: { message: 'Email is required' } })
+    }
+
+    const user = await User.findOne({ email }).select('+resetPasswordToken +resetPasswordExpires')
+    if (!user) {
+      return res.status(404).json({ success: false, error: { message: 'User not found' } })
+    }
+
+    if (!user.isVerified) {
+      return res.status(403).json({ success: false, error: { message: 'Email not verified' } })
+    }
+
+    const otp = user.generateResetPasswordToken()
+    await user.save()
+
+    // TODO: send OTP to user.email via your email service
+
+    res.json({ success: true, message: 'Password reset OTP sent to email' })
   } catch (error) {
     res.status(400).json({ success: false, error: { message: error.message } })
   }

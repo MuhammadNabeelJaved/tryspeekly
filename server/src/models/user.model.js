@@ -167,9 +167,40 @@ userSchema.methods.generateRefreshToken = function () {
   })
 }
 
-// Generate 6 digit OTP
-userSchema.methods.generateOTP = function () {
-  return Math.floor(100000 + Math.random() * 900000).toString()
+const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString()
+
+// Verification token methods
+userSchema.methods.generateVerificationToken = function () {
+  const otp = generateOTP()
+  this.verificationToken = otp
+  this.verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
+  return otp
+}
+
+userSchema.methods.isVerificationTokenValid = function (token) {
+  return this.verificationToken === token && this.verificationExpires > new Date()
+}
+
+userSchema.methods.clearVerificationToken = function () {
+  this.verificationToken = undefined
+  this.verificationExpires = undefined
+}
+
+// Reset password token methods
+userSchema.methods.generateResetPasswordToken = function () {
+  const otp = generateOTP()
+  this.resetPasswordToken = otp
+  this.resetPasswordExpires = new Date(Date.now() + 15 * 60 * 1000) // 15 minutes
+  return otp
+}
+
+userSchema.methods.isResetPasswordTokenValid = function (token) {
+  return this.resetPasswordToken === token && this.resetPasswordExpires > new Date()
+}
+
+userSchema.methods.clearResetPasswordToken = function () {
+  this.resetPasswordToken = undefined
+  this.resetPasswordExpires = undefined
 }
 
 userSchema.pre(/^find/, function (next) {
