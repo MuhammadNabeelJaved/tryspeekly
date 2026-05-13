@@ -155,8 +155,8 @@ userSchema.post('save', function (error, doc, next) {
 
 // Generate JWT access token
 userSchema.methods.generateAccessToken = function () {
-  return jwt.sign({ id: this._id, role: this.role }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN || '1h',
+  return jwt.sign({ id: this._id, role: this.role }, process.env.JWT_ACCESS_SECRET, {
+    expiresIn: process.env.JWT_ACCESS_EXPIRES_IN || '15m',
   })
 }
 

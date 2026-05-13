@@ -7,9 +7,8 @@ const router = express.Router()
 
 router.use(authenticate)
 
-router.get('/profile', asyncHandler(userController.getProfile))
-router.put('/profile', asyncHandler(userController.updateProfile))
-router.put('/password', asyncHandler(userController.updatePassword))
-router.delete('/account', asyncHandler(userController.deleteAccount))
+router.route('/profile').post(asyncHandler(userController.updateProfile))
+router.route('/change-password').post(asyncHandler(userController.changePassword))
+router.route('/delete-account').post(asyncHandler(userController.deleteAccount))
 
 export default router

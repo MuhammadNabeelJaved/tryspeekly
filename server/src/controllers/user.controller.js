@@ -220,6 +220,62 @@ export const requestPasswordReset = asyncHandler(async (req, res) => {
   }
 })
 
+// Reset password using OTP
+export const resetPassword = asyncHandler(async (req, res) => {
+  try {
+    const { email, otp, newPassword, confirmPassword } = req.body
+
+    if (!email || !otp || !newPassword || !confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        error: { message: 'Email, OTP, new password, and confirm password are required' },
+      })
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        error: { message: 'Passwords do not match' },
+      })
+    }
+
+    if (newPassword.length < 8) {
+      return res.status(400).json({
+        success: false,
+        error: { message: 'Password must be at least 8 characters long' },
+      })
+    }
+
+    const user = await User.findOne({ email }).select('+password +resetPasswordToken +resetPasswordExpires')
+    if (!user) {
+      return res.status(404).json({ success: false, error: { message: 'User not found' } })
+    }
+
+    if (!user.isResetPasswordTokenValid(otp)) {
+      return res.status(400).json({
+        success: false,
+        error: { message: 'Invalid or expired OTP' },
+      })
+    }
+
+    const isSamePassword = await user.comparePassword(newPassword)
+    if (isSamePassword) {
+      return res.status(400).json({
+        success: false,
+        error: { message: 'New password must be different from the current password' },
+      })
+    }
+
+    user.password = newPassword
+    user.clearResetPasswordToken()
+    await user.save()
+
+    res.json({ success: true, message: 'Password reset successfully. You can now log in.' })
+  } catch (error) {
+    res.status(400).json({ success: false, error: { message: error.message } })
+  }
+})
+
 // Delete user (admin only)
 export const deleteUser = asyncHandler(async (req, res) => {
   try {
