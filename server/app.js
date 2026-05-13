@@ -48,10 +48,8 @@ app.get('/api/health', (req, res) => {
     })
 })
 
-import authRoutes from './src/routes/auth.route.js'
 import userRoutes from './src/routes/user.route.js'
 
-app.use('/api/v1/auth', authRoutes)
 app.use('/api/v1/users', userRoutes)
 
 app.use((req, res) => {
