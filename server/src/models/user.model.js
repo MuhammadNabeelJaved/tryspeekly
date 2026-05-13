@@ -153,6 +153,25 @@ userSchema.post('save', function (error, doc, next) {
   }
 })
 
+// Generate JWT access token
+userSchema.methods.generateAccessToken = function () {
+  return jwt.sign({ id: this._id, role: this.role }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRES_IN || '1h',
+  })
+}
+
+// Generate JWT refresh token
+userSchema.methods.generateRefreshToken = function () {
+  return jwt.sign({ id: this._id, role: this.role }, process.env.JWT_REFRESH_SECRET, {
+    expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
+  })
+}
+
+// Generate 6 digit OTP
+userSchema.methods.generateOTP = function () {
+  return Math.floor(100000 + Math.random() * 900000).toString()
+}
+
 userSchema.pre(/^find/, function (next) {
   this.find({ isDeleted: false })
   next()

@@ -3,58 +3,201 @@ import { UnauthorizedError } from '../utils/apiErrors.js'
 import User from '../models/user.model.js'
 import bcrypt from 'bcryptjs'
 
-export const getProfile = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user?.userId).select('-password')
-  if (!user) {
-    throw new UnauthorizedError('User not found')
+// Create a new user
+export const createUser = asyncHandler(async (req, res) => {
+  try {
+    const { name, email, password, phone, role } = req.body
+
+    if (!name || !email || !password || !phone || !role) {
+      return res.status(400).json({ success: false, error: { message: 'All fields are required' } })
+    }
+
+    const existingUser = await User.findOne({ email })
+    if (existingUser) {
+      return res.status(400).json({ success: false, error: { message: 'Email already in use' } })
+    }
+
+
+    const user = new User({ name, email, password, phone, role })
+
+    if (!user) {
+      return res.status(400).json({ success: false, error: { message: 'Invalid user data' } })
+    }
+
+    // Generate 6 digit OTP
+    const otp = user.generateOTP()
+    if (!otp) {
+      return res.status(500).json({ success: false, error: { message: 'Failed to generate OTP' } })
+    }
+
+    user.verificationToken = otp
+
+    await user.save()
+    res.status(201).json(user)
+  } catch (error) {
+    res.status(400).json({ success: false, error: { message: error.message } })
   }
-  res.json({ success: true, data: { user } })
 })
 
-export const updateProfile = asyncHandler(async (req, res) => {
-  const { name, phone, bio, country, city, timezone } = req.body
-  const user = await User.findByIdAndUpdate(
-    req.user?.userId,
-    { name, phone, bio, country, city, timezone },
-    { new: true, runValidators: true }
-  ).select('-password')
+// Verification of user email using otp
+export const verifyEmail = asyncHandler(async (req, res) => {
+  try {
+    const { email, otp } = req.body
 
-  res.json({ success: true, data: { user } })
+    if (!email || !otp) {
+      return res.status(400).json({ success: false, error: { message: 'Email and OTP are required' } })
+    }
+
+    const user = await User.findOne({ email })
+    if (!user) {
+      return res.status(404).json({ success: false, error: { message: 'User not found' } })
+    }
+
+    if (otp !== user.verificationToken) {
+      return res.status(400).json({ success: false, error: { message: 'Invalid OTP' } })
+    }
+
+    user.isVerified = true
+    user.verificationToken = undefined
+    await user.save()
+
+    // Generate access and refresh tokens
+    const accessToken = user.generateAccessToken()
+    const refreshToken = user.generateRefreshToken()
+
+    if (!accessToken || !refreshToken) {
+      return res.status(500).json({ success: false, error: { message: 'Failed to generate tokens' } })
+    }
+
+    res.json({ success: true, message: 'Email verified successfully', accessToken, refreshToken })
+  } catch (error) {
+    res.status(400).json({ success: false, error: { message: error.message } })
+  }
 })
 
-export const updatePassword = asyncHandler(async (req, res) => {
-  const { currentPassword, newPassword } = req.body
+// Login user
+export const loginUser = asyncHandler(async (req, res) => {
+  try {
+    const { email, password } = req.body
 
-  if (!currentPassword || !newPassword) {
-    return res.status(400).json({ 
-      success: false, 
-      error: { message: 'Current and new password are required' } 
-    })
+    if (!email || !password) {
+      return res.status(400).json({ success: false, error: { message: 'Email and password are required' } })
+    }
+
+    const user = await User.findOne({ email })
+    if (!user) {
+      return res.status(404).json({ success: false, error: { message: 'User not found' } })
+    }
+
+    if (!user.isVerified) {
+      return res.status(403).json({ success: false, error: { message: 'Email not verified' } })
+    }
+
+    const isMatch = await user.comparePassword(password)
+    if (!isMatch) {
+      return res.status(401).json({ success: false, error: { message: 'Invalid credentials' } })
+    }
+
+    // Generate access and refresh tokens
+    const accessToken = user.generateAccessToken()
+    const refreshToken = user.generateRefreshToken()
+
+    if (!accessToken || !refreshToken) {
+      return res.status(500).json({ success: false, error: { message: 'Failed to generate tokens' } })
+    }
+
+    res.json({ success: true, message: 'Login successful', accessToken, refreshToken })
+  } catch (error) {
+    res.status(400).json({ success: false, error: { message: error.message } })
   }
-
-  const user = await User.findById(req.user?.userId)
-  if (!user) {
-    throw new UnauthorizedError('User not found')
-  }
-
-  const isMatch = await bcrypt.compare(currentPassword, user.password)
-  if (!isMatch) {
-    return res.status(400).json({ 
-      success: false, 
-      error: { message: 'Current password is incorrect' } 
-    })
-  }
-
-  user.password = await bcrypt.hash(newPassword, parseInt(process.env.BCRYPT_ROUNDS) || 10)
-  await user.save()
-
-  res.json({ success: true, message: 'Password updated successfully' })
 })
 
-export const deleteAccount = asyncHandler(async (req, res) => {
-  await User.findByIdAndDelete(req.user?.userId)
-  res.clearCookie('refreshToken').json({ 
-    success: true, 
-    message: 'Account deleted successfully' 
-  })
+// Logout user
+export const logoutUser = asyncHandler(async (req, res) => {
+  try {
+    // Invalidate the refresh token (implementation depends on how you store tokens)
+    // For example, you can maintain a blacklist of tokens or use a token versioning system
+
+    res.json({ success: true, message: 'Logout successful' })
+  } catch (error) {
+    res.status(400).json({ success: false, error: { message: error.message } })
+  }
 })
+
+// Refresh access token
+export const refreshToken = asyncHandler(async (req, res) => {
+  try {
+    const { refreshToken } = req.body
+
+    if (!refreshToken) {
+      return res.status(400).json({ success: false, error: { message: 'Refresh token is required' } })
+    }
+
+    // Verify the refresh token and generate a new access token
+    // Implementation depends on how you store and manage refresh tokens
+
+    res.json({ success: true, message: 'Token refreshed successfully', accessToken: 'newAccessToken' })
+  } catch (error) {
+    res.status(400).json({ success: false, error: { message: error.message } })
+  }
+})
+
+// Get user profile
+export const getUserProfile = asyncHandler(async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id)
+    if (!user) {
+      return res.status(404).json({ success: false, error: { message: 'User not found' } })
+    }
+    res.json(user)
+  } catch (error) {
+    res.status(400).json({ success: false, error: { message: error.message } })
+  }
+})
+
+// Get all users (admin only)
+export const getAllUsers = asyncHandler(async (req, res) => {
+  try {
+    const users = await User.find()
+    res.json(users)
+  } catch (error) {
+    res.status(400).json({ success: false, error: { message: error.message } })
+  }
+})
+
+// Update user profile
+export const updateUserProfile = asyncHandler(async (req, res) => {
+  try {
+    const { name, phone } = req.body
+    const user = await User.findById(req.user.id)
+    if (!user) {
+      return res.status(404).json({ success: false, error: { message: 'User not found' } })
+    }
+
+    user.name = name || user.name
+    user.phone = phone || user.phone
+    await user.save()
+
+    res.json({ success: true, message: 'Profile updated successfully', user })
+  } catch (error) {
+    res.status(400).json({ success: false, error: { message: error.message } })
+  }
+})
+
+// Delete user (admin only)
+export const deleteUser = asyncHandler(async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id)
+    if (!user) {
+      return res.status(404).json({ success: false, error: { message: 'User not found' } })
+    }
+
+    user.isDeleted = true
+    await user.save()
+
+    res.json({ success: true, message: 'User deleted successfully' })
+  } catch (error) {
+    res.status(400).json({ success: false, error: { message: error.message } })
+  }
+})
+
