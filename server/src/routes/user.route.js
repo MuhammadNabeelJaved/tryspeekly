@@ -1,14 +1,37 @@
 import express from 'express'
-import asyncHandler from '../utils/asyncHandler.js'
-import { authenticate } from '../middlewares/auth.js'
-import * as userController from '../controllers/user.controller.js'
+import { authenticate, authorize } from '../middlewares/auth.js'
+import {
+    createUser,
+    verifyEmail,
+    loginUser,
+    logoutUser,
+    refreshToken,
+    getUserProfile,
+    getAllUsers,
+    updateUserProfile,
+    requestPasswordReset,
+    resetPassword,
+    deleteUser,
+} from '../controllers/user.controller.js'
 
 const router = express.Router()
 
-router.use(authenticate)
+// ─── Public routes ─────────────────────────────────────────────────────────────
+router.route('/register').post(createUser)
+router.route('/verify-email').post(verifyEmail)
+router.route('/login').post(loginUser)
+router.route('/refresh-token').post(refreshToken)
+router.route('/forgot-password').post(requestPasswordReset)
+router.route('/reset-password').post(resetPassword)
 
-router.route('/profile').post(asyncHandler(userController.updateProfile))
-router.route('/change-password').post(asyncHandler(userController.changePassword))
-router.route('/delete-account').post(asyncHandler(userController.deleteAccount))
+// ─── Protected routes (login required) ────────────────────────────────────────
+router.route('/logout').post(authenticate, logoutUser)
+router.route('/profile')
+    .get(authenticate, getUserProfile)
+    .patch(authenticate, updateUserProfile)
+
+// ─── Admin only routes ─────────────────────────────────────────────────────────
+router.route('/').get(authenticate, authorize('admin'), getAllUsers)
+router.route('/:id').delete(authenticate, authorize('admin'), deleteUser)
 
 export default router
