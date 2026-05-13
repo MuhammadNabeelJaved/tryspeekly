@@ -1,5 +1,6 @@
 import asyncHandler from '../utils/asyncHandler.js'
 import User from '../models/user.model.js'
+import { uploadUserAvatar, deleteFile, extractPublicId } from '../utils/cloudinary.js'
 
 
 // Create a new user
@@ -158,7 +159,7 @@ export const getAllUsers = asyncHandler(async (req, res) => {
 // Update user profile
 export const updateUserProfile = asyncHandler(async (req, res) => {
   try {
-    const { name, phone, profileImage, bio, country, city, timezone } = req.body
+    const { name, phone, bio, country, city, timezone } = req.body
 
     const user = await User.findById(req.user.id)
     if (!user) {
@@ -167,7 +168,6 @@ export const updateUserProfile = asyncHandler(async (req, res) => {
 
     if (name !== undefined) user.name = name
     if (phone !== undefined) user.phone = phone
-    if (profileImage !== undefined) user.profileImage = profileImage
     if (bio !== undefined) user.bio = bio
     if (country !== undefined) user.country = country
     if (city !== undefined) user.city = city
@@ -266,6 +266,36 @@ export const resetPassword = asyncHandler(async (req, res) => {
   }
 })
 
+// Update profile image
+export const updateProfileImage = asyncHandler(async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, error: { message: 'No image file provided' } })
+    }
+
+    const user = await User.findById(req.user.id)
+    if (!user) {
+      return res.status(404).json({ success: false, error: { message: 'User not found' } })
+    }
+
+    // Delete old image from Cloudinary if exists
+    if (user.profileImage) {
+      const publicId = extractPublicId(user.profileImage)
+      if (publicId) await deleteFile(publicId, 'image')
+    }
+
+    // Upload new image to Cloudinary
+    const result = await uploadUserAvatar(req.file.buffer, user._id.toString())
+
+    user.profileImage = result.secure_url
+    await user.save()
+
+    res.json({ success: true, message: 'Profile image updated successfully', profileImage: user.profileImage })
+  } catch (error) {
+    res.status(400).json({ success: false, error: { message: error.message } })
+  }
+})
+
 // Delete user (admin only)
 export const deleteUser = asyncHandler(async (req, res) => {
   try {
@@ -274,7 +304,14 @@ export const deleteUser = asyncHandler(async (req, res) => {
       return res.status(404).json({ success: false, error: { message: 'User not found' } })
     }
 
+    // Delete profile image from Cloudinary if exists
+    if (user.profileImage) {
+      const publicId = extractPublicId(user.profileImage)
+      if (publicId) await deleteFile(publicId, 'image')
+    }
+
     user.isDeleted = true
+    user.profileImage = undefined
     await user.save()
 
     res.json({ success: true, message: 'User deleted successfully' })

@@ -1,5 +1,6 @@
 import express from 'express'
 import { authenticate, authorize } from '../middlewares/auth.js'
+import { uploadProfileImage, handleMulterError } from '../middlewares/multer.js'
 import {
     createUser,
     verifyEmail,
@@ -9,6 +10,7 @@ import {
     getUserProfile,
     getAllUsers,
     updateUserProfile,
+    updateProfileImage,
     requestPasswordReset,
     resetPassword,
     deleteUser,
@@ -29,6 +31,9 @@ router.route('/logout').post(authenticate, logoutUser)
 router.route('/profile')
     .get(authenticate, getUserProfile)
     .patch(authenticate, updateUserProfile)
+
+router.route('/profile/image')
+    .patch(authenticate, uploadProfileImage, handleMulterError, updateProfileImage)
 
 // ─── Admin only routes ─────────────────────────────────────────────────────────
 router.route('/').get(authenticate, authorize('admin'), getAllUsers)

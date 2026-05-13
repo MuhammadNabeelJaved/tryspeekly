@@ -49,8 +49,36 @@ app.get('/api/health', (req, res) => {
 })
 
 import userRoutes from './src/routes/user.route.js'
+import courseRoutes from './src/routes/course.route.js'
+import enrollmentRoutes from './src/routes/enrollment.route.js'
+import paymentRoutes from './src/routes/payment.route.js'
+import messageRoutes from './src/routes/message.route.js'
+import blogRoutes from './src/routes/blog.route.js'
+import certificateRoutes from './src/routes/certificate.route.js'
+import financialAidRoutes from './src/routes/financial-aid.route.js'
+import supportRoutes from './src/routes/support.route.js'
+import notificationRoutes from './src/routes/notification.route.js'
+import assignmentRoutes from './src/routes/assignment.route.js'
+import contactRoutes from './src/routes/contact.route.js'
+import faqRoutes from './src/routes/faq.route.js'
+import announcementRoutes from './src/routes/announcement.route.js'
+import siteSettingsRoutes from './src/routes/site-settings.route.js'
 
 app.use('/api/v1/users', userRoutes)
+app.use('/api/v1/courses', courseRoutes)
+app.use('/api/v1/enrollments', enrollmentRoutes)
+app.use('/api/v1/payments', paymentRoutes)
+app.use('/api/v1/messages', messageRoutes)
+app.use('/api/v1/blogs', blogRoutes)
+app.use('/api/v1/certificates', certificateRoutes)
+app.use('/api/v1/financial-aid', financialAidRoutes)
+app.use('/api/v1/support', supportRoutes)
+app.use('/api/v1/notifications', notificationRoutes)
+app.use('/api/v1/assignments', assignmentRoutes)
+app.use('/api/v1/contact', contactRoutes)
+app.use('/api/v1/faqs', faqRoutes)
+app.use('/api/v1/announcements', announcementRoutes)
+app.use('/api/v1/site-settings', siteSettingsRoutes)
 
 app.use((req, res) => {
     res.status(404).json({
