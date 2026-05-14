@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { motion, AnimatePresence } from 'framer-motion'
+import toast from 'react-hot-toast'
 import { coursesService } from '../../services/courses.service'
 import { INSTRUCTOR_COURSES as FALLBACK_COURSES } from './instructorData'
 import { BookOpen, Users, Clock, Plus, X, Check, PencilSimple, Trash, MagnifyingGlass, CheckCircle, CalendarBlank, ChartBar } from '@phosphor-icons/react'
@@ -71,8 +72,30 @@ const EMPTY_COURSE: InstructorCourse = {
   curriculum: []
 }
 
+const STATUS_COLORS: Record<string, string> = {
+  active:   'bg-emerald-500/90 text-white border border-emerald-400/50',
+  upcoming: 'bg-blue-500/90 text-white border border-blue-400/50',
+  draft:    'bg-slate-800/90 text-white border border-slate-700/50',
+  pending:  'bg-amber-500/90 text-white border border-amber-400/50',
+  rejected: 'bg-red-500/90 text-white border border-red-400/50',
+}
+
+const STATUS_LABELS: Record<string, string> = {
+  active:   'Active',
+  upcoming: 'Upcoming',
+  draft:    'Draft',
+  pending:  'Under Review',
+  rejected: 'Rejected',
+}
+
 function mapBackendCourse(c: any): InstructorCourse {
-  const statusMap: Record<string, string> = { published: 'active', archived: 'draft', draft: 'draft' }
+  const statusMap: Record<string, string> = {
+    published: 'active',
+    archived: 'draft',
+    draft: 'draft',
+    pending: 'pending',
+    rejected: 'rejected',
+  }
   return {
     id: c._id,
     title: c.title,
@@ -168,7 +191,10 @@ export default function InstructorCourses() {
           sessionDuration: 60,
           maxStudents: data.maxStudents,
         })
-        if (res.success) setCourses([...courses, mapBackendCourse(res.data)])
+        if (res.success) {
+          setCourses([...courses, mapBackendCourse(res.data)])
+          toast.success('Course submitted for review. You will be notified when approved.')
+        }
       } else {
         const res = await coursesService.updateCourse(data.id, {
           title: data.title,
@@ -245,6 +271,18 @@ export default function InstructorCourses() {
     newItems.splice(lIndex, 1)
     newCur[mIndex] = { ...newCur[mIndex], items: newItems }
     setValue('curriculum', newCur)
+  }
+
+  async function handleResubmit(courseId: string) {
+    try {
+      const res = await coursesService.submitForReview(courseId)
+      if (res.success) {
+        setCourses(courses.map(c => c.id === courseId ? mapBackendCourse(res.data) : c))
+        toast.success('Course resubmitted for review.')
+      }
+    } catch {
+      toast.error('Could not resubmit. Please try again.')
+    }
   }
 
   const filteredCourses = courses
@@ -391,12 +429,8 @@ export default function InstructorCourses() {
               
               {/* Top Badges */}
               <div className="absolute top-4 left-4 flex gap-2 flex-wrap">
-                <span className={`px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-widest backdrop-blur-md shadow-sm ${
-                  course.status === 'active' ? 'bg-emerald-500/90 text-white border border-emerald-400/50' :
-                  course.status === 'upcoming' ? 'bg-blue-500/90 text-white border border-blue-400/50' :
-                  'bg-slate-800/90 text-white border border-slate-700/50'
-                }`}>
-                  {course.status}
+                <span className={`px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-widest backdrop-blur-md shadow-sm ${STATUS_COLORS[course.status] ?? STATUS_COLORS['draft']}`}>
+                  {STATUS_LABELS[course.status] ?? course.status}
                 </span>
                 {course.category && (
                   <span className="px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-widest bg-white/90 dark:bg-black/90 text-slate-900 dark:text-white backdrop-blur-md shadow-sm border border-white/20 dark:border-white/10">
@@ -484,13 +518,23 @@ export default function InstructorCourses() {
               </div>
             </div>
             
-            <div className="p-4 border-t border-slate-100 dark:border-neutral-800 bg-slate-50/50 dark:bg-neutral-900/30 flex gap-2 shrink-0">
-              <button onClick={() => openEdit(course)} className="flex-1 flex items-center justify-center gap-1.5 bg-white dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 hover:bg-slate-50 dark:hover:bg-neutral-700 text-slate-700 dark:text-neutral-200 px-3 py-2.5 rounded-xl text-xs font-bold transition-all shadow-sm hover:shadow">
-                <PencilSimple size={16} /> Edit Details
-              </button>
-              <button onClick={() => setDeleteId(course.id)} className="w-10 flex items-center justify-center bg-white dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 hover:bg-red-50 hover:border-red-200 hover:text-red-500 dark:hover:bg-red-900/20 dark:hover:border-red-900/50 dark:hover:text-red-400 text-slate-400 px-3 py-2.5 rounded-xl transition-all shadow-sm hover:shadow">
-                <Trash size={16} />
-              </button>
+            <div className="p-4 border-t border-slate-100 dark:border-neutral-800 bg-slate-50/50 dark:bg-neutral-900/30 flex flex-col gap-2 shrink-0">
+              <div className="flex gap-2">
+                <button onClick={() => openEdit(course)} className="flex-1 flex items-center justify-center gap-1.5 bg-white dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 hover:bg-slate-50 dark:hover:bg-neutral-700 text-slate-700 dark:text-neutral-200 px-3 py-2.5 rounded-xl text-xs font-bold transition-all shadow-sm hover:shadow">
+                  <PencilSimple size={16} /> Edit Details
+                </button>
+                <button onClick={() => setDeleteId(course.id)} className="w-10 flex items-center justify-center bg-white dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 hover:bg-red-50 hover:border-red-200 hover:text-red-500 dark:hover:bg-red-900/20 dark:hover:border-red-900/50 dark:hover:text-red-400 text-slate-400 px-3 py-2.5 rounded-xl transition-all shadow-sm hover:shadow">
+                  <Trash size={16} />
+                </button>
+              </div>
+              {course.status === 'rejected' && (
+                <button
+                  onClick={() => handleResubmit(course.id)}
+                  className="w-full py-2 rounded-xl bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/20 dark:hover:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-xs font-bold transition-colors"
+                >
+                  Re-submit for Review
+                </button>
+              )}
             </div>
           </div>
         )})}
