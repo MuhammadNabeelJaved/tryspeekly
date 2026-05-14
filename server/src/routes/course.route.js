@@ -9,6 +9,8 @@ import {
   updateCourseThumbnail,
   deleteCourse,
   getTeacherCourses,
+  getAdminCourses,
+  reviewCourse,
 } from '../controllers/course.controller.js'
 
 const router = express.Router()
@@ -24,6 +26,8 @@ router.route('/:id').patch(authenticate, authorize('teacher', 'admin'), updateCo
 router.route('/:id/thumbnail').patch(authenticate, authorize('teacher', 'admin'), uploadProfileImage, handleMulterError, updateCourseThumbnail)
 
 // ─── Admin only routes ─────────────────────────────────────────────────────────
+router.route('/admin/all').get(authenticate, authorize('admin'), getAdminCourses)
+router.route('/:id/review').patch(authenticate, authorize('admin'), reviewCourse)
 router.route('/:id').delete(authenticate, authorize('admin'), deleteCourse)
 
 export default router

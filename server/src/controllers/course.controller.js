@@ -1,5 +1,6 @@
 import asyncHandler from '../utils/asyncHandler.js'
 import Course from '../models/course.model.js'
+import User from '../models/user.model.js'
 import { uploadCourseThumbnail, deleteFile, extractPublicId } from '../utils/cloudinary.js'
 
 // GET /api/v1/courses — public, with filters & pagination
@@ -43,8 +44,10 @@ export const getCourse = asyncHandler(async (req, res) => {
 // POST /api/v1/courses — teacher/admin
 export const createCourse = asyncHandler(async (req, res) => {
   try {
-    const course = await Course.create({ ...req.body, teacher: req.user.id })
-    res.status(201).json({ success: true, message: 'Course created successfully', data: course })
+    // Teachers always submit for review; admins can set their own status
+    const status = req.user.role === 'admin' ? (req.body.status ?? 'draft') : 'pending'
+    const course = await Course.create({ ...req.body, teacher: req.user.id, status })
+    res.status(201).json({ success: true, message: 'Course submitted for review', data: course })
   } catch (error) {
     res.status(400).json({ success: false, error: { message: error.message } })
   }
@@ -122,6 +125,82 @@ export const getTeacherCourses = asyncHandler(async (req, res) => {
   try {
     const courses = await Course.find({ teacher: req.user.id }).sort({ createdAt: -1 })
     res.json({ success: true, data: courses })
+  } catch (error) {
+    res.status(400).json({ success: false, error: { message: error.message } })
+  }
+})
+
+// GET /api/v1/courses/admin/all — admin: all courses any status
+export const getAdminCourses = asyncHandler(async (req, res) => {
+  try {
+    const { page = 1, limit = 50, status, search } = req.query
+    const filter = {}
+
+    if (status && status !== 'all') filter.status = status
+    if (search) filter.title = { $regex: search, $options: 'i' }
+
+    const skip = (Number(page) - 1) * Number(limit)
+    const [courses, total] = await Promise.all([
+      Course.find(filter)
+        .populate('teacher', 'name profileImage')
+        .skip(skip)
+        .limit(Number(limit))
+        .sort({ createdAt: -1 }),
+      Course.countDocuments(filter),
+    ])
+
+    res.json({
+      success: true,
+      data: courses,
+      pagination: { page: Number(page), limit: Number(limit), total, totalPages: Math.ceil(total / Number(limit)) },
+    })
+  } catch (error) {
+    res.status(400).json({ success: false, error: { message: error.message } })
+  }
+})
+
+// PATCH /api/v1/courses/:id/review — admin: approve or reject
+export const reviewCourse = asyncHandler(async (req, res) => {
+  try {
+    const { action, reason } = req.body
+
+    if (!['approve', 'reject'].includes(action)) {
+      return res.status(400).json({ success: false, error: { message: 'action must be "approve" or "reject"' } })
+    }
+
+    const course = await Course.findById(req.params.id)
+    if (!course) {
+      return res.status(404).json({ success: false, error: { message: 'Course not found' } })
+    }
+    if (course.status === 'published') {
+      return res.status(400).json({ success: false, error: { message: 'Course is already published' } })
+    }
+
+    course.status = action === 'approve' ? 'published' : 'rejected'
+    await course.save()
+
+    // Push in-app notification to teacher
+    const notificationType = action === 'approve' ? 'course_approved' : 'course_rejected'
+    const notificationMessage = action === 'approve'
+      ? `Your course "${course.title}" has been approved and is now live.`
+      : `Your course "${course.title}" was rejected.${reason ? ` Reason: ${reason}` : ''}`
+
+    await User.findByIdAndUpdate(course.teacher, {
+      $push: {
+        notifications: {
+          type: notificationType,
+          message: notificationMessage,
+          read: false,
+          createdAt: new Date(),
+        },
+      },
+    })
+
+    res.json({
+      success: true,
+      message: action === 'approve' ? 'Course approved and published' : 'Course rejected',
+      data: course,
+    })
   } catch (error) {
     res.status(400).json({ success: false, error: { message: error.message } })
   }
