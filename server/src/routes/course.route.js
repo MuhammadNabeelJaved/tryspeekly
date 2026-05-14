@@ -11,6 +11,7 @@ import {
   getTeacherCourses,
   getAdminCourses,
   reviewCourse,
+  submitCourseForReview,
 } from '../controllers/course.controller.js'
 
 const router = express.Router()
@@ -29,6 +30,7 @@ router.route('/admin/all').get(authenticate, authorize('admin'), getAdminCourses
 router.route('/:id').get(getCourse)
 router.route('/:id').patch(authenticate, authorize('teacher', 'admin'), updateCourse)
 router.route('/:id/thumbnail').patch(authenticate, authorize('teacher', 'admin'), uploadProfileImage, handleMulterError, updateCourseThumbnail)
+router.route('/:id/submit').patch(authenticate, authorize('teacher'), submitCourseForReview)
 router.route('/:id/review').patch(authenticate, authorize('admin'), reviewCourse)
 router.route('/:id').delete(authenticate, authorize('admin'), deleteCourse)
 

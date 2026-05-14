@@ -6,8 +6,8 @@ import { uploadCourseThumbnail, deleteFile, extractPublicId } from '../utils/clo
 // GET /api/v1/courses — public, with filters & pagination
 export const getAllCourses = asyncHandler(async (req, res) => {
   try {
-    const { page = 1, limit = 12, status = 'published', level, focus, type, search } = req.query
-    const filter = { status }
+    const { page = 1, limit = 12, level, focus, type, search } = req.query
+    const filter = { status: 'published' }
 
     if (level) filter.level = level
     if (focus) filter.focus = focus
@@ -168,6 +168,28 @@ export const getAdminCourses = asyncHandler(async (req, res) => {
   }
 })
 
+// PATCH /api/v1/courses/:id/submit — teacher: re-submit a rejected course for review
+export const submitCourseForReview = asyncHandler(async (req, res) => {
+  try {
+    const course = await Course.findById(req.params.id)
+    if (!course) return res.status(404).json({ success: false, error: { message: 'Course not found' } })
+
+    const isOwner = course.teacher.toString() === req.user.id.toString()
+    if (!isOwner) return res.status(403).json({ success: false, error: { message: 'Not authorized' } })
+
+    if (course.status !== 'rejected') {
+      return res.status(400).json({ success: false, error: { message: 'Only rejected courses can be resubmitted' } })
+    }
+
+    course.status = 'pending'
+    await course.save()
+
+    res.json({ success: true, message: 'Course resubmitted for review', data: course })
+  } catch (error) {
+    res.status(400).json({ success: false, error: { message: error.message } })
+  }
+})
+
 // PATCH /api/v1/courses/:id/review — admin: approve or reject
 export const reviewCourse = asyncHandler(async (req, res) => {
   try {
@@ -181,8 +203,8 @@ export const reviewCourse = asyncHandler(async (req, res) => {
     if (!course) {
       return res.status(404).json({ success: false, error: { message: 'Course not found' } })
     }
-    if (course.status === 'published') {
-      return res.status(400).json({ success: false, error: { message: 'Course is already published' } })
+    if (course.status !== 'pending') {
+      return res.status(400).json({ success: false, error: { message: 'Only pending courses can be reviewed' } })
     }
 
     course.status = action === 'approve' ? 'published' : 'rejected'

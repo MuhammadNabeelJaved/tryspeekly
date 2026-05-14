@@ -69,7 +69,7 @@ export const coursesService = {
   },
 
   async submitForReview(id: string): Promise<CourseSingleResponse> {
-    const response = await axiosClient.patch<CourseSingleResponse>(`/courses/${id}`, { status: 'pending' });
+    const response = await axiosClient.patch<CourseSingleResponse>(`/courses/${id}/submit`);
     return response.data;
   },
 };
