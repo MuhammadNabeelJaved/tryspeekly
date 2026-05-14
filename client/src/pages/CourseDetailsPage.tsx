@@ -378,6 +378,7 @@ export default function CourseDetailsPage() {
           name: apiCourse.teacher?.name || COURSE.instructor.name,
           image: apiCourse.teacher?.profileImage || COURSE.instructor.image,
           bio: apiCourse.teacher?.bio || COURSE.instructor.bio,
+          role: '',
           rating: 0,
           students: '',
           courses: 0,
