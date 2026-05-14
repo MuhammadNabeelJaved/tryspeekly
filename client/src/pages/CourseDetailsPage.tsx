@@ -328,7 +328,12 @@ export default function CourseDetailsPage() {
 
   useEffect(() => {
     if (id) {
-      coursesService.getCourseById(id).then(res => setApiCourse(res.data)).catch(() => {})
+      coursesService.getCourseById(id)
+        .then(res => setApiCourse(res.data))
+        .catch(() => {
+          toast.error('Course not found.')
+          navigate('/courses', { replace: true })
+        })
     }
   }, [id])
 
@@ -339,15 +344,32 @@ export default function CourseDetailsPage() {
         id: apiCourse._id,
         title: apiCourse.title,
         description: apiCourse.description,
-        price: apiCourse.currency === 'PKR' ? `Rs.${apiCourse.price.toLocaleString()}` : `$${apiCourse.price}`,
-        level: apiCourse.level.charAt(0).toUpperCase() + apiCourse.level.slice(1),
-        duration: `${apiCourse.totalSessions} Sessions`,
-        image: apiCourse.thumbnail || activeCourse.image,
-        students: apiCourse.enrolledStudents?.length || 0,
+        price: apiCourse.currency === 'PKR'
+          ? `Rs.${apiCourse.price?.toLocaleString()}`
+          : `$${apiCourse.price}`,
+        originalPrice: '',
+        level: apiCourse.level
+          ? apiCourse.level.charAt(0).toUpperCase() + apiCourse.level.slice(1)
+          : COURSE.level,
+        duration: `${apiCourse.totalSessions ?? 0} Sessions (${apiCourse.sessionDuration ?? 60} min each)`,
+        image: apiCourse.thumbnail || COURSE.image,
+        students: apiCourse.enrolledStudents?.length ?? 0,
+        maxStudents: apiCourse.maxStudents ?? COURSE.maxStudents,
+        schedule: apiCourse.recurringSchedule?.length
+          ? apiCourse.recurringSchedule
+              .map((s: { day: string; time: string }) => `${s.day.charAt(0).toUpperCase() + s.day.slice(1)} ${s.time}`)
+              .join(', ')
+          : COURSE.schedule,
+        meetLink: apiCourse.meetLink || '',
         instructor: {
-          ...activeCourse.instructor,
-          name: apiCourse.teacher?.name || activeCourse.instructor.name,
+          ...COURSE.instructor,
+          name: apiCourse.teacher?.name || COURSE.instructor.name,
+          image: apiCourse.teacher?.profileImage || COURSE.instructor.image,
+          bio: apiCourse.teacher?.bio || COURSE.instructor.bio,
         },
+        whatYouWillLearn: COURSE.whatYouWillLearn,
+        curriculum: COURSE.curriculum,
+        reviewsList: COURSE.reviewsList,
       }
     : COURSE
 
