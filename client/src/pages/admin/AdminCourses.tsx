@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, PencilSimple, Trash, X, Check, Users, Clock, CurrencyCircleDollar, CheckCircle, XCircle, Eye } from '@phosphor-icons/react'
+import toast from 'react-hot-toast'
 import type { AdminStore } from '../AdminPage'
 import type { Course } from './adminData'
 import { coursesService } from '../../services/courses.service'
@@ -54,28 +55,28 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
   useEffect(() => {
     async function fetchCourses() {
       try {
-        const res = await coursesService.getAllCourses({ limit: 200 })
+        const res = await coursesService.getAdminCourses({ limit: 200 })
         const apiData: any[] = res.data ?? []
         const mapped: Course[] = apiData.map((c: any, idx: number) => ({
           id: c._id ?? c.id ?? `api-c${idx}`,
           title: c.title ?? '',
-          level: c.level ?? 'Beginner',
-          duration: '',
+          level: c.level ? c.level.charAt(0).toUpperCase() + c.level.slice(1) : 'Beginner',
+          duration: `${c.totalSessions ?? 0} sessions`,
           price: c.price ?? 0,
           currency: c.currency ?? 'PKR',
           instructorId: c.teacher?._id ?? '',
           instructorName: c.teacher?.name ?? '',
           totalStudents: (c.enrolledStudents ?? []).length,
           maxStudents: c.maxStudents ?? 15,
-          status: c.status === 'published' ? 'active' as const : c.status === 'archived' ? 'inactive' as const : 'draft' as const,
+          status: c.status as Course['status'],
           description: c.description ?? '',
-          startDate: '',
-          schedule: '',
+          startDate: c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '',
+          schedule: c.recurringSchedule?.[0] ? `${c.recurringSchedule[0].day} ${c.recurringSchedule[0].time}` : '',
           features: [],
         }))
         setApiCourses(mapped)
       } catch {
-        // Fallback to store data
+        // fallback to store data
       }
     }
     fetchCourses()
@@ -86,6 +87,8 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
   const [modalType, setModalType] = useState<'add' | 'edit' | null>(null)
   const [reviewCourse, setReviewCourse] = useState<Course | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [reviewLoading, setReviewLoading] = useState(false)
+  const [rejectReason, setRejectReason] = useState('')
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState('All')
   const [activeTab, setActiveTab] = useState<'manage' | 'pending'>('manage')
@@ -120,10 +123,38 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
     setReviewCourse(course)
   }
 
-  function handleReviewAction(courseId: string, action: 'accept' | 'reject') {
-    const newStatus = action === 'accept' ? 'active' : 'rejected'
-    setCourses(courses.map(c => c.id === courseId ? { ...c, status: newStatus } : c))
-    setReviewCourse(null)
+  async function handleReviewAction(courseId: string, action: 'accept' | 'reject', reason?: string) {
+    setReviewLoading(true)
+    try {
+      await coursesService.reviewCourse(courseId, action === 'accept' ? 'approve' : 'reject', reason)
+      const res = await coursesService.getAdminCourses({ limit: 200 })
+      const apiData: any[] = res.data ?? []
+      const mapped: Course[] = apiData.map((c: any, idx: number) => ({
+        id: c._id ?? c.id ?? `api-c${idx}`,
+        title: c.title ?? '',
+        level: c.level ? c.level.charAt(0).toUpperCase() + c.level.slice(1) : 'Beginner',
+        duration: `${c.totalSessions ?? 0} sessions`,
+        price: c.price ?? 0,
+        currency: c.currency ?? 'PKR',
+        instructorId: c.teacher?._id ?? '',
+        instructorName: c.teacher?.name ?? '',
+        totalStudents: (c.enrolledStudents ?? []).length,
+        maxStudents: c.maxStudents ?? 15,
+        status: c.status as Course['status'],
+        description: c.description ?? '',
+        startDate: c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '',
+        schedule: c.recurringSchedule?.[0] ? `${c.recurringSchedule[0].day} ${c.recurringSchedule[0].time}` : '',
+        features: [],
+      }))
+      setApiCourses(mapped)
+      setReviewCourse(null)
+      setRejectReason('')
+      toast.success(action === 'accept' ? 'Course approved and published!' : 'Course rejected.')
+    } catch {
+      toast.error('Action failed. Please try again.')
+    } finally {
+      setReviewLoading(false)
+    }
   }
 
   function onSave(data: Course & { featuresInput: string }) {
@@ -392,7 +423,7 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
                   Review Course Proposal
                   <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${STATUS_COLORS[reviewCourse.status]}`}>{reviewCourse.status}</span>
                 </h3>
-                <button type="button" onClick={() => setReviewCourse(null)} className="w-8 h-8 rounded-full bg-slate-100 dark:bg-neutral-800 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors"><X size={15} /></button>
+                <button type="button" onClick={() => { setReviewCourse(null); setRejectReason('') }} className="w-8 h-8 rounded-full bg-slate-100 dark:bg-neutral-800 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors"><X size={15} /></button>
               </div>
               <div className="p-6">
                 <div className="grid grid-cols-2 gap-y-6 gap-x-4">
@@ -432,12 +463,35 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
                   )}
                 </div>
               </div>
+              {/* Rejection reason */}
+              <div className="px-6 pb-4">
+                <label className="text-[11px] font-semibold text-slate-500 dark:text-neutral-400 uppercase tracking-wide block mb-1">
+                  Rejection Reason (optional)
+                </label>
+                <textarea
+                  value={rejectReason}
+                  onChange={e => setRejectReason(e.target.value)}
+                  rows={2}
+                  placeholder="Missing syllabus, inappropriate content…"
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-neutral-600 outline-none focus:border-violet-500 transition-colors resize-none"
+                />
+              </div>
               <div className="flex gap-3 px-6 pb-6 border-t border-slate-100 dark:border-neutral-800 pt-4">
-                <button type="button" onClick={() => handleReviewAction(reviewCourse.id, 'reject')} className="flex-1 py-3 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-950/30 dark:hover:bg-red-900/40 dark:text-red-400 text-sm font-bold flex items-center justify-center gap-2 transition-colors">
-                  <XCircle size={18} weight="fill" /> Reject Course
+                <button
+                  type="button"
+                  onClick={() => handleReviewAction(reviewCourse.id, 'reject', rejectReason || undefined)}
+                  disabled={reviewLoading}
+                  className="flex-1 py-3 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-950/30 dark:hover:bg-red-900/40 dark:text-red-400 text-sm font-bold flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <XCircle size={18} weight="fill" /> {reviewLoading ? 'Processing…' : 'Reject Course'}
                 </button>
-                <button type="button" onClick={() => handleReviewAction(reviewCourse.id, 'accept')} className="flex-1 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-bold flex items-center justify-center gap-2 shadow-[0_4px_12px_rgba(16,185,129,0.3)] transition-colors">
-                  <CheckCircle size={18} weight="fill" /> Approve & Publish
+                <button
+                  type="button"
+                  onClick={() => handleReviewAction(reviewCourse.id, 'accept')}
+                  disabled={reviewLoading}
+                  className="flex-1 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-bold flex items-center justify-center gap-2 shadow-[0_4px_12px_rgba(16,185,129,0.3)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <CheckCircle size={18} weight="fill" /> {reviewLoading ? 'Processing…' : 'Approve & Publish'}
                 </button>
               </div>
             </motion.div>
