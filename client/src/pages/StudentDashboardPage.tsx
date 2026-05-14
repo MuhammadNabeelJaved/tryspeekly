@@ -169,8 +169,14 @@ export default function StudentDashboardPage() {
           <div className="px-3 pb-4 border-t border-slate-100 dark:border-neutral-800 pt-3">
             {/* Profile card */}
             <div className="flex items-center gap-3 bg-slate-50 dark:bg-neutral-800 rounded-2xl px-3 py-2.5 mb-3">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-600 to-purple-600 flex items-center justify-center text-white text-sm font-black flex-shrink-0 shadow-[0_4px_12px_rgba(124,58,237,0.4)]">
-                {user?.name?.charAt(0)?.toUpperCase() || 'S'}
+              <div className="w-9 h-9 rounded-xl overflow-hidden flex-shrink-0 shadow-[0_4px_12px_rgba(124,58,237,0.4)]">
+                {(user?.profileImage || user?.photo) ? (
+                  <img src={user.profileImage || user.photo} alt={user.name} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-violet-600 to-purple-600 flex items-center justify-center text-white text-sm font-black">
+                    {user?.name?.charAt(0)?.toUpperCase() || 'S'}
+                  </div>
+                )}
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-black text-slate-900 dark:text-white leading-none truncate">{user?.name || 'Student'}</p>

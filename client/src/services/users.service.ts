@@ -21,7 +21,7 @@ export const usersService = {
 
   async updateProfileImage(file: File): Promise<{ profileImage: string }> {
     const form = new FormData();
-    form.append('image', file);
+    form.append('profileImage', file);
     const response = await axiosClient.patch<ApiResponse<{ profileImage: string }>>(
       '/users/profile/image',
       form,
