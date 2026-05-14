@@ -35,6 +35,14 @@ export const getCourse = asyncHandler(async (req, res) => {
   try {
     const course = await Course.findById(req.params.id).populate('teacher', 'name profileImage bio')
     if (!course) return res.status(404).json({ success: false, error: { message: 'Course not found' } })
+
+    // Non-published courses only visible to admin or the course's own teacher
+    const isAdmin = req.user?.role === 'admin'
+    const isOwner = course.teacher?._id?.toString() === req.user?.id?.toString()
+    if (course.status !== 'published' && !isAdmin && !isOwner) {
+      return res.status(404).json({ success: false, error: { message: 'Course not found' } })
+    }
+
     res.json({ success: true, data: course })
   } catch (error) {
     res.status(400).json({ success: false, error: { message: error.message } })
@@ -65,6 +73,7 @@ export const updateCourse = asyncHandler(async (req, res) => {
     }
 
     const disallowed = ['teacher', 'enrolledStudents']
+    if (req.user.role !== 'admin') disallowed.push('status')
     disallowed.forEach((f) => delete req.body[f])
 
     Object.assign(course, req.body)
@@ -179,13 +188,13 @@ export const reviewCourse = asyncHandler(async (req, res) => {
     course.status = action === 'approve' ? 'published' : 'rejected'
     await course.save()
 
-    // Push in-app notification to teacher
+    // Push in-app notification to teacher (fire-and-forget — notification failure must not roll back status change)
     const notificationType = action === 'approve' ? 'course_approved' : 'course_rejected'
     const notificationMessage = action === 'approve'
       ? `Your course "${course.title}" has been approved and is now live.`
       : `Your course "${course.title}" was rejected.${reason ? ` Reason: ${reason}` : ''}`
 
-    await User.findByIdAndUpdate(course.teacher, {
+    User.findByIdAndUpdate(course.teacher, {
       $push: {
         notifications: {
           type: notificationType,
@@ -194,7 +203,7 @@ export const reviewCourse = asyncHandler(async (req, res) => {
           createdAt: new Date(),
         },
       },
-    })
+    }).catch(err => console.error('[reviewCourse] notification push failed:', err))
 
     res.json({
       success: true,
