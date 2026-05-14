@@ -61,7 +61,7 @@ const courseSchema = new Schema(
     },
     status: {
       type: String,
-      enum: ['draft', 'published', 'archived'],
+      enum: ['draft', 'pending', 'published', 'rejected', 'archived'],
       default: 'draft',
     },
     teacher: {
