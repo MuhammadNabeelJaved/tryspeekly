@@ -344,6 +344,9 @@ export default function CourseDetailsPage() {
         id: apiCourse._id,
         title: apiCourse.title,
         description: apiCourse.description,
+        category: apiCourse.type
+          ? apiCourse.type.charAt(0).toUpperCase() + apiCourse.type.slice(1)
+          : '',
         price: apiCourse.currency === 'PKR'
           ? `Rs.${apiCourse.price?.toLocaleString()}`
           : `$${apiCourse.price}`,
@@ -353,23 +356,35 @@ export default function CourseDetailsPage() {
           : COURSE.level,
         duration: `${apiCourse.totalSessions ?? 0} Sessions (${apiCourse.sessionDuration ?? 60} min each)`,
         image: apiCourse.thumbnail || COURSE.image,
+        videoPreview: apiCourse.thumbnail || COURSE.videoPreview,
         students: apiCourse.enrolledStudents?.length ?? 0,
         maxStudents: apiCourse.maxStudents ?? COURSE.maxStudents,
+        rating: 0,
+        reviews: 0,
+        startDate: '',
+        platform: apiCourse.meetLink
+          ? apiCourse.meetLink.toLowerCase().includes('meet.google')
+            ? 'Google Meet'
+            : 'Zoom'
+          : '',
         schedule: apiCourse.recurringSchedule?.length
           ? apiCourse.recurringSchedule
               .map((s: { day: string; time: string }) => `${s.day.charAt(0).toUpperCase() + s.day.slice(1)} ${s.time}`)
               .join(', ')
-          : COURSE.schedule,
+          : '',
         meetLink: apiCourse.meetLink || '',
         instructor: {
           ...COURSE.instructor,
           name: apiCourse.teacher?.name || COURSE.instructor.name,
           image: apiCourse.teacher?.profileImage || COURSE.instructor.image,
           bio: apiCourse.teacher?.bio || COURSE.instructor.bio,
+          rating: 0,
+          students: '',
+          courses: 0,
         },
-        whatYouWillLearn: COURSE.whatYouWillLearn,
-        curriculum: COURSE.curriculum,
-        reviewsList: COURSE.reviewsList,
+        whatYouWillLearn: [],
+        curriculum: [],
+        reviewsList: [],
       }
     : COURSE
 
@@ -569,29 +584,35 @@ export default function CourseDetailsPage() {
               </p>
 
               <div className="flex flex-wrap items-center gap-x-8 gap-y-4 text-sm">
-                <div className="flex items-center gap-2.5">
-                  <div className="flex items-center gap-1 text-yellow-400 font-bold bg-yellow-400/10 px-2 py-1 rounded">
-                    <Star size={16} weight="fill" />
-                    <span className="text-base">{activeCourse.rating}</span>
+                {activeCourse.rating > 0 && (
+                  <div className="flex items-center gap-2.5">
+                    <div className="flex items-center gap-1 text-yellow-400 font-bold bg-yellow-400/10 px-2 py-1 rounded">
+                      <Star size={16} weight="fill" />
+                      <span className="text-base">{activeCourse.rating}</span>
+                    </div>
+                    <button onClick={() => {
+                      document.getElementById('reviews-section')?.scrollIntoView({ behavior: 'smooth' })
+                    }} className="text-slate-300 border-b border-slate-600 border-dashed pb-0.5 cursor-pointer hover:text-white transition-colors">
+                      ({activeCourse.reviews.toLocaleString()} reviews)
+                    </button>
                   </div>
-                  <button onClick={() => {
-                    document.getElementById('reviews-section')?.scrollIntoView({ behavior: 'smooth' })
-                  }} className="text-slate-300 border-b border-slate-600 border-dashed pb-0.5 cursor-pointer hover:text-white transition-colors">
-                    ({activeCourse.reviews.toLocaleString()} reviews)
-                  </button>
-                </div>
+                )}
                 <div className="flex items-center gap-2 text-slate-300">
                   <UsersThree size={18} className="text-violet-400" />
                   <span><strong>Max {activeCourse.maxStudents}</strong> per cohort</span>
                 </div>
-                <div className="flex items-center gap-2 text-slate-300">
-                  <Calendar size={18} className="text-emerald-400" />
-                  <span>Starts: <strong>{activeCourse.startDate}</strong></span>
-                </div>
-                <div className="flex items-center gap-2 text-slate-300">
-                  <VideoCamera size={18} className="text-blue-400" />
-                  <span>{activeCourse.platform}</span>
-                </div>
+                {activeCourse.startDate && (
+                  <div className="flex items-center gap-2 text-slate-300">
+                    <Calendar size={18} className="text-emerald-400" />
+                    <span>Starts: <strong>{activeCourse.startDate}</strong></span>
+                  </div>
+                )}
+                {activeCourse.platform && (
+                  <div className="flex items-center gap-2 text-slate-300">
+                    <VideoCamera size={18} className="text-blue-400" />
+                    <span>{activeCourse.platform}</span>
+                  </div>
+                )}
               </div>
             </motion.div>
           </div>
@@ -635,23 +656,27 @@ export default function CourseDetailsPage() {
                   </div>
                   What you'll learn
                 </h2>
-                <div className="grid sm:grid-cols-2 gap-4">
-                  {activeCourse.whatYouWillLearn.map((item, i) => (
-                    <motion.div
-                      key={i}
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      whileInView={{ opacity: 1, scale: 1 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: i * 0.05 }}
-                      className="flex items-start gap-3 p-5 rounded-2xl bg-white dark:bg-neutral-900 border border-slate-100 dark:border-neutral-800 hover:border-violet-200 dark:hover:border-violet-500/30 hover:shadow-lg hover:shadow-violet-600/5 transition-all duration-300 group"
-                    >
-                      <div className="w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 flex-shrink-0 mt-0.5 group-hover:scale-110 transition-transform">
-                        <CheckCircle size={16} weight="bold" />
-                      </div>
-                      <span className="text-slate-700 dark:text-neutral-300 text-sm leading-relaxed font-medium">{item}</span>
-                    </motion.div>
-                  ))}
-                </div>
+                {activeCourse.whatYouWillLearn.length > 0 ? (
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    {activeCourse.whatYouWillLearn.map((item, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        whileInView={{ opacity: 1, scale: 1 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: i * 0.05 }}
+                        className="flex items-start gap-3 p-5 rounded-2xl bg-white dark:bg-neutral-900 border border-slate-100 dark:border-neutral-800 hover:border-violet-200 dark:hover:border-violet-500/30 hover:shadow-lg hover:shadow-violet-600/5 transition-all duration-300 group"
+                      >
+                        <div className="w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 flex-shrink-0 mt-0.5 group-hover:scale-110 transition-transform">
+                          <CheckCircle size={16} weight="bold" />
+                        </div>
+                        <span className="text-slate-700 dark:text-neutral-300 text-sm leading-relaxed font-medium">{item}</span>
+                      </motion.div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-slate-400 dark:text-neutral-500 text-sm italic">Learning outcomes will be added soon.</p>
+                )}
               </motion.div>
 
               {/* Curriculum */}
@@ -678,6 +703,9 @@ export default function CourseDetailsPage() {
                 </div>
 
                 <div className="space-y-4">
+                  {activeCourse.curriculum.length === 0 && (
+                    <p className="text-slate-400 dark:text-neutral-500 text-sm italic">Session schedule will be updated soon.</p>
+                  )}
                   {activeCourse.curriculum.map((module, i) => (
                     <div key={i} className="bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
                       <button
@@ -781,29 +809,39 @@ export default function CourseDetailsPage() {
                       alt={activeCourse.instructor.name}
                       className="relative w-36 h-36 rounded-full object-cover border-4 border-white dark:border-neutral-900 shadow-xl"
                     />
-                    <div className="absolute -bottom-2 -right-2 bg-yellow-400 text-yellow-950 text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1 shadow-lg">
-                      <Star size={12} weight="fill" /> {activeCourse.instructor.rating}
-                    </div>
+                    {activeCourse.instructor.rating > 0 && (
+                      <div className="absolute -bottom-2 -right-2 bg-yellow-400 text-yellow-950 text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1 shadow-lg">
+                        <Star size={12} weight="fill" /> {activeCourse.instructor.rating}
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex-1">
-                    <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-1 group-hover:text-violet-600 transition-colors">{activeCourse.instructor.name}</h3>
-                    <p className="text-violet-600 dark:text-violet-400 font-bold text-sm mb-5 uppercase tracking-wider">{activeCourse.instructor.role}</p>
+                    <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-1">{activeCourse.instructor.name}</h3>
+                    {activeCourse.instructor.role && (
+                      <p className="text-violet-600 dark:text-violet-400 font-bold text-sm mb-5 uppercase tracking-wider">{activeCourse.instructor.role}</p>
+                    )}
 
-                    <div className="flex flex-wrap gap-5 mb-5 pb-5 border-b border-slate-100 dark:border-neutral-800">
-                      <div className="flex items-center gap-2 text-sm text-slate-700 dark:text-neutral-300 font-semibold">
-                        <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-neutral-800 flex items-center justify-center text-slate-500 dark:text-neutral-400">
-                          <Users size={16} weight="fill" />
-                        </div>
-                        {activeCourse.instructor.students} Students
+                    {(activeCourse.instructor.students || activeCourse.instructor.courses > 0) && (
+                      <div className="flex flex-wrap gap-5 mb-5 pb-5 border-b border-slate-100 dark:border-neutral-800">
+                        {activeCourse.instructor.students && (
+                          <div className="flex items-center gap-2 text-sm text-slate-700 dark:text-neutral-300 font-semibold">
+                            <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-neutral-800 flex items-center justify-center text-slate-500 dark:text-neutral-400">
+                              <Users size={16} weight="fill" />
+                            </div>
+                            {activeCourse.instructor.students} Students
+                          </div>
+                        )}
+                        {activeCourse.instructor.courses > 0 && (
+                          <div className="flex items-center gap-2 text-sm text-slate-700 dark:text-neutral-300 font-semibold">
+                            <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-neutral-800 flex items-center justify-center text-slate-500 dark:text-neutral-400">
+                              <PlayCircle size={16} weight="fill" />
+                            </div>
+                            {activeCourse.instructor.courses} Courses
+                          </div>
+                        )}
                       </div>
-                      <div className="flex items-center gap-2 text-sm text-slate-700 dark:text-neutral-300 font-semibold">
-                        <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-neutral-800 flex items-center justify-center text-slate-500 dark:text-neutral-400">
-                          <PlayCircle size={16} weight="fill" />
-                        </div>
-                        {activeCourse.instructor.courses} Courses
-                      </div>
-                    </div>
+                    )}
 
                     <p className="text-slate-600 dark:text-neutral-400 text-base leading-relaxed italic border-l-4 border-violet-200 dark:border-violet-900/50 pl-4">
                       "{activeCourse.instructor.bio}"
@@ -828,19 +866,24 @@ export default function CourseDetailsPage() {
                       </div>
                       Student Reviews
                     </h2>
-                    <div className="flex items-center gap-3 ml-13">
-                      <div className="flex gap-1 text-yellow-400">
-                        {[1, 2, 3, 4, 5].map((s) => (
-                          <Star key={s} size={18} weight={s <= Math.floor(activeCourse.rating) ? "fill" : "regular"} />
-                        ))}
+                    {activeCourse.rating > 0 && (
+                      <div className="flex items-center gap-3 ml-13">
+                        <div className="flex gap-1 text-yellow-400">
+                          {[1, 2, 3, 4, 5].map((s) => (
+                            <Star key={s} size={18} weight={s <= Math.floor(activeCourse.rating) ? "fill" : "regular"} />
+                          ))}
+                        </div>
+                        <span className="font-bold text-slate-900 dark:text-white">{activeCourse.rating} Course Rating</span>
+                        <span className="text-slate-400 dark:text-neutral-500">•</span>
+                        <span className="text-slate-500 dark:text-neutral-400">{activeCourse.reviews.toLocaleString()} reviews</span>
                       </div>
-                      <span className="font-bold text-slate-900 dark:text-white">{activeCourse.rating} Course Rating</span>
-                      <span className="text-slate-400 dark:text-neutral-500">•</span>
-                      <span className="text-slate-500 dark:text-neutral-400">{activeCourse.reviews.toLocaleString()} reviews</span>
-                    </div>
+                    )}
                   </div>
                 </div>
 
+                {activeCourse.reviewsList.length === 0 && (
+                  <p className="text-slate-400 dark:text-neutral-500 text-sm italic mb-8">No reviews yet. Be the first to enroll and share your experience!</p>
+                )}
                 <div className="space-y-4 mb-8">
                   <AnimatePresence mode="popLayout">
                     {currentReviews.map((review) => (
@@ -1002,14 +1045,18 @@ export default function CourseDetailsPage() {
                       <span className="text-slate-500 dark:text-neutral-400">Skill Level</span>
                       <span className="font-bold text-slate-900 dark:text-white">{activeCourse.level}</span>
                     </div>
-                    <div className="flex justify-between items-center text-sm border-b border-slate-100 dark:border-neutral-800 pb-3">
-                      <span className="text-slate-500 dark:text-neutral-400">Platform</span>
-                      <span className="font-bold text-slate-900 dark:text-white">{activeCourse.platform}</span>
-                    </div>
-                    <div className="flex justify-between items-center text-sm border-b border-slate-100 dark:border-neutral-800 pb-3">
-                      <span className="text-slate-500 dark:text-neutral-400">Starts</span>
-                      <span className="font-bold text-slate-900 dark:text-white">{activeCourse.startDate}</span>
-                    </div>
+                    {activeCourse.platform && (
+                      <div className="flex justify-between items-center text-sm border-b border-slate-100 dark:border-neutral-800 pb-3">
+                        <span className="text-slate-500 dark:text-neutral-400">Platform</span>
+                        <span className="font-bold text-slate-900 dark:text-white">{activeCourse.platform}</span>
+                      </div>
+                    )}
+                    {activeCourse.startDate && (
+                      <div className="flex justify-between items-center text-sm border-b border-slate-100 dark:border-neutral-800 pb-3">
+                        <span className="text-slate-500 dark:text-neutral-400">Starts</span>
+                        <span className="font-bold text-slate-900 dark:text-white">{activeCourse.startDate}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between items-center text-sm">
                       <span className="text-slate-500 dark:text-neutral-400">Language</span>
                       <span className="font-bold text-slate-900 dark:text-white">{activeCourse.language}</span>
@@ -1087,22 +1134,30 @@ export default function CourseDetailsPage() {
                       <div className="rounded-3xl bg-slate-100 dark:bg-neutral-800/60 p-4">
                         <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500 dark:text-neutral-500 mb-3">At a glance</p>
                         <div className="space-y-3 text-sm text-slate-700 dark:text-neutral-300">
-                          <div className="flex items-center justify-between"><span>Rating</span><strong>{activeCourse.rating}</strong></div>
-                          <div className="flex items-center justify-between"><span>Reviews</span><strong>{activeCourse.reviews}</strong></div>
+                          {activeCourse.rating > 0 && (
+                            <div className="flex items-center justify-between"><span>Rating</span><strong>{activeCourse.rating}</strong></div>
+                          )}
+                          {activeCourse.reviews > 0 && (
+                            <div className="flex items-center justify-between"><span>Reviews</span><strong>{activeCourse.reviews}</strong></div>
+                          )}
                           <div className="flex items-center justify-between"><span>Live seats</span><strong>{activeCourse.maxStudents}</strong></div>
                         </div>
                       </div>
                     </div>
 
-                    <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">What you'll learn</h3>
-                    <ul className="grid gap-3 mb-8 text-sm text-slate-700 dark:text-neutral-300">
-                      {activeCourse.whatYouWillLearn.slice(0, 5).map((item, index) => (
-                        <li key={index} className="flex items-start gap-3">
-                          <span className="mt-1 shrink-0 text-violet-600 dark:text-violet-400">•</span>
-                          <span>{item}</span>
-                        </li>
-                      ))}
-                    </ul>
+                    {activeCourse.whatYouWillLearn.length > 0 && (
+                      <>
+                        <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">What you'll learn</h3>
+                        <ul className="grid gap-3 mb-8 text-sm text-slate-700 dark:text-neutral-300">
+                          {activeCourse.whatYouWillLearn.slice(0, 5).map((item, index) => (
+                            <li key={index} className="flex items-start gap-3">
+                              <span className="mt-1 shrink-0 text-violet-600 dark:text-violet-400">•</span>
+                              <span>{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </>
+                    )}
 
                     <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-5">Course Details</h3>
                     <div className="p-6 bg-slate-50 dark:bg-neutral-800/50 rounded-2xl border border-slate-100 dark:border-neutral-700">
