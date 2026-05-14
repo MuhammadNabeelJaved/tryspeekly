@@ -77,10 +77,10 @@ function ScrollHandler() {
 
 function PublicLayout() {
   return (
-    <div className="min-h-[100dvh] w-full overflow-x-hidden bg-white dark:bg-neutral-950 transition-colors duration-300">
+    <div className="flex min-h-[100dvh] w-full flex-col overflow-x-hidden bg-white transition-colors duration-300 dark:bg-neutral-950">
       <Navbar />
-      <main className="relative">
-        <Suspense fallback={<Loader />}>
+      <main className="relative flex flex-1 flex-col">
+        <Suspense fallback={<Loader page />}>
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/about" element={<AboutPage />} />
