@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
+import toast from 'react-hot-toast'
 import { useAuth } from '../../context/AuthContext'
 import { usersService } from '../../services/users.service'
 import { User, Lock, Bell, PlugsConnected, Globe, DeviceMobile, ShieldCheck, VideoCamera, Calendar, MagnifyingGlass, X } from '@phosphor-icons/react'
 import { MOCK_INSTRUCTOR as FALLBACK_INSTRUCTOR } from './instructorData'
+import { extractApiError } from '../../utils/apiError'
 
 export default function InstructorSettings() {
   const { user } = useAuth()
@@ -48,11 +50,12 @@ export default function InstructorSettings() {
         phone: data.phone,
         bio: data.bio,
       })
-      alert('Settings saved successfully!')
-    } catch {
-      alert('Failed to save settings. Please try again.')
+      toast.success('Settings saved successfully!')
+    } catch (err: unknown) {
+      toast.error(extractApiError(err, 'Failed to save settings. Please try again.'))
+    } finally {
+      setSaving(false)
     }
-    setSaving(false)
   }
 
   return (
@@ -208,13 +211,13 @@ export default function InstructorSettings() {
                       onClick={async () => {
                         const current = (document.getElementById('currentPassword') as HTMLInputElement)?.value
                         const next = (document.getElementById('newPassword') as HTMLInputElement)?.value
-                        if (!current || !next) { alert('Please fill in both password fields.'); return }
+                        if (!current || !next) { toast.error('Please fill in both password fields.'); return }
                         try {
                           await usersService.changePassword({ currentPassword: current, newPassword: next })
-                          alert('Password updated successfully!')
+                          toast.success('Password updated successfully!')
                           ;(document.getElementById('currentPassword') as HTMLInputElement).value = ''
                           ;(document.getElementById('newPassword') as HTMLInputElement).value = ''
-                        } catch { alert('Failed to update password. Please check your current password.') }
+                        } catch (err) { toast.error(extractApiError(err, 'Failed to update password. Please check your current password.')) }
                       }}
                       className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-slate-800 dark:hover:bg-slate-200 transition-colors w-full sm:w-auto text-center"
                     >

@@ -7,11 +7,26 @@ export const axiosClient = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
-// Attach Bearer token from localStorage on every request
+const getToken = (key: string) =>
+  localStorage.getItem(key) || sessionStorage.getItem(key);
+
+const setToken = (key: string, value: string) => {
+  if (localStorage.getItem('refreshToken')) {
+    localStorage.setItem(key, value);
+  } else {
+    sessionStorage.setItem(key, value);
+  }
+};
+
+// Attach Bearer token from localStorage/sessionStorage on every request
 axiosClient.interceptors.request.use(
   (cfg) => {
-    const token = localStorage.getItem('accessToken');
+    const token = getToken('accessToken');
     if (token) cfg.headers.Authorization = `Bearer ${token}`;
+    // Let the browser set Content-Type for FormData (it must include the boundary)
+    if (cfg.data instanceof FormData) {
+      delete cfg.headers['Content-Type'];
+    }
     return cfg;
   },
   (error) => Promise.reject(error)
@@ -48,22 +63,23 @@ axiosClient.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const refreshToken = localStorage.getItem('refreshToken');
+        const refreshToken = getToken('refreshToken');
         const { data } = await axios.post(
           `${config.apiUrl}/api/v1/users/refresh-token`,
           { refreshToken },
           { withCredentials: true }
         );
         const newToken = data.data.accessToken;
-        localStorage.setItem('accessToken', newToken);
+        setToken('accessToken', newToken);
         processQueue(null, newToken);
         original.headers.Authorization = `Bearer ${newToken}`;
         return axiosClient(original);
       } catch (refreshError) {
         processQueue(refreshError, null);
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        localStorage.removeItem('user');
+        ['accessToken', 'refreshToken', 'user'].forEach((k) => {
+          localStorage.removeItem(k);
+          sessionStorage.removeItem(k);
+        });
         window.location.href = '/login';
         return Promise.reject(refreshError);
       } finally {

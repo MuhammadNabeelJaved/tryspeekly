@@ -24,8 +24,7 @@ export const usersService = {
     form.append('profileImage', file);
     const response = await axiosClient.patch<ApiResponse<{ profileImage: string }>>(
       '/users/profile/image',
-      form,
-      { headers: { 'Content-Type': 'multipart/form-data' } }
+      form
     );
     return response.data.data;
   },

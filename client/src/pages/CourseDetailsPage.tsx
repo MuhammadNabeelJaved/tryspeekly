@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Link, useParams, useNavigate } from 'react-router-dom'
+import toast from 'react-hot-toast'
 import {
   Star, Users, Clock, GraduationCap, CheckCircle,
   PlayCircle, Certificate, FileText, CaretDown,
@@ -1287,9 +1288,10 @@ export default function CourseDetailsPage() {
                                 await enrollmentsService.enroll({ courseId: activeCourse.id });
                                 setShowEnrollmentModal(false);
                                 setSelectedPaymentMethod(null);
-                                alert('Enrollment successful! Check your dashboard for details.');
-                              } catch (err: any) {
-                                alert(err?.response?.data?.error?.message || 'Enrollment failed. Please try again.');
+                                toast.success('Enrolled! Check your dashboard for details.');
+                              } catch (err: unknown) {
+                                const e = err as { response?: { data?: { error?: { message?: string } } } }
+                                toast.error(e?.response?.data?.error?.message || 'Enrollment failed. Please try again.');
                               }
                             }}
                             className="w-full mt-6 bg-gradient-to-r from-violet-600 to-purple-600 text-white font-bold py-4 rounded-2xl shadow-[0_8px_28px_rgba(124,58,237,0.35)] transition-all text-lg flex items-center justify-center gap-2"

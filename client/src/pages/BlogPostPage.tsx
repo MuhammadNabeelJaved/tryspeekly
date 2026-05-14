@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { useParams, Link } from 'react-router-dom'
-import { 
-  ArrowLeft, CalendarBlank, Clock, 
+import toast from 'react-hot-toast'
+import {
+  ArrowLeft, CalendarBlank, Clock,
   TwitterLogo, LinkedinLogo, FacebookLogo, Link as LinkIcon,
   BookmarkSimple, CheckCircle, ArrowRight
 } from '@phosphor-icons/react'
 import { blogService } from '../services/blog.service'
 import type { Blog } from '../types/api'
+import { extractApiError } from '../utils/apiError'
 import Loader from '@/components/Loader'
 
 export default function BlogPostPage() {
@@ -33,8 +35,8 @@ export default function BlogPostPage() {
           })
           setRelated(relatedResponse.data.filter(b => b._id !== response.data._id))
         }
-      } catch (error) {
-        console.error('Failed to fetch blog post', error)
+      } catch (error: unknown) {
+        toast.error(extractApiError(error, 'Failed to load blog post.'))
       } finally {
         setLoading(false)
       }

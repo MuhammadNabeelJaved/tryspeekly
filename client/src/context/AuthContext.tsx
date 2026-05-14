@@ -13,9 +13,9 @@ interface AuthContextValue {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (dto: LoginDto) => Promise<AuthResponse>;
+  login: (dto: LoginDto, remember?: boolean) => Promise<AuthResponse>;
   register: (dto: RegisterDto) => Promise<{ message: string }>;
-  verifyEmail: (dto: VerifyEmailDto) => Promise<void>;
+  verifyEmail: (dto: VerifyEmailDto, remember?: boolean) => Promise<void>;
   logout: () => Promise<void>;
   updateProfile: (dto: UpdateProfileDto) => Promise<void>;
   setUser: (user: User | null) => void;
@@ -28,9 +28,9 @@ const defaultValue: AuthContextValue = {
   user: null,
   isAuthenticated: false,
   isLoading: true,
-  login: () => Promise.reject(new Error('AuthProvider not mounted')),
+  login: (_dto, _remember?) => Promise.reject(new Error('AuthProvider not mounted')),
   register: () => Promise.reject(new Error('AuthProvider not mounted')),
-  verifyEmail: () => Promise.reject(new Error('AuthProvider not mounted')),
+  verifyEmail: (_dto, _remember?) => Promise.reject(new Error('AuthProvider not mounted')),
   logout: () => Promise.resolve(),
   updateProfile: () => Promise.reject(new Error('AuthProvider not mounted')),
   setUser: () => undefined,
@@ -38,16 +38,18 @@ const defaultValue: AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue>(defaultValue);
 
-const persistAuth = (data: AuthResponse) => {
-  localStorage.setItem('accessToken', data.accessToken);
-  localStorage.setItem('refreshToken', data.refreshToken);
-  localStorage.setItem('user', JSON.stringify(data.user));
+const persistAuth = (data: AuthResponse, remember = true) => {
+  const storage = remember ? localStorage : sessionStorage;
+  storage.setItem('accessToken', data.accessToken);
+  storage.setItem('refreshToken', data.refreshToken);
+  storage.setItem('user', JSON.stringify(data.user));
 };
 
 const clearAuth = () => {
-  localStorage.removeItem('accessToken');
-  localStorage.removeItem('refreshToken');
-  localStorage.removeItem('user');
+  ['accessToken', 'refreshToken', 'user'].forEach((key) => {
+    localStorage.removeItem(key);
+    sessionStorage.removeItem(key);
+  });
 };
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -56,8 +58,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Hydrate auth state on mount — verify token is still valid
   useEffect(() => {
-    const token = localStorage.getItem('accessToken');
+    const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
     if (!token) { setIsLoading(false); return; }
+
+    // Safety net: never leave the app stuck in a loading state
+    const safetyTimer = setTimeout(() => {
+      setIsLoading(false);
+    }, 8000);
 
     usersService
       .getProfile()
@@ -69,12 +76,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         clearAuth();
         setUser(null);
       })
-      .finally(() => setIsLoading(false));
+      .finally(() => {
+        clearTimeout(safetyTimer);
+        setIsLoading(false);
+      });
+
+    return () => clearTimeout(safetyTimer);
   }, []);
 
-  const login = useCallback(async (dto: LoginDto): Promise<AuthResponse> => {
+  const login = useCallback(async (dto: LoginDto, remember = true): Promise<AuthResponse> => {
     const data = await authService.login(dto);
-    persistAuth(data);
+    persistAuth(data, remember);
     setUser(normalizeUser(data.user));
     return data;
   }, []);
@@ -83,9 +95,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return authService.register(dto);
   }, []);
 
-  const verifyEmail = useCallback(async (dto: VerifyEmailDto): Promise<void> => {
+  const verifyEmail = useCallback(async (dto: VerifyEmailDto, remember = true): Promise<void> => {
     const data = await authService.verifyEmail(dto);
-    persistAuth(data);
+    persistAuth(data, remember);
     setUser(normalizeUser(data.user));
   }, []);
 

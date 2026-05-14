@@ -1,4 +1,5 @@
 import { useForm } from 'react-hook-form'
+import toast from 'react-hot-toast'
 import { LinkedinLogo, TwitterLogo, FacebookLogo, InstagramLogo, Phone, EnvelopeSimple, MapPin, ArrowRight } from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
 
@@ -41,8 +42,8 @@ export default function Footer() {
     defaultValues: { email: '' }
   })
 
-  const onSubmit = (data: any) => {
-    alert("Subscribed " + data.email)
+  const onSubmit = (data: { email: string }) => {
+    toast.success(`Subscribed! Updates will be sent to ${data.email}`)
     reset()
   }
 

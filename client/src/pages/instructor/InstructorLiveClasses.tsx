@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import toast from 'react-hot-toast'
 import { INSTRUCTOR_COURSES } from './instructorData'
 import { Users, Clock, PlayCircle, X, Check, PencilSimple, Trash, ListDashes, DotsThreeVertical, CaretUp, CaretDown, VideoCamera, FilePdf, PresentationChart, ShareNetwork, CheckCircle, MagnifyingGlass } from '@phosphor-icons/react'
 
@@ -179,7 +180,7 @@ export default function InstructorLiveClasses() {
     ))
     
     setLiveModalCourse({ ...liveModalCourse, liveLink: liveUrlInput })
-    alert("Live class link updated successfully!")
+    toast.success("Live class link updated successfully!")
   }
 
   function handleCompleteLive() {
@@ -285,18 +286,18 @@ export default function InstructorLiveClasses() {
   function handleShareMaterial() {
     if (!shareMaterialOpen) return
     if (!materialTitleInput.trim() || !materialLinkInput.trim()) {
-      alert("Please provide both title and link.")
+      toast.error("Please provide both title and link.")
       return
     }
 
     if (editingMaterial) {
-      setSharedMaterials(sharedMaterials.map(m => 
-        m.id === editingMaterial.id 
-          ? { ...m, title: materialTitleInput, link: materialLinkInput } 
+      setSharedMaterials(sharedMaterials.map(m =>
+        m.id === editingMaterial.id
+          ? { ...m, title: materialTitleInput, link: materialLinkInput }
           : m
       ))
       setEditingMaterial(null)
-      alert('Material updated successfully!')
+      toast.success('Material updated successfully!')
     } else {
       const newMaterial: SharedMaterial = {
         id: `sm_${Date.now()}`,
@@ -306,7 +307,7 @@ export default function InstructorLiveClasses() {
         sharedAt: new Date().toLocaleString()
       }
       setSharedMaterials([newMaterial, ...sharedMaterials])
-      alert('Materials shared and students notified!')
+      toast.success('Materials shared and students notified!')
     }
     
     setMaterialTitleInput('')
@@ -321,28 +322,27 @@ export default function InstructorLiveClasses() {
   }
 
   function handleDeleteMaterial(id: string) {
-    if (confirm("Are you sure you want to delete this material?")) {
-      setSharedMaterials(sharedMaterials.filter(m => m.id !== id))
-    }
+    setSharedMaterials(sharedMaterials.filter(m => m.id !== id))
     setActiveMaterialDropdownId(null)
+    toast.success('Material deleted.')
   }
 
   // Syllabus Handlers
   function handleSyllabusSubmit() {
     if (!syllabusOpen) return
     if (!syllabusTitleInput.trim() || !syllabusDescInput.trim()) {
-      alert("Please provide both title and description.")
+      toast.error("Please provide both title and description.")
       return
     }
 
     if (editingSyllabus) {
-      setSyllabusTopics(syllabusTopics.map(t => 
-        t.id === editingSyllabus.id 
-          ? { ...t, week: syllabusWeekInput, title: syllabusTitleInput, description: syllabusDescInput, status: syllabusStatusInput } 
+      setSyllabusTopics(syllabusTopics.map(t =>
+        t.id === editingSyllabus.id
+          ? { ...t, week: syllabusWeekInput, title: syllabusTitleInput, description: syllabusDescInput, status: syllabusStatusInput }
           : t
       ))
       setEditingSyllabus(null)
-      alert('Syllabus topic updated successfully!')
+      toast.success('Syllabus topic updated successfully!')
     } else {
       const newTopic: SyllabusTopic = {
         id: `st_${Date.now()}`,
@@ -353,7 +353,7 @@ export default function InstructorLiveClasses() {
         status: syllabusStatusInput
       }
       setSyllabusTopics([...syllabusTopics, newTopic].sort((a, b) => a.week - b.week))
-      alert('Syllabus topic added!')
+      toast.success('Syllabus topic added!')
     }
     
     setSyllabusWeekInput(1)
@@ -372,10 +372,9 @@ export default function InstructorLiveClasses() {
   }
 
   function handleDeleteSyllabus(id: string) {
-    if (confirm("Are you sure you want to delete this syllabus topic?")) {
-      setSyllabusTopics(syllabusTopics.filter(t => t.id !== id))
-    }
+    setSyllabusTopics(syllabusTopics.filter(t => t.id !== id))
     setActiveSyllabusDropdownId(null)
+    toast.success('Syllabus topic deleted.')
   }
 
   const filteredMainCourses = courses.filter(c => 

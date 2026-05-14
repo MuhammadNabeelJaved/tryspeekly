@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { motion, type Variants } from 'framer-motion'
+import toast from 'react-hot-toast'
 import { Envelope, Phone, MapPin, PaperPlaneRight, LinkedinLogo, TwitterLogo, FacebookLogo, InstagramLogo } from '@phosphor-icons/react'
-import { messagesService } from '../services/messages.service'
+import { contactService } from '../services/contact.service'
+import { extractApiError } from '../utils/apiError'
 
 const pageVariants: Variants = {
   initial: { opacity: 0 },
@@ -44,15 +46,11 @@ export default function ContactPage() {
   const onSubmit = async (data: { name: string; email: string; subject: string; message: string }) => {
     setIsSubmitting(true)
     try {
-      // Compose all contact fields into the message content
-      const content = `From: ${data.name}\nEmail: ${data.email}\nSubject: ${data.subject}\n\n${data.message}`
-      await messagesService.sendMessage({ receiverId: 'admin', content })
-      alert('Thank you for your message!')
+      await contactService.submit(data)
+      toast.success('Message sent! We\'ll get back to you soon.')
       reset()
-    } catch {
-      // Fallback mock behavior on API failure
-      alert('Thank you for your message!')
-      reset()
+    } catch (err: unknown) {
+      toast.error(extractApiError(err, 'Failed to send message. Please try again.'))
     } finally {
       setIsSubmitting(false)
     }

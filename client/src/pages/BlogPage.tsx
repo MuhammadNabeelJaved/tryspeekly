@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Link } from 'react-router-dom'
-import { 
-  MagnifyingGlass, CalendarBlank, Clock, ArrowRight, 
+import toast from 'react-hot-toast'
+import {
+  MagnifyingGlass, CalendarBlank, Clock, ArrowRight,
   Article, TrendUp, EnvelopeSimple, BookmarkSimple, Funnel
 } from '@phosphor-icons/react'
 import { blogService } from '../services/blog.service'
 import type { Blog } from '../types/api'
+import { extractApiError } from '../utils/apiError'
 
 const CATEGORIES = ['All', 'Study Tips', 'Grammar', 'IELTS Prep', 'Vocabulary', 'Career']
 
@@ -31,8 +33,8 @@ export default function BlogPage() {
         
         const response = await blogService.getAllBlogs(params)
         setBlogs(response.data)
-      } catch (error) {
-        console.error('Failed to fetch blogs', error)
+      } catch (error: unknown) {
+        toast.error(extractApiError(error, 'Failed to load blog posts.'))
       } finally {
         setLoading(false)
       }
@@ -42,8 +44,8 @@ export default function BlogPage() {
     return () => clearTimeout(timer)
   }, [activeCategory, searchQuery])
 
-  const onSubmit = (data: any) => {
-    alert("Subscribed " + data.email)
+  const onSubmit = (data: { email: string }) => {
+    toast.success(`Subscribed! We'll send updates to ${data.email}`)
     reset()
   }
 

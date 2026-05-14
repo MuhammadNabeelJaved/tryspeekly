@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { useEffect, Suspense, lazy, Component, type ReactNode } from 'react'
+import { Toaster } from 'react-hot-toast'
 import { AuthProvider } from '@/context/AuthContext'
 import { SocketProvider } from '@/context/SocketContext'
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
@@ -24,6 +25,7 @@ const FinancialAidPage = lazy(() => import('@/pages/FinancialAidPage'))
 const LoginPage = lazy(() => import('@/pages/LoginPage'))
 const SignupPage = lazy(() => import('@/pages/SignupPage'))
 const EmailVerificationPage = lazy(() => import('@/pages/EmailVerificationPage'))
+const ForgotPasswordPage = lazy(() => import('@/pages/ForgotPasswordPage'))
 const StudentDashboardPage = lazy(() => import('@/pages/StudentDashboardPage'))
 const InstructorDashboardPage = lazy(() => import('@/pages/InstructorDashboardPage'))
 const CertificateViewPage = lazy(() => import('@/pages/CertificateViewPage'))
@@ -87,9 +89,6 @@ function PublicLayout() {
             <Route path="/blog/:slug" element={<BlogPostPage />} />
             <Route path="/courses" element={<CoursesPage />} />
             <Route path="/courses/:id" element={<CourseDetailsPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/signup" element={<SignupPage />} />
-            <Route path="/verify-email" element={<EmailVerificationPage />} />
             <Route path="/contact" element={<ContactPage />} />
             <Route path="/privacy" element={<PrivacyPolicyPage />} />
             <Route path="/terms" element={<TermsOfServicePage />} />
@@ -111,6 +110,15 @@ function App() {
     <BrowserRouter>
       <AuthProvider>
         <SocketProvider>
+          <Toaster
+            position="top-right"
+            toastOptions={{
+              duration: 4000,
+              style: { borderRadius: '12px', fontSize: '14px', fontWeight: '500', boxShadow: '0 8px 24px rgba(0,0,0,0.10)' },
+              success: { style: { background: '#f0fdf4', color: '#15803d', border: '1px solid #bbf7d0' } },
+              error:   { style: { background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca' } },
+            }}
+          />
           <ScrollHandler />
           <Suspense fallback={<Loader fullScreen />}>
             <Routes>
@@ -139,6 +147,10 @@ function App() {
                 }
               />
               <Route path="/certificate/:id" element={<CertificateViewPage />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/signup" element={<SignupPage />} />
+              <Route path="/verify-email" element={<EmailVerificationPage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
               <Route path="/*" element={<PublicLayout />} />
             </Routes>
           </Suspense>

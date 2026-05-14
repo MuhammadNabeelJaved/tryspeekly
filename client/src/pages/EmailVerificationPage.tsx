@@ -1,11 +1,13 @@
 import { useState, useRef, useEffect, type KeyboardEvent, type ClipboardEvent } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
+import toast from 'react-hot-toast'
 import { EnvelopeSimple, ArrowLeft, ArrowRight, Timer, Check } from '@phosphor-icons/react'
 import FloatingCard from '../components/auth/FloatingCard'
 import LoadingButton from '../components/auth/LoadingButton'
 import { useAuth } from '../context/AuthContext'
 import { authService } from '../services/auth.service'
+import { extractApiError } from '../utils/apiError'
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -22,6 +24,7 @@ export default function EmailVerificationPage() {
   const location = useLocation()
   const { verifyEmail } = useAuth()
   const email = location.state?.email || ''
+  const rememberMe: boolean = location.state?.rememberMe ?? true
 
   const [code, setCode] = useState(['', '', '', '', '', ''])
   const [isLoading, setIsLoading] = useState(false)
@@ -103,9 +106,10 @@ export default function EmailVerificationPage() {
     setError('')
 
     try {
-      await verifyEmail({ email, otp: fullCode })
+      await verifyEmail({ email, otp: fullCode }, rememberMe)
       setIsVerified(true)
-      const stored = JSON.parse(localStorage.getItem('user') || '{}')
+      const rawUser = localStorage.getItem('user') || sessionStorage.getItem('user')
+      const stored = JSON.parse(rawUser || '{}')
       const role = stored?.role
       setTimeout(() => {
         if (role === 'admin') navigate('/admin', { replace: true })
@@ -113,11 +117,7 @@ export default function EmailVerificationPage() {
         else navigate('/dashboard', { replace: true })
       }, 1500)
     } catch (err: unknown) {
-      const axiosErr = err as { response?: { data?: { error?: { message?: string } } }; message?: string }
-      const message =
-        axiosErr?.response?.data?.error?.message ||
-        axiosErr?.message ||
-        'Invalid verification code. Please try again.'
+      const message = extractApiError(err, 'Invalid verification code. Please try again.')
       setError(message)
       setCode(['', '', '', '', '', ''])
       inputRefs.current[0]?.focus()
@@ -133,9 +133,10 @@ export default function EmailVerificationPage() {
     try {
       await authService.resendVerification(email)
       setResendTimer(60)
+      toast.success('Verification code resent to your email.')
     } catch (err: unknown) {
-      const axiosErr = err as { response?: { data?: { error?: { message?: string } } } }
-      setError(axiosErr?.response?.data?.error?.message || 'Failed to resend code. Please try again.')
+      const message = extractApiError(err, 'Failed to resend code. Please try again.')
+      setError(message)
     } finally {
       setIsResending(false)
     }

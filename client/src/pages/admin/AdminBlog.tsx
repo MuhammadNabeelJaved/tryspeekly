@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  Plus, PencilSimple, Trash, X, Check, Eye, MagnifyingGlass, 
+import toast from 'react-hot-toast'
+import {
+  Plus, PencilSimple, Trash, X, Check, Eye, MagnifyingGlass,
   Clock, Tag, Globe, FileText, CalendarBlank, ArrowLeft,
   TwitterLogo, LinkedinLogo, FacebookLogo, BookmarkSimple
 } from '@phosphor-icons/react'
 import { blogService } from '../../services/blog.service'
 import type { Blog, CreateBlogDto } from '../../types/api'
+import { extractApiError } from '../../utils/apiError'
 
 const EMPTY_BLOG: CreateBlogDto = {
   title: '',
@@ -67,8 +69,8 @@ export default function AdminBlog() {
       
       const response = await blogService.getAllBlogs(params)
       setBlogs(response.data)
-    } catch (error) {
-      console.error('Failed to fetch blogs', error)
+    } catch (error: unknown) {
+      toast.error(extractApiError(error, 'Failed to load blog posts.'))
     } finally {
       setLoading(false)
     }
@@ -117,9 +119,9 @@ export default function AdminBlog() {
       
       setModalType(null)
       fetchBlogs()
-    } catch (error) {
-      console.error('Failed to save blog', error)
-      alert('Error saving blog post')
+      toast.success(modalType === 'add' ? 'Blog post created.' : 'Blog post updated.')
+    } catch (error: unknown) {
+      toast.error(extractApiError(error, 'Failed to save blog post.'))
     } finally {
       setIsSubmitting(false)
     }
@@ -130,9 +132,9 @@ export default function AdminBlog() {
       await blogService.deleteBlog(id)
       setDeleteId(null)
       fetchBlogs()
-    } catch (error) {
-      console.error('Failed to delete blog', error)
-      alert('Error deleting blog post')
+      toast.success('Blog post deleted.')
+    } catch (error: unknown) {
+      toast.error(extractApiError(error, 'Failed to delete blog post.'))
     }
   }
 

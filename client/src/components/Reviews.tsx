@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { motion, AnimatePresence } from 'framer-motion'
+import toast from 'react-hot-toast'
 import { Star, X, PencilSimple } from '@phosphor-icons/react'
 
 const REVIEWS = [
@@ -39,7 +40,7 @@ export default function Reviews() {
   const onSubmit = (data: any) => {
     // Add custom rating validation if needed
     if (rating === 0) {
-      alert("Please select a rating.")
+      toast.error('Please select a star rating before submitting.')
       return
     }
     console.log(data, rating)

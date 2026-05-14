@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
+import toast from 'react-hot-toast'
 import { ArrowLeft, CheckCircle, Certificate } from '@phosphor-icons/react'
 import { useAuth } from '../context/AuthContext'
 import { enrollmentsService } from '../services/enrollments.service'
@@ -187,7 +188,7 @@ export default function CertificateViewPage() {
              <button 
                onClick={() => {
                  navigator.clipboard.writeText(`https://englishpro.com/certificate/${course.certificateId}`)
-                 alert('Link copied to clipboard!')
+                 toast.success('Link copied to clipboard!')
                }}
                className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-2 rounded-xl transition-colors text-sm"
              >

@@ -1,9 +1,11 @@
 import { useState, useRef, useEffect } from 'react'
 import { useForm, Controller } from 'react-hook-form'
+import toast from 'react-hot-toast'
 import { Camera, CheckCircle, WarningCircle } from '@phosphor-icons/react'
 import PhoneInput from '@/components/auth/PhoneInput'
 import { useAuth } from '@/context/AuthContext'
 import { usersService } from '@/services/users.service'
+import { extractApiError } from '@/utils/apiError'
 
 interface ProfileFormData {
   name: string
@@ -50,9 +52,11 @@ export default function StudentSettings() {
     try {
       const { profileImage } = await usersService.updateProfileImage(file)
       setUser({ ...user!, profileImage, photo: profileImage })
+      toast.success('Profile photo updated.')
     } catch (err: unknown) {
-      const axiosErr = err as { response?: { data?: { error?: { message?: string } } } }
-      setAvatarError(axiosErr?.response?.data?.error?.message || 'Failed to update profile image')
+      const message = extractApiError(err, 'Failed to update profile image')
+      setAvatarError(message)
+      toast.error(message)
     } finally {
       setAvatarLoading(false)
       if (fileInputRef.current) fileInputRef.current.value = ''
@@ -72,11 +76,13 @@ export default function StudentSettings() {
       })
       setUser(updated)
       setSaveStatus('saved')
+      toast.success('Profile saved successfully.')
       setTimeout(() => setSaveStatus('idle'), 3000)
     } catch (err: unknown) {
-      const axiosErr = err as { response?: { data?: { error?: { message?: string } } } }
-      setSaveError(axiosErr?.response?.data?.error?.message || 'Failed to save changes')
+      const message = extractApiError(err, 'Failed to save changes')
+      setSaveError(message)
       setSaveStatus('error')
+      toast.error(message)
     }
   }
 

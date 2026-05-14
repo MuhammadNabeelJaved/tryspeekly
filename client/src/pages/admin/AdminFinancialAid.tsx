@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { motion, AnimatePresence } from 'framer-motion'
+import toast from 'react-hot-toast'
 import { MagnifyingGlass, Eye, Check, X, FunnelSimple, GraduationCap, Handshake } from '@phosphor-icons/react'
 import type { AdminStore } from '../AdminPage'
 import type { FinancialAidApp, Student } from './adminData'
@@ -71,7 +72,7 @@ export default function AdminFinancialAid({ store }: { store: AdminStore }) {
     }
     
     setStudents([...students, newStudent])
-    alert(`Successfully enrolled ${app.name} into ${course.title}!`)
+    toast.success(`${app.name} enrolled into ${course.title}!`)
     setModal(null)
     reset()
   }

@@ -2,6 +2,31 @@ import asyncHandler from '../utils/asyncHandler.js'
 import jwt from 'jsonwebtoken'
 import User from '../models/user.model.js'
 import { uploadUserAvatar, deleteFile, extractPublicId } from '../utils/cloudinary.js'
+import { sendForgotPasswordOtp, sendVerificationOtp } from '../utils/email.js'
+
+// ─── Cookie helpers ────────────────────────────────────────────────────────────
+const COOKIE_BASE = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'lax',
+  path: '/',
+}
+
+const setTokenCookies = (res, accessToken, refreshToken) => {
+  res.cookie('accessToken', accessToken, {
+    ...COOKIE_BASE,
+    maxAge: 7 * 24 * 60 * 60 * 1000, // mirrors JWT_ACCESS_EXPIRES_IN
+  })
+  res.cookie('refreshToken', refreshToken, {
+    ...COOKIE_BASE,
+    maxAge: 7 * 24 * 60 * 60 * 1000, // mirrors JWT_REFRESH_EXPIRES_IN
+  })
+}
+
+const clearTokenCookies = (res) => {
+  res.clearCookie('accessToken', COOKIE_BASE)
+  res.clearCookie('refreshToken', COOKIE_BASE)
+}
 
 const safeUser = (user) => ({
   _id: user._id,
@@ -33,10 +58,14 @@ export const createUser = asyncHandler(async (req, res) => {
     }
 
     const user = new User({ name, email, password, phone, role })
-    user.generateVerificationToken()
+    const otp = user.generateVerificationToken()
     if (process.env.NODE_ENV === 'development') user.isVerified = true
 
     await user.save()
+
+    if (process.env.NODE_ENV !== 'development') {
+      await sendVerificationOtp({ to: email, otp })
+    }
 
     const msg = process.env.NODE_ENV === 'development'
       ? 'Registration successful. Auto-verified in dev mode.'
@@ -89,6 +118,8 @@ export const verifyEmail = asyncHandler(async (req, res) => {
     const accessToken = user.generateAccessToken()
     const refreshToken = user.generateRefreshToken()
 
+    setTokenCookies(res, accessToken, refreshToken)
+
     res.json({
       success: true,
       message: 'Email verified successfully',
@@ -126,6 +157,8 @@ export const loginUser = asyncHandler(async (req, res) => {
     const accessToken = user.generateAccessToken()
     const refreshToken = user.generateRefreshToken()
 
+    setTokenCookies(res, accessToken, refreshToken)
+
     res.json({
       success: true,
       message: 'Login successful',
@@ -139,6 +172,7 @@ export const loginUser = asyncHandler(async (req, res) => {
 // POST /api/v1/users/logout
 export const logoutUser = asyncHandler(async (req, res) => {
   try {
+    clearTokenCookies(res)
     res.json({ success: true, message: 'Logout successful' })
   } catch (error) {
     res.status(400).json({ success: false, error: { message: error.message } })
@@ -166,6 +200,12 @@ export const refreshToken = asyncHandler(async (req, res) => {
     }
 
     const accessToken = user.generateAccessToken()
+
+    res.cookie('accessToken', accessToken, {
+      ...COOKIE_BASE,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    })
+
     res.json({ success: true, data: { accessToken } })
   } catch (error) {
     res.status(400).json({ success: false, error: { message: error.message } })
@@ -279,10 +319,10 @@ export const requestPasswordReset = asyncHandler(async (req, res) => {
     if (!user) return res.status(404).json({ success: false, error: { message: 'User not found' } })
     if (!user.isVerified) return res.status(403).json({ success: false, error: { message: 'Email not verified' } })
 
-    user.generateResetPasswordToken()
+    const otp = user.generateResetPasswordToken()
     await user.save()
 
-    // TODO: send OTP via email service
+    await sendForgotPasswordOtp({ to: email, otp })
     res.json({ success: true, message: 'Password reset OTP sent to your email' })
   } catch (error) {
     res.status(400).json({ success: false, error: { message: error.message } })

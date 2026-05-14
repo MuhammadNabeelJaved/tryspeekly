@@ -1,5 +1,6 @@
 import { motion, AnimatePresence, useInView, animate } from 'framer-motion'
 import { Link } from 'react-router-dom'
+import toast from 'react-hot-toast'
 import {
   Clock, Star, Users, GraduationCap, ArrowRight, MagnifyingGlass,
   BookOpen, Trophy, Lightning, ChatCircle, Globe, Medal,
@@ -322,8 +323,7 @@ export default function Courses() {
         }))
         setApiCourses(mapped)
       } catch {
-        // API unavailable — fallback to hardcoded data
-        console.warn('Courses API unavailable, using fallback data')
+        toast.error('Could not load courses from server — showing sample courses.')
       }
     }
     fetchCourses()
