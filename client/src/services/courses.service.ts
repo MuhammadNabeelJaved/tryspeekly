@@ -55,4 +55,21 @@ export const coursesService = {
     const response = await axiosClient.delete<{ success: boolean; message: string }>(`/courses/${id}`);
     return response.data;
   },
+
+  async getAdminCourses(params?: {
+    status?: string; search?: string; page?: number; limit?: number;
+  }): Promise<CourseListResponse> {
+    const response = await axiosClient.get<CourseListResponse>('/courses/admin/all', { params });
+    return response.data;
+  },
+
+  async reviewCourse(id: string, action: 'approve' | 'reject', reason?: string): Promise<CourseSingleResponse> {
+    const response = await axiosClient.patch<CourseSingleResponse>(`/courses/${id}/review`, { action, reason });
+    return response.data;
+  },
+
+  async submitForReview(id: string): Promise<CourseSingleResponse> {
+    const response = await axiosClient.patch<CourseSingleResponse>(`/courses/${id}`, { status: 'pending' });
+    return response.data;
+  },
 };
