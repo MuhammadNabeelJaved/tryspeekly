@@ -1,17 +1,38 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
 import { useAuth } from '../../context/AuthContext'
 import { usersService } from '../../services/users.service'
-import { User, Lock, Bell, PlugsConnected, Globe, DeviceMobile, ShieldCheck, VideoCamera, Calendar, MagnifyingGlass, X } from '@phosphor-icons/react'
+import { User, Lock, Bell, PlugsConnected, Globe, DeviceMobile, ShieldCheck, VideoCamera, Calendar, MagnifyingGlass, X, Camera } from '@phosphor-icons/react'
 import { MOCK_INSTRUCTOR as FALLBACK_INSTRUCTOR } from './instructorData'
 import { extractApiError } from '../../utils/apiError'
+import { motion } from 'framer-motion'
 
 export default function InstructorSettings() {
-  const { user } = useAuth()
+  const { user, setUser } = useAuth()
   const [activeTab, setActiveTab] = useState('profile')
   const [settingsSearch, setSettingsSearch] = useState('')
   const [saving, setSaving] = useState(false)
+  const [uploadingImage, setUploadingImage] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploadingImage(true)
+    try {
+      const result = await usersService.updateProfileImage(file)
+      if (setUser && user) {
+        setUser({ ...user, profileImage: result.profileImage })
+      }
+      toast.success('Profile image updated!')
+    } catch (err: unknown) {
+      toast.error(extractApiError(err, 'Failed to upload image'))
+    } finally {
+      setUploadingImage(false)
+    }
+  }
 
   // Notification Toggle States
   const [notifyEnrollments, setNotifyEnrollments] = useState(true)
@@ -120,6 +141,49 @@ export default function InstructorSettings() {
               </div>
 
               <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-6">
+                {/* Profile Image Upload */}
+                <div className="flex items-center gap-6">
+                  <div className="relative">
+                    {user?.profileImage ? (
+                      <img 
+                        src={user.profileImage} 
+                        alt="Profile" 
+                        className="w-24 h-24 rounded-2xl object-cover border-4 border-violet-500 shadow-lg"
+                      />
+                    ) : (
+                      <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white text-3xl font-bold border-4 border-violet-500 shadow-lg">
+                        {user?.name?.charAt(0) || 'U'}
+                      </div>
+                    )}
+                    <motion.button
+                      type="button"
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploadingImage}
+                      className="absolute -bottom-2 -right-2 w-8 h-8 rounded-xl bg-violet-600 text-white flex items-center justify-center shadow-lg hover:bg-violet-700 transition-colors disabled:opacity-50"
+                    >
+                      {uploadingImage ? (
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <Camera size={16} weight="bold" />
+                      )}
+                    </motion.button>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                    />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-slate-900 dark:text-white">Profile Photo</h3>
+                    <p className="text-sm text-slate-500 dark:text-neutral-400">Upload a photo to personalize your profile</p>
+                    <p className="text-xs text-slate-400 dark:text-neutral-500 mt-1">JPG, PNG up to 5MB</p>
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-neutral-400 mb-2">Full Name</label>

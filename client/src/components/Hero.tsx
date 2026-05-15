@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { motion, type Variants } from 'framer-motion'
+import { motion, AnimatePresence, type Variants } from 'framer-motion'
 import { ArrowRight, Play, Star } from '@phosphor-icons/react'
 
 const containerVariants: Variants = {
@@ -12,22 +12,6 @@ const itemVariants: Variants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.65, ease: [0.25, 0.46, 0.45, 0.94] } },
 }
 
-const WAVE_BARS = [
-  { minH: 3, maxH: 14, dur: 0.6, delay: 0 },
-  { minH: 5, maxH: 18, dur: 0.5, delay: 0.1 },
-  { minH: 3, maxH: 10, dur: 0.7, delay: 0.05 },
-  { minH: 7, maxH: 20, dur: 0.4, delay: 0.15 },
-  { minH: 4, maxH: 14, dur: 0.6, delay: 0.2 },
-  { minH: 2, maxH: 9, dur: 0.8, delay: 0.08 },
-] as const
-
-const LESSONS_LIVE = [
-  { label: 'Reading Comprehension', status: 'done'    as const },
-  { label: 'Listening Practice',    status: 'done'    as const },
-  { label: 'Speaking Module',       status: 'active'  as const },
-  { label: 'Writing Task 2',        status: 'pending' as const },
-]
-
 const AVATARS = [
   'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=40&q=80',
   'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&q=80',
@@ -35,61 +19,75 @@ const AVATARS = [
   'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=40&q=80',
 ]
 
-function SoundWave() {
+const SLIDE_IMAGES = [
+  { url: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=600&q=80', title: 'Live Classes', subtitle: 'Interactive sessions' },
+  { url: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=600&q=80', title: 'Student Success', subtitle: '95% pass rate' },
+  { url: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=600&q=80', title: 'Expert Tutors', subtitle: 'Native speakers' },
+  { url: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600&q=80', title: 'Flexible Learning', subtitle: 'Anytime, anywhere' },
+]
+
+function FloatingElement({ delay, y }: { delay: number; y: number }) {
   return (
-    <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-end gap-[3px]">
-      {WAVE_BARS.map((bar, i) => (
-        <motion.div
-          key={i}
-          className="w-[3px] bg-violet-400 rounded-full"
-          style={{ height: bar.maxH, transformOrigin: 'bottom' }}
-          animate={{ scaleY: [bar.minH / bar.maxH, 1, bar.minH / bar.maxH] }}
-          transition={{ duration: bar.dur, delay: bar.delay, repeat: Infinity, ease: 'easeInOut' }}
-        />
-      ))}
-    </div>
+    <motion.div
+      animate={{ y: [0, y, 0] }}
+      transition={{ duration: 3, delay, repeat: Infinity, ease: 'easeInOut' }}
+      className="absolute w-2 h-2 rounded-full"
+      style={{ background: 'rgba(124,58,237,0.4)' }}
+    />
   )
 }
 
-function TimerColon() {
+function AnimatedWord({ word, delay }: { word: string; delay: number }) {
   return (
     <motion.span
-      animate={{ opacity: [1, 0.3, 1] }}
-      transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-      className="mx-[1px]"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay, duration: 0.5 }}
+      className="inline-block mx-1"
     >
-      :
+      {word}
     </motion.span>
   )
 }
 
-function LessonDot({ status }: { status: 'done' | 'active' | 'pending' }) {
-  if (status === 'done') {
-    return <div className="w-[7px] h-[7px] rounded-full bg-violet-600 flex-shrink-0" />
-  }
-  if (status === 'active') {
-    return (
-      <motion.div
-        className="w-[7px] h-[7px] rounded-full bg-violet-400 flex-shrink-0"
-        animate={{ scale: [1, 1.5, 1], opacity: [1, 0.5, 1] }}
-        transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+function ProgressRing({ progress, delay }: { progress: number; delay: number }) {
+  const circumference = 2 * Math.PI * 18
+  return (
+    <svg className="w-10 h-10 transform -rotate-90" viewBox="0 0 40 40">
+      <circle cx="20" cy="20" r="18" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="3" />
+      <motion.circle
+        cx="20" cy="20" r="18"
+        fill="none"
+        stroke="url(#progressGradient)"
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeDasharray={circumference}
+        strokeDashoffset={circumference * (1 - progress / 100)}
+        initial={{ strokeDashoffset: circumference }}
+        animate={{ strokeDashoffset: circumference * (1 - progress / 100) }}
+        transition={{ delay, duration: 1.5, ease: 'easeOut' }}
       />
-    )
-  }
-  return <div className="w-[7px] h-[7px] rounded-full bg-white/10 flex-shrink-0" />
+      <defs>
+        <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#7c3aed" />
+          <stop offset="100%" stopColor="#a855f7" />
+        </linearGradient>
+      </defs>
+    </svg>
+  )
 }
 
 function FloatingBadge({
   children,
   delay,
-  floatDur,
-  floatDelay,
+  floatDur = 3,
+  floatDelay = 0,
   className = '',
 }: {
   children: ReactNode
   delay: number
-  floatDur: number
-  floatDelay: number
+  floatDur?: number
+  floatDelay?: number
   className?: string
 }) {
   return (
@@ -114,6 +112,244 @@ function FloatingBadge({
         {children}
       </motion.div>
     </motion.div>
+  )
+}
+
+function QuizCard() {
+  const words = ['The', 'quick', 'brown', 'fox', 'jumps']
+  return (
+    <motion.div
+      initial={{ opacity: 0, rotateY: -15 }}
+      animate={{ opacity: 1, rotateY: 0 }}
+      transition={{ delay: 0.6, duration: 0.8 }}
+      className="relative rounded-2xl p-4 overflow-hidden"
+      style={{
+        background: 'linear-gradient(135deg, rgba(124,58,237,0.3) 0%, rgba(168,85,247,0.2) 100%)',
+        border: '1px solid rgba(124,58,237,0.4)',
+      }}
+    >
+      <div className="absolute top-0 right-0 w-20 h-20 rounded-full blur-[30px]" style={{ background: 'rgba(124,58,237,0.3)' }} />
+      
+      <div className="relative z-10">
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-[10px] font-bold text-violet-300 uppercase tracking-wider">Fill in the Blank</span>
+          <div className="flex gap-1">
+            {[1,2,3,4,5].map(i => (
+              <motion.div 
+                key={i}
+                initial={{ scaleX: 0 }}
+                animate={{ scaleX: 1 }}
+                transition={{ delay: 0.8 + i * 0.1 }}
+                className="w-5 h-1 rounded-full bg-violet-500/50"
+                style={{ transformOrigin: 'left' }}
+              />
+            ))}
+          </div>
+        </div>
+        
+        <div className="flex flex-wrap gap-2 mb-3">
+          {words.map((word, i) => (
+            <motion.button
+              key={word + i}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.4 + i * 0.1 }}
+              whileHover={{ scale: 1.05 }}
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-white/10 hover:bg-violet-500/50 transition-colors"
+            >
+              {word}
+            </motion.button>
+          ))}
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <motion.div
+            animate={{ scale: [1, 1.1, 1] }}
+            transition={{ duration: 2, repeat: Infinity }}
+            className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center"
+          >
+            <span className="text-white text-xs">✓</span>
+          </motion.div>
+          <span className="text-[10px] text-emerald-400 font-medium">Correct!</span>
+        </div>
+      </div>
+    </motion.div>
+  )
+}
+
+function AchievementCard() {
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay: 0.9, duration: 0.6 }}
+      className="relative rounded-2xl p-4 overflow-hidden"
+      style={{
+        background: 'linear-gradient(135deg, rgba(251,191,36,0.2) 0%, rgba(245,158,11,0.15) 100%)',
+        border: '1px solid rgba(251,191,36,0.3)',
+      }}
+    >
+      <div className="absolute top-0 right-0 w-16 h-16 rounded-full blur-[25px]" style={{ background: 'rgba(251,191,36,0.25)' }} />
+      
+      <div className="relative z-10 flex items-center gap-3">
+        <motion.div
+          animate={{ rotate: [0, 10, -10, 0] }}
+          transition={{ duration: 2, repeat: Infinity }}
+          className="w-10 h-10 rounded-xl flex items-center justify-center text-xl"
+          style={{ background: 'linear-gradient(135deg, #f59e0b, #fbbf24)' }}
+        >
+          🏆
+        </motion.div>
+        <div>
+          <p className="text-xs font-bold text-yellow-300">Achievement Unlocked!</p>
+          <p className="text-[10px] text-yellow-200/70">7-Day Streak • Speaking Master</p>
+        </div>
+      </div>
+    </motion.div>
+  )
+}
+
+function AvatarStack() {
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ delay: 1.2, duration: 0.5 }}
+      className="flex items-center gap-2"
+    >
+      <div className="flex -space-x-2">
+        {AVATARS.map((src, i) => (
+          <motion.div
+            key={src}
+            initial={{ scale: 0, x: -10 }}
+            animate={{ scale: 1, x: 0 }}
+            transition={{ delay: 1.3 + i * 0.1 }}
+            className="w-7 h-7 rounded-full border-2 border-neutral-900 overflow-hidden"
+          >
+            <img src={src} alt="" className="w-full h-full object-cover" />
+          </motion.div>
+        ))}
+      </div>
+      <span className="text-[10px] text-white/60">+2,341 online</span>
+    </motion.div>
+  )
+}
+
+function SpeakingWave() {
+  const bars = [3, 8, 5, 12, 7, 4, 10, 6]
+  return (
+    <div className="flex items-end gap-[2px] h-6">
+      {bars.map((height, i) => (
+        <motion.div
+          key={i}
+          className="w-1 bg-violet-400 rounded-full"
+          animate={{ height: [3, height, 3] }}
+          transition={{ duration: 0.5, delay: i * 0.05, repeat: Infinity, ease: 'easeInOut' }}
+        />
+      ))}
+    </div>
+  )
+}
+
+import { useState, useEffect } from 'react'
+
+function ImageSlider() {
+  const [current, setCurrent] = useState(0)
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrent(prev => (prev + 1) % SLIDE_IMAGES.length)
+    }, 4000)
+    return () => clearInterval(timer)
+  }, [])
+
+  return (
+    <div className="relative w-full max-w-[340px] mx-auto">
+      {/* Main slider container */}
+      <div className="relative rounded-3xl overflow-hidden h-[380px] bg-neutral-900">
+        
+        {/* Slides */}
+        <AnimatePresence mode='wait'>
+          <motion.div
+            key={current}
+            initial={{ opacity: 0, scale: 1.1 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.5 }}
+            className="absolute inset-0"
+          >
+            <img 
+              src={SLIDE_IMAGES[current].url} 
+              alt={SLIDE_IMAGES[current].title}
+              className="w-full h-full object-cover"
+            />
+            {/* Gradient overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-neutral-900/90 via-neutral-900/40 to-transparent" />
+            
+            {/* Content overlay */}
+            <div className="absolute bottom-0 left-0 right-0 p-6">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="flex items-center gap-2 mb-2"
+              >
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-violet-500/80 text-white">
+                  {SLIDE_IMAGES[current].subtitle}
+                </span>
+              </motion.div>
+              <motion.h3 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="text-2xl font-black text-white"
+              >
+                {SLIDE_IMAGES[current].title}
+              </motion.h3>
+            </div>
+          </motion.div>
+        </AnimatePresence>
+
+        {/* Decorative elements */}
+        <div className="absolute top-4 left-4 w-12 h-12 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center">
+          <span className="text-xl">🎓</span>
+        </div>
+        <div className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm" />
+        
+        {/* Corner decorations */}
+        <div className="absolute top-0 right-0 w-20 h-20 opacity-30" style={{ background: 'radial-gradient(circle at top right, rgba(124,58,237,0.5), transparent 70%)' }} />
+        <div className="absolute bottom-0 left-0 w-24 h-24 opacity-20" style={{ background: 'radial-gradient(circle at bottom left, rgba(168,85,247,0.5), transparent 70%)' }} />
+      </div>
+
+      {/* Navigation dots */}
+      <div className="flex justify-center gap-2 mt-4">
+        {SLIDE_IMAGES.map((_, i) => (
+          <button
+            key={i}
+            onClick={() => setCurrent(i)}
+            className="relative"
+          >
+            <motion.div
+              animate={{ scale: current === i ? 1.3 : 1 }}
+              className={`w-2 h-2 rounded-full transition-colors ${current === i ? 'bg-violet-500' : 'bg-neutral-300 dark:bg-neutral-600'}`}
+            />
+            {current === i && (
+              <motion.div
+                layoutId="dot"
+                className="absolute -inset-1 rounded-full border-2 border-violet-500"
+                initial={false}
+                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              />
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* Slide counter */}
+      <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-xs text-neutral-400 font-medium">
+        {current + 1} / {SLIDE_IMAGES.length}
+      </div>
+    </div>
   )
 }
 
@@ -226,253 +462,67 @@ export default function Hero() {
             </motion.div>
           </motion.div>
 
-          {/* ── RIGHT: Live Classroom Scene ── */}
-          <div className="relative flex items-center justify-center order-1 lg:order-2 py-10 lg:py-0 min-h-[500px]">
-
-            {/* Dark scene container — overflow-hidden keeps glow inside */}
-            <div className="relative w-full max-w-[300px] mx-auto rounded-3xl bg-neutral-950 overflow-hidden p-6 min-h-[440px] flex items-center justify-center">
-
-              {/* Breathing glow orb */}
+          {/* ── RIGHT: Image Slider ── */}
+          <div className="relative flex items-center justify-center order-1 lg:order-2 py-10 lg:py-0 min-h-[480px]">
+            
+            {/* Background glows */}
+            <div className="absolute inset-0 pointer-events-none">
               <motion.div
-                animate={{ scale: [1, 1.08, 1], opacity: [0.6, 1, 0.6] }}
-                transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[280px] h-[280px] rounded-full pointer-events-none"
-                style={{ background: 'radial-gradient(circle, rgba(124,58,237,0.3) 0%, transparent 65%)' }}
+                animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
+                transition={{ duration: 5, repeat: Infinity }}
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full"
+                style={{ background: 'radial-gradient(circle, rgba(124,58,237,0.25) 0%, transparent 70%)' }}
               />
-
-              {/* Dot grid — top right */}
-              <div
-                className="absolute top-6 right-6 w-24 h-24 opacity-40 pointer-events-none"
-                style={{ backgroundImage: 'radial-gradient(circle, #7c3aed 1.5px, transparent 1.5px)', backgroundSize: '10px 10px' }}
-              />
-              {/* Dot grid — bottom left */}
-              <div
-                className="absolute bottom-6 left-6 w-16 h-16 opacity-25 pointer-events-none"
-                style={{ backgroundImage: 'radial-gradient(circle, #7c3aed 1.5px, transparent 1.5px)', backgroundSize: '10px 10px' }}
-              />
-
-              {/* ── Main glassmorphism card ── */}
-              <motion.div
-                initial={{ opacity: 0, y: 32 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4, duration: 0.7, ease: 'easeOut' }}
-                className="relative z-10 w-full"
-                style={{
-                  background: 'rgba(255,255,255,0.06)',
-                  backdropFilter: 'blur(20px)',
-                  WebkitBackdropFilter: 'blur(20px)',
-                  border: '1px solid rgba(255,255,255,0.12)',
-                  borderRadius: '24px',
-                  padding: '20px',
-                  boxShadow: '0 24px 64px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)',
-                }}
-              >
-                {/* Card header */}
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <p className="text-[9px] text-neutral-400 font-bold tracking-[1.5px] uppercase mb-1">
-                      Live Session
-                    </p>
-                    <h3 className="text-[13px] font-extrabold text-white leading-tight">
-                      IELTS Speaking Practice
-                    </h3>
-                  </div>
-                  <div
-                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-full flex-shrink-0"
-                    style={{ background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.35)' }}
-                  >
-                    <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-                    <span className="text-[9px] text-red-400 font-bold tracking-wide">REC</span>
-                  </div>
-                </div>
-
-                {/* Video grid */}
-                <div className="grid grid-cols-2 gap-2 mb-4">
-                  {/* Instructor tile — speaking */}
-                  <div
-                    className="relative rounded-2xl h-[72px] flex items-center justify-center overflow-hidden"
-                    style={{
-                      background: 'rgba(124,58,237,0.25)',
-                      border: '2px solid rgba(124,58,237,0.6)',
-                      boxShadow: '0 0 16px rgba(124,58,237,0.3)',
-                    }}
-                  >
-                    <span className="absolute top-1.5 left-2 text-[8px] text-violet-300 font-bold">
-                      Speaking
-                    </span>
-                    <div
-                      className="w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-extrabold text-white"
-                      style={{ background: 'linear-gradient(135deg, #7c3aed, #a855f7)' }}
-                    >
-                      S
-                    </div>
-                    <SoundWave />
-                  </div>
-
-                  {/* Student tile — listening */}
-                  <div
-                    className="relative rounded-2xl h-[72px] flex items-center justify-center"
-                    style={{ background: 'rgba(30,27,60,0.8)', border: '1px solid rgba(255,255,255,0.07)' }}
-                  >
-                    <div
-                      className="w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-extrabold text-white"
-                      style={{ background: 'linear-gradient(135deg, #1e40af, #3b82f6)' }}
-                    >
-                      A
-                    </div>
-                  </div>
-                </div>
-
-                {/* Timer row */}
-                <div className="flex justify-center mb-4">
-                  <div
-                    className="flex items-center gap-1.5 px-4 py-1.5 rounded-full"
-                    style={{ background: 'rgba(124,58,237,0.15)', border: '1px solid rgba(124,58,237,0.3)' }}
-                  >
-                    <span className="text-[12px]">⏱</span>
-                    <span className="text-[15px] font-extrabold text-violet-300 tabular-nums flex items-center">
-                      12<TimerColon />45
-                    </span>
-                    <span className="text-[9px] text-neutral-500">remaining</span>
-                  </div>
-                </div>
-
-                {/* AI Fluency Score */}
-                <div
-                  className="mb-3 rounded-2xl p-3"
-                  style={{ background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.06)' }}
-                >
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-[10px] text-neutral-400 font-semibold">✦ AI Fluency Score</span>
-                    <span className="text-[13px] font-black text-violet-300">8.2 / 9.0</span>
-                  </div>
-                  <div
-                    className="h-[5px] rounded-full overflow-hidden"
-                    style={{ background: 'rgba(255,255,255,0.08)' }}
-                  >
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: '82%' }}
-                      transition={{ delay: 1.2, duration: 1.3, ease: 'easeOut' }}
-                      className="h-full rounded-full relative overflow-hidden"
-                      style={{ background: 'linear-gradient(90deg, #7c3aed, #a855f7, #c084fc)' }}
-                    >
-                      {/* Shimmer overlay — translates across after bar fills */}
-                      <motion.div
-                        animate={{ x: ['-100%', '200%'] }}
-                        transition={{ duration: 2, delay: 2.7, repeat: Infinity, ease: 'linear', repeatDelay: 1 }}
-                        className="absolute inset-0"
-                        style={{ background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%)' }}
-                      />
-                    </motion.div>
-                  </div>
-                </div>
-
-                {/* Lesson list */}
-                <div>
-                  {LESSONS_LIVE.map((lesson, i) => (
-                    <div
-                      key={lesson.label}
-                      className="flex items-center gap-2 py-2"
-                      style={{ borderTop: i > 0 ? '1px solid rgba(255,255,255,0.06)' : undefined }}
-                    >
-                      <LessonDot status={lesson.status} />
-                      <span className={`text-[10px] flex-1 leading-tight ${
-                        lesson.status === 'done'
-                          ? 'line-through text-neutral-600'
-                          : lesson.status === 'active'
-                          ? 'text-violet-200 font-bold'
-                          : 'text-neutral-700'
-                      }`}>
-                        {lesson.label}
-                      </span>
-                      {lesson.status === 'active' && (
-                        <span
-                          className="text-[8px] font-bold text-violet-400 px-2 py-0.5 rounded-full flex-shrink-0"
-                          style={{ background: 'rgba(124,58,237,0.2)' }}
-                        >
-                          TODAY
-                        </span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </motion.div>
+              <div className="absolute top-10 right-10 w-32 h-32 rounded-full" style={{ background: 'radial-gradient(circle, rgba(168,85,247,0.2) 0%, transparent 70%)' }} />
+              <div className="absolute bottom-20 left-10 w-24 h-24 rounded-full" style={{ background: 'radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%)' }} />
             </div>
 
-            {/* ── Floating badges — outside the dark container so they can overflow ── */}
+            <ImageSlider />
 
-            {/* Rating — top right */}
-            <FloatingBadge
-              delay={0.8}
-              floatDur={3.5}
-              floatDelay={1.5}
-              className="absolute top-[6%] right-[4%] sm:right-[8%] lg:right-[2%] z-20"
-            >
-              <div className="text-center">
-                <p className="text-[8px] text-neutral-400 uppercase tracking-wider mb-0.5">Avg Score</p>
-                <p className="text-lg font-black text-yellow-400">4.9 ★</p>
-                <p className="text-[8px] text-neutral-500">1,200+ Reviews</p>
-              </div>
-            </FloatingBadge>
+            {/* Floating badges above slider */}
+            <div className="absolute -top-6 left-0 right-0 flex justify-between px-4 z-20">
+              <FloatingBadge delay={0.6}>
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg flex items-center justify-center text-sm" style={{ background: 'rgba(251,191,36,0.2)' }}>
+                    ⭐
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-bold text-white">4.9</p>
+                    <p className="text-[8px] text-white/50">Rating</p>
+                  </div>
+                </div>
+              </FloatingBadge>
 
-            {/* Learners — bottom left */}
-            <FloatingBadge
-              delay={1.1}
-              floatDur={3.8}
-              floatDelay={2.0}
-              className="absolute bottom-[6%] left-[4%] sm:left-[8%] lg:left-[2%] z-20"
-            >
-              <div className="flex items-center gap-2">
-                <div
-                  className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-xl"
-                  style={{ background: 'rgba(124,58,237,0.25)' }}
-                >
-                  🎓
+              <FloatingBadge delay={0.8}>
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg flex items-center justify-center text-sm" style={{ background: 'rgba(59,130,246,0.2)' }}>
+                    👥
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-bold text-white">50K+</p>
+                    <p className="text-[8px] text-white/50">Students</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-[13px] font-black text-white">50K+</p>
-                  <p className="text-[8px] text-neutral-500 uppercase tracking-wider">Learners</p>
-                </div>
-              </div>
-            </FloatingBadge>
+              </FloatingBadge>
+            </div>
 
-            {/* Certificate — mid right */}
-            <FloatingBadge
-              delay={1.4}
-              floatDur={3.2}
-              floatDelay={1.8}
-              className="absolute top-[48%] right-[2%] lg:right-[-2%] -translate-y-1/2 z-20 hidden sm:block"
-            >
-              <div className="flex items-center gap-2">
-                <div
-                  className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-xl"
-                  style={{ background: 'rgba(251,191,36,0.15)' }}
-                >
-                  🏆
+            <div className="absolute -bottom-4 left-0 right-0 flex justify-between px-4 z-20">
+              <FloatingBadge delay={1}>
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-lg flex items-center justify-center text-sm" style={{ background: 'rgba(124,58,237,0.3)' }}>
+                    🏆
+                  </div>
+                  <p className="text-[10px] font-bold text-white">Certificate</p>
                 </div>
-                <div>
-                  <p className="text-[11px] font-bold text-white">Certificate</p>
-                  <p className="text-[8px] text-neutral-500 uppercase tracking-wider">Awarded</p>
-                </div>
-              </div>
-            </FloatingBadge>
+              </FloatingBadge>
 
-            {/* Band score — top left */}
-            <FloatingBadge
-              delay={1.6}
-              floatDur={4.0}
-              floatDelay={2.2}
-              className="absolute top-[20%] left-[2%] lg:left-[-2%] z-20"
-            >
-              <div>
-                <div className="flex items-center gap-1 mb-0.5">
-                  <span className="text-emerald-400 font-black text-sm">↑</span>
-                  <span className="text-[11px] font-extrabold text-emerald-400">+1.5 Band</span>
+              <FloatingBadge delay={1.2}>
+                <div className="text-center">
+                  <p className="text-xs font-black text-emerald-400">+1.5</p>
+                  <p className="text-[8px] text-white/50">Band Score</p>
                 </div>
-                <p className="text-[8px] text-neutral-500">Score improved</p>
-              </div>
-            </FloatingBadge>
+              </FloatingBadge>
+            </div>
 
           </div>
         </div>

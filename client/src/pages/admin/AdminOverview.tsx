@@ -5,6 +5,7 @@ import type { AdminStore } from '../AdminPage'
 import type { AdminView } from '../AdminPage'
 import { axiosClient } from '../../lib/axiosClient'
 import { coursesService } from '../../services/courses.service'
+import { useAuth } from '../../context/AuthContext'
 
 const FLAG_MAP: Record<string, string> = {
   'Pakistan': '🇵🇰',
@@ -36,6 +37,7 @@ function getGreeting(hour = new Date().getHours()) {
 const card = { initial: { opacity: 0, y: 16 }, animate: { opacity: 1, y: 0 } }
 
 export default function AdminOverview({ store, onNavigate }: { store: AdminStore; onNavigate: (v: AdminView) => void }) {
+  const { user } = useAuth()
   const { students, instructors, courses, financialAidApps } = store
 
   const [apiStudentCount, setApiStudentCount] = useState<number | null>(null)
@@ -155,12 +157,27 @@ export default function AdminOverview({ store, onNavigate }: { store: AdminStore
 
       {/* Welcome strip */}
       <motion.div {...card} className="relative">
-        <h2 className="text-2xl font-black text-slate-900 dark:text-white">
-          {getGreeting(now.getHours())}, Admin 👋
-        </h2>
-        <p className="text-sm text-slate-400 dark:text-neutral-500 mt-0.5">
-          {now.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-        </p>
+        <div className="flex items-center gap-4">
+          {user?.profileImage ? (
+            <img 
+              src={user.profileImage} 
+              alt="Admin" 
+              className="w-14 h-14 rounded-2xl object-cover border-2 border-violet-500 shadow-lg"
+            />
+          ) : (
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white text-xl font-bold border-2 border-violet-500 shadow-lg">
+              Admin
+            </div>
+          )}
+          <div>
+            <h2 className="text-2xl font-black text-slate-900 dark:text-white">
+              {getGreeting(now.getHours())}, Admin 👋
+            </h2>
+            <p className="text-sm text-slate-400 dark:text-neutral-500 mt-0.5">
+              {now.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+            </p>
+          </div>
+        </div>
       </motion.div>
 
       {/* Alert strip */}

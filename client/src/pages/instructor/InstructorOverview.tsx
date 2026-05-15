@@ -60,9 +60,22 @@ export default function InstructorOverview({ onNavigate }: { onNavigate: (view: 
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-black text-slate-900 dark:text-white">Welcome back, {displayName}!</h1>
-          <p className="text-sm text-slate-500 dark:text-neutral-400">Here's what's happening with your courses and students today.</p>
+        <div className="flex items-center gap-4">
+          {user?.profileImage ? (
+            <img 
+              src={user.profileImage} 
+              alt={displayName} 
+              className="w-14 h-14 rounded-2xl object-cover border-2 border-violet-500 shadow-lg"
+            />
+          ) : (
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white text-xl font-bold border-2 border-violet-500 shadow-lg">
+              {displayName.charAt(0).toUpperCase()}
+            </div>
+          )}
+          <div>
+            <h1 className="text-2xl font-black text-slate-900 dark:text-white">Welcome back, {displayName}!</h1>
+            <p className="text-sm text-slate-500 dark:text-neutral-400">Here's what's happening with your courses and students today.</p>
+          </div>
         </div>
 
         {/* Global Overview Search */}
