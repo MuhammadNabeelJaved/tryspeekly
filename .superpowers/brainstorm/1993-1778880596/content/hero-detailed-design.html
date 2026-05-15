@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hero Right Section — Detailed Design</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0f0f1a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px 16px; gap: 24px; }
+  h2 { color: #fff; font-size: 20px; font-weight: 700; text-align: center; }
+  .subtitle { color: #9ca3af; font-size: 13px; text-align: center; max-width: 560px; line-height: 1.6; }
+
+  /* ─── Scene ─── */
+  .scene {
+    position: relative;
+    width: 340px;
+    height: 460px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Ambient glow */
+  .glow {
+    position: absolute;
+    width: 320px; height: 320px;
+    background: radial-gradient(circle, rgba(124,58,237,0.3) 0%, transparent 65%);
+    border-radius: 50%;
+    top: 50%; left: 50%; transform: translate(-50%, -50%);
+    pointer-events: none;
+    animation: breathe 4s ease-in-out infinite;
+  }
+  @keyframes breathe {
+    0%, 100% { opacity: 0.6; transform: translate(-50%, -50%) scale(1); }
+    50%       { opacity: 1;   transform: translate(-50%, -50%) scale(1.08); }
+  }
+
+  /* Grid dots */
+  .grid-dots {
+    position: absolute;
+    top: 0; right: 0;
+    width: 100px; height: 100px;
+    background-image: radial-gradient(circle, rgba(124,58,237,0.4) 1.5px, transparent 1.5px);
+    background-size: 10px 10px;
+    opacity: 0.4;
+    animation: fadeIn 1s ease 0.5s both;
+  }
+
+  /* ─── Main card ─── */
+  .main-card {
+    position: relative;
+    z-index: 10;
+    background: rgba(255,255,255,0.06);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 24px;
+    padding: 20px;
+    width: 285px;
+    animation: slideUp 0.7s cubic-bezier(0.25,0.46,0.45,0.94) 0.2s both;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1);
+  }
+
+  /* Header */
+  .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .course-label { font-size: 9px; color: #9ca3af; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 3px; }
+  .course-name { font-size: 13px; font-weight: 800; color: #fff; }
+  .live-badge {
+    display: flex; align-items: center; gap: 5px;
+    background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.35);
+    border-radius: 20px; padding: 4px 10px;
+  }
+  .live-dot {
+    width: 6px; height: 6px; background: #ef4444; border-radius: 50%;
+    animation: pulse 1.2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: 0.5; transform: scale(0.7); }
+  }
+  .live-text { font-size: 9px; color: #ef4444; font-weight: 700; letter-spacing: 1px; }
+
+  /* Video grid */
+  .video-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+  .video-tile {
+    border-radius: 14px;
+    height: 72px;
+    display: flex; align-items: center; justify-content: center;
+    position: relative; overflow: hidden;
+  }
+  .video-tile.speaking {
+    background: rgba(124,58,237,0.25);
+    border: 2px solid rgba(124,58,237,0.6);
+    box-shadow: 0 0 16px rgba(124,58,237,0.3);
+  }
+  .video-tile.listening { background: rgba(30,27,60,0.8); border: 1px solid rgba(255,255,255,0.07); }
+  .avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 800; color: #fff;
+  }
+  .avatar.s { background: linear-gradient(135deg, #7c3aed, #a855f7); }
+  .avatar.a { background: linear-gradient(135deg, #1e40af, #3b82f6); }
+
+  /* Sound wave */
+  .wave {
+    position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+    display: flex; align-items: flex-end; gap: 2.5px;
+  }
+  .wave-bar {
+    width: 3px; background: #a78bfa; border-radius: 3px;
+    animation: waveAnim var(--dur, 0.8s) ease-in-out infinite alternate;
+    animation-delay: var(--del, 0s);
+  }
+  @keyframes waveAnim {
+    from { height: var(--min, 4px); }
+    to   { height: var(--max, 14px); }
+  }
+
+  /* Speaking label */
+  .speaking-label {
+    position: absolute; top: 6px; left: 8px;
+    font-size: 8px; font-weight: 700; color: #a78bfa; letter-spacing: 0.5px;
+  }
+
+  /* Timer */
+  .timer-row {
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    margin-bottom: 14px;
+  }
+  .timer-chip {
+    background: rgba(124,58,237,0.15);
+    border: 1px solid rgba(124,58,237,0.3);
+    border-radius: 20px; padding: 5px 16px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .timer-icon { font-size: 12px; }
+  .timer-value {
+    font-size: 15px; font-weight: 800; color: #c4b5fd;
+    font-variant-numeric: tabular-nums;
+    animation: countTick 1s steps(1) infinite;
+  }
+  @keyframes countTick {
+    0%, 49%  { opacity: 1; }
+    50%, 100% { opacity: 0.6; }
+  }
+  .timer-label { font-size: 9px; color: #6b7280; }
+
+  /* AI Score */
+  .score-box {
+    background: rgba(0,0,0,0.25);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 14px; padding: 10px 12px;
+    margin-bottom: 12px;
+  }
+  .score-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .score-label { font-size: 10px; color: #9ca3af; font-weight: 600; }
+  .score-value { font-size: 13px; font-weight: 900; color: #a78bfa; }
+  .score-bar-bg { height: 5px; background: rgba(255,255,255,0.08); border-radius: 5px; overflow: hidden; }
+  .score-bar-fill {
+    height: 100%; border-radius: 5px;
+    background: linear-gradient(90deg, #7c3aed, #a855f7, #c084fc);
+    background-size: 200% 100%;
+    animation: scoreIn 1.5s cubic-bezier(0.25,0.46,0.45,0.94) 1.2s both,
+               shimmer 2.5s linear 2.7s infinite;
+    width: 0;
+  }
+  @keyframes scoreIn { from { width: 0; } to { width: 82%; } }
+  @keyframes shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* Lesson row */
+  .lesson-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 0;
+    border-top: 1px solid rgba(255,255,255,0.06);
+  }
+  .lesson-dot {
+    width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+  }
+  .lesson-dot.done    { background: #7c3aed; }
+  .lesson-dot.active  { background: #a78bfa; box-shadow: 0 0 6px #a78bfa; animation: pulseDot 1.5s ease-in-out infinite; }
+  .lesson-dot.pending { background: rgba(255,255,255,0.1); }
+  @keyframes pulseDot {
+    0%, 100% { box-shadow: 0 0 4px #a78bfa; }
+    50%       { box-shadow: 0 0 10px #a78bfa, 0 0 20px rgba(167,139,250,0.4); }
+  }
+  .lesson-name { font-size: 10px; flex: 1; }
+  .lesson-name.done   { color: #4b5563; text-decoration: line-through; }
+  .lesson-name.active { color: #e9d5ff; font-weight: 700; }
+  .lesson-name.pending { color: #374151; }
+  .today-chip { background: rgba(124,58,237,0.2); border-radius: 20px; padding: 2px 7px; font-size: 8px; color: #a78bfa; font-weight: 700; }
+
+  /* ─── Floating badges ─── */
+  .badge {
+    position: absolute;
+    background: rgba(255,255,255,0.07);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 16px;
+    padding: 8px 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  }
+
+  .badge-score {
+    top: 12px; right: 0;
+    animation: slideUp 0.6s ease 0.8s both, floatY 3.5s ease-in-out 1.5s infinite;
+  }
+  .badge-score-val { font-size: 18px; font-weight: 900; color: #10b981; }
+  .badge-score-sub { font-size: 8px; color: #9ca3af; font-weight: 600; margin-top: 1px; }
+  .badge-score-label { font-size: 8px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.8px; }
+
+  .badge-users {
+    bottom: 20px; left: 0;
+    display: flex; align-items: center; gap: 8px;
+    animation: slideUp 0.6s ease 1.1s both, floatY 3.8s ease-in-out 2s infinite;
+  }
+  .badge-icon { width: 34px; height: 34px; border-radius: 10px; background: rgba(124,58,237,0.25); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+  .badge-users-val { font-size: 13px; font-weight: 900; color: #fff; }
+  .badge-users-sub { font-size: 8px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.8px; margin-top: 1px; }
+
+  .badge-cert {
+    bottom: 90px; right: -8px;
+    animation: slideUp 0.6s ease 1.4s both, floatY 3.2s ease-in-out 1.8s infinite;
+  }
+  .badge-cert-row { display: flex; align-items: center; gap: 6px; }
+  .badge-cert-icon { width: 28px; height: 28px; border-radius: 8px; background: rgba(251,191,36,0.2); display: flex; align-items: center; justify-content: center; font-size: 14px; }
+  .badge-cert-val { font-size: 11px; font-weight: 800; color: #fff; }
+  .badge-cert-sub { font-size: 8px; color: #6b7280; margin-top: 1px; }
+
+  /* New: Band score improvement chip */
+  .badge-band {
+    top: 80px; left: -12px;
+    animation: slideUp 0.6s ease 1.6s both, floatY 4s ease-in-out 2.2s infinite;
+  }
+  .band-row { display: flex; align-items: center; gap: 5px; }
+  .band-arrow { font-size: 14px; color: #10b981; font-weight: 900; }
+  .band-text { font-size: 11px; font-weight: 800; color: #10b981; }
+  .band-sub { font-size: 8px; color: #9ca3af; margin-top: 2px; }
+
+  /* ─── Animations ─── */
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px) scale(0.9); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @keyframes floatY {
+    0%, 100% { transform: translateY(0); }
+    50%       { transform: translateY(-8px); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; } to { opacity: 0.4; }
+  }
+
+  /* ─── Legend ─── */
+  .legend {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 10px; max-width: 560px; width: 100%;
+  }
+  .legend-item {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px; padding: 12px;
+  }
+  .legend-item h4 { font-size: 11px; font-weight: 700; color: #a78bfa; margin-bottom: 4px; }
+  .legend-item p  { font-size: 11px; color: #6b7280; line-height: 1.5; }
+
+  /* Approve button */
+  .approve-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: linear-gradient(135deg, #7c3aed, #a855f7);
+    color: white; font-size: 14px; font-weight: 700;
+    padding: 12px 28px; border-radius: 20px; border: none; cursor: pointer;
+    box-shadow: 0 8px 28px rgba(124,58,237,0.4);
+    text-decoration: none;
+    animation: fadeIn 0.5s ease 2s both;
+  }
+</style>
+</head>
+<body>
+
+<h2>Hero Right — Final Design Preview</h2>
+<p class="subtitle">Yeh exactly waise dikhega jaise build hoga. Sab animations live hain is preview mein.</p>
+
+<!-- Main scene -->
+<div class="scene">
+  <div class="glow"></div>
+  <div class="grid-dots"></div>
+
+  <!-- Main card -->
+  <div class="main-card">
+    <!-- Header -->
+    <div class="card-header">
+      <div>
+        <div class="course-label">Live Session</div>
+        <div class="course-name">IELTS Speaking Practice</div>
+      </div>
+      <div class="live-badge">
+        <div class="live-dot"></div>
+        <span class="live-text">REC</span>
+      </div>
+    </div>
+
+    <!-- Video tiles -->
+    <div class="video-grid">
+      <div class="video-tile speaking">
+        <span class="speaking-label">Speaking</span>
+        <div class="avatar s">S</div>
+        <div class="wave">
+          <div class="wave-bar" style="--min:3px;--max:13px;--dur:0.6s;--del:0s"></div>
+          <div class="wave-bar" style="--min:5px;--max:18px;--dur:0.5s;--del:0.1s"></div>
+          <div class="wave-bar" style="--min:3px;--max:10px;--dur:0.7s;--del:0.05s"></div>
+          <div class="wave-bar" style="--min:7px;--max:20px;--dur:0.4s;--del:0.15s"></div>
+          <div class="wave-bar" style="--min:4px;--max:14px;--dur:0.6s;--del:0.2s"></div>
+          <div class="wave-bar" style="--min:2px;--max:9px;--dur:0.8s;--del:0.08s"></div>
+        </div>
+      </div>
+      <div class="video-tile listening">
+        <div class="avatar a">A</div>
+      </div>
+    </div>
+
+    <!-- Timer -->
+    <div class="timer-row">
+      <div class="timer-chip">
+        <span class="timer-icon">⏱</span>
+        <span class="timer-value">12:45</span>
+        <span class="timer-label">remaining</span>
+      </div>
+    </div>
+
+    <!-- AI Score -->
+    <div class="score-box">
+      <div class="score-header">
+        <span class="score-label">✦ AI Fluency Score</span>
+        <span class="score-value">8.2 / 9.0</span>
+      </div>
+      <div class="score-bar-bg">
+        <div class="score-bar-fill"></div>
+      </div>
+    </div>
+
+    <!-- Lessons -->
+    <div class="lesson-row">
+      <div class="lesson-dot done"></div>
+      <span class="lesson-name done">Reading Comprehension</span>
+    </div>
+    <div class="lesson-row">
+      <div class="lesson-dot done"></div>
+      <span class="lesson-name done">Listening Practice</span>
+    </div>
+    <div class="lesson-row">
+      <div class="lesson-dot active"></div>
+      <span class="lesson-name active">Speaking Module</span>
+      <span class="today-chip">TODAY</span>
+    </div>
+    <div class="lesson-row">
+      <div class="lesson-dot pending"></div>
+      <span class="lesson-name pending">Writing Task 2</span>
+    </div>
+  </div>
+
+  <!-- Badge: Band score improvement -->
+  <div class="badge badge-band">
+    <div class="band-row">
+      <span class="band-arrow">↑</span>
+      <span class="band-text">+1.5 Band</span>
+    </div>
+    <div class="band-sub">Score improved</div>
+  </div>
+
+  <!-- Badge: AI score -->
+  <div class="badge badge-score" style="text-align:center;">
+    <div class="badge-score-label">Avg Score</div>
+    <div class="badge-score-val">4.9 ★</div>
+    <div class="badge-score-sub">1,200+ Reviews</div>
+  </div>
+
+  <!-- Badge: Users -->
+  <div class="badge badge-users">
+    <div class="badge-icon">🎓</div>
+    <div>
+      <div class="badge-users-val">50K+</div>
+      <div class="badge-users-sub">Learners</div>
+    </div>
+  </div>
+
+  <!-- Badge: Certificate -->
+  <div class="badge badge-cert">
+    <div class="badge-cert-row">
+      <div class="badge-cert-icon">🏆</div>
+      <div>
+        <div class="badge-cert-val">Certificate</div>
+        <div class="badge-cert-sub">Awarded</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Animation legend -->
+<div class="legend">
+  <div class="legend-item">
+    <h4>🎙 Sound Wave Bars</h4>
+    <p>Instructor ki awaaz ke saath bars up-down hoti hain — framer-motion keyframes</p>
+  </div>
+  <div class="legend-item">
+    <h4>📊 Score Bar Shimmer</h4>
+    <p>Progress bar slide-in hoti hai phir glossy shimmer effect loop hota hai</p>
+  </div>
+  <div class="legend-item">
+    <h4>🔴 Live REC Pulse</h4>
+    <p>Red dot breathes continuously — session live feel deta hai</p>
+  </div>
+  <div class="legend-item">
+    <h4>🪄 Floating Badges</h4>
+    <p>4 badges staggered spring-in karte hain, phir gentle y-axis float loop</p>
+  </div>
+</div>
+
+<p class="subtitle" style="margin-top:8px;">Pasand aaya? Terminal mein <strong style="color:#a78bfa;">"haan"</strong> likhen — implementation shuru ho jaega.</p>
+
+</body>
+</html>
