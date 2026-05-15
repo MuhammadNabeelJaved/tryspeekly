@@ -42,8 +42,8 @@ function SoundWave() {
         <motion.div
           key={i}
           className="w-[3px] bg-violet-400 rounded-full"
-          style={{ height: bar.minH }}
-          animate={{ height: [bar.minH, bar.maxH, bar.minH] }}
+          style={{ height: bar.maxH, transformOrigin: 'bottom' }}
+          animate={{ scaleY: [bar.minH / bar.maxH, 1, bar.minH / bar.maxH] }}
           transition={{ duration: bar.dur, delay: bar.delay, repeat: Infinity, ease: 'easeInOut' }}
         />
       ))}
