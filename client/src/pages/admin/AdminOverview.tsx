@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Users, BookOpen, CreditCard, TrendUp, Globe, ChartPieSlice, ArrowRight, Student, Handshake } from '@phosphor-icons/react'
-import type { AdminStore, AdminView } from '../AdminPage'
+import type { AdminStore, AdminView } from '@/pages/AdminPage'
 import type { AdminStats, ApiResponse } from '@/types/api'
 import { axiosClient } from '@/lib/axiosClient'
 import { useAuth } from '@/context/AuthContext'
