@@ -236,6 +236,40 @@ function LearnersCard() {
   )
 }
 
+// ─── ProgressCard ───────────────────────────────────────────────────────────────
+
+function ProgressCard() {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.8, duration: 0.5, ease: 'easeOut' }}
+      className="col-start-1 row-start-3 rounded-2xl p-4 flex flex-col justify-center gap-2 overflow-hidden"
+      style={CARD_STYLE}
+    >
+      <p className="text-[10px] text-white/50 uppercase tracking-wider">Speaking Progress</p>
+      <div className="relative h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.1)' }}>
+        {/* Fill bar */}
+        <motion.div
+          className="absolute left-0 top-0 h-full rounded-full"
+          style={{ background: 'linear-gradient(90deg, #7c3aed, #a855f7)' }}
+          initial={{ width: '0%' }}
+          animate={{ width: '82%' }}
+          transition={{ delay: 1.0, duration: 1.4, ease: 'easeOut' }}
+        />
+        {/* Shimmer */}
+        <motion.div
+          className="absolute top-0 h-full w-[50px] rounded-full"
+          style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.45), transparent)' }}
+          animate={{ x: [-50, 220] }}
+          transition={{ delay: 2.5, duration: 1.8, repeat: Infinity, repeatDelay: 1.2, ease: 'easeInOut' }}
+        />
+      </div>
+      <p className="text-right text-sm font-black text-violet-300">82%</p>
+    </motion.div>
+  )
+}
+
 export default function Hero() {
   return (
     <section className="relative bg-white dark:bg-neutral-950 min-h-[100dvh] overflow-hidden transition-colors duration-300">
