@@ -1,34 +1,77 @@
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import Hero from './Hero'
+import Hero, { getTimeUntilNextClass } from './Hero'
 
-// globals: true in vitest.config.ts — no need to import describe/it/expect
-// @testing-library/jest-dom is loaded via src/test/setup.ts
-
-describe('Hero — Live Classroom scene', () => {
-  it('renders the live session course name', () => {
-    render(<Hero />)
-    expect(screen.getByText('IELTS Speaking Practice')).toBeInTheDocument()
-  })
-
-  it('renders AI fluency score label', () => {
-    render(<Hero />)
-    expect(screen.getByText(/AI Fluency Score/i)).toBeInTheDocument()
-  })
-
-  it('renders the active lesson with TODAY badge', () => {
-    render(<Hero />)
-    expect(screen.getByText('Speaking Module')).toBeInTheDocument()
-    expect(screen.getByText('TODAY')).toBeInTheDocument()
-  })
-
-  it('renders the 50K+ learners floating badge', () => {
-    render(<Hero />)
-    expect(screen.getByText('50K+')).toBeInTheDocument()
-  })
-
+describe('Hero — Bento Grid', () => {
   it('renders left-side CTAs unchanged', () => {
     render(<Hero />)
     expect(screen.getByText('Start Learning')).toBeInTheDocument()
     expect(screen.getByText('Watch Demo')).toBeInTheDocument()
+  })
+
+  it('renders IELTS Speaking Practice in Next Class card', () => {
+    render(<Hero />)
+    expect(screen.getByText('IELTS Speaking Practice')).toBeInTheDocument()
+  })
+
+  it('renders LIVE badge', () => {
+    render(<Hero />)
+    expect(screen.getByText('Live')).toBeInTheDocument()
+  })
+
+  it('renders rating card', () => {
+    render(<Hero />)
+    expect(screen.getByText('4.9')).toBeInTheDocument()
+    expect(screen.getByText(/1,200\+/)).toBeInTheDocument()
+  })
+
+  it('renders streak card', () => {
+    render(<Hero />)
+    expect(screen.getByText(/7-Day Streak/i)).toBeInTheDocument()
+  })
+
+  it('renders certificate card', () => {
+    render(<Hero />)
+    expect(screen.getByText(/Certificate/i)).toBeInTheDocument()
+  })
+
+  it('renders speaking progress card', () => {
+    render(<Hero />)
+    expect(screen.getByText(/Speaking Progress/i)).toBeInTheDocument()
+    expect(screen.getByText('82%')).toBeInTheDocument()
+  })
+
+  it('renders 50K+ learners card', () => {
+    render(<Hero />)
+    expect(screen.getByText('50K+')).toBeInTheDocument()
+  })
+})
+
+describe('getTimeUntilNextClass', () => {
+  beforeEach(() => { vi.useFakeTimers() })
+  afterEach(() => { vi.useRealTimers() })
+
+  it('returns correct hours/minutes/seconds when class is in the future', () => {
+    vi.setSystemTime(new Date('2026-05-16T14:00:00'))
+    const result = getTimeUntilNextClass()
+    expect(result.h).toBe(4)
+    expect(result.m).toBe(0)
+    expect(result.s).toBe(0)
+  })
+
+  it('rolls over to next day when 6PM has already passed', () => {
+    vi.setSystemTime(new Date('2026-05-16T19:00:00'))
+    const result = getTimeUntilNextClass()
+    expect(result.h).toBe(23)
+    expect(result.m).toBe(0)
+    expect(result.s).toBe(0)
+  })
+
+  it('returns all-zero values at exactly 6PM', () => {
+    vi.setSystemTime(new Date('2026-05-16T18:00:00'))
+    const result = getTimeUntilNextClass()
+    expect(result.h).toBe(0)
+    expect(result.m).toBe(0)
+    expect(result.s).toBe(0)
   })
 })
