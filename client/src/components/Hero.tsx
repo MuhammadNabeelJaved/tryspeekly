@@ -94,6 +94,73 @@ function BackgroundSlideshow() {
   )
 }
 
+// ─── NextClassCard ─────────────────────────────────────────────────────────────
+
+function NextClassCard() {
+  const [time, setTime] = useState(getTimeUntilNextClass())
+
+  useEffect(() => {
+    const id = setInterval(() => setTime(getTimeUntilNextClass()), 1000)
+    return () => clearInterval(id)
+  }, [])
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.2, duration: 0.5, ease: 'easeOut' }}
+      className="col-start-1 col-end-3 row-start-1 row-end-3 rounded-2xl p-5 flex flex-col justify-between overflow-hidden"
+      style={CARD_STYLE}
+    >
+      <motion.div
+        animate={{ y: [0, -6, 0] }}
+        transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+        className="flex flex-col h-full gap-3"
+      >
+        {/* LIVE badge */}
+        <div className="flex items-center gap-2">
+          <motion.div
+            className="w-2 h-2 rounded-full bg-red-500"
+            animate={{ opacity: [1, 0.3, 1] }}
+            transition={{ duration: 1, repeat: Infinity }}
+          />
+          <span className="text-[10px] font-bold text-red-400 uppercase tracking-widest">Live</span>
+        </div>
+
+        {/* Class info */}
+        <div className="flex-1 flex flex-col justify-end gap-2">
+          <p className="text-[10px] text-white/50 uppercase tracking-wider">📅 Next Live Class</p>
+          <p className="text-lg font-black text-white leading-tight">IELTS Speaking Practice</p>
+          <p className="text-[11px] text-white/60">Today · 6:00 PM</p>
+
+          {/* Countdown */}
+          <div
+            className="rounded-xl px-3 py-2.5 mt-1"
+            style={{ background: 'rgba(124,58,237,0.2)', border: '1px solid rgba(124,58,237,0.3)' }}
+          >
+            <p className="text-[9px] text-violet-300 uppercase tracking-wider mb-1">Starts in</p>
+            <div className="flex items-center gap-0.5 font-mono text-2xl font-black text-white">
+              <span>{pad(time.h)}</span>
+              <motion.span
+                animate={{ opacity: [1, 0.3, 1] }}
+                transition={{ duration: 1, repeat: Infinity }}
+                className="text-violet-400"
+              >:</motion.span>
+              <span>{pad(time.m)}</span>
+              <motion.span
+                animate={{ opacity: [1, 0.3, 1] }}
+                transition={{ duration: 1, repeat: Infinity }}
+                className="text-violet-400"
+              >:</motion.span>
+              <span>{pad(time.s)}</span>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
+  )
+}
+
 export default function Hero() {
   return (
     <section className="relative bg-white dark:bg-neutral-950 min-h-[100dvh] overflow-hidden transition-colors duration-300">
