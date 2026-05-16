@@ -4,11 +4,9 @@ import {
   ArrowLeft,
   VideoCamera,
   CalendarBlank,
-  FilePdf,
   ShieldCheck,
   Clock,
   CheckCircle,
-  DownloadSimple,
   ChatCircleDots,
   Spinner,
   ClipboardText,
@@ -278,39 +276,6 @@ export default function StudentCourseDetails() {
                 </div>
               </div>
 
-              {/* Materials */}
-              <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200 dark:border-neutral-800 shadow-sm overflow-hidden">
-                <div className="p-5 border-b border-slate-100 dark:border-neutral-800 bg-slate-50 dark:bg-neutral-800/50">
-                  <h3 className="font-bold text-slate-900 dark:text-white">
-                    Class Materials &amp; Notes
-                  </h3>
-                </div>
-                <div className="p-0 divide-y divide-slate-100 dark:divide-neutral-800">
-                  {[1, 2, 3].map((num) => (
-                    <div
-                      key={num}
-                      className="p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-neutral-800/30 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-red-50 dark:bg-red-900/20 flex items-center justify-center text-red-500">
-                          <FilePdf size={20} weight="fill" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-bold text-slate-900 dark:text-white">
-                            Module {num} Presentation Notes
-                          </p>
-                          <p className="text-[10px] text-slate-500 dark:text-neutral-400">
-                            PDF Document • 2.4 MB
-                          </p>
-                        </div>
-                      </div>
-                      <button className="p-2 text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 bg-slate-100 dark:bg-neutral-800 rounded-lg transition-colors">
-                        <DownloadSimple size={16} weight="bold" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
             </>
           ) : (
             /* Assignments Tab */

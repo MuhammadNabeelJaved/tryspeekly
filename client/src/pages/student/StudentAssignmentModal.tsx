@@ -1,4 +1,5 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
+import type { FormEvent } from 'react'
 import { X, UploadSimple, FileText, CircleNotch, CheckCircle, Star } from '@phosphor-icons/react'
 import toast from 'react-hot-toast'
 import { assignmentsService } from '@/services/assignments.service'
@@ -35,7 +36,7 @@ export default function StudentAssignmentModal({
     onClose()
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     if (!file) return
 
