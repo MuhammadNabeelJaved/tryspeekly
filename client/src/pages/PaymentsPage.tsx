@@ -1,5 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence, type Variants } from 'framer-motion'
+import { siteSettingsService } from '@/services/site-settings.service'
+import type { PaymentMethodAdmin } from '@/pages/admin/adminData'
 import {
   ShieldCheck,
   Lock,
@@ -329,11 +331,31 @@ export default function PaymentsPage() {
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null)
   const [expandedPolicy, setExpandedPolicy] = useState<number | null>(null)
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null)
+  const [paymentConfig, setPaymentConfig] = useState<{ methods: PaymentMethodAdmin[] } | null>(null)
 
-  const methods = activeTab === 'local' ? LOCAL_METHODS : INTL_METHODS
+  useEffect(() => {
+    siteSettingsService.get()
+      .then(settings => {
+        if (settings.paymentsSetup) {
+          const config = settings.paymentsSetup as { methods?: PaymentMethodAdmin[] }
+          if (config.methods?.length) setPaymentConfig({ methods: config.methods })
+        }
+      })
+      .catch(() => {})
+  }, [])
 
-  const allMethods = [...LOCAL_METHODS, ...INTL_METHODS]
+  const configLocal = paymentConfig?.methods.filter(m => m.tab === 'local') ?? []
+  const configIntl = paymentConfig?.methods.filter(m => m.tab === 'international') ?? []
+  const localMethods: PaymentMethod[] = configLocal.length
+    ? configLocal.map(m => ({ ...m, logoKey: m.logoKey as PaymentMethod['logoKey'] }))
+    : LOCAL_METHODS
+  const intlMethods: PaymentMethod[] = configIntl.length
+    ? configIntl.map(m => ({ ...m, logoKey: m.logoKey as PaymentMethod['logoKey'] }))
+    : INTL_METHODS
+  const methods = activeTab === 'local' ? localMethods : intlMethods
+  const allMethods = [...localMethods, ...intlMethods]
   const selected = allMethods.find(m => m.id === selectedMethod)
+  const selectedAdmin = paymentConfig?.methods.find(m => m.id === selectedMethod)
 
   return (
     <motion.div
@@ -573,10 +595,10 @@ export default function PaymentsPage() {
                       {/* Account info */}
                       <div className="space-y-3 mb-5">
                         {[
-                          { label: 'Account Title', value: 'EnglishPro Academy' },
-                          { label: 'Account / IBAN', value: 'PK36 MEZN 0001 2345 0100 6543' },
-                          { label: 'Bank Name', value: 'Meezan Bank Ltd.' },
-                          { label: 'Reference', value: 'Your Full Name' },
+                          { label: 'Account Title', value: selectedAdmin?.accountTitle || 'EnglishPro Academy' },
+                          { label: 'Account / IBAN', value: selectedAdmin?.accountIban || 'PK36 MEZN 0001 2345 0100 6543' },
+                          { label: 'Bank Name', value: selectedAdmin?.bankName || 'Meezan Bank Ltd.' },
+                          { label: 'Reference', value: selectedAdmin?.reference || 'Your Full Name' },
                         ].map(({ label, value }) => (
                           <div key={label} className="bg-slate-50 dark:bg-neutral-800/60 rounded-2xl px-4 py-3">
                             <p className="text-[10px] font-semibold text-slate-400 dark:text-neutral-500 uppercase tracking-wide mb-1">{label}</p>
@@ -595,7 +617,7 @@ export default function PaymentsPage() {
                       {/* Action buttons */}
                       <div className="flex flex-col gap-2.5">
                         <a
-                          href="https://wa.me/92XXXXXXXXXX"
+                          href={selectedAdmin?.whatsappLink || 'https://wa.me/92XXXXXXXXXX'}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 rounded-2xl text-sm transition-colors"
@@ -604,7 +626,7 @@ export default function PaymentsPage() {
                           Send Receipt on WhatsApp
                         </a>
                         <a
-                          href="mailto:payments@englishpro.com"
+                          href={`mailto:${selectedAdmin?.receiptEmail || 'payments@englishpro.com'}`}
                           className="flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 rounded-2xl text-sm transition-colors"
                         >
                           <CreditCard size={15} weight="fill" />

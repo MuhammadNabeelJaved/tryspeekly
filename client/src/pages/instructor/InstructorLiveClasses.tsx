@@ -154,7 +154,7 @@ export default function InstructorLiveClasses() {
           const mappedCompleted: CompletedClass[] = completedLiveClasses.map((lc: { _id: string; course: { _id: string; title: string }; meetingLink: string; classNumber: number; createdAt: string }) => ({
             _id: lc._id,
             id: lc._id,
-            courseId: lc.course._id,
+            courseId: String(lc.course._id),
             courseTitle: lc.course.title,
             completedAt: new Date(lc.createdAt).toLocaleString(),
             timestamp: new Date(lc.createdAt).getTime(),
@@ -164,10 +164,11 @@ export default function InstructorLiveClasses() {
           setCompletedClasses(mappedCompleted)
 
           const mappedCourses: InstructorCourse[] = activeCourses.map((course: { _id: string; title: string; enrolledStudents: unknown[]; status: string; totalSessions: number; level?: string; description?: string }) => {
-            const liveClass = activeLiveClasses.find((lc: { course: { _id: string } }) => lc.course._id === course._id)
+            const courseIdStr = String(course._id)
+            const liveClass = activeLiveClasses.find((lc: { course: { _id: string } }) => String(lc.course._id) === courseIdStr)
             return {
               _id: course._id,
-              id: course._id,
+              id: courseIdStr,
               title: course.title,
               students: course.enrolledStudents?.length || 0,
               status: course.status || 'active',
@@ -354,8 +355,9 @@ export default function InstructorLiveClasses() {
       const courseHistory = completedClasses.filter(c => c.courseId === liveModalCourse.id)
 
       const newRecord: CompletedClass = {
+        _id: `hc_${Date.now()}`,
         id: `hc_${Date.now()}`,
-        courseId: liveModalCourse.id,
+        courseId: liveModalCourse._id || liveModalCourse.id,
         courseTitle: liveModalCourse.title,
         completedAt: new Date().toLocaleString(),
         timestamp: Date.now(),
@@ -689,8 +691,10 @@ export default function InstructorLiveClasses() {
                     <span className="font-medium">{course.students} Enrolled</span>
                   </div>
                   {course.totalClasses && (() => {
-                    const completed = completedClasses.filter(c => c.courseId === course.id).length;
+                    const courseId = (course.id || course._id || '').toString().trim();
+                    const completed = completedClasses.filter(cc => (cc.courseId || '').toString().trim() === courseId).length;
                     const isAllCompleted = completed >= course.totalClasses;
+
                     return (
                       <div className={`flex items-center gap-1.5 font-bold px-2.5 py-1 rounded-md text-xs border ${isAllCompleted ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 border-green-200 dark:border-green-800' : 'bg-slate-50 dark:bg-neutral-800/80 text-violet-600 dark:text-violet-400 border-slate-200 dark:border-neutral-700'}`}>
                         {isAllCompleted ? <CheckCircle size={14} weight="fill" /> : <ListDashes size={14} weight="bold" />}
