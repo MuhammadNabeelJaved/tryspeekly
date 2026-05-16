@@ -10,6 +10,7 @@ import {
 import type { Student, Instructor, Course, CMSPage, FinancialAidApp } from './admin/adminData'
 import { INITIAL_STUDENTS, INITIAL_INSTRUCTORS, INITIAL_COURSES, INITIAL_CMS_PAGES, INITIAL_FINANCIAL_AID } from './admin/adminData'
 import Loader from '@/components/Loader'
+import UserAvatar from '@/components/UserAvatar'
 import { useAuth } from '../context/AuthContext'
 
 const AdminOverview = lazy(() => import('./admin/AdminOverview'))
@@ -366,9 +367,7 @@ export default function AdminPage() {
           <div className="px-3 pb-4 border-t border-slate-100 dark:border-neutral-800 pt-3">
             {/* Profile card */}
             <div className="flex items-center gap-3 bg-slate-50 dark:bg-neutral-800 rounded-2xl px-3 py-2.5 mb-3">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-600 to-purple-600 flex items-center justify-center text-white text-sm font-black flex-shrink-0 shadow-[0_4px_12px_rgba(124,58,237,0.4)]">
-                A
-              </div>
+              <UserAvatar src={user?.profileImage} name={user?.name || 'Admin'} size="md" />
               <div className="min-w-0">
                 <p className="text-sm font-black text-slate-900 dark:text-white leading-none">Admin</p>
                 <p className="text-[10px] text-slate-400 dark:text-neutral-600 mt-0.5 truncate">admin@englishpro.com</p>
@@ -476,9 +475,7 @@ export default function AdminPage() {
             </div>
 
             {/* Avatar */}
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-600 to-purple-600 flex items-center justify-center text-white text-xs font-black shadow-[0_2px_8px_rgba(124,58,237,0.4)]">
-              A
-            </div>
+            <UserAvatar src={user?.profileImage} name={user?.name || 'Admin'} size="sm" />
           </div>
         </header>
 
