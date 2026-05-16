@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { enrollmentsService } from '@/services/enrollments.service'
-import { MagnifyingGlass, Check, X, CalendarBlank, ChartBar, BookOpen, UserMinus, Clock, ChatCircleText } from '@phosphor-icons/react'
+import {
+  MagnifyingGlass, Check, X, CalendarBlank, ChartBar, BookOpen, UserMinus, Clock, ChatCircleText,
+} from '@phosphor-icons/react'
 
 interface Student {
   id: string
