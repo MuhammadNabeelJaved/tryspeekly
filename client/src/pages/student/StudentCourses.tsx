@@ -3,7 +3,7 @@ import { VideoCamera, CalendarBlank, FilePdf, ShieldCheck, ChatCircleDots } from
 import { Link } from 'react-router-dom'
 import { enrollmentsService } from '@/services/enrollments.service'
 import type { Enrollment } from '@/types/api'
-import InstructorChatModal from './InstructorChatModal'
+import InstructorChatModal from '@/pages/student/InstructorChatModal'
 
 export default function StudentCourses() {
   const [enrollments, setEnrollments] = useState<Enrollment[]>([])
@@ -123,13 +123,9 @@ export default function StudentCourses() {
                       <p className="text-xs text-slate-500 dark:text-neutral-400 mt-1">attendance rate</p>
                     </div>
 
-                    <Link
-                      to={`/dashboard/courses/${enrollment.course._id}`}
-                      onClick={(e) => e.stopPropagation()}
-                      className="w-full flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 rounded-xl transition-colors text-sm shadow-[0_4px_14px_rgba(124,58,237,0.25)]"
-                    >
+                    <div className="w-full flex items-center justify-center gap-2 bg-violet-600 text-white font-bold py-3 rounded-xl text-sm shadow-[0_4px_14px_rgba(124,58,237,0.25)]">
                       View Course Details
-                    </Link>
+                    </div>
                   </div>
                 </Link>
               )
