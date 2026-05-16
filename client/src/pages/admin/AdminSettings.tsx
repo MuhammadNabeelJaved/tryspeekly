@@ -1,13 +1,18 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { motion } from 'framer-motion'
+import toast from 'react-hot-toast'
 import {
   FloppyDisk, CheckCircle, Globe, Phone, Share, MagnifyingGlass,
-  ShieldCheck, Trash, Eye, EyeSlash, ArrowCounterClockwise,
+  ShieldCheck, Trash, Eye, EyeSlash, ArrowCounterClockwise, Camera,
 } from '@phosphor-icons/react'
 import type { AdminStore } from '../AdminPage'
 import { INITIAL_SETTINGS } from './adminData'
 import type { AdminSettings } from './adminData'
+import { useAuth } from '../../context/AuthContext'
+import { usersService } from '../../services/users.service'
+import { extractApiError } from '../../utils/apiError'
+import UserAvatar from '../../components/UserAvatar'
 
 function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
@@ -68,6 +73,30 @@ export default function AdminSettings({ store }: { store: AdminStore }) {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [passwordError, setPasswordError] = useState('')
   const [showResetConfirm, setShowResetConfirm] = useState(false)
+
+  const { user, setUser } = useAuth()
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [avatarLoading, setAvatarLoading] = useState(false)
+  const [avatarError, setAvatarError] = useState('')
+
+  async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setAvatarLoading(true)
+    setAvatarError('')
+    try {
+      const { profileImage } = await usersService.updateProfileImage(file)
+      setUser({ ...user!, profileImage })
+      toast.success('Profile photo updated.')
+    } catch (err: unknown) {
+      const message = extractApiError(err, 'Failed to update profile image')
+      setAvatarError(message)
+      toast.error(message)
+    } finally {
+      setAvatarLoading(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
 
   const metaTitle = watch('seo.metaTitle') || ''
   const metaDescription = watch('seo.metaDescription') || ''
@@ -185,6 +214,46 @@ export default function AdminSettings({ store }: { store: AdminStore }) {
           </Field>
         </div>
       </SectionCard>
+
+      {/* ── PROFILE PHOTO ── */}
+      <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-100 dark:border-neutral-800 overflow-hidden">
+        <div className="flex items-center gap-3 px-5 py-4 border-b border-slate-100 dark:border-neutral-800">
+          <div className="w-8 h-8 rounded-xl bg-violet-50 dark:bg-violet-950/40 flex items-center justify-center text-violet-600 dark:text-violet-400">
+            <Camera size={16} />
+          </div>
+          <h3 className="text-sm font-black text-slate-900 dark:text-white">Profile Photo</h3>
+        </div>
+        <div className="p-5 flex items-center gap-5">
+          <div className="relative flex-shrink-0">
+            <UserAvatar src={user?.profileImage} name={user?.name || 'Admin'} size="lg" />
+            {avatarLoading && (
+              <div className="absolute inset-0 rounded-xl bg-black/50 flex items-center justify-center">
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              </div>
+            )}
+          </div>
+          <div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={handleAvatarChange}
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={avatarLoading}
+              className="flex items-center gap-1.5 text-sm font-semibold text-violet-600 hover:text-violet-700 bg-violet-50 hover:bg-violet-100 dark:bg-violet-900/20 dark:hover:bg-violet-900/40 px-3 py-1.5 rounded-lg transition-colors mb-1 disabled:opacity-60"
+            >
+              <Camera size={14} weight="bold" />
+              {avatarLoading ? 'Uploading...' : 'Change Photo'}
+            </button>
+            <p className="text-xs text-slate-500 dark:text-neutral-400">JPG, PNG or WEBP. Max 5MB.</p>
+            {avatarError && <p className="text-xs text-red-500 mt-1">{avatarError}</p>}
+          </div>
+        </div>
+      </div>
 
       {/* ── ADMIN ACCOUNT ── */}
       <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-100 dark:border-neutral-800 overflow-hidden">
