@@ -1,5 +1,6 @@
 import asyncHandler from '../utils/asyncHandler.js'
 import Assignment from '../models/assignment.model.js'
+import Course from '../models/course.model.js'
 import { uploadCourseMaterial, deleteFile, extractPublicId } from '../utils/cloudinary.js'
 
 // POST /api/v1/assignments — teacher/admin: create assignment
@@ -19,31 +20,27 @@ export const createAssignment = asyncHandler(async (req, res) => {
 
 // GET /api/v1/assignments/course/:courseId — authenticated
 export const getCourseAssignments = asyncHandler(async (req, res) => {
-  try {
-    const assignments = await Assignment.find({
-      course: req.params.courseId,
-      isDeleted: { $ne: true },
-    })
-      .sort({ dueDate: 1 })
-      .lean()
+  const assignments = await Assignment.find({
+    course: req.params.courseId,
+    isDeleted: { $ne: true },
+  })
+    .sort({ dueDate: 1 })
+    .lean()
 
-    if (req.user.role === 'student') {
-      const withMySubmission = assignments.map((a) => ({
-        ...a,
-        submissions: a.submissions.filter(
-          (s) => s.student.toString() === req.user.id.toString()
-        ),
-      }))
-      return res.json({ success: true, data: withMySubmission })
-    }
-
-    res.json({
-      success: true,
-      data: assignments.map((a) => ({ ...a, submissions: [] })),
-    })
-  } catch (error) {
-    res.status(400).json({ success: false, error: { message: error.message } })
+  if (req.user.role === 'student') {
+    const withMySubmission = assignments.map((a) => ({
+      ...a,
+      submissions: a.submissions.filter(
+        (s) => s.student.toString() === req.user.id.toString()
+      ),
+    }))
+    return res.json({ success: true, data: withMySubmission })
   }
+
+  res.json({
+    success: true,
+    data: assignments.map((a) => ({ ...a, submissions: [] })),
+  })
 })
 
 // GET /api/v1/assignments/:id — authenticated
@@ -141,24 +138,19 @@ export const deleteAssignment = asyncHandler(async (req, res) => {
 
 // GET /api/v1/assignments/instructor/my — teacher/admin
 export const getInstructorAssignments = asyncHandler(async (req, res) => {
-  try {
-    const Course = (await import('../models/course.model.js')).default
-    const courses = await Course.find({ teacher: req.user.id })
-      .select('_id')
-      .lean()
-    const courseIds = courses.map((c) => c._id)
+  const courses = await Course.find({ teacher: req.user.id })
+    .select('_id')
+    .lean()
+  const courseIds = courses.map((c) => c._id)
 
-    const assignments = await Assignment.find({
-      course: { $in: courseIds },
-      isDeleted: { $ne: true },
-    })
-      .populate('course', 'title')
-      .populate('submissions.student', 'name profileImage')
-      .sort({ dueDate: 1 })
-      .lean()
+  const assignments = await Assignment.find({
+    course: { $in: courseIds },
+    isDeleted: { $ne: true },
+  })
+    .populate('course', 'title')
+    .populate('submissions.student', 'name profileImage')
+    .sort({ dueDate: 1 })
+    .lean()
 
-    res.json({ success: true, data: assignments })
-  } catch (error) {
-    res.status(400).json({ success: false, error: { message: error.message } })
-  }
+  res.json({ success: true, data: assignments })
 })
