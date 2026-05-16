@@ -64,8 +64,10 @@ import faqRoutes from './src/routes/faq.route.js'
 import announcementRoutes from './src/routes/announcement.route.js'
 import siteSettingsRoutes from './src/routes/site-settings.route.js'
 import statsRoutes from './src/routes/stats.route.js'
+import liveClassRoutes from './src/routes/live-class.route.js'
 
 app.use('/api/v1/users', userRoutes)
+app.use('/api/v1/live-classes', liveClassRoutes)
 app.use('/api/v1/courses', courseRoutes)
 app.use('/api/v1/enrollments', enrollmentRoutes)
 app.use('/api/v1/payments', paymentRoutes)

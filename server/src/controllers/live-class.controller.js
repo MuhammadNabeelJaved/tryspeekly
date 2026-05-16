@@ -1,0 +1,168 @@
+import asyncHandler from '../utils/asyncHandler.js'
+import LiveClass from '../models/live-class.model.js'
+import Course from '../models/course.model.js'
+
+// POST /api/v1/live-classes - Create/start a live class
+export const createLiveClass = asyncHandler(async (req, res) => {
+  const { courseId, meetingLink, classNumber } = req.body
+
+  const course = await Course.findById(courseId)
+  if (!course) {
+    return res.status(404).json({ success: false, message: 'Course not found' })
+  }
+
+  if (course.teacher.toString() !== req.user.id.toString()) {
+    return res.status(403).json({ success: false, message: 'Not authorized to start live class for this course' })
+  }
+
+  const existingActive = await LiveClass.findOne({
+    course: courseId,
+    status: 'active',
+  })
+
+  if (existingActive) {
+    return res.status(400).json({ success: false, message: 'An active live class already exists for this course' })
+  }
+
+  const liveClass = await LiveClass.create({
+    course: courseId,
+    teacher: req.user.id,
+    meetingLink,
+    classNumber,
+    status: 'active',
+  })
+
+  await liveClass.populate('course', 'title totalSessions')
+
+  res.status(201).json({
+    success: true,
+    message: 'Live class started successfully',
+    data: liveClass,
+  })
+})
+
+// PATCH /api/v1/live-classes/:id - Update live class (meeting link)
+export const updateLiveClass = asyncHandler(async (req, res) => {
+  const { meetingLink } = req.body
+
+  const liveClass = await LiveClass.findById(req.params.id)
+  if (!liveClass) {
+    return res.status(404).json({ success: false, message: 'Live class not found' })
+  }
+
+  if (liveClass.teacher.toString() !== req.user.id.toString()) {
+    return res.status(403).json({ success: false, message: 'Not authorized to update this live class' })
+  }
+
+  liveClass.meetingLink = meetingLink
+  await liveClass.save()
+
+  await liveClass.populate('course', 'title totalSessions')
+
+  res.json({
+    success: true,
+    message: 'Live class updated successfully',
+    data: liveClass,
+  })
+})
+
+// PATCH /api/v1/live-classes/:id/complete - Mark live class as completed
+export const completeLiveClass = asyncHandler(async (req, res) => {
+  const liveClass = await LiveClass.findById(req.params.id)
+  if (!liveClass) {
+    return res.status(404).json({ success: false, message: 'Live class not found' })
+  }
+
+  if (liveClass.teacher.toString() !== req.user.id.toString()) {
+    return res.status(403).json({ success: false, message: 'Not authorized to complete this live class' })
+  }
+
+  liveClass.status = 'completed'
+  await liveClass.save()
+
+  await liveClass.populate('course', 'title totalSessions')
+
+  res.json({
+    success: true,
+    message: 'Live class marked as completed',
+    data: liveClass,
+  })
+})
+
+// PATCH /api/v1/live-classes/:id/cancel - Cancel live class
+export const cancelLiveClass = asyncHandler(async (req, res) => {
+  const liveClass = await LiveClass.findById(req.params.id)
+  if (!liveClass) {
+    return res.status(404).json({ success: false, message: 'Live class not found' })
+  }
+
+  if (liveClass.teacher.toString() !== req.user.id.toString()) {
+    return res.status(403).json({ success: false, message: 'Not authorized to cancel this live class' })
+  }
+
+  liveClass.status = 'cancelled'
+  await liveClass.save()
+
+  await liveClass.populate('course', 'title totalSessions')
+
+  res.json({
+    success: true,
+    message: 'Live class cancelled',
+    data: liveClass,
+  })
+})
+
+// GET /api/v1/live-classes/active - Get all active live classes (for students)
+export const getActiveLiveClasses = asyncHandler(async (req, res) => {
+  const liveClasses = await LiveClass.find({ status: 'active' })
+    .populate('course', 'title totalSessions')
+    .populate('teacher', 'name profileImage')
+    .sort({ createdAt: -1 })
+
+  res.json({
+    success: true,
+    data: liveClasses,
+  })
+})
+
+// GET /api/v1/live-classes/course/:courseId - Get live class for specific course
+export const getLiveClassByCourse = asyncHandler(async (req, res) => {
+  const liveClass = await LiveClass.findOne({
+    course: req.params.courseId,
+    status: 'active',
+  })
+    .populate('course', 'title totalSessions')
+    .populate('teacher', 'name profileImage')
+
+  res.json({
+    success: true,
+    data: liveClass,
+  })
+})
+
+// GET /api/v1/live-classes/teacher - Get teacher's all live classes
+export const getTeacherLiveClasses = asyncHandler(async (req, res) => {
+  const liveClasses = await LiveClass.find({ teacher: req.user.id })
+    .populate('course', 'title totalSessions')
+    .sort({ createdAt: -1 })
+
+  res.json({
+    success: true,
+    data: liveClasses,
+  })
+})
+
+// GET /api/v1/live-classes/teacher/completed - Get teacher's completed live classes
+export const getTeacherCompletedClasses = asyncHandler(async (req, res) => {
+  const liveClasses = await LiveClass.find({
+    teacher: req.user.id,
+    status: 'completed',
+  })
+    .populate('course', 'title totalSessions')
+    .sort({ createdAt: -1 })
+
+  res.json({
+    success: true,
+    data: liveClasses,
+  })
+})

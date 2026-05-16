@@ -4,11 +4,28 @@ import { CalendarBlank, CheckCircle, CreditCard, Clock, VideoCamera, HandWaving,
 import { useAuth } from '../../context/AuthContext'
 import { enrollmentsService } from '../../services/enrollments.service'
 import { paymentsService } from '../../services/payments.service'
+import { liveClassService } from '@/services/live-class.service'
 import { MOCK_STUDENT, MOCK_ENROLLED_COURSES, MOCK_PAYMENTS, MOCK_ANNOUNCEMENTS, MOCK_ASSIGNMENTS } from './studentData'
 import type { StudentView } from '../StudentDashboardPage'
 import type { EnrolledCourse, PaymentRecord } from './studentData'
 import type { Enrollment, Payment } from '../../types/api'
 import StudentAssignmentModal from './StudentAssignmentModal'
+
+type ActiveLiveClass = {
+  _id: string
+  course: {
+    _id: string
+    title: string
+    totalSessions: number
+  }
+  teacher: {
+    _id: string
+    name: string
+  }
+  meetingLink: string
+  classNumber: number
+  createdAt: string
+}
 
 export default function StudentOverview({ onNavigate }: { onNavigate: (view: StudentView) => void }) {
   const activeCourses = MOCK_ENROLLED_COURSES.filter(c => c.status === 'active')
@@ -18,6 +35,24 @@ export default function StudentOverview({ onNavigate }: { onNavigate: (view: Stu
 
   const [submitModalOpen, setSubmitModalOpen] = useState(false)
   const [selectedTask, setSelectedTask] = useState<{title: string, course: string} | null>(null)
+  const [activeLiveClass, setActiveLiveClass] = useState<ActiveLiveClass | null>(null)
+  const [isLoadingLiveClass, setIsLoadingLiveClass] = useState(true)
+
+  useEffect(() => {
+    async function fetchActiveLiveClasses() {
+      try {
+        const response = await liveClassService.getActiveLiveClasses()
+        if (response.success && response.data.length > 0) {
+          setActiveLiveClass(response.data[0])
+        }
+      } catch (error) {
+        console.error('Failed to fetch active live classes:', error)
+      } finally {
+        setIsLoadingLiveClass(false)
+      }
+    }
+    fetchActiveLiveClasses()
+  }, [])
 
   // Calculate Average Attendance
   const avgAttendance = activeCourses.length > 0 
@@ -43,7 +78,44 @@ export default function StudentOverview({ onNavigate }: { onNavigate: (view: Stu
             <p className="text-violet-100 max-w-lg mb-6">Ready for your live sessions? Check your schedule and join your classes on time.</p>
           </div>
 
-          {upcomingClass && (
+          {!isLoadingLiveClass && activeLiveClass ? (
+            <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 min-w-[300px]">
+              <div className="flex justify-between items-start mb-1">
+                <p className="text-xs font-bold text-violet-200 uppercase tracking-widest">Up Next</p>
+                <span className="text-[10px] font-bold bg-red-500/80 px-2 py-0.5 rounded-full text-white animate-pulse">
+                  LIVE NOW
+                </span>
+              </div>
+              <h3 className="text-lg font-bold text-white leading-tight mb-3 truncate" title={activeLiveClass.course.title}>
+                {activeLiveClass.course.title}
+              </h3>
+
+              <div className="flex items-center gap-3 text-sm text-violet-100 mb-2">
+                <span className="text-[10px] font-bold bg-white/20 px-2 py-0.5 rounded-full">
+                  Class {activeLiveClass.classNumber} / {activeLiveClass.course.totalSessions}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2 text-sm text-violet-100 mb-4">
+                <Clock size={16} weight="fill" />
+                <span>
+                  {new Date(activeLiveClass.createdAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                  {' '} • {' '}
+                  {new Date(activeLiveClass.createdAt).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                </span>
+              </div>
+
+              <a
+                href={activeLiveClass.meetingLink}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center justify-center gap-2 bg-white text-violet-600 w-full py-2.5 rounded-xl font-bold text-sm shadow-[0_4px_14px_rgba(255,255,255,0.2)] hover:scale-105 transition-transform"
+              >
+                <VideoCamera size={18} weight="fill" />
+                Join Live Class
+              </a>
+            </div>
+          ) : upcomingClass ? (
             <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 min-w-[300px]">
               <div className="flex justify-between items-start mb-1">
                 <p className="text-xs font-bold text-violet-200 uppercase tracking-widest">Up Next</p>
@@ -52,17 +124,17 @@ export default function StudentOverview({ onNavigate }: { onNavigate: (view: Stu
                 </span>
               </div>
               <h3 className="text-lg font-bold text-white leading-tight mb-3 truncate" title={upcomingClass.title}>{upcomingClass.title}</h3>
-              
+
               <div className="flex items-center gap-2 text-sm text-violet-100 mb-4">
                 <Clock size={16} weight="fill" />
                 <span>
-                  {new Date(upcomingClass.nextClassTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} 
+                  {new Date(upcomingClass.nextClassTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
                   {' '} • {' '}
                   {new Date(upcomingClass.nextClassTime).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
                 </span>
               </div>
 
-              <a 
+              <a
                 href={upcomingClass.meetingLink}
                 target="_blank"
                 rel="noreferrer"
@@ -72,7 +144,7 @@ export default function StudentOverview({ onNavigate }: { onNavigate: (view: Stu
                 Join Live Class
               </a>
             </div>
-          )}
+          ) : null}
         </div>
       </div>
 
