@@ -8,12 +8,14 @@ import {
   submitAssignment,
   gradeSubmission,
   deleteAssignment,
+  getInstructorAssignments,
 } from '../controllers/assignment.controller.js'
 
 const router = express.Router()
 
 // ─── Teacher/Admin routes ──────────────────────────────────────────────────────
 router.route('/').post(authenticate, authorize('teacher', 'admin'), createAssignment)
+router.route('/instructor/my').get(authenticate, authorize('teacher', 'admin'), getInstructorAssignments)
 router.route('/:id').delete(authenticate, authorize('teacher', 'admin'), deleteAssignment)
 router.route('/:id/submissions/:submissionId/grade').patch(authenticate, authorize('teacher', 'admin'), gradeSubmission)
 

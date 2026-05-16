@@ -20,8 +20,27 @@ export const createAssignment = asyncHandler(async (req, res) => {
 // GET /api/v1/assignments/course/:courseId — authenticated
 export const getCourseAssignments = asyncHandler(async (req, res) => {
   try {
-    const assignments = await Assignment.find({ course: req.params.courseId }).select('-submissions').sort({ dueDate: 1 })
-    res.json({ success: true, data: assignments })
+    const assignments = await Assignment.find({
+      course: req.params.courseId,
+      isDeleted: { $ne: true },
+    })
+      .sort({ dueDate: 1 })
+      .lean()
+
+    if (req.user.role === 'student') {
+      const withMySubmission = assignments.map((a) => ({
+        ...a,
+        submissions: a.submissions.filter(
+          (s) => s.student.toString() === req.user.id.toString()
+        ),
+      }))
+      return res.json({ success: true, data: withMySubmission })
+    }
+
+    res.json({
+      success: true,
+      data: assignments.map((a) => ({ ...a, submissions: [] })),
+    })
   } catch (error) {
     res.status(400).json({ success: false, error: { message: error.message } })
   }
@@ -115,6 +134,30 @@ export const deleteAssignment = asyncHandler(async (req, res) => {
     await assignment.save()
 
     res.json({ success: true, message: 'Assignment deleted' })
+  } catch (error) {
+    res.status(400).json({ success: false, error: { message: error.message } })
+  }
+})
+
+// GET /api/v1/assignments/instructor/my — teacher/admin
+export const getInstructorAssignments = asyncHandler(async (req, res) => {
+  try {
+    const Course = (await import('../models/course.model.js')).default
+    const courses = await Course.find({ teacher: req.user.id })
+      .select('_id')
+      .lean()
+    const courseIds = courses.map((c) => c._id)
+
+    const assignments = await Assignment.find({
+      course: { $in: courseIds },
+      isDeleted: { $ne: true },
+    })
+      .populate('course', 'title')
+      .populate('submissions.student', 'name profileImage')
+      .sort({ dueDate: 1 })
+      .lean()
+
+    res.json({ success: true, data: assignments })
   } catch (error) {
     res.status(400).json({ success: false, error: { message: error.message } })
   }
