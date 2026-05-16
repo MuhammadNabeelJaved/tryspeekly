@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Users, BookOpen, CreditCard, TrendUp, Globe, ChartPieSlice, ArrowRight, Student, Handshake } from '@phosphor-icons/react'
-import type { AdminStore } from '../AdminPage'
-import type { AdminView } from '../AdminPage'
-import type { AdminStats } from '../../types/api'
-import { axiosClient } from '../../lib/axiosClient'
-import { useAuth } from '../../context/AuthContext'
+import type { AdminStore, AdminView } from '../AdminPage'
+import type { AdminStats, ApiResponse } from '@/types/api'
+import { axiosClient } from '@/lib/axiosClient'
+import { useAuth } from '@/context/AuthContext'
 
 const FLAG_MAP: Record<string, string> = {
   'Pakistan': '🇵🇰',
@@ -43,9 +42,15 @@ export default function AdminOverview({ store, onNavigate }: { store: AdminStore
   const [stats, setStats] = useState<AdminStats | null>(null)
 
   useEffect(() => {
-    axiosClient.get<{ success: boolean; data: AdminStats }>('/stats/admin')
-      .then(res => { if (res.data.success) setStats(res.data.data) })
-      .catch(() => {})
+    const fetchStats = async () => {
+      try {
+        const res = await axiosClient.get<ApiResponse<AdminStats>>('/stats/admin')
+        if (res.data.success) setStats(res.data.data)
+      } catch {
+        // silently fall back to store data
+      }
+    }
+    fetchStats()
   }, [])
   const now = new Date()
 
@@ -87,7 +92,7 @@ export default function AdminOverview({ store, onNavigate }: { store: AdminStore
       view: 'students' as AdminView,
     },
     {
-      label: 'Total Courses',
+      label: 'Published Courses',
       value: stats?.coursesByStatus?.published ?? courses.filter(c => c.status === 'active').length,
       sub: `${courses.length} total`,
       Icon: BookOpen,
