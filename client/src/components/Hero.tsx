@@ -161,6 +161,81 @@ function NextClassCard() {
   )
 }
 
+// ─── Small bento cards ──────────────────────────────────────────────────────────
+
+function RatingCard() {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.35, duration: 0.5, ease: 'easeOut' }}
+      className="col-start-3 row-start-1 rounded-2xl p-4 flex flex-col justify-center gap-1"
+      style={CARD_STYLE}
+    >
+      <motion.div
+        animate={{ y: [0, -5, 0] }}
+        transition={{ duration: 3.5, delay: 0.8, repeat: Infinity, ease: 'easeInOut' }}
+      >
+        <div className="flex items-center gap-1 mb-1">
+          {[1, 2, 3, 4, 5].map(s => (
+            <Star key={s} size={10} weight="fill" className="text-yellow-400" />
+          ))}
+        </div>
+        <p className="text-xl font-black text-white">4.9</p>
+        <p className="text-[10px] text-white/50">1,200+ Reviews</p>
+      </motion.div>
+    </motion.div>
+  )
+}
+
+function StreakCard() {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.5, duration: 0.5, ease: 'easeOut' }}
+      className="col-start-3 row-start-2 rounded-2xl p-4 flex flex-col justify-center gap-1"
+      style={CARD_STYLE}
+    >
+      <span className="text-xl">🏆</span>
+      <p className="text-sm font-bold text-white leading-tight">7-Day Streak</p>
+      <p className="text-[10px] text-white/50">Speaking Master</p>
+    </motion.div>
+  )
+}
+
+function CertificateCard() {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.65, duration: 0.5, ease: 'easeOut' }}
+      className="col-start-3 row-start-3 rounded-2xl p-4 flex flex-col justify-center gap-1"
+      style={CARD_STYLE}
+    >
+      <span className="text-xl">✦</span>
+      <p className="text-sm font-bold text-white leading-tight">Certificate</p>
+      <p className="text-[10px] text-white/50">Awarded</p>
+    </motion.div>
+  )
+}
+
+function LearnersCard() {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.95, duration: 0.5, ease: 'easeOut' }}
+      className="col-start-2 row-start-3 rounded-2xl p-4 flex flex-col justify-center gap-1"
+      style={CARD_STYLE}
+    >
+      <span className="text-xl">🎓</span>
+      <p className="text-xl font-black text-white">50K+</p>
+      <p className="text-[10px] text-white/50">Learners</p>
+    </motion.div>
+  )
+}
+
 export default function Hero() {
   return (
     <section className="relative bg-white dark:bg-neutral-950 min-h-[100dvh] overflow-hidden transition-colors duration-300">
