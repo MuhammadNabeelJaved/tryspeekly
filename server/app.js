@@ -63,6 +63,7 @@ import contactRoutes from './src/routes/contact.route.js'
 import faqRoutes from './src/routes/faq.route.js'
 import announcementRoutes from './src/routes/announcement.route.js'
 import siteSettingsRoutes from './src/routes/site-settings.route.js'
+import statsRoutes from './src/routes/stats.route.js'
 
 app.use('/api/v1/users', userRoutes)
 app.use('/api/v1/courses', courseRoutes)
@@ -79,6 +80,7 @@ app.use('/api/v1/contact', contactRoutes)
 app.use('/api/v1/faqs', faqRoutes)
 app.use('/api/v1/announcements', announcementRoutes)
 app.use('/api/v1/site-settings', siteSettingsRoutes)
+app.use('/api/v1/stats', statsRoutes)
 
 app.use((req, res) => {
     res.status(404).json({
