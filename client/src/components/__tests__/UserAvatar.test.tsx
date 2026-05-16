@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import UserAvatar from '../UserAvatar'
 
 describe('UserAvatar', () => {
@@ -20,5 +20,15 @@ describe('UserAvatar', () => {
   it('renders ? fallback when neither src nor name is provided', () => {
     render(<UserAvatar size="sm" />)
     expect(screen.getByText('?')).toBeInTheDocument()
+  })
+
+  it('renders fallback when img fails to load', async () => {
+    render(<UserAvatar src="https://broken-url.com/image.jpg" name="Tariq Ali" size="md" />)
+    const img = screen.getByRole('img')
+    fireEvent.error(img)
+    await waitFor(() => {
+      expect(screen.queryByRole('img')).not.toBeInTheDocument()
+      expect(screen.getByText('T')).toBeInTheDocument()
+    })
   })
 })

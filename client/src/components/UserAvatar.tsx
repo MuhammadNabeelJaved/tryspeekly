@@ -1,3 +1,5 @@
+import { useState } from 'react'
+
 const SIZES = {
   sm: 'w-8 h-8 text-xs',
   md: 'w-9 h-9 text-sm',
@@ -14,12 +16,14 @@ interface UserAvatarProps {
 export default function UserAvatar({ src, name, size, className = '' }: UserAvatarProps) {
   const dim = SIZES[size]
   const initial = name?.charAt(0)?.toUpperCase() || '?'
+  const [imgError, setImgError] = useState(false)
 
-  if (src) {
+  if (src && !imgError) {
     return (
       <img
         src={src}
-        alt={name}
+        alt={name ?? ''}
+        onError={() => setImgError(true)}
         className={`${dim} rounded-xl object-cover flex-shrink-0 shadow-[0_4px_12px_rgba(124,58,237,0.4)] ${className}`}
       />
     )
