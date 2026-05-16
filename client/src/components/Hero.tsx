@@ -152,28 +152,9 @@ export default function Hero() {
             </motion.div>
           </motion.div>
 
-          {/* ── RIGHT: Image Slider ── */}
-          <div className="relative flex items-center order-1 lg:order-2 min-h-[calc(100dvh-80px)]">
-            
-            {/* Background glows */}
-            <div className="absolute inset-0 pointer-events-none">
-              <motion.div
-                animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
-                transition={{ duration: 5, repeat: Infinity }}
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full"
-                style={{ background: 'radial-gradient(circle, rgba(124,58,237,0.25) 0%, transparent 70%)' }}
-              />
-              <div className="absolute top-10 right-10 w-32 h-32 rounded-full" style={{ background: 'radial-gradient(circle, rgba(168,85,247,0.2) 0%, transparent 70%)' }} />
-              <div className="absolute bottom-20 left-10 w-24 h-24 rounded-full" style={{ background: 'radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%)' }} />
-            </div>
-
-            {/* Gradient fade on left edge to connect with content */}
-            <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-white/90 dark:from-neutral-950/90 to-transparent z-10 pointer-events-none" />
-
-            <div className="flex-1 flex items-center justify-center pl-6 lg:pl-10">
-              <ImageSlider />
-            </div>
-
+          {/* ── RIGHT: Bento Grid (wired in Task 7) ── */}
+          <div className="relative flex items-center justify-center order-1 lg:order-2 min-h-[calc(100dvh-80px)] py-8 lg:py-0">
+            <div className="w-full max-w-[440px] h-[520px] rounded-3xl bg-neutral-900/20" />
           </div>
         </div>
       </div>
