@@ -17,6 +17,7 @@ const InstructorMessages = lazy(() => import('./instructor/InstructorMessages'))
 const InstructorSettings = lazy(() => import('./instructor/InstructorSettings'))
 const InstructorSupport = lazy(() => import('./instructor/InstructorSupport'))
 const InstructorNotifications = lazy(() => import('./instructor/InstructorNotifications'))
+const InstructorAssignments = lazy(() => import('./instructor/InstructorAssignments'))
 
 export type InstructorView = 'overview' | 'courses' | 'live' | 'students' | 'messages' | 'assignments' | 'settings' | 'support' | 'notifications'
 
@@ -27,6 +28,7 @@ const NAV_MAIN: NavItem[] = [
   { view: 'courses', label: 'My Courses', path: 'courses', Icon: BookOpen as NavItem['Icon'] },
   { view: 'live', label: 'Live Classes', path: 'live', Icon: VideoCamera as NavItem['Icon'] },
   { view: 'students', label: 'My Students', path: 'students', Icon: Users as NavItem['Icon'] },
+  { view: 'assignments', label: 'Assignments', path: 'assignments', Icon: CheckCircle as NavItem['Icon'] },
   { view: 'messages', label: 'Messages', path: 'messages', Icon: Chats as NavItem['Icon'] },
 ]
 
@@ -286,6 +288,7 @@ export default function InstructorDashboardPage() {
                   <Route path="/courses" element={<InstructorCourses />} />
                   <Route path="/live" element={<InstructorLiveClasses />} />
                   <Route path="/students" element={<InstructorStudents />} />
+                  <Route path="/assignments" element={<InstructorAssignments />} />
                   <Route path="/messages" element={<InstructorMessages />} />
                   <Route path="/settings" element={<InstructorSettings />} />
                   <Route path="/support" element={<InstructorSupport />} />
