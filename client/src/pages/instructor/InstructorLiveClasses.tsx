@@ -189,8 +189,7 @@ export default function InstructorLiveClasses() {
             setCurrentLiveClassId(activeLiveClasses[0]._id)
           }
         }
-      } catch (error) {
-        console.error('Failed to fetch courses:', error)
+      } catch {
         toast.error('Failed to load courses')
       } finally {
         setIsLoadingCourses(false)
@@ -221,8 +220,7 @@ export default function InstructorLiveClasses() {
           }))
           setCompletedClasses(mapped)
         }
-      } catch (error) {
-        console.error('Failed to fetch completed classes:', error)
+      } catch {
         toast.error('Failed to load class history')
       } finally {
         setIsLoadingHistory(false)

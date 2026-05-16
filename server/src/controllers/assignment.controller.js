@@ -20,6 +20,7 @@ export const getCourseAssignments = asyncHandler(async (req, res) => {
     course: req.params.courseId,
     isDeleted: { $ne: true },
   })
+    .populate('course', 'title')
     .sort({ dueDate: 1 })
     .lean()
 
