@@ -9,10 +9,10 @@ import {
 import type { AdminStore } from '../AdminPage'
 import { INITIAL_SETTINGS } from './adminData'
 import type { AdminSettings } from './adminData'
-import { useAuth } from '../../context/AuthContext'
-import { usersService } from '../../services/users.service'
-import { extractApiError } from '../../utils/apiError'
-import UserAvatar from '../../components/UserAvatar'
+import { useAuth } from '@/context/AuthContext'
+import { usersService } from '@/services/users.service'
+import { extractApiError } from '@/utils/apiError'
+import UserAvatar from '@/components/UserAvatar'
 
 function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
@@ -82,11 +82,15 @@ export default function AdminSettings({ store }: { store: AdminStore }) {
   async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
+    if (file.size > 5 * 1024 * 1024) {
+      setAvatarError('File must be smaller than 5 MB.')
+      return
+    }
     setAvatarLoading(true)
     setAvatarError('')
     try {
       const { profileImage } = await usersService.updateProfileImage(file)
-      setUser({ ...user!, profileImage })
+      setUser({ ...user!, profileImage, photo: profileImage })
       toast.success('Profile photo updated.')
     } catch (err: unknown) {
       const message = extractApiError(err, 'Failed to update profile image')
