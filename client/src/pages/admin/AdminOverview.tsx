@@ -88,7 +88,7 @@ export default function AdminOverview({ store, onNavigate }: { store: AdminStore
     },
     {
       label: 'Total Courses',
-      value: stats?.coursesByStatus.published ?? courses.filter(c => c.status === 'active').length,
+      value: stats?.coursesByStatus?.published ?? courses.filter(c => c.status === 'active').length,
       sub: `${courses.length} total`,
       Icon: BookOpen,
       variant: 'normal' as const,
