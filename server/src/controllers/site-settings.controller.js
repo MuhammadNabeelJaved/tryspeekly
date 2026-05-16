@@ -30,6 +30,11 @@ export const updateSiteSettings = asyncHandler(async (req, res) => {
       }
     })
 
+    if (req.body.paymentsSetup !== undefined) {
+      settings.paymentsSetup = req.body.paymentsSetup
+      settings.markModified('paymentsSetup')
+    }
+
     await settings.save()
     res.json({ success: true, message: 'Settings updated', data: settings })
   } catch (error) {
