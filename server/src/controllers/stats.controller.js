@@ -16,14 +16,15 @@ export const getAdminStats = asyncHandler(async (req, res) => {
     User.countDocuments({ role: 'student', isDeleted: { $ne: true } }),
     User.countDocuments({ role: 'teacher', isDeleted: { $ne: true } }),
     Course.aggregate([
+      { $match: { isDeleted: { $ne: true } } },
       { $group: { _id: '$status', count: { $sum: 1 } } },
     ]),
     Payment.aggregate([
       { $match: { status: 'approved' } },
-      { $group: { _id: null, total: { $sum: '$amount' } } },
+      { $group: { _id: '$currency', total: { $sum: '$amount' } } },
     ]),
     Payment.countDocuments({ status: 'pending' }),
-    Course.countDocuments({ status: 'pending' }),
+    Course.countDocuments({ status: 'pending', isDeleted: { $ne: true } }),
   ])
 
   const courseMap = {
@@ -37,12 +38,18 @@ export const getAdminStats = asyncHandler(async (req, res) => {
     if (_id in courseMap) courseMap[_id] = count
   })
 
+  const revenueMap = {}
+  revenueAgg.forEach(({ _id, total }) => {
+    revenueMap[_id] = total
+  })
+
   res.json({
     success: true,
+    message: 'Stats retrieved',
     data: {
       totalStudents,
       totalInstructors,
-      totalRevenue: revenueAgg[0]?.total ?? 0,
+      revenue: revenueMap,
       pendingPayments,
       pendingCourseReviews,
       coursesByStatus: courseMap,
