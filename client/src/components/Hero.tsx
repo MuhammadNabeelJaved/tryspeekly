@@ -41,6 +41,59 @@ const CARD_STYLE: CSSProperties = {
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
+// ─── Countdown utility ──────────────────────────────────────────────────────────
+
+export function getTimeUntilNextClass(): { h: number; m: number; s: number } {
+  const now = new Date()
+  const target = new Date()
+  target.setHours(18, 0, 0, 0)
+  if (now > target) target.setDate(target.getDate() + 1)
+  const diff = Math.max(0, Math.floor((target.getTime() - now.getTime()) / 1000))
+  return {
+    h: Math.floor(diff / 3600),
+    m: Math.floor((diff % 3600) / 60),
+    s: diff % 60,
+  }
+}
+
+// ─── BackgroundSlideshow ────────────────────────────────────────────────────────
+
+function BackgroundSlideshow() {
+  const [current, setCurrent] = useState(0)
+
+  useEffect(() => {
+    const id = setInterval(() => setCurrent(prev => (prev + 1) % BG_IMAGES.length), 5000)
+    return () => clearInterval(id)
+  }, [])
+
+  return (
+    <div className="absolute inset-0 overflow-hidden rounded-3xl">
+      <AnimatePresence mode="sync">
+        <motion.img
+          key={current}
+          src={BG_IMAGES[current]}
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover"
+          initial={{ opacity: 0, scale: 1 }}
+          animate={{ opacity: 1, scale: 1.08 }}
+          exit={{ opacity: 0 }}
+          transition={{
+            opacity: { duration: 0.8 },
+            scale: { duration: 5, ease: 'linear' },
+          }}
+        />
+      </AnimatePresence>
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            'linear-gradient(135deg, rgba(10,10,10,0.82) 0%, rgba(10,10,10,0.62) 50%, rgba(10,10,10,0.80) 100%)',
+        }}
+      />
+    </div>
+  )
+}
+
 export default function Hero() {
   return (
     <section className="relative bg-white dark:bg-neutral-950 min-h-[100dvh] overflow-hidden transition-colors duration-300">
