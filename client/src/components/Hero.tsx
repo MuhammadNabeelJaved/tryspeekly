@@ -129,7 +129,7 @@ function NextClassCard() {
 
         {/* Class info */}
         <div className="flex-1 flex flex-col justify-end gap-2">
-          <p className="text-[10px] text-white/50 uppercase tracking-wider">📅 Next Live Class</p>
+          <p className="text-[10px] text-white/50 uppercase tracking-wider">📅 Next Class</p>
           <p className="text-lg font-black text-white leading-tight">IELTS Speaking Practice</p>
           <p className="text-[11px] text-white/60">Today · 6:00 PM</p>
 
@@ -270,6 +270,21 @@ function ProgressCard() {
   )
 }
 
+// ─── BentoGrid ──────────────────────────────────────────────────────────────────
+
+function BentoGrid() {
+  return (
+    <div className="grid grid-cols-3 grid-rows-3 gap-3 w-full h-full">
+      <NextClassCard />
+      <RatingCard />
+      <StreakCard />
+      <ProgressCard />
+      <LearnersCard />
+      <CertificateCard />
+    </div>
+  )
+}
+
 export default function Hero() {
   return (
     <section className="relative bg-white dark:bg-neutral-950 min-h-[100dvh] overflow-hidden transition-colors duration-300">
@@ -291,8 +306,6 @@ export default function Hero() {
             animate="visible"
             className="py-16 lg:py-24 pr-6 xl:pr-12 text-center lg:text-left order-2 lg:order-1 space-y-8 relative"
           >
-            {/* Gradient fade on right edge to connect with slider */}
-            <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-white/90 dark:from-neutral-950/90 to-transparent pointer-events-none" />
             {/* Label */}
             <motion.div variants={itemVariants} className="flex items-center gap-3 justify-center lg:justify-start">
               <span className="w-6 h-[2px] bg-violet-600 dark:bg-violet-400 rounded-full" />
@@ -320,7 +333,7 @@ export default function Hero() {
               variants={itemVariants}
               className="text-slate-500 dark:text-neutral-400 text-lg leading-relaxed max-w-[420px] mx-auto lg:mx-0"
             >
-              Expert-led live sessions via Zoom & Google Meet — designed to get you speaking confidently, faster.
+              Expert-led sessions via Zoom & Google Meet — designed to get you speaking confidently, faster.
             </motion.p>
 
             {/* CTAs */}
@@ -368,7 +381,7 @@ export default function Hero() {
                   ))}
                 </div>
                 <p className="text-sm text-slate-500 dark:text-neutral-400">
-                  <span className="font-bold text-slate-900 dark:text-white">4.9</span> · 10,000+ students
+                  {'4.9 · 10,000+ students'}
                 </p>
               </div>
 
@@ -381,9 +394,14 @@ export default function Hero() {
             </motion.div>
           </motion.div>
 
-          {/* ── RIGHT: Bento Grid (wired in Task 7) ── */}
+          {/* ── RIGHT: Bento Grid ── */}
           <div className="relative flex items-center justify-center order-1 lg:order-2 min-h-[calc(100dvh-80px)] py-8 lg:py-0">
-            <div className="w-full max-w-[440px] h-[520px] rounded-3xl bg-neutral-900/20" />
+            <div className="relative rounded-3xl overflow-hidden w-full max-w-[440px] h-[520px]">
+              <BackgroundSlideshow />
+              <div className="relative z-10 p-4 h-full">
+                <BentoGrid />
+              </div>
+            </div>
           </div>
         </div>
       </div>

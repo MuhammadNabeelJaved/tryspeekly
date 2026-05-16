@@ -404,7 +404,23 @@ export interface SiteSettings {
   seo: { metaTitle?: string; metaDescription?: string; keywords?: string };
   logoUrl?: string;
   bannerUrl?: string;
+  paymentsSetup?: Record<string, unknown>;
   updatedAt: string;
+}
+
+export interface AdminStats {
+  totalStudents: number;
+  totalInstructors: number;
+  revenue: Record<string, number>;
+  pendingPayments: number;
+  pendingCourseReviews: number;
+  coursesByStatus: {
+    published: number;
+    pending: number;
+    draft: number;
+    rejected: number;
+    archived: number;
+  };
 }
 
 // ─── Assignment Types ─────────────────────────────────────────────────────────
