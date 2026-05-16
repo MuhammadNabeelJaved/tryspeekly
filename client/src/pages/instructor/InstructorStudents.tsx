@@ -1,14 +1,23 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { coursesService } from '../../services/courses.service'
-import { INSTRUCTOR_STUDENTS as FALLBACK_STUDENTS } from './instructorData'
+import { enrollmentsService } from '@/services/enrollments.service'
+import type { Enrollment } from '@/types/api'
 import { MagnifyingGlass, Check, X, CalendarBlank, ChartBar, Star, BookOpen, UserMinus, Clock, ChatCircleText } from '@phosphor-icons/react'
 
-type FallbackStudent = typeof FALLBACK_STUDENTS[0]
-type Student = FallbackStudent & { todayStatus?: 'present' | 'absent' | 'late' }
+interface Student {
+  id: string
+  name: string
+  course: string
+  status: 'excellent' | 'good' | 'needs_attention'
+  attendance: number
+  attendedClasses: number
+  totalClasses: number
+  todayStatus?: 'present' | 'absent' | 'late'
+}
 
 export default function InstructorStudents() {
-  const [students, setStudents] = useState<Student[]>(FALLBACK_STUDENTS)
+  const [students, setStudents] = useState<Student[]>([])
+  const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [courseFilter, setCourseFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
@@ -18,35 +27,43 @@ export default function InstructorStudents() {
   useEffect(() => {
     const fetchStudents = async () => {
       try {
-        const coursesRes = await coursesService.getTeacherCourses()
-        if (coursesRes.success && coursesRes.data.length > 0) {
-          const allStudents: Student[] = []
-          for (const c of coursesRes.data) {
-            try {
-              const studentsRes = await coursesService.getCourseStudents(c._id)
-              if (studentsRes.success && studentsRes.data.length > 0) {
-                studentsRes.data.forEach((s: any) => {
-                  allStudents.push({
-                    id: s._id || s.id || `s_${Math.random()}`,
-                    name: s.name || s.email || 'Unknown',
-                    course: c.title,
-                    status: 'good',
-                    attendance: s.progress?.sessionsAttended && s.progress?.totalSessions
-                      ? Math.round((s.progress.sessionsAttended / s.progress.totalSessions) * 100)
-                      : 0,
-                    attendedClasses: s.progress?.sessionsAttended || 0,
-                    totalClasses: s.progress?.totalSessions || 0,
-                  })
-                })
-              }
-            } catch {
-              // skip course if fetch fails
-            }
+        const res = await enrollmentsService.getTeacherEnrollments()
+        if (!res.success) return
+
+        const map = new Map<string, Student>()
+        res.data.forEach((enrollment: Enrollment) => {
+          const sid = enrollment.student._id
+          const attended = enrollment.progress?.sessionsAttended ?? 0
+          const total = enrollment.progress?.totalSessions ?? 0
+          const pct = total > 0 ? Math.round((attended / total) * 100) : 0
+
+          if (map.has(sid)) {
+            const existing = map.get(sid)!
+            existing.course = `${existing.course}, ${enrollment.course.title}`
+            existing.attendedClasses += attended
+            existing.totalClasses += total
+            existing.attendance = existing.totalClasses > 0
+              ? Math.round((existing.attendedClasses / existing.totalClasses) * 100)
+              : 0
+            existing.status = existing.attendance >= 80 ? 'excellent' : existing.attendance >= 50 ? 'good' : 'needs_attention'
+          } else {
+            map.set(sid, {
+              id: sid,
+              name: enrollment.student.name,
+              course: enrollment.course.title,
+              status: pct >= 80 ? 'excellent' : pct >= 50 ? 'good' : 'needs_attention',
+              attendance: pct,
+              attendedClasses: attended,
+              totalClasses: total,
+            })
           }
-          if (allStudents.length > 0) setStudents(allStudents)
-        }
+        })
+
+        setStudents(Array.from(map.values()))
       } catch {
-        // fallback to default (FALLBACK_STUDENTS already set)
+        // keep empty array — no mock fallback
+      } finally {
+        setLoading(false)
       }
     }
     fetchStudents()
@@ -89,6 +106,16 @@ export default function InstructorStudents() {
     })
 
   const courses = Array.from(new Set(students.map(s => s.course)))
+
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        {[1, 2, 3].map(i => (
+          <div key={i} className="h-16 bg-slate-100 dark:bg-neutral-800 rounded-2xl animate-pulse" />
+        ))}
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
