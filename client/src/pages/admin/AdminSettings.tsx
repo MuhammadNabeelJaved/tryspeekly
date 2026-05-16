@@ -91,6 +91,7 @@ export default function AdminSettings({ store }: { store: AdminStore }) {
     try {
       const { profileImage } = await usersService.updateProfileImage(file)
       setUser({ ...user!, profileImage, photo: profileImage })
+      localStorage.setItem('user', JSON.stringify({ ...user!, profileImage, photo: profileImage }))
       toast.success('Profile photo updated.')
     } catch (err: unknown) {
       const message = extractApiError(err, 'Failed to update profile image')
