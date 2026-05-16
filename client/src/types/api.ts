@@ -110,7 +110,7 @@ export interface Course {
   thumbnail?: string;
   totalSessions: number;
   sessionDuration: number;
-  status: 'draft' | 'published' | 'archived';
+  status: 'draft' | 'pending' | 'published' | 'rejected' | 'archived';
   teacher: { _id: string; name: string; profileImage?: string; bio?: string };
   enrolledStudents: string[];
   recurringSchedule?: { day: string; time: string }[];

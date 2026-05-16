@@ -14,7 +14,11 @@ interface CourseItem {
   progress: number
 }
 
-export default function InstructorOverview({ onNavigate }: { onNavigate: (view: InstructorView) => void }) {
+interface InstructorOverviewProps {
+  onNavigate: (view: InstructorView) => void
+}
+
+export default function InstructorOverview({ onNavigate }: InstructorOverviewProps) {
   const { user } = useAuth()
   const [searchTerm, setSearchTerm] = useState('')
   const [earnings, setEarnings] = useState(0)
@@ -43,8 +47,8 @@ export default function InstructorOverview({ onNavigate }: { onNavigate: (view: 
         }
 
         if (paymentsRes.status === 'fulfilled' && paymentsRes.value.success) {
-          const approved = paymentsRes.value.data.filter((p: { status: string }) => p.status === 'approved')
-          setEarnings(approved.reduce((sum: number, p: { amount?: number }) => sum + (p.amount ?? 0), 0))
+          const approved = paymentsRes.value.data.filter((p) => p.status === 'approved')
+          setEarnings(approved.reduce((sum, p) => sum + (p.amount ?? 0), 0))
         }
       } catch {
         // show zeros on error — no mock fallback
