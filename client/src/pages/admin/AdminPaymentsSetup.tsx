@@ -287,22 +287,24 @@ function MethodModal({ method, onSave, onClose }: {
 
 export default function AdminPaymentsSetup() {
   const [data, setData] = useState(INITIAL_PAYMENTS_SETUP)
-
-  useEffect(() => {
-    siteSettingsService.get()
-      .then(settings => {
-        if (settings.paymentsSetup && Object.keys(settings.paymentsSetup).length > 0) {
-          setData(settings.paymentsSetup as unknown as typeof INITIAL_PAYMENTS_SETUP)
-        }
-      })
-      .catch(() => {})
-  }, [])
   const [activeSection, setActiveSection] = useState<Section>('local-methods')
   const [saved, setSaved] = useState(false)
   const [methodModal, setMethodModal] = useState<PaymentMethodAdmin | null>(null)
   const [deleteMethodId, setDeleteMethodId] = useState<string | null>(null)
   const [expandedPolicy, setExpandedPolicy] = useState<string | null>(null)
   const [expandedFaq, setExpandedFaq] = useState<string | null>(null)
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const settings = await siteSettingsService.get()
+        if (settings.paymentsSetup && Object.keys(settings.paymentsSetup).length > 0) {
+          setData(settings.paymentsSetup as unknown as typeof INITIAL_PAYMENTS_SETUP)
+        }
+      } catch { /* silent */ }
+    }
+    load()
+  }, [])
 
   async function save() {
     try {

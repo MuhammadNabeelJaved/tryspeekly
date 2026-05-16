@@ -315,9 +315,11 @@ const FAQS = [
 function MethodLogo({ method }: { method: PaymentMethod }) {
   if (method.logoKey === 'bank-local') return <BankTransferIcon />
   if (method.logoKey === 'bank-intl') return <BankTransferIcon international />
+  const src = LOGOS[method.logoKey as keyof typeof LOGOS]
+  if (!src) return <BankTransferIcon />
   return (
     <PaymentLogo
-      src={LOGOS[method.logoKey as keyof typeof LOGOS]}
+      src={src}
       alt={`${method.name} logo`}
       fallbackBg={method.fallbackBg}
     />
@@ -334,14 +336,16 @@ export default function PaymentsPage() {
   const [paymentConfig, setPaymentConfig] = useState<{ methods: PaymentMethodAdmin[] } | null>(null)
 
   useEffect(() => {
-    siteSettingsService.get()
-      .then(settings => {
+    async function load() {
+      try {
+        const settings = await siteSettingsService.get()
         if (settings.paymentsSetup) {
           const config = settings.paymentsSetup as { methods?: PaymentMethodAdmin[] }
           if (config.methods?.length) setPaymentConfig({ methods: config.methods })
         }
-      })
-      .catch(() => {})
+      } catch { /* silent */ }
+    }
+    load()
   }, [])
 
   const configLocal = paymentConfig?.methods.filter(m => m.tab === 'local') ?? []
