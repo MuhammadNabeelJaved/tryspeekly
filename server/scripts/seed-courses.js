@@ -207,9 +207,7 @@ async function seedCourses() {
   // Check existing courses
   const existingCount = await Course.countDocuments({ teacher: teacher._id })
   if (existingCount > 0) {
-    console.log(`Teacher already has ${existingCount} courses. Skipping...`)
-    await mongoose.disconnect()
-    return
+    console.log(`Teacher already has ${existingCount} courses. Adding more...`)
   }
 
   // Create courses
