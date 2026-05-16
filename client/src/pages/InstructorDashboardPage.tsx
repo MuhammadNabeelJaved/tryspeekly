@@ -6,6 +6,7 @@ import {
   List, X, SignOut, Bell, Sun, Moon, Headset, Chats, CheckCircle
 } from '@phosphor-icons/react'
 import Loader from '@/components/Loader'
+import UserAvatar from '@/components/UserAvatar'
 import { useAuth } from '@/context/AuthContext'
 
 const InstructorOverview = lazy(() => import('./instructor/InstructorOverview'))
@@ -166,9 +167,7 @@ export default function InstructorDashboardPage() {
           <div className="px-3 pb-4 border-t border-slate-100 dark:border-neutral-800 pt-3">
             {/* Profile card */}
             <div className="flex items-center gap-3 bg-slate-50 dark:bg-neutral-800 rounded-2xl px-3 py-2.5 mb-3">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-600 to-purple-600 flex items-center justify-center text-white text-sm font-black flex-shrink-0 shadow-[0_4px_12px_rgba(124,58,237,0.4)]">
-                {user?.name?.charAt(0)?.toUpperCase() || 'T'}
-              </div>
+              <UserAvatar src={user?.profileImage} name={user?.name} size="md" />
               <div className="min-w-0">
                 <p className="text-sm font-black text-slate-900 dark:text-white leading-none truncate">{user?.name || 'Instructor'}</p>
                 <p className="text-[10px] text-slate-400 dark:text-neutral-400 mt-0.5 truncate">{user?.email || 'teacher@englishpro.com'}</p>
