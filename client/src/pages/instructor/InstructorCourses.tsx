@@ -144,9 +144,11 @@ export default function InstructorCourses() {
   const [formTab, setFormTab] = useState<'basic' | 'logistics' | 'curriculum'>('basic')
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [completedClassesMap, setCompletedClassesMap] = useState<Record<string, number>>({})
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     const fetchCourses = async () => {
+      setIsLoading(true)
       try {
         const [res, liveClassesRes] = await Promise.all([
           coursesService.getTeacherCourses(),
@@ -170,6 +172,8 @@ export default function InstructorCourses() {
         }
       } catch {
         setCourses(FALLBACK_COURSES)
+      } finally {
+        setIsLoading(false)
       }
     }
     fetchCourses()
@@ -326,6 +330,25 @@ export default function InstructorCourses() {
   const activeCount = courses.filter(c => c.status === 'active').length
   const draftCount = courses.filter(c => c.status === 'draft').length
   const totalEnrolled = courses.reduce((sum, c) => sum + c.students, 0)
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-2">
+            <div className="h-7 w-40 bg-slate-200 dark:bg-neutral-800 rounded-lg animate-pulse" />
+            <div className="h-4 w-60 bg-slate-100 dark:bg-neutral-700 rounded-lg animate-pulse" />
+          </div>
+          <div className="h-10 w-32 bg-slate-200 dark:bg-neutral-800 rounded-xl animate-pulse" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          {[1, 2, 3, 4, 5, 6].map(i => (
+            <div key={i} className="h-56 bg-slate-100 dark:bg-neutral-800 rounded-3xl animate-pulse" />
+          ))}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">

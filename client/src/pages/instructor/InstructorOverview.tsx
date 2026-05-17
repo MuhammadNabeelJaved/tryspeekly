@@ -23,9 +23,11 @@ export default function InstructorOverview({ onNavigate }: InstructorOverviewPro
   const [searchTerm, setSearchTerm] = useState('')
   const [earnings, setEarnings] = useState(0)
   const [courses, setCourses] = useState<CourseItem[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     const fetchData = async () => {
+      setIsLoading(true)
       try {
         const [coursesRes, paymentsRes] = await Promise.allSettled([
           coursesService.getTeacherCourses(),
@@ -52,6 +54,8 @@ export default function InstructorOverview({ onNavigate }: InstructorOverviewPro
         }
       } catch {
         // show zeros on error — no mock fallback
+      } finally {
+        setIsLoading(false)
       }
     }
     fetchData()
@@ -67,6 +71,33 @@ export default function InstructorOverview({ onNavigate }: InstructorOverviewPro
   const totalStudents = courses.reduce((sum, c) => sum + (c.students || 0), 0)
   const activeCount = courses.filter((c) => c.status === 'active').length
   const pendingCount = courses.filter((c) => c.status === 'pending').length
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-slate-200 dark:bg-neutral-800 animate-pulse" />
+            <div className="space-y-2">
+              <div className="h-6 w-52 bg-slate-200 dark:bg-neutral-800 rounded-lg animate-pulse" />
+              <div className="h-4 w-72 bg-slate-100 dark:bg-neutral-700 rounded-lg animate-pulse" />
+            </div>
+          </div>
+          <div className="h-10 w-72 bg-slate-100 dark:bg-neutral-800 rounded-xl animate-pulse" />
+        </div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map(i => (
+            <div key={i} className="h-24 bg-slate-100 dark:bg-neutral-800 rounded-2xl animate-pulse" />
+          ))}
+        </div>
+        <div className="space-y-3">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="h-16 bg-slate-100 dark:bg-neutral-800 rounded-2xl animate-pulse" />
+          ))}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
