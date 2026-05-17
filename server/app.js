@@ -35,7 +35,7 @@ if (process.env.NODE_ENV === 'development') {
 
 const globalLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 100,
+    max: 500,
     message: { success: false, error: { message: 'Too many requests, please try again later.' } }
 })
 app.use(globalLimiter)

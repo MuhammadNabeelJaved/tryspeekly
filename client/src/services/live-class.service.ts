@@ -15,7 +15,8 @@ interface LiveClass {
   };
   meetingLink: string;
   classNumber: number;
-  status: 'active' | 'completed' | 'cancelled';
+  scheduledAt: string | null;
+  status: 'scheduled' | 'active' | 'completed' | 'cancelled';
   createdAt: string;
   updatedAt: string;
 }
@@ -62,6 +63,21 @@ export const liveClassService = {
 
   async getTeacherCompletedClasses(): Promise<ApiResponse<LiveClass[]>> {
     const response = await axiosClient.get<ApiResponse<LiveClass[]>>('/live-classes/teacher/completed');
+    return response.data;
+  },
+
+  async scheduleClass(dto: { courseId: string; scheduledAt: string }): Promise<ApiResponse<LiveClass>> {
+    const response = await axiosClient.post<ApiResponse<LiveClass>>('/live-classes/schedule', dto);
+    return response.data;
+  },
+
+  async updateSchedule(id: string, scheduledAt: string): Promise<ApiResponse<LiveClass>> {
+    const response = await axiosClient.patch<ApiResponse<LiveClass>>(`/live-classes/${id}/reschedule`, { scheduledAt });
+    return response.data;
+  },
+
+  async deleteSchedule(id: string): Promise<ApiResponse<null>> {
+    const response = await axiosClient.delete<ApiResponse<null>>(`/live-classes/${id}/schedule`);
     return response.data;
   },
 };

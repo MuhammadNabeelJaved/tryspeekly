@@ -166,3 +166,102 @@ export const getTeacherCompletedClasses = asyncHandler(async (req, res) => {
     data: liveClasses,
   })
 })
+
+// POST /api/v1/live-classes/schedule - Create a scheduled class
+export const scheduleClass = asyncHandler(async (req, res) => {
+  const { courseId, scheduledAt } = req.body
+
+  if (!courseId || !scheduledAt) {
+    return res.status(400).json({ success: false, message: 'courseId and scheduledAt are required' })
+  }
+
+  const course = await Course.findById(courseId)
+  if (!course) {
+    return res.status(404).json({ success: false, message: 'Course not found' })
+  }
+
+  if (course.teacher.toString() !== req.user.id.toString()) {
+    return res.status(403).json({ success: false, message: 'Not authorized to schedule class for this course' })
+  }
+
+  // Remove any existing scheduled class for this course before creating new one
+  await LiveClass.updateMany(
+    { course: courseId, teacher: req.user.id, status: 'scheduled' },
+    { isDeleted: true }
+  )
+
+  const liveClass = await LiveClass.create({
+    course: courseId,
+    teacher: req.user.id,
+    meetingLink: '',
+    classNumber: 0,
+    scheduledAt: new Date(scheduledAt),
+    status: 'scheduled',
+  })
+
+  await liveClass.populate('course', 'title totalSessions')
+
+  res.status(201).json({
+    success: true,
+    message: 'Class scheduled successfully',
+    data: liveClass,
+  })
+})
+
+// PATCH /api/v1/live-classes/:id/reschedule - Update scheduled datetime
+export const updateSchedule = asyncHandler(async (req, res) => {
+  const { scheduledAt } = req.body
+
+  if (!scheduledAt) {
+    return res.status(400).json({ success: false, message: 'scheduledAt is required' })
+  }
+
+  const liveClass = await LiveClass.findById(req.params.id)
+  if (!liveClass) {
+    return res.status(404).json({ success: false, message: 'Scheduled class not found' })
+  }
+
+  if (liveClass.teacher.toString() !== req.user.id.toString()) {
+    return res.status(403).json({ success: false, message: 'Not authorized to update this schedule' })
+  }
+
+  if (liveClass.status !== 'scheduled') {
+    return res.status(400).json({ success: false, message: 'Only scheduled classes can be rescheduled' })
+  }
+
+  liveClass.scheduledAt = new Date(scheduledAt)
+  await liveClass.save()
+
+  await liveClass.populate('course', 'title totalSessions')
+
+  res.json({
+    success: true,
+    message: 'Schedule updated successfully',
+    data: liveClass,
+  })
+})
+
+// DELETE /api/v1/live-classes/:id/schedule - Remove a scheduled class
+export const deleteSchedule = asyncHandler(async (req, res) => {
+  const liveClass = await LiveClass.findById(req.params.id)
+  if (!liveClass) {
+    return res.status(404).json({ success: false, message: 'Scheduled class not found' })
+  }
+
+  if (liveClass.teacher.toString() !== req.user.id.toString()) {
+    return res.status(403).json({ success: false, message: 'Not authorized to delete this schedule' })
+  }
+
+  if (liveClass.status !== 'scheduled') {
+    return res.status(400).json({ success: false, message: 'Only scheduled classes can be deleted this way' })
+  }
+
+  liveClass.isDeleted = true
+  await liveClass.save()
+
+  res.json({
+    success: true,
+    message: 'Schedule removed successfully',
+    data: null,
+  })
+})

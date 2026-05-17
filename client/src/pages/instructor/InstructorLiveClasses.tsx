@@ -43,6 +43,12 @@ type CompletedClass = {
   classNumber: number
 }
 
+type ScheduledClass = {
+  _id: string
+  courseId: string
+  scheduledAt: string
+}
+
 type SharedMaterial = {
   id: string
   courseId: string
@@ -63,7 +69,11 @@ type SyllabusTopic = {
 export default function InstructorLiveClasses() {
   const [courses, setCourses] = useState<InstructorCourse[]>([])
   const [mainSearchTerm, setMainSearchTerm] = useState('')
+  const [statusFilter, setStatusFilter] = useState<'all' | 'live' | 'upcoming'>('all')
+  const [levelFilter, setLevelFilter] = useState<string>('all')
   const [isLoadingCourses, setIsLoadingCourses] = useState(true)
+  const [scheduledClasses, setScheduledClasses] = useState<Record<string, ScheduledClass>>({})
+  const [isSavingSchedule, setIsSavingSchedule] = useState(false)
   
   // Live Class State
   const [liveModalCourse, setLiveModalCourse] = useState<InstructorCourse | null>(null)
@@ -149,6 +159,18 @@ export default function InstructorLiveClasses() {
 
           const activeLiveClasses = liveClassesRes.data?.filter((lc: { status: string }) => lc.status === 'active') || []
           const completedLiveClasses = liveClassesRes.data?.filter((lc: { status: string }) => lc.status === 'completed') || []
+          const scheduledLiveClasses = liveClassesRes.data?.filter((lc: { status: string }) => lc.status === 'scheduled') || []
+
+          // Build scheduled classes map keyed by courseId
+          const scheduledMap: Record<string, ScheduledClass> = {}
+          scheduledLiveClasses.forEach((lc: { _id: string; course: { _id: string }; scheduledAt: string }) => {
+            scheduledMap[String(lc.course._id)] = {
+              _id: lc._id,
+              courseId: String(lc.course._id),
+              scheduledAt: lc.scheduledAt,
+            }
+          })
+          setScheduledClasses(scheduledMap)
 
           // Set completed classes for history
           const mappedCompleted: CompletedClass[] = completedLiveClasses.map((lc: { _id: string; course: { _id: string; title: string }; meetingLink: string; classNumber: number; createdAt: string }) => ({
@@ -406,20 +428,74 @@ export default function InstructorLiveClasses() {
   // Schedule Handlers
   function openScheduleModal(course: InstructorCourse) {
     setScheduleModalCourse(course)
-    setScheduleInput(course.nextClass !== 'TBD' ? course.nextClass : '')
+    const courseId = (course._id || course.id || '').toString()
+    const existing = scheduledClasses[courseId]
+    if (existing?.scheduledAt) {
+      const dt = new Date(existing.scheduledAt)
+      const pad = (n: number) => String(n).padStart(2, '0')
+      const local = `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`
+      setScheduleInput(local)
+    } else {
+      setScheduleInput('')
+    }
   }
 
-  function handleSaveSchedule() {
-    if (!scheduleModalCourse) return
-    const updatedValue = scheduleInput.trim() || 'TBD'
-    setCourses(courses.map(c => c.id === scheduleModalCourse.id ? { ...c, nextClass: updatedValue } : c))
-    setScheduleModalCourse(null)
+  async function handleSaveSchedule() {
+    if (!scheduleModalCourse || !scheduleInput) return
+    const courseId = (scheduleModalCourse._id || scheduleModalCourse.id || '').toString()
+    const existing = scheduledClasses[courseId]
+    setIsSavingSchedule(true)
+    try {
+      if (existing) {
+        const res = await liveClassService.updateSchedule(existing._id, new Date(scheduleInput).toISOString())
+        if (res.success) {
+          setScheduledClasses(prev => ({
+            ...prev,
+            [courseId]: { _id: existing._id, courseId, scheduledAt: (res.data as { scheduledAt: string }).scheduledAt }
+          }))
+          toast.success('Schedule updated!')
+        }
+      } else {
+        const res = await liveClassService.scheduleClass({ courseId, scheduledAt: new Date(scheduleInput).toISOString() })
+        if (res.success) {
+          const data = res.data as { _id: string; scheduledAt: string }
+          setScheduledClasses(prev => ({
+            ...prev,
+            [courseId]: { _id: data._id, courseId, scheduledAt: data.scheduledAt }
+          }))
+          toast.success('Class scheduled!')
+        }
+      }
+    } catch {
+      toast.error('Failed to save schedule')
+    } finally {
+      setIsSavingSchedule(false)
+      setScheduleModalCourse(null)
+    }
   }
 
-  function handleRemoveSchedule() {
+  async function handleRemoveSchedule() {
     if (!scheduleModalCourse) return
-    setCourses(courses.map(c => c.id === scheduleModalCourse.id ? { ...c, nextClass: 'TBD' } : c))
-    setScheduleModalCourse(null)
+    const courseId = (scheduleModalCourse._id || scheduleModalCourse.id || '').toString()
+    const existing = scheduledClasses[courseId]
+    if (!existing) { setScheduleModalCourse(null); return }
+    setIsSavingSchedule(true)
+    try {
+      const res = await liveClassService.deleteSchedule(existing._id)
+      if (res.success) {
+        setScheduledClasses(prev => {
+          const copy = { ...prev }
+          delete copy[courseId]
+          return copy
+        })
+        toast.success('Schedule removed')
+      }
+    } catch {
+      toast.error('Failed to remove schedule')
+    } finally {
+      setIsSavingSchedule(false)
+      setScheduleModalCourse(null)
+    }
   }
 
   // History Edit Handlers
@@ -546,9 +622,14 @@ export default function InstructorLiveClasses() {
     toast.success('Syllabus topic deleted.')
   }
 
-  const filteredMainCourses = courses.filter(c => 
-    c.title.toLowerCase().includes(mainSearchTerm.toLowerCase())
-  )
+  const filteredMainCourses = courses.filter(c => {
+    const matchesSearch = c.title.toLowerCase().includes(mainSearchTerm.toLowerCase())
+    const matchesStatus = statusFilter === 'all'
+      || (statusFilter === 'live' && c.isLive)
+      || (statusFilter === 'upcoming' && !c.isLive)
+    const matchesLevel = levelFilter === 'all' || (c.level || '').toLowerCase() === levelFilter.toLowerCase()
+    return matchesSearch && matchesStatus && matchesLevel
+  })
 
   // Group classes by course for the history view
   const filteredHistory = completedClasses
@@ -619,6 +700,42 @@ export default function InstructorLiveClasses() {
         </div>
       </div>
 
+      {/* Filter bar */}
+      <div className="flex flex-wrap items-center gap-4">
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-black text-slate-400 dark:text-neutral-500 uppercase tracking-widest">Status:</span>
+          {(['all', 'live', 'upcoming'] as const).map(s => (
+            <button
+              key={s}
+              onClick={() => setStatusFilter(s)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+                statusFilter === s
+                  ? 'bg-violet-600 text-white shadow-sm'
+                  : 'bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-400 hover:bg-slate-200 dark:hover:bg-neutral-700'
+              }`}
+            >
+              {s === 'all' ? 'All' : s === 'live' ? 'Live Now' : 'Upcoming'}
+            </button>
+          ))}
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-black text-slate-400 dark:text-neutral-500 uppercase tracking-widest">Level:</span>
+          {(['all', 'beginner', 'intermediate', 'advanced'] as const).map(l => (
+            <button
+              key={l}
+              onClick={() => setLevelFilter(l)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors capitalize ${
+                levelFilter === l
+                  ? 'bg-violet-600 text-white shadow-sm'
+                  : 'bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-400 hover:bg-slate-200 dark:hover:bg-neutral-700'
+              }`}
+            >
+              {l === 'all' ? 'All Levels' : l}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {isLoadingCourses ? (
         <div className="flex items-center justify-center py-20">
           <div className="flex flex-col items-center gap-4">
@@ -672,7 +789,19 @@ export default function InstructorLiveClasses() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wide">Next Class</p>
-                    <p className="font-semibold truncate">{course.nextClass !== 'TBD' ? course.nextClass : 'Not Scheduled'}</p>
+                    {(() => {
+                      const cId = (course.id || course._id || '').toString()
+                      const scheduled = scheduledClasses[cId]
+                      if (scheduled?.scheduledAt) {
+                        const dt = new Date(scheduled.scheduledAt)
+                        return (
+                          <p className="font-semibold truncate text-violet-700 dark:text-violet-300">
+                            {dt.toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                          </p>
+                        )
+                      }
+                      return <p className="font-semibold truncate text-slate-400 dark:text-neutral-500">Not Scheduled</p>
+                    })()}
                   </div>
                   <button 
                     onClick={() => openScheduleModal(course)}
@@ -694,9 +823,15 @@ export default function InstructorLiveClasses() {
                     const isAllCompleted = completed >= course.totalClasses;
 
                     return (
-                      <div className={`flex items-center gap-1.5 font-bold px-2.5 py-1 rounded-md text-xs border ${isAllCompleted ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 border-green-200 dark:border-green-800' : 'bg-slate-50 dark:bg-neutral-800/80 text-violet-600 dark:text-violet-400 border-slate-200 dark:border-neutral-700'}`}>
-                        {isAllCompleted ? <CheckCircle size={14} weight="fill" /> : <ListDashes size={14} weight="bold" />}
-                        {completed} / {course.totalClasses} Completed
+                      <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1 font-bold px-2 py-1 rounded-md text-xs border bg-slate-50 dark:bg-neutral-800/80 text-slate-600 dark:text-neutral-400 border-slate-200 dark:border-neutral-700">
+                          <ListDashes size={12} weight="bold" />
+                          {course.totalClasses} Total
+                        </div>
+                        <div className={`flex items-center gap-1 font-bold px-2 py-1 rounded-md text-xs border ${isAllCompleted ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 border-green-200 dark:border-green-800' : 'bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-400 border-violet-200 dark:border-violet-800/50'}`}>
+                          <CheckCircle size={12} weight={isAllCompleted ? 'fill' : 'regular'} />
+                          {completed} Done
+                        </div>
                       </div>
                     );
                   })()}
@@ -947,35 +1082,40 @@ export default function InstructorLiveClasses() {
               
               <div className="space-y-4">
                 <div>
-                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wide block mb-1.5">Next Class (Day, Date & Time)</label>
-                  <input 
-                    type="text" 
-                    value={scheduleInput} 
-                    onChange={e => setScheduleInput(e.target.value)} 
-                    placeholder="e.g. Tomorrow, 4:00 PM"
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm font-medium text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors" 
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wide block mb-1.5">Next Class Date & Time</label>
+                  <input
+                    type="datetime-local"
+                    value={scheduleInput}
+                    onChange={e => setScheduleInput(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm font-medium text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors"
                   />
-                  <p className="text-[10px] text-slate-400 mt-2">This will be displayed to students on their dashboard.</p>
                 </div>
               </div>
 
               <div className="flex flex-col gap-2 mt-8">
-                <button 
-                  onClick={handleSaveSchedule} 
-                  className="w-full py-3 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-bold shadow-md shadow-violet-600/20 transition-colors flex items-center justify-center gap-2"
+                <button
+                  onClick={handleSaveSchedule}
+                  disabled={isSavingSchedule || !scheduleInput}
+                  className="w-full py-3 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-bold shadow-md shadow-violet-600/20 transition-colors flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  <Check size={16} /> Update Schedule
+                  {isSavingSchedule ? (
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <Check size={16} />
+                  )}
+                  {scheduleModalCourse && scheduledClasses[(scheduleModalCourse._id || scheduleModalCourse.id || '').toString()] ? 'Update Schedule' : 'Save Schedule'}
                 </button>
                 <div className="flex gap-2">
-                  <button 
-                    onClick={() => setScheduleModalCourse(null)} 
+                  <button
+                    onClick={() => setScheduleModalCourse(null)}
                     className="flex-1 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-slate-700 dark:text-neutral-200 text-xs font-bold transition-colors"
                   >
                     Cancel
                   </button>
-                  <button 
-                    onClick={handleRemoveSchedule} 
-                    className="flex-1 py-2.5 rounded-xl bg-red-50 hover:bg-red-100 dark:bg-red-900/10 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 text-xs font-bold transition-colors flex items-center justify-center gap-1.5"
+                  <button
+                    onClick={handleRemoveSchedule}
+                    disabled={isSavingSchedule || !scheduleModalCourse || !scheduledClasses[(scheduleModalCourse?._id || scheduleModalCourse?.id || '').toString()]}
+                    className="flex-1 py-2.5 rounded-xl bg-red-50 hover:bg-red-100 dark:bg-red-900/10 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 text-xs font-bold transition-colors flex items-center justify-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     <Trash size={14} /> Remove
                   </button>

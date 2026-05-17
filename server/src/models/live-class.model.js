@@ -16,17 +16,21 @@ const liveClassSchema = new Schema(
     },
     meetingLink: {
       type: String,
-      required: [true, 'Meeting link is required'],
+      default: '',
       trim: true,
     },
     classNumber: {
       type: Number,
-      required: [true, 'Class number is required'],
-      min: [1, 'Class number must be at least 1'],
+      default: 0,
+      min: [0, 'Class number must be at least 0'],
+    },
+    scheduledAt: {
+      type: Date,
+      default: null,
     },
     status: {
       type: String,
-      enum: ['active', 'completed', 'cancelled'],
+      enum: ['scheduled', 'active', 'completed', 'cancelled'],
       default: 'active',
     },
     isDeleted: { type: Boolean, default: false },
