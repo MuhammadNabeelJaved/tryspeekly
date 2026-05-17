@@ -87,7 +87,7 @@ export const claimCertificate = asyncHandler(async (req, res) => {
       return res.status(403).json({ success: false, message: 'You can only claim certificates for your own enrollments' })
     }
 
-    const { sessionsAttended, totalSessions } = enrollment.progress
+    const { sessionsAttended = 0, totalSessions = 0 } = enrollment.progress ?? {}
     if (totalSessions === 0 || sessionsAttended < totalSessions) {
       return res.status(400).json({
         success: false,
