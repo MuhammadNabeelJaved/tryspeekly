@@ -80,4 +80,9 @@ export const liveClassService = {
     const response = await axiosClient.delete<ApiResponse<null>>(`/live-classes/${id}/schedule`);
     return response.data;
   },
+
+  async getStudentUpcomingClasses(): Promise<ApiResponse<LiveClass[]>> {
+    const response = await axiosClient.get<ApiResponse<LiveClass[]>>('/live-classes/student/upcoming');
+    return response.data;
+  },
 };

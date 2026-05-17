@@ -9,12 +9,14 @@ import {
   gradeSubmission,
   deleteAssignment,
   getInstructorAssignments,
+  getMyAssignments,
 } from '../controllers/assignment.controller.js'
 
 const router = express.Router()
 
 // Static/specific paths must be registered before /:id to avoid shadowing
 router.route('/').post(authenticate, authorize('teacher', 'admin'), createAssignment)
+router.route('/my').get(authenticate, authorize('student'), getMyAssignments)
 router.route('/instructor/my').get(authenticate, authorize('teacher', 'admin'), getInstructorAssignments)
 router.route('/course/:courseId').get(authenticate, getCourseAssignments)
 

@@ -1,6 +1,7 @@
 import asyncHandler from '../utils/asyncHandler.js'
 import LiveClass from '../models/live-class.model.js'
 import Course from '../models/course.model.js'
+import Enrollment from '../models/enrollment.model.js'
 
 // POST /api/v1/live-classes - Create/start a live class
 export const createLiveClass = asyncHandler(async (req, res) => {
@@ -239,6 +240,22 @@ export const updateSchedule = asyncHandler(async (req, res) => {
     message: 'Schedule updated successfully',
     data: liveClass,
   })
+})
+
+// GET /api/v1/live-classes/student/upcoming - Get scheduled+active live classes for student's enrolled courses
+export const getStudentUpcomingClasses = asyncHandler(async (req, res) => {
+  const enrollments = await Enrollment.find({ student: req.user.id }).select('course')
+  const courseIds = enrollments.map((e) => e.course)
+
+  const liveClasses = await LiveClass.find({
+    course: { $in: courseIds },
+    status: { $in: ['scheduled', 'active'] },
+  })
+    .populate('course', 'title totalSessions')
+    .populate('teacher', 'name profileImage')
+    .sort({ scheduledAt: 1, createdAt: -1 })
+
+  res.json({ success: true, data: liveClasses })
 })
 
 // DELETE /api/v1/live-classes/:id/schedule - Remove a scheduled class

@@ -9,6 +9,7 @@ import {
   getLiveClassByCourse,
   getTeacherLiveClasses,
   getTeacherCompletedClasses,
+  getStudentUpcomingClasses,
   scheduleClass,
   updateSchedule,
   deleteSchedule,
@@ -19,6 +20,7 @@ const router = express.Router()
 // IMPORTANT: Specific routes must come before parameterized routes
 router.route('/teacher').get(authenticate, authorize('teacher'), getTeacherLiveClasses)
 router.route('/teacher/completed').get(authenticate, authorize('teacher'), getTeacherCompletedClasses)
+router.route('/student/upcoming').get(authenticate, authorize('student'), getStudentUpcomingClasses)
 router.route('/active').get(getActiveLiveClasses)
 router.route('/course/:courseId').get(getLiveClassByCourse)
 router.route('/schedule').post(authenticate, authorize('teacher'), scheduleClass)

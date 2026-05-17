@@ -1,6 +1,7 @@
 import asyncHandler from '../utils/asyncHandler.js'
 import Assignment from '../models/assignment.model.js'
 import Course from '../models/course.model.js'
+import Enrollment from '../models/enrollment.model.js'
 import { uploadCourseMaterial, deleteFile, extractPublicId } from '../utils/cloudinary.js'
 
 // POST /api/v1/assignments — teacher/admin: create assignment
@@ -115,6 +116,29 @@ export const deleteAssignment = asyncHandler(async (req, res) => {
   await assignment.save()
 
   res.json({ success: true, message: 'Assignment deleted' })
+})
+
+// GET /api/v1/assignments/my — student: all assignments across enrolled courses
+export const getMyAssignments = asyncHandler(async (req, res) => {
+  const enrollments = await Enrollment.find({ student: req.user.id }).select('course')
+  const courseIds = enrollments.map((e) => e.course)
+
+  const assignments = await Assignment.find({
+    course: { $in: courseIds },
+    isDeleted: { $ne: true },
+  })
+    .populate('course', 'title')
+    .sort({ dueDate: 1 })
+    .lean()
+
+  const withMySubmission = assignments.map((a) => ({
+    ...a,
+    submissions: a.submissions.filter(
+      (s) => s.student.toString() === req.user.id.toString()
+    ),
+  }))
+
+  res.json({ success: true, data: withMySubmission })
 })
 
 // GET /api/v1/assignments/instructor/my — teacher/admin

@@ -155,7 +155,16 @@ export interface CourseSingleResponse {
 export interface Enrollment {
   _id: string;
   student: { _id: string; name: string; email: string; profileImage?: string };
-  course: { _id: string; title: string; thumbnail?: string; totalSessions?: number };
+  course: {
+    _id: string;
+    title: string;
+    thumbnail?: string;
+    totalSessions?: number;
+    level?: string;
+    type?: string;
+    sessionDuration?: number;
+    recurringSchedule?: Array<{ day: string; time: string }>;
+  };
   teacher: { _id: string; name: string; profileImage?: string };
   payment?: string;
   enrolledAt: string;

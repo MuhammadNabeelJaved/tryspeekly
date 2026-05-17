@@ -48,4 +48,11 @@ export const assignmentsService = {
     );
     return response.data;
   },
+
+  async getMyAssignments(): Promise<{ success: boolean; data: Assignment[] }> {
+    const response = await axiosClient.get<{ success: boolean; data: Assignment[] }>(
+      '/assignments/my'
+    );
+    return response.data;
+  },
 };
