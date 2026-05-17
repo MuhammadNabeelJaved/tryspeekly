@@ -7,6 +7,16 @@ export const certificatesService = {
     return response.data;
   },
 
+  async claimCertificate(enrollmentId: string): Promise<ApiResponse<Certificate>> {
+    const response = await axiosClient.post<ApiResponse<Certificate>>('/certificates/claim', { enrollmentId });
+    return response.data;
+  },
+
+  async verifyCertificate(certificateId: string): Promise<ApiResponse<Certificate>> {
+    const response = await axiosClient.get<ApiResponse<Certificate>>(`/certificates/verify/${certificateId}`);
+    return response.data;
+  },
+
   async getCertificate(id: string): Promise<ApiResponse<Certificate>> {
     const response = await axiosClient.get<ApiResponse<Certificate>>(`/certificates/${id}`);
     return response.data;

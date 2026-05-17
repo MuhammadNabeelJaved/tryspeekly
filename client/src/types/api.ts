@@ -98,6 +98,21 @@ export interface ResetPasswordDto {
 
 // ─── Course Types ─────────────────────────────────────────────────────────────
 
+export interface CourseMaterial {
+  _id: string;
+  title: string;
+  link: string;
+  sharedAt: string;
+}
+
+export interface SyllabusTopic {
+  _id: string;
+  week: number;
+  title: string;
+  description: string;
+  status: 'pending' | 'in-progress' | 'completed';
+}
+
 export interface Course {
   _id: string;
   title: string;
@@ -116,6 +131,8 @@ export interface Course {
   recurringSchedule?: { day: string; time: string }[];
   meetLink?: string;
   maxStudents?: number;
+  materials?: CourseMaterial[];
+  syllabus?: SyllabusTopic[];
   createdAt: string;
   updatedAt: string;
 }
@@ -285,9 +302,9 @@ export interface BlogSingleResponse {
 export interface Certificate {
   _id: string;
   certificateId: string;
-  enrollment: string;
+  enrollment: string | { _id: string; teacher?: { _id: string; name: string } };
   student: { _id: string; name: string };
-  course: { _id: string; title: string; thumbnail?: string };
+  course: { _id: string; title: string; thumbnail?: string; level?: string };
   issueDate: string;
   credentialUrl?: string;
   status: 'issued' | 'revoked';
