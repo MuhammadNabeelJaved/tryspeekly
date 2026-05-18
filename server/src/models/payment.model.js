@@ -12,7 +12,7 @@ const paymentSchema = new Schema(
       required: [true, 'Payment method is required'],
       enum: ['jazzcash', 'easypaisa', 'nayapay', 'sadapay', 'zindigi', 'bank_local', 'bank_international'],
     },
-    transactionId: { type: String, required: [true, 'Transaction ID is required'], trim: true },
+    transactionId: { type: String, trim: true },
     screenshotUrl: { type: String, trim: true },
     amount: { type: Number, required: [true, 'Amount is required'], min: [0, 'Amount cannot be negative'] },
     currency: { type: String, enum: ['PKR', 'USD'], default: 'PKR' },
