@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Receipt, CheckCircle, Clock, XCircle, Image } from '@phosphor-icons/react'
 import { paymentsService } from '@/services/payments.service'
 import type { Payment } from '@/types/api'
@@ -63,8 +63,8 @@ export default function StudentPayments() {
                 </tr>
               )}
               {payments.map(payment => (
-                <>
-                  <tr key={payment._id} className="hover:bg-slate-50 dark:hover:bg-neutral-800/20 transition-colors">
+                <React.Fragment key={payment._id}>
+                  <tr className="hover:bg-slate-50 dark:hover:bg-neutral-800/20 transition-colors">
                     <td className="px-5 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-neutral-400 font-medium">
                       {new Date(payment.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                     </td>
@@ -110,14 +110,14 @@ export default function StudentPayments() {
                     </td>
                   </tr>
                   {payment.status === 'rejected' && payment.rejectionReason && (
-                    <tr key={`${payment._id}-reason`} className="bg-red-50/50 dark:bg-red-950/10">
+                    <tr className="bg-red-50/50 dark:bg-red-950/10">
                       <td colSpan={6} className="px-5 py-2 text-xs text-red-600 dark:text-red-400">
                         <span className="font-bold">Rejection reason:</span> {payment.rejectionReason}
                         {payment.adminNote && <span className="ml-4 text-slate-500 dark:text-neutral-500">Note: {payment.adminNote}</span>}
                       </td>
                     </tr>
                   )}
-                </>
+                </React.Fragment>
               ))}
             </tbody>
           </table>

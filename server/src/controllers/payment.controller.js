@@ -11,6 +11,12 @@ export const createPayment = asyncHandler(async (req, res) => {
 
     if (!req.file) return res.status(400).json({ success: false, error: { message: 'Payment screenshot is required' } })
 
+    const enrollment = await Enrollment.findOne({ student: req.user.id, course: courseId }).populate('payment', 'status')
+    if (!enrollment) return res.status(404).json({ success: false, error: { message: 'Enrollment not found for this course' } })
+    if (enrollment.payment && enrollment.payment.status === 'pending') {
+      return res.status(409).json({ success: false, error: { message: 'A payment is already under review for this course' } })
+    }
+
     const result = await uploadCourseMaterial(req.file.buffer, `payment_${Date.now()}`)
 
     const payment = await Payment.create({
@@ -24,10 +30,7 @@ export const createPayment = asyncHandler(async (req, res) => {
       currency: currency || 'PKR',
     })
 
-    await Enrollment.findOneAndUpdate(
-      { student: req.user.id, course: courseId },
-      { payment: payment._id }
-    )
+    await Enrollment.findByIdAndUpdate(enrollment._id, { payment: payment._id })
 
     res.status(201).json({ success: true, message: 'Payment submitted. Awaiting admin approval.', data: payment })
   } catch (error) {
@@ -141,6 +144,9 @@ export const adminCreatePayment = asyncHandler(async (req, res) => {
       return res.status(400).json({ success: false, error: { message: 'studentId, courseId, teacherId, method, and amount are required' } })
     }
 
+    const enrollment = await Enrollment.findOne({ student: studentId, course: courseId })
+    if (!enrollment) return res.status(404).json({ success: false, error: { message: 'Enrollment not found for this student and course' } })
+
     const payment = await Payment.create({
       student: studentId,
       course: courseId,
@@ -152,10 +158,7 @@ export const adminCreatePayment = asyncHandler(async (req, res) => {
       adminNote: adminNote || '',
     })
 
-    await Enrollment.findOneAndUpdate(
-      { student: studentId, course: courseId },
-      { payment: payment._id }
-    )
+    await Enrollment.findByIdAndUpdate(enrollment._id, { payment: payment._id })
 
     const populated = await Payment.findById(payment._id)
       .populate('student', 'name email')
