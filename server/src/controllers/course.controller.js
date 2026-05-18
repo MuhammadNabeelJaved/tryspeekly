@@ -236,3 +236,119 @@ export const reviewCourse = asyncHandler(async (req, res) => {
     res.status(400).json({ success: false, error: { message: error.message } })
   }
 })
+
+// ─── Materials ────────────────────────────────────────────────────────────────
+
+// GET /api/v1/courses/:id/materials
+export const getMaterials = asyncHandler(async (req, res) => {
+  const course = await Course.findById(req.params.id).select('materials teacher')
+  if (!course) return res.status(404).json({ success: false, message: 'Course not found' })
+  res.json({ success: true, data: course.materials })
+})
+
+// POST /api/v1/courses/:id/materials
+export const addMaterial = asyncHandler(async (req, res) => {
+  const { title, link } = req.body
+  if (!title || !link) return res.status(400).json({ success: false, message: 'title and link are required' })
+
+  const course = await Course.findById(req.params.id).select('materials teacher')
+  if (!course) return res.status(404).json({ success: false, message: 'Course not found' })
+  if (course.teacher.toString() !== req.user.id.toString())
+    return res.status(403).json({ success: false, message: 'Not authorized' })
+
+  course.materials.push({ title, link })
+  await course.save()
+  const added = course.materials[course.materials.length - 1]
+  res.status(201).json({ success: true, message: 'Material shared successfully', data: added })
+})
+
+// PATCH /api/v1/courses/:id/materials/:materialId
+export const updateMaterial = asyncHandler(async (req, res) => {
+  const { title, link } = req.body
+  const course = await Course.findById(req.params.id).select('materials teacher')
+  if (!course) return res.status(404).json({ success: false, message: 'Course not found' })
+  if (course.teacher.toString() !== req.user.id.toString())
+    return res.status(403).json({ success: false, message: 'Not authorized' })
+
+  const material = course.materials.id(req.params.materialId)
+  if (!material) return res.status(404).json({ success: false, message: 'Material not found' })
+
+  if (title) material.title = title
+  if (link) material.link = link
+  await course.save()
+  res.json({ success: true, message: 'Material updated', data: material })
+})
+
+// DELETE /api/v1/courses/:id/materials/:materialId
+export const deleteMaterial = asyncHandler(async (req, res) => {
+  const course = await Course.findById(req.params.id).select('materials teacher')
+  if (!course) return res.status(404).json({ success: false, message: 'Course not found' })
+  if (course.teacher.toString() !== req.user.id.toString())
+    return res.status(403).json({ success: false, message: 'Not authorized' })
+
+  const material = course.materials.id(req.params.materialId)
+  if (!material) return res.status(404).json({ success: false, message: 'Material not found' })
+
+  material.deleteOne()
+  await course.save()
+  res.json({ success: true, message: 'Material deleted' })
+})
+
+// ─── Syllabus ─────────────────────────────────────────────────────────────────
+
+// GET /api/v1/courses/:id/syllabus
+export const getSyllabus = asyncHandler(async (req, res) => {
+  const course = await Course.findById(req.params.id).select('syllabus teacher')
+  if (!course) return res.status(404).json({ success: false, message: 'Course not found' })
+  res.json({ success: true, data: course.syllabus.sort((a, b) => a.week - b.week) })
+})
+
+// POST /api/v1/courses/:id/syllabus
+export const addSyllabusTopic = asyncHandler(async (req, res) => {
+  const { week, title, description, status } = req.body
+  if (!week || !title) return res.status(400).json({ success: false, message: 'week and title are required' })
+
+  const course = await Course.findById(req.params.id).select('syllabus teacher')
+  if (!course) return res.status(404).json({ success: false, message: 'Course not found' })
+  if (course.teacher.toString() !== req.user.id.toString())
+    return res.status(403).json({ success: false, message: 'Not authorized' })
+
+  course.syllabus.push({ week, title, description: description || '', status: status || 'pending' })
+  await course.save()
+  const added = course.syllabus[course.syllabus.length - 1]
+  res.status(201).json({ success: true, message: 'Syllabus topic added', data: added })
+})
+
+// PATCH /api/v1/courses/:id/syllabus/:topicId
+export const updateSyllabusTopic = asyncHandler(async (req, res) => {
+  const { week, title, description, status } = req.body
+  const course = await Course.findById(req.params.id).select('syllabus teacher')
+  if (!course) return res.status(404).json({ success: false, message: 'Course not found' })
+  if (course.teacher.toString() !== req.user.id.toString())
+    return res.status(403).json({ success: false, message: 'Not authorized' })
+
+  const topic = course.syllabus.id(req.params.topicId)
+  if (!topic) return res.status(404).json({ success: false, message: 'Topic not found' })
+
+  if (week !== undefined) topic.week = week
+  if (title) topic.title = title
+  if (description !== undefined) topic.description = description
+  if (status) topic.status = status
+  await course.save()
+  res.json({ success: true, message: 'Topic updated', data: topic })
+})
+
+// DELETE /api/v1/courses/:id/syllabus/:topicId
+export const deleteSyllabusTopic = asyncHandler(async (req, res) => {
+  const course = await Course.findById(req.params.id).select('syllabus teacher')
+  if (!course) return res.status(404).json({ success: false, message: 'Course not found' })
+  if (course.teacher.toString() !== req.user.id.toString())
+    return res.status(403).json({ success: false, message: 'Not authorized' })
+
+  const topic = course.syllabus.id(req.params.topicId)
+  if (!topic) return res.status(404).json({ success: false, message: 'Topic not found' })
+
+  topic.deleteOne()
+  await course.save()
+  res.json({ success: true, message: 'Topic deleted' })
+})

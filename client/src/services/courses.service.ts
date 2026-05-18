@@ -1,5 +1,5 @@
 import { axiosClient } from '../lib/axiosClient';
-import type { Course, CreateCourseDto, UpdateCourseDto, CourseListResponse, CourseSingleResponse, ApiResponse } from '../types/api';
+import type { Course, CreateCourseDto, UpdateCourseDto, CourseListResponse, CourseSingleResponse, ApiResponse, CourseMaterial, SyllabusTopic } from '../types/api';
 
 export const coursesService = {
   async getAllCourses(params?: {
@@ -70,6 +70,50 @@ export const coursesService = {
 
   async submitForReview(id: string): Promise<CourseSingleResponse> {
     const response = await axiosClient.patch<CourseSingleResponse>(`/courses/${id}/submit`);
+    return response.data;
+  },
+
+  // ─── Materials ────────────────────────────────────────────────────────────────
+
+  async getMaterials(courseId: string): Promise<ApiResponse<CourseMaterial[]>> {
+    const response = await axiosClient.get<ApiResponse<CourseMaterial[]>>(`/courses/${courseId}/materials`);
+    return response.data;
+  },
+
+  async addMaterial(courseId: string, dto: { title: string; link: string }): Promise<ApiResponse<CourseMaterial>> {
+    const response = await axiosClient.post<ApiResponse<CourseMaterial>>(`/courses/${courseId}/materials`, dto);
+    return response.data;
+  },
+
+  async updateMaterial(courseId: string, materialId: string, dto: { title?: string; link?: string }): Promise<ApiResponse<CourseMaterial>> {
+    const response = await axiosClient.patch<ApiResponse<CourseMaterial>>(`/courses/${courseId}/materials/${materialId}`, dto);
+    return response.data;
+  },
+
+  async deleteMaterial(courseId: string, materialId: string): Promise<ApiResponse<null>> {
+    const response = await axiosClient.delete<ApiResponse<null>>(`/courses/${courseId}/materials/${materialId}`);
+    return response.data;
+  },
+
+  // ─── Syllabus ─────────────────────────────────────────────────────────────────
+
+  async getSyllabus(courseId: string): Promise<ApiResponse<SyllabusTopic[]>> {
+    const response = await axiosClient.get<ApiResponse<SyllabusTopic[]>>(`/courses/${courseId}/syllabus`);
+    return response.data;
+  },
+
+  async addSyllabusTopic(courseId: string, dto: { week: number; title: string; description?: string; status?: string }): Promise<ApiResponse<SyllabusTopic>> {
+    const response = await axiosClient.post<ApiResponse<SyllabusTopic>>(`/courses/${courseId}/syllabus`, dto);
+    return response.data;
+  },
+
+  async updateSyllabusTopic(courseId: string, topicId: string, dto: { week?: number; title?: string; description?: string; status?: string }): Promise<ApiResponse<SyllabusTopic>> {
+    const response = await axiosClient.patch<ApiResponse<SyllabusTopic>>(`/courses/${courseId}/syllabus/${topicId}`, dto);
+    return response.data;
+  },
+
+  async deleteSyllabusTopic(courseId: string, topicId: string): Promise<ApiResponse<null>> {
+    const response = await axiosClient.delete<ApiResponse<null>>(`/courses/${courseId}/syllabus/${topicId}`);
     return response.data;
   },
 };
