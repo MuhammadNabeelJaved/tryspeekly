@@ -1,7 +1,22 @@
 import asyncHandler from '../utils/asyncHandler.js'
 import FinancialAid from '../models/financial-aid.model.js'
 
-// POST /api/v1/financial-aid — student: apply
+// POST /api/v1/financial-aid/public — unauthenticated: apply from public page
+export const publicApplyForFinancialAid = asyncHandler(async (req, res) => {
+  try {
+    const { name, email, phone, reason } = req.body
+    if (!name || !email || !reason) {
+      return res.status(400).json({ success: false, error: { message: 'Name, email, and reason are required' } })
+    }
+
+    const application = await FinancialAid.create({ name, email, phone, reason })
+    res.status(201).json({ success: true, message: 'Application submitted successfully', data: application })
+  } catch (error) {
+    res.status(400).json({ success: false, error: { message: error.message } })
+  }
+})
+
+// POST /api/v1/financial-aid — student: apply (authenticated)
 export const applyForFinancialAid = asyncHandler(async (req, res) => {
   try {
     const { courseId, name, email, phone, reason } = req.body

@@ -1,6 +1,7 @@
 import express from 'express'
 import { authenticate, authorize } from '../middlewares/auth.js'
 import {
+  publicApplyForFinancialAid,
   applyForFinancialAid,
   getMyApplications,
   getAllApplications,
@@ -8,6 +9,9 @@ import {
 } from '../controllers/financial-aid.controller.js'
 
 const router = express.Router()
+
+// ─── Public route (no auth required) ──────────────────────────────────────────
+router.route('/public').post(publicApplyForFinancialAid)
 
 // ─── Student routes ────────────────────────────────────────────────────────────
 router.route('/').post(authenticate, authorize('student'), applyForFinancialAid)

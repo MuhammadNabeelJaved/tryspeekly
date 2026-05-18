@@ -4,7 +4,7 @@ const { Schema, model } = mongoose
 
 const financialAidSchema = new Schema(
   {
-    student: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    student: { type: Schema.Types.ObjectId, ref: 'User' },
     course: { type: Schema.Types.ObjectId, ref: 'Course' },
     name: { type: String, required: [true, 'Name is required'], trim: true },
     email: {

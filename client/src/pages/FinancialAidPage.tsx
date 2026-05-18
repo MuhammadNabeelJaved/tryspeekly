@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import { Heart, Handshake, VideoCamera, CheckCircle, WarningCircle, CaretRight, ShieldCheck, GraduationCap, Question, CaretDown, Star, Certificate, Target } from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
 import PhoneInput from '@/components/auth/PhoneInput'
+import { financialAidService } from '@/services/financial-aid.service'
 
 export default function FinancialAidPage() {
   const { register, handleSubmit, control, formState: { errors }, reset } = useForm({
@@ -30,14 +31,17 @@ export default function FinancialAidPage() {
     window.scrollTo(0, 0)
   }, [])
 
-  const onSubmit = () => {
+  const onSubmit = async (data: { name: string; email: string; phone: string; reason: string; agree: boolean }) => {
     setIsSubmitting(true)
-    // Simulate API call
-    setTimeout(() => {
-      setIsSubmitting(false)
+    try {
+      await financialAidService.publicApply({ name: data.name, email: data.email, phone: data.phone || undefined, reason: data.reason })
       setIsSubmitted(true)
       reset()
-    }, 1500)
+    } catch {
+      // show generic error — form stays open for retry
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
