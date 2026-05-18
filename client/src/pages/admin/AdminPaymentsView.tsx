@@ -208,22 +208,24 @@ export default function AdminPaymentsView() {
                     )}
                   </td>
                   <td className="px-4 py-3">
-                    {p.status === 'pending' && (
-                      <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1">
+                      {p.status !== 'approved' && (
                         <button
                           onClick={() => setAction({ paymentId: p._id, type: 'approve', note: '' })}
                           title="Approve"
                           className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 flex items-center justify-center transition-colors">
                           <CheckCircle size={13} weight="fill" />
                         </button>
+                      )}
+                      {p.status !== 'rejected' && (
                         <button
                           onClick={() => setAction({ paymentId: p._id, type: 'reject', note: '' })}
                           title="Reject"
                           className="w-7 h-7 rounded-lg bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 hover:bg-red-100 flex items-center justify-center transition-colors">
                           <XCircle size={13} weight="fill" />
                         </button>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
