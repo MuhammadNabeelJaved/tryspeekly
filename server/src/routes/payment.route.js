@@ -1,6 +1,6 @@
 import express from 'express'
 import { authenticate, authorize } from '../middlewares/auth.js'
-import { uploadDocument, handleMulterError } from '../middlewares/multer.js'
+import { uploadPaymentScreenshot, handleMulterError } from '../middlewares/multer.js'
 import {
   createPayment,
   getMyPayments,
@@ -13,7 +13,7 @@ import {
 const router = express.Router()
 
 // ─── Student routes ────────────────────────────────────────────────────────────
-router.route('/').post(authenticate, authorize('student'), uploadDocument, handleMulterError, createPayment)
+router.route('/').post(authenticate, authorize('student'), uploadPaymentScreenshot, handleMulterError, createPayment)
 router.route('/my').get(authenticate, authorize('student'), getMyPayments)
 
 // ─── Admin only routes ─────────────────────────────────────────────────────────

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/context/AuthContext'
 import { coursesService } from '@/services/courses.service'
-import { paymentsService } from '@/services/payments.service'
+import { enrollmentsService } from '@/services/enrollments.service'
 import { BookOpen, Users, ArrowRight, MagnifyingGlass, X } from '@phosphor-icons/react'
 import type { InstructorView } from '@/pages/InstructorDashboardPage'
 
@@ -29,28 +29,43 @@ export default function InstructorOverview({ onNavigate }: InstructorOverviewPro
     const fetchData = async () => {
       setIsLoading(true)
       try {
-        const [coursesRes, paymentsRes] = await Promise.allSettled([
+        const [coursesRes, enrollmentsRes] = await Promise.allSettled([
           coursesService.getTeacherCourses(),
-          paymentsService.getMyPayments(),
+          enrollmentsService.getTeacherEnrollments(),
         ])
 
-        if (coursesRes.status === 'fulfilled' && coursesRes.value.success) {
-          const mapped = coursesRes.value.data.map((c) => ({
-            id: c._id,
-            title: c.title,
-            students: c.enrolledStudents?.length ?? 0,
-            status: c.status === 'published' ? 'active' : c.status,
-            nextClass: c.recurringSchedule?.[0]
-              ? `${c.recurringSchedule[0].day}, ${c.recurringSchedule[0].time}`
-              : '—',
-            progress: 0,
-          }))
-          setCourses(mapped)
+        // Build completed classes map from enrollments
+        const completedMap: Record<string, number> = {}
+        if (enrollmentsRes.status === 'fulfilled' && enrollmentsRes.value.success) {
+          enrollmentsRes.value.data.forEach((enrollment) => {
+            const courseId = enrollment.course?._id || (enrollment.course as unknown as string)
+            const attended = enrollment.progress?.sessionsAttended ?? 0
+            if (courseId) {
+              const courseIdStr = courseId.toString().trim()
+              completedMap[courseIdStr] = Math.max(completedMap[courseIdStr] ?? 0, attended)
+            }
+          })
         }
 
-        if (paymentsRes.status === 'fulfilled' && paymentsRes.value.success) {
-          const approved = paymentsRes.value.data.filter((p) => p.status === 'approved')
-          setEarnings(approved.reduce((sum, p) => sum + (p.amount ?? 0), 0))
+        if (coursesRes.status === 'fulfilled' && coursesRes.value.success) {
+          const mapped = coursesRes.value.data.map((c) => {
+            const courseIdStr = c._id.toString().trim()
+            const completedCount = completedMap[courseIdStr] || 0
+            const totalClasses = c.totalSessions || 0
+            const progress = totalClasses > 0 ? Math.round((completedCount / totalClasses) * 100) : 0
+
+            return {
+              id: c._id,
+              title: c.title,
+              students: c.enrolledStudents?.length ?? 0,
+              status: c.status === 'published' ? 'active' : c.status,
+              nextClass: c.recurringSchedule?.[0]
+                ? `${c.recurringSchedule[0].day}, ${c.recurringSchedule[0].time}`
+                : '—',
+              progress,
+            }
+          })
+          setCourses(mapped)
         }
       } catch {
         // show zeros on error — no mock fallback

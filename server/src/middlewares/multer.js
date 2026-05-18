@@ -75,6 +75,13 @@ export const uploadProfileImage = multer({
   fileFilter: createFileFilter('image'),
 }).single('profileImage')
 
+// Payment screenshot → memory (buffer used for Cloudinary upload in controller)
+export const uploadPaymentScreenshot = multer({
+  storage: memoryStorage,
+  limits: { fileSize: FILE_CONFIGS.image.maxSize },
+  fileFilter: createFileFilter('image'),
+}).single('screenshot')
+
 // Course document → disk
 export const uploadDocument = multer({
   storage: createDiskStorage('documents'),
