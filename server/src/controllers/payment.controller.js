@@ -131,3 +131,39 @@ export const rejectPayment = asyncHandler(async (req, res) => {
     res.status(400).json({ success: false, error: { message: error.message } })
   }
 })
+
+// POST /api/v1/payments/admin — admin manually creates a payment record
+export const adminCreatePayment = asyncHandler(async (req, res) => {
+  try {
+    const { studentId, courseId, teacherId, method, transactionId, amount, currency, adminNote } = req.body
+
+    if (!studentId || !courseId || !teacherId || !method || !amount) {
+      return res.status(400).json({ success: false, error: { message: 'studentId, courseId, teacherId, method, and amount are required' } })
+    }
+
+    const payment = await Payment.create({
+      student: studentId,
+      course: courseId,
+      teacher: teacherId,
+      method,
+      transactionId: transactionId || '',
+      amount,
+      currency: currency || 'PKR',
+      adminNote: adminNote || '',
+    })
+
+    await Enrollment.findOneAndUpdate(
+      { student: studentId, course: courseId },
+      { payment: payment._id }
+    )
+
+    const populated = await Payment.findById(payment._id)
+      .populate('student', 'name email')
+      .populate('course', 'title')
+      .populate('teacher', 'name')
+
+    res.status(201).json({ success: true, message: 'Payment record created', data: populated })
+  } catch (error) {
+    res.status(400).json({ success: false, error: { message: error.message } })
+  }
+})
