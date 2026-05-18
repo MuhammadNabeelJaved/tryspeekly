@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { X, PaperPlaneRight, VideoCamera, Checks, Paperclip } from '@phosphor-icons/react'
-import { MOCK_STUDENT } from './studentData'
+import { useAuth } from '@/context/AuthContext'
 
 interface InstructorChatModalProps {
   isOpen: boolean
@@ -10,12 +10,14 @@ interface InstructorChatModalProps {
 }
 
 export default function InstructorChatModal({ isOpen, onClose, instructorName, courseTitle }: InstructorChatModalProps) {
+  const { user } = useAuth()
+  const firstName = user?.name?.split(' ')[0] ?? 'there'
   const [message, setMessage] = useState('')
   const [messages, setMessages] = useState([
     {
       id: 1,
       sender: 'instructor',
-      text: `Hello ${MOCK_STUDENT.name.split(' ')[0]}! Welcome to ${courseTitle}. If you have any questions about the live classes or assignments, feel free to ask here.`,
+      text: `Hello ${firstName}! Welcome to ${courseTitle}. If you have any questions about the live classes or assignments, feel free to ask here.`,
       time: '10:00 AM',
       date: 'Today'
     }

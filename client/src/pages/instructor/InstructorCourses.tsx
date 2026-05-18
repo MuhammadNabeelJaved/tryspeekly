@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import toast from 'react-hot-toast'
 import { coursesService } from '../../services/courses.service'
 import { enrollmentsService } from '@/services/enrollments.service'
-import { INSTRUCTOR_COURSES as FALLBACK_COURSES } from './instructorData'
+
 import { BookOpen, Users, Clock, Plus, X, Check, PencilSimple, Trash, MagnifyingGlass, CheckCircle, CalendarBlank, ChartBar } from '@phosphor-icons/react'
 
 type CourseItem = {
@@ -168,7 +168,7 @@ export default function InstructorCourses() {
         if (res.success && res.data.length > 0) {
           setCourses(res.data.map(mapBackendCourse))
         } else {
-          setCourses(FALLBACK_COURSES)
+          setCourses([])
         }
       } catch {
         setCourses(FALLBACK_COURSES)

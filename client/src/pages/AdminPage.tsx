@@ -7,8 +7,8 @@ import {
   List, X, SignOut, Bell, MagnifyingGlass, Sun, Moon, GearSix,
   Lock, Eye, EyeSlash, Handshake, Certificate, ChatCircleDots, CheckCircle
 } from '@phosphor-icons/react'
-import type { Student, Instructor, Course, CMSPage, FinancialAidApp } from './admin/adminData'
-import { INITIAL_STUDENTS, INITIAL_INSTRUCTORS, INITIAL_COURSES, INITIAL_CMS_PAGES, INITIAL_FINANCIAL_AID } from './admin/adminData'
+import type { Student, Instructor, Course, CMSPage } from './admin/adminData'
+import { INITIAL_STUDENTS, INITIAL_INSTRUCTORS, INITIAL_COURSES, INITIAL_CMS_PAGES } from './admin/adminData'
 import Loader from '@/components/Loader'
 import UserAvatar from '@/components/UserAvatar'
 import { useAuth } from '../context/AuthContext'
@@ -35,12 +35,10 @@ export interface AdminStore {
   instructors: Instructor[]
   courses: Course[]
   cmsPages: CMSPage[]
-  financialAidApps: FinancialAidApp[]
   setStudents: (s: Student[]) => void
   setInstructors: (i: Instructor[]) => void
   setCourses: (c: Course[]) => void
   setCmsPages: (p: CMSPage[]) => void
-  setFinancialAidApps: (apps: FinancialAidApp[]) => void
 }
 
 // ─── CONSTANTS ────────────────────────────────────────────────────────────────
@@ -220,16 +218,11 @@ export default function AdminPage() {
     try { return JSON.parse(localStorage.getItem('admin_cms') || 'null') ?? INITIAL_CMS_PAGES }
     catch { return INITIAL_CMS_PAGES }
   })
-  const [financialAidApps, setFinancialAidApps] = useState<FinancialAidApp[]>(() => {
-    try { return JSON.parse(localStorage.getItem('admin_financial_aid') || 'null') ?? INITIAL_FINANCIAL_AID }
-    catch { return INITIAL_FINANCIAL_AID }
-  })
 
   useEffect(() => { localStorage.setItem('admin_students', JSON.stringify(students)) }, [students])
   useEffect(() => { localStorage.setItem('admin_instructors', JSON.stringify(instructors)) }, [instructors])
   useEffect(() => { localStorage.setItem('admin_courses', JSON.stringify(courses)) }, [courses])
   useEffect(() => { localStorage.setItem('admin_cms', JSON.stringify(cmsPages)) }, [cmsPages])
-  useEffect(() => { localStorage.setItem('admin_financial_aid', JSON.stringify(financialAidApps)) }, [financialAidApps])
 
   // Force admin auth in dev mode
   useEffect(() => {
@@ -268,7 +261,6 @@ export default function AdminPage() {
   }
 
   const paymentAlerts = students.filter(s => s.paymentStatus === 'pending' || s.paymentStatus === 'failed').length
-  const aidPending = financialAidApps.filter(a => a.status === 'pending' || a.status === 'under_review').length
   const pendingCourses = courses.filter(c => c.status === 'pending').length
 
   const renderNavItem = ({ view, label, path, Icon }: NavItem) => {
@@ -276,7 +268,6 @@ export default function AdminPage() {
     const badge =
       view === 'students' ? students.length :
       view === 'payments' && paymentAlerts > 0 ? paymentAlerts :
-      view === 'financial-aid' && aidPending > 0 ? aidPending :
       view === 'courses' && pendingCourses > 0 ? pendingCourses :
       null
 
@@ -304,7 +295,7 @@ export default function AdminPage() {
     )
   }
 
-  const store: AdminStore = { students, instructors, courses, cmsPages, financialAidApps, setStudents, setInstructors, setCourses, setCmsPages, setFinancialAidApps }
+  const store: AdminStore = { students, instructors, courses, cmsPages, setStudents, setInstructors, setCourses, setCmsPages }
 
   const activeLabel = allNavItems.find(n => n.view === activeView)?.label ?? 'Dashboard'
 
@@ -496,13 +487,13 @@ export default function AdminPage() {
                   <Route path="/students" element={<AdminStudents store={store} />} />
                   <Route path="/instructors" element={<AdminInstructors store={store} />} />
                   <Route path="/courses" element={<AdminCourses store={store} />} />
-                  <Route path="/certificates" element={<AdminCertificates store={store} />} />
+                  <Route path="/certificates" element={<AdminCertificates />} />
                   <Route path="/payments" element={<AdminPaymentsView />} />
-                  <Route path="/financial-aid" element={<AdminFinancialAid store={store} />} />
+                  <Route path="/financial-aid" element={<AdminFinancialAid />} />
                   <Route path="/cms/*" element={<AdminCMS store={store} />} />
                   <Route path="/blog" element={<AdminBlog />} />
                    <Route path="/settings" element={<AdminSettings store={store} />} />
-                  <Route path="/support" element={<AdminSupport store={store} />} />
+                  <Route path="/support" element={<AdminSupport />} />
                   <Route path="/notifications" element={<AdminNotifications />} />
                   <Route path="*" element={<Navigate to="/admin" replace />} />
                 </Routes>

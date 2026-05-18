@@ -209,7 +209,7 @@ export default function AdminPaymentsView() {
                   </td>
                   <td className="px-4 py-3">
                     {p.status === 'pending' && (
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex items-center gap-1">
                         <button
                           onClick={() => setAction({ paymentId: p._id, type: 'approve', note: '' })}
                           title="Approve"
@@ -231,7 +231,7 @@ export default function AdminPaymentsView() {
           </table>
         </div>
       </div>
-      <p className="text-[11px] text-slate-300 dark:text-neutral-700 mt-3 text-center">Hover a pending row to see approve/reject actions</p>
+      
 
       <AdminPaymentCreateModal
         isOpen={createModalOpen}

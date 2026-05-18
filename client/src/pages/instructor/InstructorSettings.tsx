@@ -4,7 +4,7 @@ import toast from 'react-hot-toast'
 import { useAuth } from '../../context/AuthContext'
 import { usersService } from '../../services/users.service'
 import { User, Lock, Bell, PlugsConnected, Globe, DeviceMobile, ShieldCheck, VideoCamera, Calendar, MagnifyingGlass, X, Camera } from '@phosphor-icons/react'
-import { MOCK_INSTRUCTOR as FALLBACK_INSTRUCTOR } from './instructorData'
+
 import { extractApiError } from '../../utils/apiError'
 import { motion } from 'framer-motion'
 
@@ -50,8 +50,8 @@ export default function InstructorSettings() {
     tab.label.toLowerCase().includes(settingsSearch.toLowerCase())
   )
 
-  const defaultName = user?.name || FALLBACK_INSTRUCTOR.name
-  const defaultEmail = user?.email || FALLBACK_INSTRUCTOR.email
+  const defaultName = user?.name || ''
+  const defaultEmail = user?.email || ''
 
   const { register, handleSubmit, reset: resetForm } = useForm({
     defaultValues: {
