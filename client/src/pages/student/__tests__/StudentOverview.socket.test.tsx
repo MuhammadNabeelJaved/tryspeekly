@@ -64,6 +64,10 @@ describe('StudentOverview — socket live-class events', () => {
   it('shows "Join Live Class" button when live-class:updated fires with active status', async () => {
     renderComponent()
 
+    // Drain fetchAll's async operations so the initial empty API result settles
+    // before the socket event fires, preventing a race condition in test
+    await act(async () => { await Promise.resolve() })
+
     await act(async () => {
       handlers['live-class:updated']?.(mockLiveClass)
     })

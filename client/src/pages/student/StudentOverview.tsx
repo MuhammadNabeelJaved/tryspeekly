@@ -47,10 +47,8 @@ export default function StudentOverview({ onNavigate }: { onNavigate: (view: Stu
       ])
 
       if (enrollRes.status === 'fulfilled' && enrollRes.value.success) setEnrollments(enrollRes.value.data)
-      if (liveRes.status === 'fulfilled' && liveRes.value.success) {
-        const apiData = liveRes.value.data as UpcomingClass[]
-        setUpcomingClasses((prev) => prev.length > 0 ? prev : apiData)
-      }
+      if (liveRes.status === 'fulfilled' && liveRes.value.success)
+        setUpcomingClasses(liveRes.value.data as UpcomingClass[])
       if (assignRes.status === 'fulfilled' && assignRes.value.success) setAssignments(assignRes.value.data)
       if (annRes.status === 'fulfilled' && annRes.value.success) setAnnouncements(annRes.value.data)
       if (payRes.status === 'fulfilled' && payRes.value.success) setPayments(payRes.value.data)
