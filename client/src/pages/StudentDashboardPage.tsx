@@ -8,7 +8,7 @@ import {
 import Loader from '@/components/Loader'
 import { useAuth } from '../context/AuthContext'
 import { enrollmentsService } from '@/services/enrollments.service'
-import CompleteEnrollmentPopup from './student/CompleteEnrollmentPopup'
+import PaymentSubmitModal from './student/PaymentSubmitModal'
 import type { Enrollment } from '@/types/api'
 
 const StudentOverview = lazy(() => import('./student/StudentOverview'))
@@ -46,9 +46,31 @@ export default function StudentDashboardPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [darkMode, setDarkMode] = useState(() => document.documentElement.classList.contains('dark'))
 
-  // Complete Enrollment Popup
+  // Payment modal for pending enrollments
+  // sessionStorage tracks which enrollment IDs have already been shown this session
+  const SHOWN_KEY = 'ep_shown_payment_modal'
+
+  const getShownIds = (): Set<string> => {
+    try {
+      const raw = sessionStorage.getItem(SHOWN_KEY)
+      return new Set(raw ? JSON.parse(raw) : [])
+    } catch {
+      return new Set()
+    }
+  }
+
+  const markAsShown = (id: string) => {
+    try {
+      const shown = getShownIds()
+      shown.add(id)
+      sessionStorage.setItem(SHOWN_KEY, JSON.stringify([...shown]))
+    } catch {
+      // ignore storage errors
+    }
+  }
+
   const [pendingEnrollments, setPendingEnrollments] = useState<Enrollment[]>([])
-  const [showEnrollmentPopup, setShowEnrollmentPopup] = useState(false)
+  const [paymentModalEnrollment, setPaymentModalEnrollment] = useState<Enrollment | null>(null)
 
   const fetchPendingEnrollments = useCallback(async () => {
     try {
@@ -57,7 +79,13 @@ export default function StudentDashboardPage() {
         !e.isActive && (!e.payment || e.payment.status === 'rejected')
       )
       setPendingEnrollments(unpaid)
-      if (unpaid.length > 0) setShowEnrollmentPopup(true)
+      // Only auto-open for enrollments not yet shown this session
+      const shown = getShownIds()
+      const unseen = unpaid.find(e => !shown.has(e._id))
+      if (unseen) {
+        markAsShown(unseen._id)
+        setPaymentModalEnrollment(unseen)
+      }
     } catch {
       // silently ignore — non-critical
     }
@@ -65,10 +93,8 @@ export default function StudentDashboardPage() {
 
   useEffect(() => { fetchPendingEnrollments() }, [fetchPendingEnrollments])
 
-  const handlePopupClose = () => setShowEnrollmentPopup(false)
-
   const handlePaymentSuccess = () => {
-    setShowEnrollmentPopup(false)
+    setPaymentModalEnrollment(null)
     fetchPendingEnrollments()
   }
 
@@ -339,16 +365,17 @@ export default function StudentDashboardPage() {
       </div>
     </div>
 
-    {/* Complete Enrollment Popup */}
-    <AnimatePresence>
-      {showEnrollmentPopup && (
-        <CompleteEnrollmentPopup
-          enrollments={pendingEnrollments}
-          onClose={handlePopupClose}
-          onPaymentSuccess={handlePaymentSuccess}
-        />
-      )}
-    </AnimatePresence>
+    {/* Payment modal — opens directly when there are pending enrollments */}
+    {paymentModalEnrollment && (
+      <PaymentSubmitModal
+        courseId={paymentModalEnrollment.course._id}
+        teacherId={paymentModalEnrollment.teacher._id}
+        courseName={paymentModalEnrollment.course.title}
+        isOpen={true}
+        onClose={() => setPaymentModalEnrollment(null)}
+        onSuccess={handlePaymentSuccess}
+      />
+    )}
     </>
   )
 }

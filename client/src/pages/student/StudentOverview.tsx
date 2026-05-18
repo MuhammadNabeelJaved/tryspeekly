@@ -515,6 +515,7 @@ export default function StudentOverview({ onNavigate }: { onNavigate: (view: Stu
         <PaymentSubmitModal
           courseId={selectedPayEnrollment.course._id}
           teacherId={selectedPayEnrollment.teacher._id}
+          courseName={selectedPayEnrollment.course.title}
           isOpen={true}
           onClose={() => setSelectedPayEnrollment(null)}
           onSuccess={() => {
