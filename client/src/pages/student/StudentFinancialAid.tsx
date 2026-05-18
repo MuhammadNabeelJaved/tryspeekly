@@ -33,23 +33,25 @@ interface ApplyModalProps {
   onSuccess: () => void
   defaultName: string
   defaultEmail: string
+  defaultPhone: string
 }
 
-function ApplyModal({ onClose, onSuccess, defaultName, defaultEmail }: ApplyModalProps) {
+function ApplyModal({ onClose, onSuccess, defaultName, defaultEmail, defaultPhone }: ApplyModalProps) {
   const [name, setName] = useState(defaultName)
   const [email, setEmail] = useState(defaultEmail)
-  const [phone, setPhone] = useState('')
+  const [phone, setPhone] = useState(defaultPhone)
   const [reason, setReason] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!phone.trim()) { setError('Please provide a phone number so we can contact you.'); return }
     if (!reason.trim()) { setError('Please provide a reason for your application.'); return }
     setError('')
     setSubmitting(true)
     try {
-      await financialAidService.apply({ name, email, phone: phone || undefined, reason })
+      await financialAidService.apply({ name, email, phone, reason })
       onSuccess()
     } catch {
       setError('Failed to submit application. Please try again.')
@@ -93,8 +95,8 @@ function ApplyModal({ onClose, onSuccess, defaultName, defaultEmail }: ApplyModa
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-700 dark:text-neutral-300 mb-1.5">Phone <span className="font-normal text-slate-400">(optional)</span></label>
-            <input value={phone} onChange={e => setPhone(e.target.value)} type="tel" placeholder="+92 300 0000000"
+            <label className="block text-xs font-bold text-slate-700 dark:text-neutral-300 mb-1.5">Phone <span className="text-red-500">*</span></label>
+            <input value={phone} onChange={e => setPhone(e.target.value)} type="tel" placeholder="+92 300 0000000" required
               className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500" />
           </div>
 
@@ -223,6 +225,7 @@ export default function StudentFinancialAid() {
             onSuccess={handleSuccess}
             defaultName={user?.name ?? ''}
             defaultEmail={user?.email ?? ''}
+            defaultPhone={user?.phone ?? ''}
           />
         )}
       </AnimatePresence>
