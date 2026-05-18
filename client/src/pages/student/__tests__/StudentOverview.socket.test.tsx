@@ -130,15 +130,18 @@ describe('StudentOverview — socket live-class events', () => {
     expect(screen.getAllByText(/join live class/i)).toHaveLength(1)
   })
 
-  it('registers and cleans up both socket listeners on unmount', () => {
+  it('registers and cleans up both socket listeners with the same function reference on unmount', () => {
     const { unmount } = renderComponent()
 
-    expect(mockSocket.on).toHaveBeenCalledWith('live-class:updated', expect.any(Function))
-    expect(mockSocket.on).toHaveBeenCalledWith('live-class:deleted', expect.any(Function))
+    const updatedHandler = mockSocket.on.mock.calls.find(([e]) => e === 'live-class:updated')?.[1]
+    const deletedHandler = mockSocket.on.mock.calls.find(([e]) => e === 'live-class:deleted')?.[1]
+
+    expect(updatedHandler).toBeDefined()
+    expect(deletedHandler).toBeDefined()
 
     unmount()
 
-    expect(mockSocket.off).toHaveBeenCalledWith('live-class:updated', expect.any(Function))
-    expect(mockSocket.off).toHaveBeenCalledWith('live-class:deleted', expect.any(Function))
+    expect(mockSocket.off).toHaveBeenCalledWith('live-class:updated', updatedHandler)
+    expect(mockSocket.off).toHaveBeenCalledWith('live-class:deleted', deletedHandler)
   })
 })
