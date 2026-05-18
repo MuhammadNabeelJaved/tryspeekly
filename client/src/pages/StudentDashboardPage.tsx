@@ -1,4 +1,4 @@
-import React, { useState, Suspense, lazy, useRef, useEffect } from 'react'
+import React, { useState, Suspense, lazy, useRef, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import {
@@ -7,6 +7,9 @@ import {
 } from '@phosphor-icons/react'
 import Loader from '@/components/Loader'
 import { useAuth } from '../context/AuthContext'
+import { enrollmentsService } from '@/services/enrollments.service'
+import CompleteEnrollmentPopup from './student/CompleteEnrollmentPopup'
+import type { Enrollment } from '@/types/api'
 
 const StudentOverview = lazy(() => import('./student/StudentOverview'))
 const StudentCourses = lazy(() => import('./student/StudentCourses'))
@@ -36,13 +39,47 @@ const NAV_PREFS: NavItem[] = [
   { view: 'settings', label: 'Settings', path: 'settings', Icon: GearSix as NavItem['Icon'] },
 ]
 
+const SESSION_KEY = 'enrollment_popup_dismissed'
+
 export default function StudentDashboardPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { user, logout } = useAuth()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [darkMode, setDarkMode] = useState(() => document.documentElement.classList.contains('dark'))
-  
+
+  // Complete Enrollment Popup
+  const [pendingEnrollments, setPendingEnrollments] = useState<Enrollment[]>([])
+  const [showEnrollmentPopup, setShowEnrollmentPopup] = useState(false)
+
+  const fetchPendingEnrollments = useCallback(async () => {
+    try {
+      const res = await enrollmentsService.getMyEnrollments()
+      const unpaid = res.data.filter(e =>
+        !e.isActive && (!e.payment || e.payment.status === 'rejected')
+      )
+      setPendingEnrollments(unpaid)
+      if (unpaid.length > 0 && !sessionStorage.getItem(SESSION_KEY)) {
+        setShowEnrollmentPopup(true)
+      }
+    } catch {
+      // silently ignore — non-critical
+    }
+  }, [])
+
+  useEffect(() => { fetchPendingEnrollments() }, [fetchPendingEnrollments])
+
+  const handlePopupClose = () => {
+    setShowEnrollmentPopup(false)
+    sessionStorage.setItem(SESSION_KEY, '1')
+  }
+
+  const handlePaymentSuccess = () => {
+    setShowEnrollmentPopup(false)
+    sessionStorage.removeItem(SESSION_KEY)
+    fetchPendingEnrollments()
+  }
+
   // Notification State
   const [showNotifications, setShowNotifications] = useState(false)
   const [notifs, setNotifs] = useState([
@@ -308,5 +345,16 @@ export default function StudentDashboardPage() {
         </main>
       </div>
     </div>
+
+    {/* Complete Enrollment Popup */}
+    <AnimatePresence>
+      {showEnrollmentPopup && (
+        <CompleteEnrollmentPopup
+          enrollments={pendingEnrollments}
+          onClose={handlePopupClose}
+          onPaymentSuccess={handlePaymentSuccess}
+        />
+      )}
+    </AnimatePresence>
   )
 }
