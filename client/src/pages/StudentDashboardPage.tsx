@@ -149,6 +149,7 @@ export default function StudentDashboardPage() {
   const activeLabel = allNavItems.find(n => n.view === activeView)?.label ?? 'Dashboard'
 
   return (
+    <>
     <div className="flex h-screen bg-slate-50 dark:bg-neutral-950 overflow-hidden transition-colors duration-300">
       {/* ── SIDEBAR ── */}
       <>
@@ -356,5 +357,6 @@ export default function StudentDashboardPage() {
         />
       )}
     </AnimatePresence>
+    </>
   )
 }
