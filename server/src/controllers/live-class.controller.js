@@ -295,7 +295,7 @@ export const deleteSchedule = asyncHandler(async (req, res) => {
   liveClass.isDeleted = true
   await liveClass.save()
 
-  // liveClass.course is still an ObjectId here (not populated) — toString() via template literal is correct
+  // liveClass.course is unpopulated ObjectId here — template literal coercion is correct
   getIO()?.to(`course:${liveClass.course}`).emit('live-class:deleted', { _id: liveClass._id })
 
   res.json({
