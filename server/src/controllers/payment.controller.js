@@ -108,13 +108,23 @@ export const rejectPayment = asyncHandler(async (req, res) => {
     const { rejectionReason } = req.body
     if (!rejectionReason) return res.status(400).json({ success: false, error: { message: 'Rejection reason is required' } })
 
-    const payment = await Payment.findById(req.params.id)
+    const payment = await Payment.findById(req.params.id).populate('course', 'title')
     if (!payment) return res.status(404).json({ success: false, error: { message: 'Payment not found' } })
     if (payment.status !== 'pending') return res.status(400).json({ success: false, error: { message: 'Payment already processed' } })
 
     payment.status = 'rejected'
     payment.rejectionReason = rejectionReason
     await payment.save()
+
+    await Notification.create({
+      recipient: payment.student,
+      title: 'Payment Rejected',
+      message: `Your payment for "${payment.course.title}" was rejected: ${rejectionReason}. Please resubmit your payment proof.`,
+      type: 'payment',
+      severity: 'medium',
+      relatedId: payment._id,
+      relatedType: 'Payment',
+    })
 
     res.json({ success: true, message: 'Payment rejected', data: payment })
   } catch (error) {
