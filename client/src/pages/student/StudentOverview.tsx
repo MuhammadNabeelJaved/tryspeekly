@@ -64,7 +64,11 @@ export default function StudentOverview({ onNavigate }: { onNavigate: (view: Stu
       setUpcomingClasses((prev) => {
         const filtered = prev.filter((c) => c._id !== liveClass._id)
         if (liveClass.status === 'active' || liveClass.status === 'scheduled') {
-          return [...filtered, liveClass]
+          return [...filtered, liveClass].sort((a, b) => {
+            if (a.scheduledAt && b.scheduledAt)
+              return new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime()
+            return 0
+          })
         }
         return filtered
       })

@@ -44,7 +44,7 @@ io.on('connection', async (socket) => {
 
   if (role === 'student') {
     try {
-      const enrollments = await Enrollment.find({ student: userId }).select('course').lean()
+      const enrollments = await Enrollment.find({ student: userId, isActive: true }).select('course').lean()
       enrollments.forEach((e) => socket.join(`course:${e.course}`))
     } catch (err) {
       console.warn('[Socket] failed to join course rooms for student:', err.message)
