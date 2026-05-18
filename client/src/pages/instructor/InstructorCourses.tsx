@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form'
 import { motion, AnimatePresence } from 'framer-motion'
 import toast from 'react-hot-toast'
 import { coursesService } from '../../services/courses.service'
-import { liveClassService } from '@/services/live-class.service'
+import { enrollmentsService } from '@/services/enrollments.service'
 import { INSTRUCTOR_COURSES as FALLBACK_COURSES } from './instructorData'
 import { BookOpen, Users, Clock, Plus, X, Check, PencilSimple, Trash, MagnifyingGlass, CheckCircle, CalendarBlank, ChartBar } from '@phosphor-icons/react'
 
@@ -150,18 +150,18 @@ export default function InstructorCourses() {
     const fetchCourses = async () => {
       setIsLoading(true)
       try {
-        const [res, liveClassesRes] = await Promise.all([
+        const [res, enrollmentsRes] = await Promise.all([
           coursesService.getTeacherCourses(),
-          liveClassService.getTeacherLiveClasses()
+          enrollmentsService.getTeacherEnrollments()
         ])
 
-        // Build completed classes map
+        // Build completed classes map: max sessionsAttended across all enrollments per course
         const completedMap: Record<string, number> = {}
-        if (liveClassesRes.success && liveClassesRes.data) {
-          const completedClasses = liveClassesRes.data.filter((lc: { status: string }) => lc.status === 'completed')
-          completedClasses.forEach((lc: { course: { _id: string } }) => {
-            const key = String(lc.course._id)
-            completedMap[key] = (completedMap[key] || 0) + 1
+        if (enrollmentsRes.success && enrollmentsRes.data) {
+          enrollmentsRes.data.forEach((enr: { course: { _id: string } | string; progress?: { sessionsAttended?: number } }) => {
+            const courseId = typeof enr.course === 'string' ? enr.course : enr.course._id
+            const attended = enr.progress?.sessionsAttended ?? 0
+            completedMap[courseId] = Math.max(completedMap[courseId] ?? 0, attended)
           })
           setCompletedClassesMap(completedMap)
         }
