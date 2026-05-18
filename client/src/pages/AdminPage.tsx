@@ -492,7 +492,7 @@ export default function AdminPage() {
             >
               <Suspense fallback={<Loader />}>
                 <Routes>
-                  <Route path="/" element={<AdminOverview store={store} onNavigate={handleNavigate} />} />
+                  <Route path="/" element={<AdminOverview onNavigate={handleNavigate} />} />
                   <Route path="/students" element={<AdminStudents store={store} />} />
                   <Route path="/instructors" element={<AdminInstructors store={store} />} />
                   <Route path="/courses" element={<AdminCourses store={store} />} />

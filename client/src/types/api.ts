@@ -437,9 +437,12 @@ export interface SiteSettings {
 export interface AdminStats {
   totalStudents: number;
   totalInstructors: number;
+  totalCourses: number;
   revenue: Record<string, number>;
   pendingPayments: number;
+  failedPayments: number;
   pendingCourseReviews: number;
+  pendingFinancialAid: number;
   coursesByStatus: {
     published: number;
     pending: number;
@@ -447,6 +450,17 @@ export interface AdminStats {
     rejected: number;
     archived: number;
   };
+  studentsByCountry: Array<{ country: string; count: number }>;
+  paymentsByMethod: Array<{ method: string; count: number }>;
+  recentEnrollments: Array<{
+    _id: string;
+    studentName: string;
+    courseName: string;
+    country: string;
+    paymentStatus: string;
+    enrolledAt: string;
+  }>;
+  enrollmentsByCourse: Array<{ title: string; count: number }>;
 }
 
 // ─── Assignment Types ─────────────────────────────────────────────────────────
