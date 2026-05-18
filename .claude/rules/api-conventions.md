@@ -4,10 +4,11 @@ Claude loads these rules when building or modifying Express routes.
 
 ## URL Structure
 ```
-/api/<resource>          GET (list), POST (create)
-/api/<resource>/:id      GET (single), PUT (full update), PATCH (partial), DELETE
-/api/<resource>/:id/<sub-resource>   nested resources
+/api/v1/<resource>              GET (list), POST (create)
+/api/v1/<resource>/:id          GET (single), PUT (full update), PATCH (partial), DELETE
+/api/v1/<resource>/:id/<sub>    nested resources
 ```
+All routes are versioned under `/api/v1/`. Health check lives at `GET /api/health` (no version prefix).
 
 ## HTTP Methods
 | Method | Use case |
@@ -19,10 +20,10 @@ Claude loads these rules when building or modifying Express routes.
 | DELETE | Remove a resource |
 
 ## Response Format
-All responses use this envelope:
+All responses use this envelope (via `ApiResponse` utility):
 ```json
-{ "success": true, "data": { ... } }
-{ "success": false, "error": "Human-readable message", "code": "MACHINE_CODE" }
+{ "success": true, "message": "...", "data": { ... } }
+{ "success": false, "message": "Human-readable error message" }
 ```
 
 ## Status Codes
@@ -42,10 +43,10 @@ All responses use this envelope:
 - Never trust client-supplied user IDs — always derive user identity from the JWT
 
 ## Validation
-- Use `express-validator` or `zod` for request body validation
-- Return `400` with a structured errors array on validation failure:
+- Use `Joi` for request body validation (already installed — do not introduce express-validator or zod)
+- Return `400` with a descriptive message on validation failure:
 ```json
-{ "success": false, "error": "Validation failed", "fields": [{ "field": "email", "message": "Invalid email" }] }
+{ "success": false, "message": "Validation error description" }
 ```
 
 ## Pagination

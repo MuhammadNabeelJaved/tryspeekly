@@ -1,14 +1,27 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { coursesService } from '../../services/courses.service'
-import { INSTRUCTOR_STUDENTS as FALLBACK_STUDENTS } from './instructorData'
-import { MagnifyingGlass, Check, X, CalendarBlank, ChartBar, Star, BookOpen, UserMinus, Clock, ChatCircleText } from '@phosphor-icons/react'
+import { enrollmentsService } from '@/services/enrollments.service'
+import {
+  MagnifyingGlass, Check, X, CalendarBlank, ChartBar, BookOpen, UserMinus, Clock, ChatCircleText,
+} from '@phosphor-icons/react'
 
-type FallbackStudent = typeof FALLBACK_STUDENTS[0]
-type Student = FallbackStudent & { todayStatus?: 'present' | 'absent' | 'late' }
+interface Student {
+  id: string
+  name: string
+  course: string
+  enrolledAt: string
+  status: 'excellent' | 'good' | 'needs_attention'
+  attendance: number
+  attendedClasses: number
+  totalClasses: number
+  todayStatus?: 'present' | 'absent' | 'late'
+}
 
 export default function InstructorStudents() {
-  const [students, setStudents] = useState<Student[]>(FALLBACK_STUDENTS)
+  const navigate = useNavigate()
+  const [students, setStudents] = useState<Student[]>([])
+  const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [courseFilter, setCourseFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
@@ -18,35 +31,44 @@ export default function InstructorStudents() {
   useEffect(() => {
     const fetchStudents = async () => {
       try {
-        const coursesRes = await coursesService.getTeacherCourses()
-        if (coursesRes.success && coursesRes.data.length > 0) {
-          const allStudents: Student[] = []
-          for (const c of coursesRes.data) {
-            try {
-              const studentsRes = await coursesService.getCourseStudents(c._id)
-              if (studentsRes.success && studentsRes.data.length > 0) {
-                studentsRes.data.forEach((s: any) => {
-                  allStudents.push({
-                    id: s._id || s.id || `s_${Math.random()}`,
-                    name: s.name || s.email || 'Unknown',
-                    course: c.title,
-                    status: 'good',
-                    attendance: s.progress?.sessionsAttended && s.progress?.totalSessions
-                      ? Math.round((s.progress.sessionsAttended / s.progress.totalSessions) * 100)
-                      : 0,
-                    attendedClasses: s.progress?.sessionsAttended || 0,
-                    totalClasses: s.progress?.totalSessions || 0,
-                  })
-                })
-              }
-            } catch {
-              // skip course if fetch fails
-            }
+        const res = await enrollmentsService.getTeacherEnrollments()
+        if (!res.success) return
+
+        const map = new Map<string, Student>()
+        res.data.forEach((enrollment) => {
+          const sid = enrollment.student._id
+          const attended = enrollment.progress?.sessionsAttended ?? 0
+          const total = enrollment.progress?.totalSessions ?? 0
+          const pct = total > 0 ? Math.round((attended / total) * 100) : 0
+
+          if (map.has(sid)) {
+            const existing = map.get(sid)!
+            existing.course = `${existing.course}, ${enrollment.course.title}`
+            existing.attendedClasses += attended
+            existing.totalClasses += total
+            existing.attendance = existing.totalClasses > 0
+              ? Math.round((existing.attendedClasses / existing.totalClasses) * 100)
+              : 0
+            existing.status = existing.attendance >= 80 ? 'excellent' : existing.attendance >= 50 ? 'good' : 'needs_attention'
+          } else {
+            map.set(sid, {
+              id: sid,
+              name: enrollment.student.name,
+              course: enrollment.course.title,
+              enrolledAt: enrollment.enrolledAt,
+              status: pct >= 80 ? 'excellent' : pct >= 50 ? 'good' : 'needs_attention',
+              attendance: pct,
+              attendedClasses: attended,
+              totalClasses: total,
+            })
           }
-          if (allStudents.length > 0) setStudents(allStudents)
-        }
+        })
+
+        setStudents(Array.from(map.values()))
       } catch {
-        // fallback to default (FALLBACK_STUDENTS already set)
+        // keep empty array — no mock fallback
+      } finally {
+        setLoading(false)
       }
     }
     fetchStudents()
@@ -66,7 +88,7 @@ export default function InstructorStudents() {
           newAttended = Math.max(s.attendedClasses - 1, 0)
         }
 
-        const newPercentage = Math.round((newAttended / s.totalClasses) * 100)
+        const newPercentage = s.totalClasses > 0 ? Math.round((newAttended / s.totalClasses) * 100) : 0
         return { ...s, attendedClasses: newAttended, attendance: newPercentage, todayStatus: status || undefined }
       }
       return s
@@ -76,7 +98,7 @@ export default function InstructorStudents() {
   const filteredStudents = students
     .filter(s => {
       const matchesSearch = s.name.toLowerCase().includes(searchQuery.toLowerCase())
-      const matchesCourse = courseFilter === 'all' || s.course === courseFilter
+      const matchesCourse = courseFilter === 'all' || s.course.split(', ').includes(courseFilter)
       const matchesStatus = statusFilter === 'all' || s.status === statusFilter
       return matchesSearch && matchesCourse && matchesStatus
     })
@@ -88,7 +110,17 @@ export default function InstructorStudents() {
       return 0
     })
 
-  const courses = Array.from(new Set(students.map(s => s.course)))
+  const courses = Array.from(new Set(students.flatMap(s => s.course.split(', '))))
+
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        {[1, 2, 3].map(i => (
+          <div key={i} className="h-16 bg-slate-100 dark:bg-neutral-800 rounded-2xl animate-pulse" />
+        ))}
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -298,14 +330,18 @@ export default function InstructorStudents() {
                     <CalendarBlank size={20} className="text-slate-400" />
                     <div>
                       <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Enrolled On</p>
-                      <p className="text-sm font-semibold text-slate-700 dark:text-neutral-300">Oct 12, 2025</p>
+                      <p className="text-sm font-semibold text-slate-700 dark:text-neutral-300">
+                        {new Date(selectedStudent.enrolledAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3 bg-slate-50 dark:bg-neutral-800/50 p-3.5 rounded-xl border border-slate-100 dark:border-neutral-800">
-                    <Star size={20} className="text-slate-400" />
+                    <ChartBar size={20} className="text-slate-400" />
                     <div>
-                      <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Avg. Score</p>
-                      <p className="text-sm font-semibold text-slate-700 dark:text-neutral-300">88% (A Grade)</p>
+                      <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Attendance</p>
+                      <p className="text-sm font-semibold text-slate-700 dark:text-neutral-300">
+                        {selectedStudent.attendedClasses} / {selectedStudent.totalClasses} sessions
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -348,7 +384,7 @@ export default function InstructorStudents() {
               
               {/* Footer Actions */}
               <div className="p-5 border-t border-slate-100 dark:border-neutral-800 bg-slate-50/50 dark:bg-neutral-900/50 flex flex-col sm:flex-row gap-3">
-                <button onClick={() => window.location.href = '/instructor/messages'} className="flex-1 py-3 flex items-center justify-center gap-2 bg-white dark:bg-neutral-800 hover:bg-slate-50 dark:hover:bg-neutral-700 border border-slate-200 dark:border-neutral-700 text-slate-700 dark:text-white font-bold text-sm rounded-xl transition-colors shadow-sm">
+                <button onClick={() => navigate('/instructor/messages')} className="flex-1 py-3 flex items-center justify-center gap-2 bg-white dark:bg-neutral-800 hover:bg-slate-50 dark:hover:bg-neutral-700 border border-slate-200 dark:border-neutral-700 text-slate-700 dark:text-white font-bold text-sm rounded-xl transition-colors shadow-sm">
                   <ChatCircleText size={18} weight="fill" className="text-violet-500" />
                   Direct Message
                 </button>

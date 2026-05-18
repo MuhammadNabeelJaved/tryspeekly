@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Users, BookOpen, CreditCard, TrendUp, Globe, ChartPieSlice, ArrowRight, Student, Handshake } from '@phosphor-icons/react'
-import type { AdminStore } from '../AdminPage'
-import type { AdminView } from '../AdminPage'
-import { axiosClient } from '../../lib/axiosClient'
-import { coursesService } from '../../services/courses.service'
-import { useAuth } from '../../context/AuthContext'
+import type { AdminStore, AdminView } from '@/pages/AdminPage'
+import type { AdminStats, ApiResponse } from '@/types/api'
+import { axiosClient } from '@/lib/axiosClient'
+import { useAuth } from '@/context/AuthContext'
 
 const FLAG_MAP: Record<string, string> = {
   'Pakistan': '🇵🇰',
@@ -40,27 +39,15 @@ export default function AdminOverview({ store, onNavigate }: { store: AdminStore
   const { user } = useAuth()
   const { students, instructors, courses, financialAidApps } = store
 
-  const [apiStudentCount, setApiStudentCount] = useState<number | null>(null)
-  const [apiCourseCount, setApiCourseCount] = useState<number | null>(null)
-  const [apiInstructorCount, setApiInstructorCount] = useState<number | null>(null)
+  const [stats, setStats] = useState<AdminStats | null>(null)
 
   useEffect(() => {
-    async function fetchStats() {
+    const fetchStats = async () => {
       try {
-        const [usersRes, coursesRes] = await Promise.all([
-          axiosClient.get('/users'),
-          coursesService.getAllCourses(),
-        ])
-        const users = usersRes.data?.data
-        if (Array.isArray(users)) {
-          setApiStudentCount(users.filter((u: any) => u.role === 'student').length)
-          setApiInstructorCount(users.filter((u: any) => u.role === 'teacher').length)
-        }
-        if (coursesRes.success && Array.isArray(coursesRes.data)) {
-          setApiCourseCount(coursesRes.data.length)
-        }
+        const res = await axiosClient.get<ApiResponse<AdminStats>>('/stats/admin')
+        if (res.data.success) setStats(res.data.data)
       } catch {
-        // Fallback to store data
+        // silently fall back to store data
       }
     }
     fetchStats()
@@ -95,7 +82,7 @@ export default function AdminOverview({ store, onNavigate }: { store: AdminStore
   const statCards = [
     {
       label: 'Total Students',
-      value: apiStudentCount ?? students.length,
+      value: stats?.totalStudents ?? students.length,
       sub: `${activeStudents} active`,
       Icon: Users,
       variant: 'gradient' as const,
@@ -105,8 +92,8 @@ export default function AdminOverview({ store, onNavigate }: { store: AdminStore
       view: 'students' as AdminView,
     },
     {
-      label: 'Total Courses',
-      value: apiCourseCount ?? courses.filter(c => c.status === 'active').length,
+      label: 'Published Courses',
+      value: stats?.coursesByStatus?.published ?? courses.filter(c => c.status === 'active').length,
       sub: `${courses.length} total`,
       Icon: BookOpen,
       variant: 'normal' as const,
@@ -117,7 +104,7 @@ export default function AdminOverview({ store, onNavigate }: { store: AdminStore
     },
     {
       label: 'Instructors',
-      value: apiInstructorCount ?? instructors.length,
+      value: stats?.totalInstructors ?? instructors.length,
       sub: `${instructors.filter(i => i.status === 'active').length} active`,
       Icon: Student,
       variant: 'normal' as const,
@@ -128,7 +115,7 @@ export default function AdminOverview({ store, onNavigate }: { store: AdminStore
     },
     {
       label: 'Revenue (PKR)',
-      value: `₨${totalRevenuePKR.toLocaleString()}`,
+      value: stats ? `₨${(stats.revenue?.PKR ?? 0).toLocaleString()}` : `₨${totalRevenuePKR.toLocaleString()}`,
       sub: `${students.filter(s => s.paymentStatus === 'paid').length} paid`,
       Icon: CreditCard,
       variant: 'dark' as const,

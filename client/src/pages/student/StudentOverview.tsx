@@ -4,75 +4,160 @@ import { CalendarBlank, CheckCircle, CreditCard, Clock, VideoCamera, HandWaving,
 import { useAuth } from '../../context/AuthContext'
 import { enrollmentsService } from '../../services/enrollments.service'
 import { paymentsService } from '../../services/payments.service'
-import { MOCK_STUDENT, MOCK_ENROLLED_COURSES, MOCK_PAYMENTS, MOCK_ANNOUNCEMENTS, MOCK_ASSIGNMENTS } from './studentData'
+import { liveClassService } from '@/services/live-class.service'
+import { assignmentsService } from '@/services/assignments.service'
+import { announcementsService } from '@/services/announcements.service'
 import type { StudentView } from '../StudentDashboardPage'
-import type { EnrolledCourse, PaymentRecord } from './studentData'
-import type { Enrollment, Payment } from '../../types/api'
+import type { Enrollment, Assignment, Announcement, Payment } from '../../types/api'
 import StudentAssignmentModal from './StudentAssignmentModal'
 
+type UpcomingClass = {
+  _id: string
+  course: { _id: string; title: string; totalSessions: number }
+  teacher: { _id: string; name: string }
+  meetingLink: string
+  classNumber: number
+  scheduledAt: string | null
+  status: 'scheduled' | 'active' | 'completed' | 'cancelled'
+  createdAt: string
+}
+
 export default function StudentOverview({ onNavigate }: { onNavigate: (view: StudentView) => void }) {
-  const activeCourses = MOCK_ENROLLED_COURSES.filter(c => c.status === 'active')
-  const completedCourses = MOCK_ENROLLED_COURSES.filter(c => c.status === 'completed')
-  const recentPayments = MOCK_PAYMENTS.slice(0, 3)
-  const pendingAssignments = MOCK_ASSIGNMENTS.filter(a => a.status === 'pending')
-
+  const { user } = useAuth()
+  const [enrollments, setEnrollments] = useState<Enrollment[]>([])
+  const [upcomingClasses, setUpcomingClasses] = useState<UpcomingClass[]>([])
+  const [assignments, setAssignments] = useState<Assignment[]>([])
+  const [announcements, setAnnouncements] = useState<Announcement[]>([])
+  const [payments, setPayments] = useState<Payment[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const [submitModalOpen, setSubmitModalOpen] = useState(false)
-  const [selectedTask, setSelectedTask] = useState<{title: string, course: string} | null>(null)
+  const [selectedTask, setSelectedTask] = useState<{ assignment: Assignment; enrollmentId: string } | null>(null)
 
-  // Calculate Average Attendance
-  const avgAttendance = activeCourses.length > 0 
-    ? Math.round(activeCourses.reduce((acc, curr) => acc + curr.attendance, 0) / activeCourses.length) 
+  useEffect(() => {
+    const fetchAll = async () => {
+      setIsLoading(true)
+      const [enrollRes, liveRes, assignRes, annRes, payRes] = await Promise.allSettled([
+        enrollmentsService.getMyEnrollments(),
+        liveClassService.getStudentUpcomingClasses(),
+        assignmentsService.getMyAssignments(),
+        announcementsService.getMyAnnouncements(),
+        paymentsService.getMyPayments(),
+      ])
+
+      if (enrollRes.status === 'fulfilled' && enrollRes.value.success) setEnrollments(enrollRes.value.data)
+      if (liveRes.status === 'fulfilled' && liveRes.value.success) setUpcomingClasses(liveRes.value.data as UpcomingClass[])
+      if (assignRes.status === 'fulfilled' && assignRes.value.success) setAssignments(assignRes.value.data)
+      if (annRes.status === 'fulfilled' && annRes.value.success) setAnnouncements(annRes.value.data)
+      if (payRes.status === 'fulfilled' && payRes.value.success) setPayments(payRes.value.data)
+      setIsLoading(false)
+    }
+    fetchAll()
+  }, [])
+
+  const activeCourses = enrollments
+  const avgAttendance = activeCourses.length > 0
+    ? Math.round(
+        activeCourses.reduce((acc, e) => {
+          const total = e.progress.totalSessions
+          const attended = e.progress.sessionsAttended
+          return acc + (total > 0 ? Math.round((attended / total) * 100) : 0)
+        }, 0) / activeCourses.length
+      )
     : 0
 
-  // Find the next upcoming class
-  const upcomingClass = activeCourses
-    .filter(c => c.nextClassTime)
-    .sort((a, b) => new Date(a.nextClassTime).getTime() - new Date(b.nextClassTime).getTime())[0]
+  const pendingAssignments = assignments.filter(a => !a.submissions || a.submissions.length === 0)
+  const recentPayments = payments.slice(0, 3)
+
+  // Prefer active live class over scheduled for banner
+  const activeLiveClass = upcomingClasses.find(c => c.status === 'active') ?? null
+  const nextScheduled = upcomingClasses.find(c => c.status === 'scheduled') ?? null
+  const bannerClass = activeLiveClass ?? nextScheduled
+
+  const scheduleLabel = (e: Enrollment) => {
+    const rs = e.course.recurringSchedule
+    if (!rs || rs.length === 0) return null
+    const days = rs.map(r => r.day.slice(0, 3)).join(', ')
+    return `${days} • ${rs[0].time}`
+  }
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="h-40 bg-gradient-to-r from-violet-200 to-purple-200 dark:from-violet-900/30 dark:to-purple-900/30 rounded-[24px] animate-pulse" />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map(i => <div key={i} className="h-20 bg-slate-100 dark:bg-neutral-800 rounded-2xl animate-pulse" />)}
+        </div>
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          <div className="xl:col-span-2 space-y-4">
+            <div className="h-48 bg-slate-100 dark:bg-neutral-800 rounded-2xl animate-pulse" />
+            <div className="h-40 bg-slate-100 dark:bg-neutral-800 rounded-2xl animate-pulse" />
+          </div>
+          <div className="space-y-4">
+            <div className="h-40 bg-slate-100 dark:bg-neutral-800 rounded-2xl animate-pulse" />
+            <div className="h-32 bg-slate-100 dark:bg-neutral-800 rounded-2xl animate-pulse" />
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
       {/* Welcome & Next Class Banner */}
       <div className="bg-gradient-to-r from-violet-600 to-purple-600 rounded-[24px] p-6 sm:p-8 text-white relative overflow-hidden shadow-xl shadow-violet-600/20">
         <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4 pointer-events-none" />
-        
+
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div>
             <h2 className="text-2xl sm:text-3xl font-black mb-2 flex items-center gap-2">
-              Hello, {MOCK_STUDENT.name.split(' ')[0]}! <HandWaving size={28} className="text-amber-300" weight="fill" />
+              Hello, {user?.name?.split(' ')[0] ?? 'Student'}! <HandWaving size={28} className="text-amber-300" weight="fill" />
             </h2>
             <p className="text-violet-100 max-w-lg mb-6">Ready for your live sessions? Check your schedule and join your classes on time.</p>
           </div>
 
-          {upcomingClass && (
+          {bannerClass ? (
             <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 min-w-[300px]">
               <div className="flex justify-between items-start mb-1">
                 <p className="text-xs font-bold text-violet-200 uppercase tracking-widest">Up Next</p>
-                <span className="text-[10px] font-bold bg-white/20 px-2 py-0.5 rounded-full text-white">
-                  Class {upcomingClass.nextClassNumber} / {upcomingClass.totalClasses}
-                </span>
+                {bannerClass.status === 'active' ? (
+                  <span className="text-[10px] font-bold bg-red-500/80 px-2 py-0.5 rounded-full text-white animate-pulse">LIVE NOW</span>
+                ) : (
+                  <span className="text-[10px] font-bold bg-white/20 px-2 py-0.5 rounded-full text-white">Scheduled</span>
+                )}
               </div>
-              <h3 className="text-lg font-bold text-white leading-tight mb-3 truncate" title={upcomingClass.title}>{upcomingClass.title}</h3>
-              
+              <h3 className="text-lg font-bold text-white leading-tight mb-3 truncate" title={bannerClass.course.title}>
+                {bannerClass.course.title}
+              </h3>
+
               <div className="flex items-center gap-2 text-sm text-violet-100 mb-4">
                 <Clock size={16} weight="fill" />
                 <span>
-                  {new Date(upcomingClass.nextClassTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} 
-                  {' '} • {' '}
-                  {new Date(upcomingClass.nextClassTime).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                  {bannerClass.status === 'active'
+                    ? new Date(bannerClass.createdAt).toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+                    : bannerClass.scheduledAt
+                      ? new Date(bannerClass.scheduledAt).toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+                      : '—'}
                 </span>
               </div>
 
-              <a 
-                href={upcomingClass.meetingLink}
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center justify-center gap-2 bg-white text-violet-600 w-full py-2.5 rounded-xl font-bold text-sm shadow-[0_4px_14px_rgba(255,255,255,0.2)] hover:scale-105 transition-transform"
-              >
-                <VideoCamera size={18} weight="fill" />
-                Join Live Class
-              </a>
+              {bannerClass.meetingLink ? (
+                <a
+                  href={bannerClass.meetingLink}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center justify-center gap-2 bg-white text-violet-600 w-full py-2.5 rounded-xl font-bold text-sm shadow-[0_4px_14px_rgba(255,255,255,0.2)] hover:scale-105 transition-transform"
+                >
+                  <VideoCamera size={18} weight="fill" />
+                  Join Live Class
+                </a>
+              ) : (
+                <div className="flex items-center justify-center gap-2 bg-white/20 text-white/70 w-full py-2.5 rounded-xl font-bold text-sm">
+                  <VideoCamera size={18} weight="fill" />
+                  Link not set yet
+                </div>
+              )}
             </div>
-          )}
+          ) : null}
         </div>
       </div>
 
@@ -87,7 +172,7 @@ export default function StudentOverview({ onNavigate }: { onNavigate: (view: Stu
             <p className="text-xs font-bold text-slate-500 dark:text-neutral-400 uppercase mt-1">Active Batches</p>
           </div>
         </div>
-        
+
         <div className="bg-white dark:bg-neutral-900 p-5 rounded-2xl border border-slate-200 dark:border-neutral-800 shadow-sm flex items-center gap-4">
           <div className="w-12 h-12 rounded-full bg-green-50 dark:bg-green-900/20 flex items-center justify-center text-green-600 dark:text-green-400">
             <ChartLineUp size={24} weight="fill" />
@@ -113,17 +198,19 @@ export default function StudentOverview({ onNavigate }: { onNavigate: (view: Stu
             <Certificate size={24} weight="fill" />
           </div>
           <div>
-            <p className="text-2xl font-black text-slate-900 dark:text-white leading-none">{completedCourses.filter(c => c.certificateId).length}</p>
+            <p className="text-2xl font-black text-slate-900 dark:text-white leading-none">
+              {payments.filter(p => p.status === 'approved').length}
+            </p>
             <p className="text-xs font-bold text-slate-500 dark:text-neutral-400 uppercase mt-1">Certificates</p>
           </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        {/* Left Column (Main Content) */}
+        {/* Left Column */}
         <div className="xl:col-span-2 space-y-6">
-          
-          {/* Active Courses */}
+
+          {/* Enrolled Courses */}
           <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200 dark:border-neutral-800 shadow-sm overflow-hidden">
             <div className="p-5 border-b border-slate-100 dark:border-neutral-800 flex items-center justify-between bg-slate-50 dark:bg-neutral-800/50">
               <h3 className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
@@ -135,35 +222,66 @@ export default function StudentOverview({ onNavigate }: { onNavigate: (view: Stu
               </button>
             </div>
             <div className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {activeCourses.length > 0 ? activeCourses.map(course => (
-                <Link key={course.id} to={`/dashboard/courses/${course.id}`} className="bg-slate-50 dark:bg-neutral-800/30 rounded-2xl p-4 border border-slate-100 dark:border-neutral-800 flex flex-col hover:bg-slate-100 dark:hover:bg-neutral-800/50 transition-colors group">
-                  <div className="flex justify-between items-start mb-3">
-                    <div className="w-10 h-10 rounded-xl bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center text-violet-600 dark:text-violet-400 group-hover:scale-110 transition-transform">
-                      <VideoCamera size={20} weight="fill" />
+              {activeCourses.length > 0 ? activeCourses.map(enrollment => {
+                const attended = enrollment.progress.sessionsAttended
+                const total = enrollment.progress.totalSessions
+                const attendance = total > 0 ? Math.round((attended / total) * 100) : 0
+                const schedule = scheduleLabel(enrollment)
+                const liveForCourse = upcomingClasses.find(c => c.course._id === enrollment.course._id)
+
+                return (
+                  <Link
+                    key={enrollment._id}
+                    to={`/dashboard/courses/${enrollment.course._id}`}
+                    className="bg-slate-50 dark:bg-neutral-800/30 rounded-2xl p-4 border border-slate-100 dark:border-neutral-800 flex flex-col hover:bg-slate-100 dark:hover:bg-neutral-800/50 transition-colors group"
+                  >
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="w-10 h-10 rounded-xl bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center text-violet-600 dark:text-violet-400 group-hover:scale-110 transition-transform">
+                        <VideoCamera size={20} weight="fill" />
+                      </div>
+                      {enrollment.course.level && (
+                        <span className="text-[10px] font-bold px-2 py-1 bg-white dark:bg-neutral-800 text-slate-600 dark:text-neutral-400 rounded-md border border-slate-200 dark:border-neutral-700">
+                          {enrollment.course.level}
+                        </span>
+                      )}
                     </div>
-                    <span className="text-[10px] font-bold px-2 py-1 bg-white dark:bg-neutral-800 text-slate-600 dark:text-neutral-400 rounded-md border border-slate-200 dark:border-neutral-700">
-                      {course.level}
-                    </span>
-                  </div>
-                  
-                  <h4 className="font-bold text-slate-900 dark:text-white leading-tight mb-1 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">{course.title}</h4>
-                  <p className="text-xs text-slate-500 dark:text-neutral-400 mb-4">Inst: {course.instructorName}</p>
-                  
-                  <div className="mt-auto space-y-3">
-                    <div className="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-neutral-300 bg-white dark:bg-neutral-800 p-2 rounded-lg border border-slate-100 dark:border-neutral-700">
-                      <CalendarBlank size={14} className="text-violet-600" />
-                      {course.schedule}
+
+                    <h4 className="font-bold text-slate-900 dark:text-white leading-tight mb-1 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">
+                      {enrollment.course.title}
+                    </h4>
+                    <p className="text-xs text-slate-500 dark:text-neutral-400 mb-4">Inst: {enrollment.teacher?.name ?? '—'}</p>
+
+                    <div className="mt-auto space-y-2">
+                      {schedule && (
+                        <div className="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-neutral-300 bg-white dark:bg-neutral-800 p-2 rounded-lg border border-slate-100 dark:border-neutral-700">
+                          <CalendarBlank size={14} className="text-violet-600" />
+                          {schedule}
+                        </div>
+                      )}
+                      {liveForCourse && (
+                        <div className={`flex items-center gap-2 text-xs font-semibold p-2 rounded-lg border ${
+                          liveForCourse.status === 'active'
+                            ? 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/10 border-red-100 dark:border-red-900/20'
+                            : 'text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-900/10 border-violet-100 dark:border-violet-900/20'
+                        }`}>
+                          <Clock size={14} />
+                          {liveForCourse.status === 'active' ? 'LIVE NOW' : (
+                            liveForCourse.scheduledAt
+                              ? `Next: ${new Date(liveForCourse.scheduledAt).toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}`
+                              : 'Scheduled'
+                          )}
+                        </div>
+                      )}
+                      <div className="flex justify-between items-center text-xs font-bold pt-1">
+                        <span className="text-slate-500 dark:text-neutral-400">Attendance</span>
+                        <span className={attendance >= 80 ? 'text-green-600' : 'text-amber-500'}>
+                          {attendance}% ({attended}/{total})
+                        </span>
+                      </div>
                     </div>
-                    
-                    <div className="flex justify-between items-center text-xs font-bold pt-2">
-                      <span className="text-slate-500 dark:text-neutral-400">Attendance</span>
-                      <span className={course.attendance >= 80 ? "text-green-600" : "text-amber-500"}>
-                        {course.attendance}% ({course.attendedClasses}/{course.totalClasses})
-                      </span>
-                    </div>
-                  </div>
-                </Link>
-              )) : (
+                  </Link>
+                )
+              }) : (
                 <div className="col-span-2 text-center py-6">
                   <p className="text-sm text-slate-500 dark:text-neutral-400">No active classes. Register for a new batch today!</p>
                 </div>
@@ -182,18 +300,22 @@ export default function StudentOverview({ onNavigate }: { onNavigate: (view: Stu
             <div className="p-0">
               {pendingAssignments.length > 0 ? (
                 <div className="divide-y divide-slate-100 dark:divide-neutral-800">
-                  {pendingAssignments.map(assignment => (
-                    <div key={assignment.id} className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50 dark:hover:bg-neutral-800/30 transition-colors">
+                  {pendingAssignments.slice(0, 5).map(assignment => (
+                    <div key={assignment._id} className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50 dark:hover:bg-neutral-800/30 transition-colors">
                       <div>
                         <h4 className="font-bold text-slate-900 dark:text-white text-sm mb-1">{assignment.title}</h4>
-                        <p className="text-xs text-slate-500 dark:text-neutral-400 mb-2">{assignment.courseName}</p>
+                        <p className="text-xs text-slate-500 dark:text-neutral-400 mb-2">{assignment.course.title}</p>
                         <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-600 dark:text-amber-500 bg-amber-50 dark:bg-amber-900/20 px-2.5 py-1 rounded-full w-fit">
                           <Clock size={12} weight="bold" />
                           Due: {new Date(assignment.dueDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
                         </div>
                       </div>
-                      <button 
-                        onClick={() => { setSelectedTask({ title: assignment.title, course: assignment.courseName }); setSubmitModalOpen(true); }}
+                      <button
+                        onClick={() => {
+                          const enrollment = enrollments.find(e => e.course._id === assignment.course._id)
+                          setSelectedTask({ assignment, enrollmentId: enrollment?._id ?? '' })
+                          setSubmitModalOpen(true)
+                        }}
                         className="bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-200 dark:text-slate-900 text-white px-4 py-2 rounded-xl text-xs font-bold transition-colors whitespace-nowrap"
                       >
                         Submit Task
@@ -212,9 +334,9 @@ export default function StudentOverview({ onNavigate }: { onNavigate: (view: Stu
           </div>
         </div>
 
-        {/* Right Column (Sidebar Widgets) */}
+        {/* Right Column */}
         <div className="space-y-6">
-          
+
           {/* Noticeboard */}
           <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200 dark:border-neutral-800 shadow-sm overflow-hidden">
             <div className="p-5 border-b border-slate-100 dark:border-neutral-800 flex items-center gap-2 bg-blue-50/50 dark:bg-blue-900/5">
@@ -222,20 +344,26 @@ export default function StudentOverview({ onNavigate }: { onNavigate: (view: Stu
               <h3 className="font-bold text-slate-900 dark:text-white">Noticeboard</h3>
             </div>
             <div className="p-0 divide-y divide-slate-100 dark:divide-neutral-800">
-              {MOCK_ANNOUNCEMENTS.map(announcement => (
-                <div key={announcement.id} className="p-5">
+              {announcements.length > 0 ? announcements.slice(0, 5).map(ann => (
+                <div key={ann._id} className="p-5">
                   <div className="flex justify-between items-start mb-2">
                     <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
-                      announcement.type === 'alert' ? 'bg-red-50 text-red-600 dark:bg-red-900/20' : 'bg-blue-50 text-blue-600 dark:bg-blue-900/20'
+                      ann.type === 'alert' ? 'bg-red-50 text-red-600 dark:bg-red-900/20'
+                      : ann.type === 'success' ? 'bg-green-50 text-green-600 dark:bg-green-900/20'
+                      : 'bg-blue-50 text-blue-600 dark:bg-blue-900/20'
                     }`}>
-                      {announcement.type}
+                      {ann.type}
                     </span>
-                    <span className="text-[10px] text-slate-400 font-semibold">{new Date(announcement.date).toLocaleDateString()}</span>
+                    <span className="text-[10px] text-slate-400 font-semibold">
+                      {new Date(ann.createdAt).toLocaleDateString()}
+                    </span>
                   </div>
-                  <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-1.5">{announcement.title}</h4>
-                  <p className="text-xs text-slate-600 dark:text-neutral-400 leading-relaxed">{announcement.content}</p>
+                  <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-1.5">{ann.title}</h4>
+                  <p className="text-xs text-slate-600 dark:text-neutral-400 leading-relaxed">{ann.content}</p>
                 </div>
-              ))}
+              )) : (
+                <div className="p-6 text-center text-sm text-slate-500 dark:text-neutral-400">No announcements yet.</div>
+              )}
             </div>
           </div>
 
@@ -245,40 +373,56 @@ export default function StudentOverview({ onNavigate }: { onNavigate: (view: Stu
               <h3 className="font-bold text-slate-900 dark:text-white">Recent Payments</h3>
               <button onClick={() => onNavigate('payments')} className="text-xs font-bold text-violet-600 hover:text-violet-700">View All</button>
             </div>
-            <div className="space-y-4">
-              {recentPayments.map(payment => (
-                <div key={payment.id} className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-slate-50 dark:bg-neutral-800 border border-slate-100 dark:border-neutral-700 flex items-center justify-center text-slate-500 dark:text-neutral-400 flex-shrink-0">
-                    <CreditCard size={18} />
+            {recentPayments.length > 0 ? (
+              <div className="space-y-4">
+                {recentPayments.map(payment => (
+                  <div key={payment._id} className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-slate-50 dark:bg-neutral-800 border border-slate-100 dark:border-neutral-700 flex items-center justify-center text-slate-500 dark:text-neutral-400 flex-shrink-0">
+                      <CreditCard size={18} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-bold text-slate-900 dark:text-white truncate mb-0.5">
+                        {payment.course.title}
+                      </p>
+                      <p className="text-[10px] text-slate-500 dark:text-neutral-500 flex items-center gap-1 font-medium">
+                        <Clock size={10} /> {new Date(payment.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-bold text-slate-900 dark:text-white leading-none mb-1">
+                        {payment.currency} {payment.amount.toLocaleString()}
+                      </p>
+                      <p className={`text-[9px] font-bold uppercase tracking-wider ${
+                        payment.status === 'approved' ? 'text-green-500' : payment.status === 'rejected' ? 'text-red-500' : 'text-amber-500'
+                      }`}>
+                        {payment.status}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold text-slate-900 dark:text-white truncate mb-0.5" title={payment.description}>{payment.description}</p>
-                    <p className="text-[10px] text-slate-500 dark:text-neutral-500 flex items-center gap-1 font-medium">
-                      <Clock size={10} /> {new Date(payment.date).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-bold text-slate-900 dark:text-white leading-none mb-1">
-                      {payment.currency} {payment.amount.toLocaleString()}
-                    </p>
-                    <p className={`text-[9px] font-bold uppercase tracking-wider ${payment.status === 'completed' ? 'text-green-500' : 'text-amber-500'}`}>
-                      {payment.status}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-slate-500 dark:text-neutral-400 text-center py-4">No payments yet.</p>
+            )}
           </div>
 
         </div>
       </div>
-      
-      {/* Assignment Upload Modal */}
-      <StudentAssignmentModal 
-        isOpen={submitModalOpen} 
-        onClose={() => setSubmitModalOpen(false)} 
-        assignmentTitle={selectedTask?.title || ''} 
-        courseName={selectedTask?.course || ''} 
+
+      {/* Assignment Submit Modal */}
+      <StudentAssignmentModal
+        isOpen={submitModalOpen}
+        onClose={() => setSubmitModalOpen(false)}
+        assignment={selectedTask?.assignment ?? null}
+        enrollmentId={selectedTask?.enrollmentId ?? ''}
+        onSubmitted={() => {
+          setSubmitModalOpen(false)
+          setAssignments(prev => prev.map(a =>
+            a._id === selectedTask?.assignment._id
+              ? { ...a, submissions: [{ _id: 'temp', student: { _id: '', name: '' }, submittedAt: new Date().toISOString(), fileUrl: '', status: 'submitted' as const }] }
+              : a
+          ))
+        }}
       />
     </div>
   )

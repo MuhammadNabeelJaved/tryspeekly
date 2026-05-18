@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -8,6 +8,8 @@ import {
 } from '@phosphor-icons/react'
 import type { PaymentMethodAdmin, PaymentPolicyAdmin, PaymentFaqAdmin } from './adminData'
 import { INITIAL_PAYMENTS_SETUP } from './adminData'
+import { siteSettingsService } from '@/services/site-settings.service'
+import toast from 'react-hot-toast'
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 
@@ -284,10 +286,7 @@ function MethodModal({ method, onSave, onClose }: {
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 
 export default function AdminPaymentsSetup() {
-  const [data, setData] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('admin_payments_setup') || 'null') ?? INITIAL_PAYMENTS_SETUP }
-    catch { return INITIAL_PAYMENTS_SETUP }
-  })
+  const [data, setData] = useState(INITIAL_PAYMENTS_SETUP)
   const [activeSection, setActiveSection] = useState<Section>('local-methods')
   const [saved, setSaved] = useState(false)
   const [methodModal, setMethodModal] = useState<PaymentMethodAdmin | null>(null)
@@ -295,15 +294,37 @@ export default function AdminPaymentsSetup() {
   const [expandedPolicy, setExpandedPolicy] = useState<string | null>(null)
   const [expandedFaq, setExpandedFaq] = useState<string | null>(null)
 
-  function save() {
-    localStorage.setItem('admin_payments_setup', JSON.stringify(data))
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2500)
+  useEffect(() => {
+    async function load() {
+      try {
+        const settings = await siteSettingsService.get()
+        if (settings.paymentsSetup && Object.keys(settings.paymentsSetup).length > 0) {
+          setData(settings.paymentsSetup as unknown as typeof INITIAL_PAYMENTS_SETUP)
+        }
+      } catch { /* silent */ }
+    }
+    load()
+  }, [])
+
+  async function save() {
+    try {
+      await siteSettingsService.update({ paymentsSetup: data as unknown as Record<string, unknown> })
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2500)
+      toast.success('Payment settings saved')
+    } catch {
+      toast.error('Failed to save settings')
+    }
   }
 
-  function resetAll() {
+  async function resetAll() {
     setData(INITIAL_PAYMENTS_SETUP)
-    localStorage.setItem('admin_payments_setup', JSON.stringify(INITIAL_PAYMENTS_SETUP))
+    try {
+      await siteSettingsService.update({ paymentsSetup: INITIAL_PAYMENTS_SETUP as unknown as Record<string, unknown> })
+      toast.success('Reset to defaults')
+    } catch {
+      toast.error('Failed to reset')
+    }
   }
 
   function upd(path: string[], value: unknown) {

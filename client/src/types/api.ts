@@ -98,6 +98,21 @@ export interface ResetPasswordDto {
 
 // ─── Course Types ─────────────────────────────────────────────────────────────
 
+export interface CourseMaterial {
+  _id: string;
+  title: string;
+  link: string;
+  sharedAt: string;
+}
+
+export interface SyllabusTopic {
+  _id: string;
+  week: number;
+  title: string;
+  description: string;
+  status: 'pending' | 'in-progress' | 'completed';
+}
+
 export interface Course {
   _id: string;
   title: string;
@@ -110,12 +125,14 @@ export interface Course {
   thumbnail?: string;
   totalSessions: number;
   sessionDuration: number;
-  status: 'draft' | 'published' | 'archived';
+  status: 'draft' | 'pending' | 'published' | 'rejected' | 'archived';
   teacher: { _id: string; name: string; profileImage?: string; bio?: string };
   enrolledStudents: string[];
   recurringSchedule?: { day: string; time: string }[];
   meetLink?: string;
   maxStudents?: number;
+  materials?: CourseMaterial[];
+  syllabus?: SyllabusTopic[];
   createdAt: string;
   updatedAt: string;
 }
@@ -155,7 +172,16 @@ export interface CourseSingleResponse {
 export interface Enrollment {
   _id: string;
   student: { _id: string; name: string; email: string; profileImage?: string };
-  course: { _id: string; title: string; thumbnail?: string; totalSessions?: number };
+  course: {
+    _id: string;
+    title: string;
+    thumbnail?: string;
+    totalSessions?: number;
+    level?: string;
+    type?: string;
+    sessionDuration?: number;
+    recurringSchedule?: Array<{ day: string; time: string }>;
+  };
   teacher: { _id: string; name: string; profileImage?: string };
   payment?: string;
   enrolledAt: string;
@@ -276,9 +302,9 @@ export interface BlogSingleResponse {
 export interface Certificate {
   _id: string;
   certificateId: string;
-  enrollment: string;
+  enrollment: string | { _id: string; teacher?: { _id: string; name: string } };
   student: { _id: string; name: string };
-  course: { _id: string; title: string; thumbnail?: string };
+  course: { _id: string; title: string; thumbnail?: string; level?: string };
   issueDate: string;
   credentialUrl?: string;
   status: 'issued' | 'revoked';
@@ -404,7 +430,23 @@ export interface SiteSettings {
   seo: { metaTitle?: string; metaDescription?: string; keywords?: string };
   logoUrl?: string;
   bannerUrl?: string;
+  paymentsSetup?: Record<string, unknown>;
   updatedAt: string;
+}
+
+export interface AdminStats {
+  totalStudents: number;
+  totalInstructors: number;
+  revenue: Record<string, number>;
+  pendingPayments: number;
+  pendingCourseReviews: number;
+  coursesByStatus: {
+    published: number;
+    pending: number;
+    draft: number;
+    rejected: number;
+    archived: number;
+  };
 }
 
 // ─── Assignment Types ─────────────────────────────────────────────────────────

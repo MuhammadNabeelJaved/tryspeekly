@@ -1,10 +1,12 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import toast from 'react-hot-toast'
-import { INSTRUCTOR_COURSES } from './instructorData'
+import { liveClassService } from '@/services/live-class.service'
+import { coursesService } from '@/services/courses.service'
 import { Users, Clock, PlayCircle, X, Check, PencilSimple, Trash, ListDashes, DotsThreeVertical, CaretUp, CaretDown, VideoCamera, FilePdf, PresentationChart, ShareNetwork, CheckCircle, MagnifyingGlass } from '@phosphor-icons/react'
 
 type InstructorCourse = {
+  _id: string
   id: string
   title: string
   students: number
@@ -18,16 +20,33 @@ type InstructorCourse = {
   isLive?: boolean
   totalClasses?: number
   maxStudents?: number
+  totalSessions?: number
+}
+
+type ActiveLiveClass = {
+  _id: string
+  courseId: string
+  courseTitle: string
+  meetingLink: string
+  classNumber: number
+  createdAt: string
 }
 
 type CompletedClass = {
+  _id: string
   id: string
   courseId: string
   courseTitle: string
   completedAt: string
   timestamp: number
   link: string
-  classNumber?: number
+  classNumber: number
+}
+
+type ScheduledClass = {
+  _id: string
+  courseId: string
+  scheduledAt: string
 }
 
 type SharedMaterial = {
@@ -48,24 +67,28 @@ type SyllabusTopic = {
 }
 
 export default function InstructorLiveClasses() {
-  const [courses, setCourses] = useState<InstructorCourse[]>(INSTRUCTOR_COURSES.filter(c => c.status === 'active'))
+  const [courses, setCourses] = useState<InstructorCourse[]>([])
   const [mainSearchTerm, setMainSearchTerm] = useState('')
+  const [statusFilter, setStatusFilter] = useState<'all' | 'live' | 'upcoming'>('all')
+  const [levelFilter, setLevelFilter] = useState<string>('all')
+  const [isLoadingCourses, setIsLoadingCourses] = useState(true)
+  const [scheduledClasses, setScheduledClasses] = useState<Record<string, ScheduledClass>>({})
+  const [isSavingSchedule, setIsSavingSchedule] = useState(false)
   
   // Live Class State
   const [liveModalCourse, setLiveModalCourse] = useState<InstructorCourse | null>(null)
   const [liveUrlInput, setLiveUrlInput] = useState('')
   const [liveUrlError, setLiveUrlError] = useState('')
+  const [currentLiveClassId, setCurrentLiveClassId] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
 
   // Schedule State
   const [scheduleModalCourse, setScheduleModalCourse] = useState<InstructorCourse | null>(null)
   const [scheduleInput, setScheduleInput] = useState('')
 
   // Live Class History
-  const [completedClasses, setCompletedClasses] = useState<CompletedClass[]>([
-    { id: 'hc_1', courseId: 'c1', courseTitle: 'IELTS Academic Prep', completedAt: new Date(Date.now() - 86400000).toLocaleString(), timestamp: Date.now() - 86400000, link: 'https://zoom.us/j/123456', classNumber: 13 },
-    { id: 'hc_2', courseId: 'c1', courseTitle: 'IELTS Academic Prep', completedAt: new Date(Date.now() - 172800000).toLocaleString(), timestamp: Date.now() - 172800000, link: 'https://zoom.us/j/654321', classNumber: 12 },
-    { id: 'hc_3', courseId: 'c2', courseTitle: 'Business English Basics', completedAt: new Date(Date.now() - 259200000).toLocaleString(), timestamp: Date.now() - 259200000, link: 'https://meet.google.com/abc-defg-hij', classNumber: 6 }
-  ])
+  const [completedClasses, setCompletedClasses] = useState<CompletedClass[]>([])
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false)
   const [historyModalOpen, setHistoryModalOpen] = useState(false)
   const [historySearchTerm, setHistorySearchTerm] = useState('')
   const [historySortBy, setHistorySortBy] = useState<'newest' | 'oldest' | 'class-asc' | 'class-desc'>('newest')
@@ -120,6 +143,115 @@ export default function InstructorLiveClasses() {
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [dropdownRef, materialDropdownRef, syllabusDropdownRef])
 
+  // Fetch courses and active live classes from API
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        setIsLoadingCourses(true)
+
+        const [coursesRes, liveClassesRes] = await Promise.all([
+          coursesService.getTeacherCourses(),
+          liveClassService.getTeacherLiveClasses()
+        ])
+
+        if (coursesRes.success && coursesRes.data) {
+          const activeCourses = coursesRes.data.filter((c: { status: string }) => c.status === 'published' || c.status === 'active')
+
+          const activeLiveClasses = liveClassesRes.data?.filter((lc: { status: string }) => lc.status === 'active') || []
+          const completedLiveClasses = liveClassesRes.data?.filter((lc: { status: string }) => lc.status === 'completed') || []
+          const scheduledLiveClasses = liveClassesRes.data?.filter((lc: { status: string }) => lc.status === 'scheduled') || []
+
+          // Build scheduled classes map keyed by courseId
+          const scheduledMap: Record<string, ScheduledClass> = {}
+          scheduledLiveClasses.forEach((lc: { _id: string; course: { _id: string }; scheduledAt: string }) => {
+            scheduledMap[String(lc.course._id)] = {
+              _id: lc._id,
+              courseId: String(lc.course._id),
+              scheduledAt: lc.scheduledAt,
+            }
+          })
+          setScheduledClasses(scheduledMap)
+
+          // Set completed classes for history
+          const mappedCompleted: CompletedClass[] = completedLiveClasses.map((lc: { _id: string; course: { _id: string; title: string }; meetingLink: string; classNumber: number; createdAt: string }) => ({
+            _id: lc._id,
+            id: lc._id,
+            courseId: String(lc.course._id),
+            courseTitle: lc.course.title,
+            completedAt: new Date(lc.createdAt).toLocaleString(),
+            timestamp: new Date(lc.createdAt).getTime(),
+            link: lc.meetingLink,
+            classNumber: lc.classNumber,
+          }))
+          setCompletedClasses(mappedCompleted)
+
+          const mappedCourses: InstructorCourse[] = activeCourses.map((course: { _id: string; title: string; enrolledStudents: unknown[]; status: string; totalSessions: number; level?: string; description?: string }) => {
+            const courseIdStr = String(course._id)
+            const liveClass = activeLiveClasses.find((lc: { course: { _id: string } }) => String(lc.course._id) === courseIdStr)
+            return {
+              _id: course._id,
+              id: courseIdStr,
+              title: course.title,
+              students: course.enrolledStudents?.length || 0,
+              status: course.status || 'active',
+              nextClass: 'TBD',
+              progress: 0,
+              level: course.level,
+              description: course.description,
+              totalClasses: course.totalSessions,
+              totalSessions: course.totalSessions,
+              isLive: !!liveClass,
+              liveLink: liveClass?.meetingLink || ''
+            }
+          })
+
+          setCourses(mappedCourses)
+
+          if (activeLiveClasses.length > 0) {
+            setCurrentLiveClassId(activeLiveClasses[0]._id)
+          }
+        }
+      } catch {
+        toast.error('Failed to load courses')
+      } finally {
+        setIsLoadingCourses(false)
+      }
+    }
+
+    fetchData()
+  }, [])
+
+  // Fetch completed classes from database
+  useEffect(() => {
+    async function fetchCompletedClasses() {
+      if (!historyModalOpen) return
+
+      setIsLoadingHistory(true)
+      try {
+        const response = await liveClassService.getTeacherCompletedClasses()
+        if (response.success && response.data) {
+          const mapped: CompletedClass[] = response.data.map((lc: { _id: string; course: { _id: string; title: string }; meetingLink: string; classNumber: number; createdAt: string }) => ({
+            _id: lc._id,
+            id: lc._id,
+            courseId: lc.course._id,
+            courseTitle: lc.course.title,
+            completedAt: new Date(lc.createdAt).toLocaleString(),
+            timestamp: new Date(lc.createdAt).getTime(),
+            link: lc.meetingLink,
+            classNumber: lc.classNumber,
+          }))
+          setCompletedClasses(mapped)
+        }
+      } catch {
+        toast.error('Failed to load class history')
+      } finally {
+        setIsLoadingHistory(false)
+      }
+    }
+
+    fetchCompletedClasses()
+  }, [historyModalOpen])
+
   // Live Class Handlers
   function openLiveModal(course: InstructorCourse) {
     setLiveModalCourse(course)
@@ -127,7 +259,7 @@ export default function InstructorLiveClasses() {
     setLiveUrlError('')
   }
 
-  function handleStartLive() {
+  async function handleStartLive() {
     if (!liveModalCourse) return
 
     if (!liveUrlInput.trim()) {
@@ -146,16 +278,38 @@ export default function InstructorLiveClasses() {
     }
 
     setLiveUrlError('')
-    setCourses(courses.map(c => 
-      c.id === liveModalCourse.id 
-        ? { ...c, isLive: true, liveLink: liveUrlInput } 
-        : c
-    ))
-    setLiveModalCourse(null)
+    setIsLoading(true)
+
+    try {
+      const courseId = liveModalCourse._id || liveModalCourse.id
+      const completedCount = completedClasses.filter(c => c.courseId === liveModalCourse.id).length
+
+      const response = await liveClassService.startLiveClass({
+        courseId,
+        meetingLink: liveUrlInput,
+        classNumber: completedCount + 1,
+      })
+
+      if (response.success) {
+        setCurrentLiveClassId(response.data._id)
+        setCourses(courses.map(c =>
+          c.id === liveModalCourse.id
+            ? { ...c, isLive: true, liveLink: liveUrlInput }
+            : c
+        ))
+        toast.success('Live class started! Enrolled students have been notified.')
+      }
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } }
+      toast.error(err.response?.data?.message || 'Failed to start live class')
+    } finally {
+      setIsLoading(false)
+      setLiveModalCourse(null)
+    }
   }
 
-  function handleUpdateLive() {
-    if (!liveModalCourse || !liveUrlInput) return
+  async function handleUpdateLive() {
+    if (!liveModalCourse || !liveUrlInput || !currentLiveClassId) return
 
     if (!liveUrlInput.trim()) {
       setLiveUrlError('Please provide a meeting link.')
@@ -173,18 +327,29 @@ export default function InstructorLiveClasses() {
     }
 
     setLiveUrlError('')
-    setCourses(courses.map(c => 
-      c.id === liveModalCourse.id 
-        ? { ...c, liveLink: liveUrlInput } 
-        : c
-    ))
-    
-    setLiveModalCourse({ ...liveModalCourse, liveLink: liveUrlInput })
-    toast.success("Live class link updated successfully!")
+    setIsLoading(true)
+
+    try {
+      await liveClassService.updateLiveClass(currentLiveClassId, liveUrlInput)
+
+      setCourses(courses.map(c =>
+        c.id === liveModalCourse.id
+          ? { ...c, liveLink: liveUrlInput }
+          : c
+      ))
+
+      setLiveModalCourse({ ...liveModalCourse, liveLink: liveUrlInput })
+      toast.success("Live class link updated successfully!")
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } }
+      toast.error(err.response?.data?.message || 'Failed to update live class')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
-  function handleCompleteLive() {
-    if (!liveModalCourse) return
+  async function handleCompleteLive() {
+    if (!liveModalCourse || !currentLiveClassId) return
 
     if (!liveUrlInput.trim()) {
       setLiveUrlError('Please provide a meeting link to mark as completed.')
@@ -200,57 +365,137 @@ export default function InstructorLiveClasses() {
       setLiveUrlError('This link has already been used for a completed class. Please provide a new link.')
       return
     }
-    
+
     setLiveUrlError('')
+    setIsLoading(true)
 
-    const courseHistory = completedClasses.filter(c => c.courseId === liveModalCourse.id)
-    
-    const newRecord: CompletedClass = {
-      id: `hc_${Date.now()}`,
-      courseId: liveModalCourse.id,
-      courseTitle: liveModalCourse.title,
-      completedAt: new Date().toLocaleString(),
-      timestamp: Date.now(),
-      link: liveUrlInput,
-      classNumber: courseHistory.length + 1
+    try {
+      await liveClassService.completeLiveClass(currentLiveClassId)
+
+      const courseHistory = completedClasses.filter(c => c.courseId === liveModalCourse.id)
+
+      const newRecord: CompletedClass = {
+        _id: `hc_${Date.now()}`,
+        id: `hc_${Date.now()}`,
+        courseId: liveModalCourse._id || liveModalCourse.id,
+        courseTitle: liveModalCourse.title,
+        completedAt: new Date().toLocaleString(),
+        timestamp: Date.now(),
+        link: liveUrlInput,
+        classNumber: courseHistory.length + 1
+      }
+      setCompletedClasses([newRecord, ...completedClasses])
+
+      setCourses(courses.map(c =>
+        c.id === liveModalCourse.id
+          ? { ...c, isLive: false, liveLink: '' }
+          : c
+      ))
+      setCurrentLiveClassId(null)
+      toast.success('Live class marked as completed!')
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } }
+      toast.error(err.response?.data?.message || 'Failed to complete live class')
+    } finally {
+      setIsLoading(false)
+      setLiveModalCourse(null)
     }
-    setCompletedClasses([newRecord, ...completedClasses])
-
-    setCourses(courses.map(c => 
-      c.id === liveModalCourse.id 
-        ? { ...c, isLive: false, liveLink: '' } 
-        : c
-    ))
-    setLiveModalCourse(null)
   }
 
-  function handleCancelLive() {
-    if (!liveModalCourse) return
-    setCourses(courses.map(c => 
-      c.id === liveModalCourse.id 
-        ? { ...c, isLive: false, liveLink: '' } 
-        : c
-    ))
-    setLiveModalCourse(null)
+  async function handleCancelLive() {
+    if (!liveModalCourse || !currentLiveClassId) return
+
+    setIsLoading(true)
+    try {
+      await liveClassService.cancelLiveClass(currentLiveClassId)
+
+      setCourses(courses.map(c =>
+        c.id === liveModalCourse.id
+          ? { ...c, isLive: false, liveLink: '' }
+          : c
+      ))
+      setCurrentLiveClassId(null)
+      toast.success('Live session cancelled')
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } }
+      toast.error(err.response?.data?.message || 'Failed to cancel live class')
+    } finally {
+      setIsLoading(false)
+      setLiveModalCourse(null)
+    }
   }
 
   // Schedule Handlers
   function openScheduleModal(course: InstructorCourse) {
     setScheduleModalCourse(course)
-    setScheduleInput(course.nextClass !== 'TBD' ? course.nextClass : '')
+    const courseId = (course._id || course.id || '').toString()
+    const existing = scheduledClasses[courseId]
+    if (existing?.scheduledAt) {
+      const dt = new Date(existing.scheduledAt)
+      const pad = (n: number) => String(n).padStart(2, '0')
+      const local = `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`
+      setScheduleInput(local)
+    } else {
+      setScheduleInput('')
+    }
   }
 
-  function handleSaveSchedule() {
-    if (!scheduleModalCourse) return
-    const updatedValue = scheduleInput.trim() || 'TBD'
-    setCourses(courses.map(c => c.id === scheduleModalCourse.id ? { ...c, nextClass: updatedValue } : c))
-    setScheduleModalCourse(null)
+  async function handleSaveSchedule() {
+    if (!scheduleModalCourse || !scheduleInput) return
+    const courseId = (scheduleModalCourse._id || scheduleModalCourse.id || '').toString()
+    const existing = scheduledClasses[courseId]
+    setIsSavingSchedule(true)
+    try {
+      if (existing) {
+        const res = await liveClassService.updateSchedule(existing._id, new Date(scheduleInput).toISOString())
+        if (res.success) {
+          setScheduledClasses(prev => ({
+            ...prev,
+            [courseId]: { _id: existing._id, courseId, scheduledAt: (res.data as { scheduledAt: string }).scheduledAt }
+          }))
+          toast.success('Schedule updated!')
+        }
+      } else {
+        const res = await liveClassService.scheduleClass({ courseId, scheduledAt: new Date(scheduleInput).toISOString() })
+        if (res.success) {
+          const data = res.data as { _id: string; scheduledAt: string }
+          setScheduledClasses(prev => ({
+            ...prev,
+            [courseId]: { _id: data._id, courseId, scheduledAt: data.scheduledAt }
+          }))
+          toast.success('Class scheduled!')
+        }
+      }
+    } catch {
+      toast.error('Failed to save schedule')
+    } finally {
+      setIsSavingSchedule(false)
+      setScheduleModalCourse(null)
+    }
   }
 
-  function handleRemoveSchedule() {
+  async function handleRemoveSchedule() {
     if (!scheduleModalCourse) return
-    setCourses(courses.map(c => c.id === scheduleModalCourse.id ? { ...c, nextClass: 'TBD' } : c))
-    setScheduleModalCourse(null)
+    const courseId = (scheduleModalCourse._id || scheduleModalCourse.id || '').toString()
+    const existing = scheduledClasses[courseId]
+    if (!existing) { setScheduleModalCourse(null); return }
+    setIsSavingSchedule(true)
+    try {
+      const res = await liveClassService.deleteSchedule(existing._id)
+      if (res.success) {
+        setScheduledClasses(prev => {
+          const copy = { ...prev }
+          delete copy[courseId]
+          return copy
+        })
+        toast.success('Schedule removed')
+      }
+    } catch {
+      toast.error('Failed to remove schedule')
+    } finally {
+      setIsSavingSchedule(false)
+      setScheduleModalCourse(null)
+    }
   }
 
   // History Edit Handlers
@@ -377,9 +622,14 @@ export default function InstructorLiveClasses() {
     toast.success('Syllabus topic deleted.')
   }
 
-  const filteredMainCourses = courses.filter(c => 
-    c.title.toLowerCase().includes(mainSearchTerm.toLowerCase())
-  )
+  const filteredMainCourses = courses.filter(c => {
+    const matchesSearch = c.title.toLowerCase().includes(mainSearchTerm.toLowerCase())
+    const matchesStatus = statusFilter === 'all'
+      || (statusFilter === 'live' && c.isLive)
+      || (statusFilter === 'upcoming' && !c.isLive)
+    const matchesLevel = levelFilter === 'all' || (c.level || '').toLowerCase() === levelFilter.toLowerCase()
+    return matchesSearch && matchesStatus && matchesLevel
+  })
 
   // Group classes by course for the history view
   const filteredHistory = completedClasses
@@ -450,8 +700,60 @@ export default function InstructorLiveClasses() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-        {filteredMainCourses.map(course => (
+      {/* Filter bar */}
+      <div className="flex flex-wrap items-center gap-4">
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-black text-slate-400 dark:text-neutral-500 uppercase tracking-widest">Status:</span>
+          {(['all', 'live', 'upcoming'] as const).map(s => (
+            <button
+              key={s}
+              onClick={() => setStatusFilter(s)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+                statusFilter === s
+                  ? 'bg-violet-600 text-white shadow-sm'
+                  : 'bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-400 hover:bg-slate-200 dark:hover:bg-neutral-700'
+              }`}
+            >
+              {s === 'all' ? 'All' : s === 'live' ? 'Live Now' : 'Upcoming'}
+            </button>
+          ))}
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-black text-slate-400 dark:text-neutral-500 uppercase tracking-widest">Level:</span>
+          {(['all', 'beginner', 'intermediate', 'advanced'] as const).map(l => (
+            <button
+              key={l}
+              onClick={() => setLevelFilter(l)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors capitalize ${
+                levelFilter === l
+                  ? 'bg-violet-600 text-white shadow-sm'
+                  : 'bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-400 hover:bg-slate-200 dark:hover:bg-neutral-700'
+              }`}
+            >
+              {l === 'all' ? 'All Levels' : l}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {isLoadingCourses ? (
+        <div className="flex items-center justify-center py-20">
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-10 h-10 border-4 border-violet-200 border-t-violet-600 rounded-full animate-spin" />
+            <p className="text-sm font-medium text-slate-500 dark:text-neutral-400">Loading your courses...</p>
+          </div>
+        </div>
+      ) : filteredMainCourses.length === 0 ? (
+        <div className="text-center py-20">
+          <div className="w-16 h-16 bg-slate-100 dark:bg-neutral-800 rounded-full flex items-center justify-center mx-auto mb-4">
+            <VideoCamera size={32} className="text-slate-400" />
+          </div>
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">No Active Courses</h3>
+          <p className="text-sm text-slate-500 dark:text-neutral-400">You don't have any published courses yet. Create a course to start live classes.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+          {filteredMainCourses.map(course => (
           <div key={course.id} className={`bg-white dark:bg-neutral-900 rounded-3xl border ${course.isLive ? 'border-red-200 dark:border-red-900/50 shadow-red-100 dark:shadow-red-900/20 shadow-lg scale-[1.01]' : 'border-slate-200 dark:border-neutral-800 shadow-sm hover:shadow-md hover:border-violet-300 dark:hover:border-violet-700'} overflow-hidden flex flex-col transition-all duration-300 relative`}>
             
             {/* Live Indicator Pulse Background */}
@@ -487,7 +789,19 @@ export default function InstructorLiveClasses() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wide">Next Class</p>
-                    <p className="font-semibold truncate">{course.nextClass !== 'TBD' ? course.nextClass : 'Not Scheduled'}</p>
+                    {(() => {
+                      const cId = (course.id || course._id || '').toString()
+                      const scheduled = scheduledClasses[cId]
+                      if (scheduled?.scheduledAt) {
+                        const dt = new Date(scheduled.scheduledAt)
+                        return (
+                          <p className="font-semibold truncate text-violet-700 dark:text-violet-300">
+                            {dt.toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                          </p>
+                        )
+                      }
+                      return <p className="font-semibold truncate text-slate-400 dark:text-neutral-500">Not Scheduled</p>
+                    })()}
                   </div>
                   <button 
                     onClick={() => openScheduleModal(course)}
@@ -504,12 +818,20 @@ export default function InstructorLiveClasses() {
                     <span className="font-medium">{course.students} Enrolled</span>
                   </div>
                   {course.totalClasses && (() => {
-                    const completed = completedClasses.filter(c => c.courseId === course.id).length;
+                    const courseId = (course.id || course._id || '').toString().trim();
+                    const completed = completedClasses.filter(cc => (cc.courseId || '').toString().trim() === courseId).length;
                     const isAllCompleted = completed >= course.totalClasses;
+
                     return (
-                      <div className={`flex items-center gap-1.5 font-bold px-2.5 py-1 rounded-md text-xs border ${isAllCompleted ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 border-green-200 dark:border-green-800' : 'bg-slate-50 dark:bg-neutral-800/80 text-violet-600 dark:text-violet-400 border-slate-200 dark:border-neutral-700'}`}>
-                        {isAllCompleted ? <CheckCircle size={14} weight="fill" /> : <ListDashes size={14} weight="bold" />}
-                        {completed} / {course.totalClasses} Completed
+                      <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1 font-bold px-2 py-1 rounded-md text-xs border bg-slate-50 dark:bg-neutral-800/80 text-slate-600 dark:text-neutral-400 border-slate-200 dark:border-neutral-700">
+                          <ListDashes size={12} weight="bold" />
+                          {course.totalClasses} Total
+                        </div>
+                        <div className={`flex items-center gap-1 font-bold px-2 py-1 rounded-md text-xs border ${isAllCompleted ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 border-green-200 dark:border-green-800' : 'bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-400 border-violet-200 dark:border-violet-800/50'}`}>
+                          <CheckCircle size={12} weight={isAllCompleted ? 'fill' : 'regular'} />
+                          {completed} Done
+                        </div>
                       </div>
                     );
                   })()}
@@ -551,7 +873,8 @@ export default function InstructorLiveClasses() {
             </div>
           </div>
         ))}
-      </div>
+        </div>
+      )}
 
       {/* SHARE MATERIAL MODAL */}
       <AnimatePresence>
@@ -759,35 +1082,40 @@ export default function InstructorLiveClasses() {
               
               <div className="space-y-4">
                 <div>
-                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wide block mb-1.5">Next Class (Day, Date & Time)</label>
-                  <input 
-                    type="text" 
-                    value={scheduleInput} 
-                    onChange={e => setScheduleInput(e.target.value)} 
-                    placeholder="e.g. Tomorrow, 4:00 PM"
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm font-medium text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors" 
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wide block mb-1.5">Next Class Date & Time</label>
+                  <input
+                    type="datetime-local"
+                    value={scheduleInput}
+                    onChange={e => setScheduleInput(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm font-medium text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors"
                   />
-                  <p className="text-[10px] text-slate-400 mt-2">This will be displayed to students on their dashboard.</p>
                 </div>
               </div>
 
               <div className="flex flex-col gap-2 mt-8">
-                <button 
-                  onClick={handleSaveSchedule} 
-                  className="w-full py-3 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-bold shadow-md shadow-violet-600/20 transition-colors flex items-center justify-center gap-2"
+                <button
+                  onClick={handleSaveSchedule}
+                  disabled={isSavingSchedule || !scheduleInput}
+                  className="w-full py-3 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-bold shadow-md shadow-violet-600/20 transition-colors flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  <Check size={16} /> Update Schedule
+                  {isSavingSchedule ? (
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <Check size={16} />
+                  )}
+                  {scheduleModalCourse && scheduledClasses[(scheduleModalCourse._id || scheduleModalCourse.id || '').toString()] ? 'Update Schedule' : 'Save Schedule'}
                 </button>
                 <div className="flex gap-2">
-                  <button 
-                    onClick={() => setScheduleModalCourse(null)} 
+                  <button
+                    onClick={() => setScheduleModalCourse(null)}
                     className="flex-1 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-slate-700 dark:text-neutral-200 text-xs font-bold transition-colors"
                   >
                     Cancel
                   </button>
-                  <button 
-                    onClick={handleRemoveSchedule} 
-                    className="flex-1 py-2.5 rounded-xl bg-red-50 hover:bg-red-100 dark:bg-red-900/10 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 text-xs font-bold transition-colors flex items-center justify-center gap-1.5"
+                  <button
+                    onClick={handleRemoveSchedule}
+                    disabled={isSavingSchedule || !scheduleModalCourse || !scheduledClasses[(scheduleModalCourse?._id || scheduleModalCourse?.id || '').toString()]}
+                    className="flex-1 py-2.5 rounded-xl bg-red-50 hover:bg-red-100 dark:bg-red-900/10 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 text-xs font-bold transition-colors flex items-center justify-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     <Trash size={14} /> Remove
                   </button>
@@ -867,9 +1195,16 @@ export default function InstructorLiveClasses() {
                   </div>
                 </div>
               </div>
-              
+
               <div className="p-6 overflow-y-auto flex-1">
-                {completedClasses.length === 0 ? (
+                {isLoadingHistory ? (
+                  <div className="flex items-center justify-center py-16">
+                    <div className="flex flex-col items-center gap-4">
+                      <div className="w-10 h-10 border-4 border-violet-200 border-t-violet-600 rounded-full animate-spin" />
+                      <p className="text-sm font-medium text-slate-500 dark:text-neutral-400">Loading class history...</p>
+                    </div>
+                  </div>
+                ) : completedClasses.length === 0 ? (
                   <div className="text-center text-slate-500 dark:text-neutral-400 py-16">
                     <div className="w-16 h-16 bg-slate-100 dark:bg-neutral-800 rounded-full flex items-center justify-center mx-auto mb-4">
                        <ListDashes size={24} className="opacity-50" />

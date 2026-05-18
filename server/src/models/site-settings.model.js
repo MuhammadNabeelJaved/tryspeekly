@@ -29,6 +29,7 @@ const siteSettingsSchema = new Schema(
       metaDescription: { type: String, trim: true },
       keywords: { type: String, trim: true },
     },
+    paymentsSetup: { type: mongoose.Schema.Types.Mixed, default: null },
   },
   { timestamps: true, versionKey: false }
 )

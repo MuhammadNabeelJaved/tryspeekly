@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form'
 import { motion, AnimatePresence } from 'framer-motion'
 import toast from 'react-hot-toast'
 import { coursesService } from '../../services/courses.service'
+import { liveClassService } from '@/services/live-class.service'
 import { INSTRUCTOR_COURSES as FALLBACK_COURSES } from './instructorData'
 import { BookOpen, Users, Clock, Plus, X, Check, PencilSimple, Trash, MagnifyingGlass, CheckCircle, CalendarBlank, ChartBar } from '@phosphor-icons/react'
 
@@ -97,7 +98,7 @@ function mapBackendCourse(c: any): InstructorCourse {
     rejected: 'rejected',
   }
   return {
-    id: c._id,
+    id: String(c._id),
     title: c.title,
     students: c.enrolledStudents?.length || 0,
     status: statusMap[c.status] || c.status,
@@ -142,11 +143,28 @@ export default function InstructorCourses() {
   const [modalType, setModalType] = useState<'add' | 'edit' | null>(null)
   const [formTab, setFormTab] = useState<'basic' | 'logistics' | 'curriculum'>('basic')
   const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [completedClassesMap, setCompletedClassesMap] = useState<Record<string, number>>({})
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     const fetchCourses = async () => {
+      setIsLoading(true)
       try {
-        const res = await coursesService.getTeacherCourses()
+        const [res, liveClassesRes] = await Promise.all([
+          coursesService.getTeacherCourses(),
+          liveClassService.getTeacherLiveClasses()
+        ])
+
+        // Build completed classes map
+        const completedMap: Record<string, number> = {}
+        if (liveClassesRes.success && liveClassesRes.data) {
+          const completedClasses = liveClassesRes.data.filter((lc: { status: string }) => lc.status === 'completed')
+          completedClasses.forEach((lc: { course: { _id: string } }) => {
+            const key = String(lc.course._id)
+            completedMap[key] = (completedMap[key] || 0) + 1
+          })
+          setCompletedClassesMap(completedMap)
+        }
         if (res.success && res.data.length > 0) {
           setCourses(res.data.map(mapBackendCourse))
         } else {
@@ -154,6 +172,8 @@ export default function InstructorCourses() {
         }
       } catch {
         setCourses(FALLBACK_COURSES)
+      } finally {
+        setIsLoading(false)
       }
     }
     fetchCourses()
@@ -311,6 +331,25 @@ export default function InstructorCourses() {
   const draftCount = courses.filter(c => c.status === 'draft').length
   const totalEnrolled = courses.reduce((sum, c) => sum + c.students, 0)
 
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-2">
+            <div className="h-7 w-40 bg-slate-200 dark:bg-neutral-800 rounded-lg animate-pulse" />
+            <div className="h-4 w-60 bg-slate-100 dark:bg-neutral-700 rounded-lg animate-pulse" />
+          </div>
+          <div className="h-10 w-32 bg-slate-200 dark:bg-neutral-800 rounded-xl animate-pulse" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          {[1, 2, 3, 4, 5, 6].map(i => (
+            <div key={i} className="h-56 bg-slate-100 dark:bg-neutral-800 rounded-3xl animate-pulse" />
+          ))}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -412,8 +451,11 @@ export default function InstructorCourses() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredCourses.map(course => {
-          const completedCount = Math.round((course.progress / 100) * (course.totalClasses || 0))
-          
+          const courseIdStr = (course.id || '').toString().trim()
+          const completedCount = completedClassesMap[courseIdStr] || 0
+          const totalClasses = course.totalClasses || 0
+          const progress = totalClasses > 0 ? Math.round((completedCount / totalClasses) * 100) : 0
+
           return (
           <div key={course.id} className="bg-white dark:bg-neutral-900 rounded-3xl border border-slate-200 dark:border-neutral-800 overflow-hidden shadow-sm flex flex-col hover:shadow-lg hover:border-violet-300 dark:hover:border-violet-700/50 transition-all duration-300 group">
             
@@ -493,16 +535,16 @@ export default function InstructorCourses() {
                   <div className="flex justify-between items-end mb-2">
                     <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-neutral-300">
                       <CheckCircle size={14} className="text-violet-500" weight="bold" />
-                      {completedCount} / {course.totalClasses || 0} Classes
+                      {completedCount} / {totalClasses} Classes
                     </div>
                     <span className="text-[10px] font-bold text-violet-600 dark:text-violet-400">
-                      {course.progress}%
+                      {progress}%
                     </span>
                   </div>
                   <div className="h-1.5 bg-slate-200 dark:bg-neutral-700 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-violet-600 rounded-full transition-all duration-1000 ease-out" 
-                      style={{ width: `${course.progress}%` }} 
+                    <div
+                      className="h-full bg-violet-600 rounded-full transition-all duration-1000 ease-out"
+                      style={{ width: `${progress}%` }}
                     />
                   </div>
                 </div>
