@@ -26,7 +26,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    const token = localStorage.getItem('accessToken');
+    const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
     if (!token) return;
 
     const socket = io(config.socketUrl, {
