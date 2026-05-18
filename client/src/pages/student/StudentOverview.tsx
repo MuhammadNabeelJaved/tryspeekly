@@ -49,11 +49,7 @@ export default function StudentOverview({ onNavigate }: { onNavigate: (view: Stu
       if (enrollRes.status === 'fulfilled' && enrollRes.value.success) setEnrollments(enrollRes.value.data)
       if (liveRes.status === 'fulfilled' && liveRes.value.success) {
         const apiData = liveRes.value.data as UpcomingClass[]
-        setUpcomingClasses((prev) => {
-          const apiIds = new Set(apiData.map((c) => c._id))
-          const socketOnly = prev.filter((c) => !apiIds.has(c._id))
-          return [...apiData, ...socketOnly]
-        })
+        setUpcomingClasses((prev) => prev.length > 0 ? prev : apiData)
       }
       if (assignRes.status === 'fulfilled' && assignRes.value.success) setAssignments(assignRes.value.data)
       if (annRes.status === 'fulfilled' && annRes.value.success) setAnnouncements(annRes.value.data)
