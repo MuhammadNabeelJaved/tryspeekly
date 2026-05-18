@@ -497,7 +497,7 @@ export default function AdminPage() {
                   <Route path="/instructors" element={<AdminInstructors store={store} />} />
                   <Route path="/courses" element={<AdminCourses store={store} />} />
                   <Route path="/certificates" element={<AdminCertificates store={store} />} />
-                  <Route path="/payments" element={<AdminPaymentsView store={store} />} />
+                  <Route path="/payments" element={<AdminPaymentsView />} />
                   <Route path="/financial-aid" element={<AdminFinancialAid store={store} />} />
                   <Route path="/cms/*" element={<AdminCMS store={store} />} />
                   <Route path="/blog" element={<AdminBlog />} />
