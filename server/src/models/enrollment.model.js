@@ -19,7 +19,7 @@ const enrollmentSchema = new Schema(
     payment: { type: Schema.Types.ObjectId, ref: 'Payment' },
     enrolledAt: { type: Date, default: Date.now },
     expiresAt: { type: Date },
-    isActive: { type: Boolean, default: true },
+    isActive: { type: Boolean, default: false },
     progress: {
       sessionsAttended: { type: Number, default: 0 },
       totalSessions: { type: Number, required: true },
