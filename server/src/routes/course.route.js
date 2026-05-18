@@ -12,6 +12,14 @@ import {
   getAdminCourses,
   reviewCourse,
   submitCourseForReview,
+  getMaterials,
+  addMaterial,
+  updateMaterial,
+  deleteMaterial,
+  getSyllabus,
+  addSyllabusTopic,
+  updateSyllabusTopic,
+  deleteSyllabusTopic,
 } from '../controllers/course.controller.js'
 
 const router = express.Router()
@@ -33,5 +41,17 @@ router.route('/:id/thumbnail').patch(authenticate, authorize('teacher', 'admin')
 router.route('/:id/submit').patch(authenticate, authorize('teacher'), submitCourseForReview)
 router.route('/:id/review').patch(authenticate, authorize('admin'), reviewCourse)
 router.route('/:id').delete(authenticate, authorize('admin'), deleteCourse)
+
+// ─── Materials ─────────────────────────────────────────────────────────────────
+router.route('/:id/materials').get(authenticate, getMaterials)
+router.route('/:id/materials').post(authenticate, authorize('teacher', 'admin'), addMaterial)
+router.route('/:id/materials/:materialId').patch(authenticate, authorize('teacher', 'admin'), updateMaterial)
+router.route('/:id/materials/:materialId').delete(authenticate, authorize('teacher', 'admin'), deleteMaterial)
+
+// ─── Syllabus ──────────────────────────────────────────────────────────────────
+router.route('/:id/syllabus').get(getSyllabus)
+router.route('/:id/syllabus').post(authenticate, authorize('teacher', 'admin'), addSyllabusTopic)
+router.route('/:id/syllabus/:topicId').patch(authenticate, authorize('teacher', 'admin'), updateSyllabusTopic)
+router.route('/:id/syllabus/:topicId').delete(authenticate, authorize('teacher', 'admin'), deleteSyllabusTopic)
 
 export default router

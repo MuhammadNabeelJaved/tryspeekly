@@ -100,11 +100,11 @@ export default function InstructorLiveClasses() {
 
   // Share Material Modal
   const [shareMaterialOpen, setShareMaterialOpen] = useState<string | null>(null)
-  
+  const [isLoadingMaterials, setIsLoadingMaterials] = useState(false)
+  const [isSavingMaterial, setIsSavingMaterial] = useState(false)
+
   // Shared Materials History
-  const [sharedMaterials, setSharedMaterials] = useState<SharedMaterial[]>([
-    { id: 'sm_1', courseId: 'c1', title: 'Week 1 Grammar Slides', link: 'https://drive.google.com/open?id=123', sharedAt: new Date(Date.now() - 86400000).toLocaleString() }
-  ])
+  const [sharedMaterials, setSharedMaterials] = useState<SharedMaterial[]>([])
   const [materialTitleInput, setMaterialTitleInput] = useState('')
   const [materialLinkInput, setMaterialLinkInput] = useState('')
   const [editingMaterial, setEditingMaterial] = useState<SharedMaterial | null>(null)
@@ -112,10 +112,9 @@ export default function InstructorLiveClasses() {
 
   // Syllabus Modal State
   const [syllabusOpen, setSyllabusOpen] = useState<string | null>(null)
-  const [syllabusTopics, setSyllabusTopics] = useState<SyllabusTopic[]>([
-    { id: 'st_1', courseId: 'c1', week: 1, title: 'Introduction to IELTS', description: 'Overview of the exam format and scoring system.', status: 'completed' },
-    { id: 'st_2', courseId: 'c1', week: 2, title: 'Listening Strategies', description: 'Techniques for multiple choice and matching questions.', status: 'in-progress' }
-  ])
+  const [isLoadingSyllabus, setIsLoadingSyllabus] = useState(false)
+  const [isSavingSyllabus, setIsSavingSyllabus] = useState(false)
+  const [syllabusTopics, setSyllabusTopics] = useState<SyllabusTopic[]>([])
   const [editingSyllabus, setEditingSyllabus] = useState<SyllabusTopic | null>(null)
   const [syllabusWeekInput, setSyllabusWeekInput] = useState<number>(1)
   const [syllabusTitleInput, setSyllabusTitleInput] = useState('')
@@ -251,6 +250,61 @@ export default function InstructorLiveClasses() {
 
     fetchCompletedClasses()
   }, [historyModalOpen])
+
+  // Fetch materials when Share Material modal opens
+  useEffect(() => {
+    if (!shareMaterialOpen) return
+    async function fetchMaterials() {
+      setIsLoadingMaterials(true)
+      try {
+        const res = await coursesService.getMaterials(shareMaterialOpen!)
+        if (res.success) {
+          setSharedMaterials(
+            (res.data as unknown as Array<{ _id: string; title: string; link: string; sharedAt: string }>).map((m) => ({
+              id: m._id,
+              courseId: shareMaterialOpen!,
+              title: m.title,
+              link: m.link,
+              sharedAt: new Date(m.sharedAt).toLocaleString(),
+            }))
+          )
+        }
+      } catch {
+        toast.error('Failed to load materials')
+      } finally {
+        setIsLoadingMaterials(false)
+      }
+    }
+    fetchMaterials()
+  }, [shareMaterialOpen])
+
+  // Fetch syllabus when Syllabus modal opens
+  useEffect(() => {
+    if (!syllabusOpen) return
+    async function fetchSyllabus() {
+      setIsLoadingSyllabus(true)
+      try {
+        const res = await coursesService.getSyllabus(syllabusOpen!)
+        if (res.success) {
+          setSyllabusTopics(
+            (res.data as unknown as Array<{ _id: string; week: number; title: string; description: string; status: 'pending' | 'in-progress' | 'completed' }>).map((t) => ({
+              id: t._id,
+              courseId: syllabusOpen!,
+              week: t.week,
+              title: t.title,
+              description: t.description,
+              status: t.status,
+            }))
+          )
+        }
+      } catch {
+        toast.error('Failed to load syllabus')
+      } finally {
+        setIsLoadingSyllabus(false)
+      }
+    }
+    fetchSyllabus()
+  }, [syllabusOpen])
 
   // Live Class Handlers
   function openLiveModal(course: InstructorCourse) {
@@ -528,35 +582,55 @@ export default function InstructorLiveClasses() {
   }
 
   // Shared Material Handlers
-  function handleShareMaterial() {
+  async function handleShareMaterial() {
     if (!shareMaterialOpen) return
     if (!materialTitleInput.trim() || !materialLinkInput.trim()) {
       toast.error("Please provide both title and link.")
       return
     }
 
-    if (editingMaterial) {
-      setSharedMaterials(sharedMaterials.map(m =>
-        m.id === editingMaterial.id
-          ? { ...m, title: materialTitleInput, link: materialLinkInput }
-          : m
-      ))
-      setEditingMaterial(null)
-      toast.success('Material updated successfully!')
-    } else {
-      const newMaterial: SharedMaterial = {
-        id: `sm_${Date.now()}`,
-        courseId: shareMaterialOpen,
-        title: materialTitleInput,
-        link: materialLinkInput,
-        sharedAt: new Date().toLocaleString()
+    setIsSavingMaterial(true)
+    try {
+      if (editingMaterial) {
+        const res = await coursesService.updateMaterial(shareMaterialOpen, editingMaterial.id, {
+          title: materialTitleInput,
+          link: materialLinkInput,
+        })
+        if (res.success) {
+          const updated = res.data as unknown as { _id: string; title: string; link: string; sharedAt: string }
+          setSharedMaterials(sharedMaterials.map(m =>
+            m.id === editingMaterial.id
+              ? { ...m, title: updated.title, link: updated.link }
+              : m
+          ))
+          setEditingMaterial(null)
+          toast.success('Material updated successfully!')
+        }
+      } else {
+        const res = await coursesService.addMaterial(shareMaterialOpen, {
+          title: materialTitleInput,
+          link: materialLinkInput,
+        })
+        if (res.success) {
+          const added = res.data as unknown as { _id: string; title: string; link: string; sharedAt: string }
+          const newMaterial: SharedMaterial = {
+            id: added._id,
+            courseId: shareMaterialOpen,
+            title: added.title,
+            link: added.link,
+            sharedAt: new Date(added.sharedAt).toLocaleString(),
+          }
+          setSharedMaterials([newMaterial, ...sharedMaterials])
+          toast.success('Material shared successfully!')
+        }
       }
-      setSharedMaterials([newMaterial, ...sharedMaterials])
-      toast.success('Materials shared and students notified!')
+      setMaterialTitleInput('')
+      setMaterialLinkInput('')
+    } catch {
+      toast.error('Failed to save material')
+    } finally {
+      setIsSavingMaterial(false)
     }
-    
-    setMaterialTitleInput('')
-    setMaterialLinkInput('')
   }
 
   function handleEditMaterial(material: SharedMaterial) {
@@ -566,45 +640,78 @@ export default function InstructorLiveClasses() {
     setActiveMaterialDropdownId(null)
   }
 
-  function handleDeleteMaterial(id: string) {
-    setSharedMaterials(sharedMaterials.filter(m => m.id !== id))
-    setActiveMaterialDropdownId(null)
-    toast.success('Material deleted.')
+  async function handleDeleteMaterial(id: string) {
+    if (!shareMaterialOpen) return
+    try {
+      await coursesService.deleteMaterial(shareMaterialOpen, id)
+      setSharedMaterials(sharedMaterials.filter(m => m.id !== id))
+      setActiveMaterialDropdownId(null)
+      toast.success('Material deleted.')
+    } catch {
+      toast.error('Failed to delete material')
+    }
   }
 
   // Syllabus Handlers
-  function handleSyllabusSubmit() {
+  async function handleSyllabusSubmit() {
     if (!syllabusOpen) return
-    if (!syllabusTitleInput.trim() || !syllabusDescInput.trim()) {
-      toast.error("Please provide both title and description.")
+    if (!syllabusTitleInput.trim()) {
+      toast.error("Please provide a topic title.")
       return
     }
 
-    if (editingSyllabus) {
-      setSyllabusTopics(syllabusTopics.map(t =>
-        t.id === editingSyllabus.id
-          ? { ...t, week: syllabusWeekInput, title: syllabusTitleInput, description: syllabusDescInput, status: syllabusStatusInput }
-          : t
-      ))
-      setEditingSyllabus(null)
-      toast.success('Syllabus topic updated successfully!')
-    } else {
-      const newTopic: SyllabusTopic = {
-        id: `st_${Date.now()}`,
-        courseId: syllabusOpen,
-        week: syllabusWeekInput,
-        title: syllabusTitleInput,
-        description: syllabusDescInput,
-        status: syllabusStatusInput
+    setIsSavingSyllabus(true)
+    try {
+      if (editingSyllabus) {
+        const res = await coursesService.updateSyllabusTopic(syllabusOpen, editingSyllabus.id, {
+          week: syllabusWeekInput,
+          title: syllabusTitleInput,
+          description: syllabusDescInput,
+          status: syllabusStatusInput,
+        })
+        if (res.success) {
+          const updated = res.data as unknown as { _id: string; week: number; title: string; description: string; status: 'pending' | 'in-progress' | 'completed' }
+          setSyllabusTopics(
+            syllabusTopics
+              .map(t => t.id === editingSyllabus.id
+                ? { ...t, week: updated.week, title: updated.title, description: updated.description, status: updated.status }
+                : t
+              )
+              .sort((a, b) => a.week - b.week)
+          )
+          setEditingSyllabus(null)
+          toast.success('Syllabus topic updated!')
+        }
+      } else {
+        const res = await coursesService.addSyllabusTopic(syllabusOpen, {
+          week: syllabusWeekInput,
+          title: syllabusTitleInput,
+          description: syllabusDescInput,
+          status: syllabusStatusInput,
+        })
+        if (res.success) {
+          const added = res.data as unknown as { _id: string; week: number; title: string; description: string; status: 'pending' | 'in-progress' | 'completed' }
+          const newTopic: SyllabusTopic = {
+            id: added._id,
+            courseId: syllabusOpen,
+            week: added.week,
+            title: added.title,
+            description: added.description,
+            status: added.status,
+          }
+          setSyllabusTopics([...syllabusTopics, newTopic].sort((a, b) => a.week - b.week))
+          toast.success('Syllabus topic added!')
+        }
       }
-      setSyllabusTopics([...syllabusTopics, newTopic].sort((a, b) => a.week - b.week))
-      toast.success('Syllabus topic added!')
+      setSyllabusWeekInput(1)
+      setSyllabusTitleInput('')
+      setSyllabusDescInput('')
+      setSyllabusStatusInput('pending')
+    } catch {
+      toast.error('Failed to save syllabus topic')
+    } finally {
+      setIsSavingSyllabus(false)
     }
-    
-    setSyllabusWeekInput(1)
-    setSyllabusTitleInput('')
-    setSyllabusDescInput('')
-    setSyllabusStatusInput('pending')
   }
 
   function handleEditSyllabus(topic: SyllabusTopic) {
@@ -616,10 +723,16 @@ export default function InstructorLiveClasses() {
     setActiveSyllabusDropdownId(null)
   }
 
-  function handleDeleteSyllabus(id: string) {
-    setSyllabusTopics(syllabusTopics.filter(t => t.id !== id))
-    setActiveSyllabusDropdownId(null)
-    toast.success('Syllabus topic deleted.')
+  async function handleDeleteSyllabus(id: string) {
+    if (!syllabusOpen) return
+    try {
+      await coursesService.deleteSyllabusTopic(syllabusOpen, id)
+      setSyllabusTopics(syllabusTopics.filter(t => t.id !== id))
+      setActiveSyllabusDropdownId(null)
+      toast.success('Syllabus topic deleted.')
+    } catch {
+      toast.error('Failed to delete syllabus topic')
+    }
   }
 
   const filteredMainCourses = courses.filter(c => {
@@ -893,6 +1006,7 @@ export default function InstructorLiveClasses() {
                  </div>
                  <button onClick={() => {
                    setShareMaterialOpen(null);
+                   setSharedMaterials([]);
                    setEditingMaterial(null);
                    setMaterialTitleInput('');
                    setMaterialLinkInput('');
@@ -921,8 +1035,8 @@ export default function InstructorLiveClasses() {
                          Cancel Edit
                        </button>
                      )}
-                     <button onClick={handleShareMaterial} className="flex-1 py-2.5 bg-violet-600 hover:bg-violet-700 text-white text-sm font-bold rounded-xl shadow-md shadow-violet-600/20 transition-all flex items-center justify-center gap-2">
-                       {editingMaterial ? <><Check size={16} /> Update Material</> : <><ShareNetwork size={16} /> Share & Notify Students</>}
+                     <button onClick={handleShareMaterial} disabled={isSavingMaterial} className="flex-1 py-2.5 bg-violet-600 hover:bg-violet-700 disabled:opacity-60 text-white text-sm font-bold rounded-xl shadow-md shadow-violet-600/20 transition-all flex items-center justify-center gap-2">
+                       {isSavingMaterial ? <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : editingMaterial ? <><Check size={16} /> Update Material</> : <><ShareNetwork size={16} /> Share & Notify Students</>}
                      </button>
                    </div>
                  </div>
@@ -932,8 +1046,12 @@ export default function InstructorLiveClasses() {
                    <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
                      <ListDashes size={16} className="text-slate-400" /> Previously Shared Materials
                    </h4>
-                   
-                   {sharedMaterials.filter(m => m.courseId === shareMaterialOpen).length === 0 ? (
+
+                   {isLoadingMaterials ? (
+                     <div className="space-y-3">
+                       {[1,2].map(i => <div key={i} className="h-16 rounded-xl bg-slate-100 dark:bg-neutral-800 animate-pulse" />)}
+                     </div>
+                   ) : sharedMaterials.filter(m => m.courseId === shareMaterialOpen).length === 0 ? (
                      <div className="text-center py-8 bg-slate-50 dark:bg-neutral-800/20 rounded-2xl border border-slate-100 border-dashed dark:border-neutral-800">
                        <FilePdf size={24} className="mx-auto text-slate-300 mb-2" />
                        <p className="text-sm font-medium text-slate-500">No materials shared yet.</p>
@@ -1396,6 +1514,7 @@ export default function InstructorLiveClasses() {
                  </div>
                  <button onClick={() => {
                    setSyllabusOpen(null);
+                   setSyllabusTopics([]);
                    setEditingSyllabus(null);
                    setSyllabusWeekInput(1);
                    setSyllabusTitleInput('');
@@ -1438,8 +1557,8 @@ export default function InstructorLiveClasses() {
                          Cancel Edit
                        </button>
                      )}
-                     <button onClick={handleSyllabusSubmit} className="flex-1 py-2.5 bg-violet-600 hover:bg-violet-700 text-white text-sm font-bold rounded-xl shadow-md shadow-violet-600/20 transition-all flex items-center justify-center gap-2">
-                       {editingSyllabus ? <><Check size={16} /> Update Topic</> : <><Plus size={16} /> Add Topic</>}
+                     <button onClick={handleSyllabusSubmit} disabled={isSavingSyllabus} className="flex-1 py-2.5 bg-violet-600 hover:bg-violet-700 disabled:opacity-60 text-white text-sm font-bold rounded-xl shadow-md shadow-violet-600/20 transition-all flex items-center justify-center gap-2">
+                       {isSavingSyllabus ? <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : editingSyllabus ? <><Check size={16} /> Update Topic</> : <><Plus size={16} /> Add Topic</>}
                      </button>
                    </div>
                  </div>
@@ -1450,7 +1569,11 @@ export default function InstructorLiveClasses() {
                      <ListDashes size={16} className="text-slate-400" /> Course Timeline
                    </h4>
                    
-                   {syllabusTopics.filter(t => t.courseId === syllabusOpen).length === 0 ? (
+                   {isLoadingSyllabus ? (
+                     <div className="space-y-3">
+                       {[1,2,3].map(i => <div key={i} className="h-20 rounded-2xl bg-slate-100 dark:bg-neutral-800 animate-pulse" />)}
+                     </div>
+                   ) : syllabusTopics.filter(t => t.courseId === syllabusOpen).length === 0 ? (
                      <div className="text-center py-8 bg-slate-50 dark:bg-neutral-800/20 rounded-2xl border border-slate-100 border-dashed dark:border-neutral-800">
                        <PresentationChart size={24} className="mx-auto text-slate-300 mb-2" />
                        <p className="text-sm font-medium text-slate-500">No syllabus topics added yet.</p>

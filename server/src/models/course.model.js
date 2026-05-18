@@ -14,6 +14,29 @@ const recurringScheduleSchema = new Schema(
   { _id: false }
 )
 
+const materialSchema = new Schema(
+  {
+    title: { type: String, required: [true, 'Material title is required'], trim: true },
+    link: { type: String, required: [true, 'Material link is required'], trim: true },
+    sharedAt: { type: Date, default: Date.now },
+  },
+  { timestamps: false }
+)
+
+const syllabusTopicSchema = new Schema(
+  {
+    week: { type: Number, required: [true, 'Week number is required'], min: [1, 'Week must be at least 1'] },
+    title: { type: String, required: [true, 'Topic title is required'], trim: true },
+    description: { type: String, trim: true, default: '' },
+    status: {
+      type: String,
+      enum: ['pending', 'in-progress', 'completed'],
+      default: 'pending',
+    },
+  },
+  { timestamps: false }
+)
+
 const courseSchema = new Schema(
   {
     title: {
@@ -73,6 +96,8 @@ const courseSchema = new Schema(
     maxStudents: { type: Number, min: [1, 'Max students must be at least 1'] },
     recurringSchedule: [recurringScheduleSchema],
     meetLink: { type: String, trim: true },
+    materials: [materialSchema],
+    syllabus: [syllabusTopicSchema],
     isDeleted: { type: Boolean, default: false },
   },
   { timestamps: true, versionKey: false }
