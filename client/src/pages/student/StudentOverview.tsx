@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { CalendarBlank, CheckCircle, CreditCard, Clock, VideoCamera, HandWaving, Megaphone, ClipboardText, ChartLineUp, Certificate, ArrowRight } from '@phosphor-icons/react'
 import { useAuth } from '../../context/AuthContext'
+import { useSocket } from '@/context/SocketContext'
 import { enrollmentsService } from '../../services/enrollments.service'
 import { paymentsService } from '../../services/payments.service'
 import { liveClassService } from '@/services/live-class.service'
@@ -24,6 +25,7 @@ type UpcomingClass = {
 
 export default function StudentOverview({ onNavigate }: { onNavigate: (view: StudentView) => void }) {
   const { user } = useAuth()
+  const { socket } = useSocket()
   const [enrollments, setEnrollments] = useState<Enrollment[]>([])
   const [upcomingClasses, setUpcomingClasses] = useState<UpcomingClass[]>([])
   const [assignments, setAssignments] = useState<Assignment[]>([])
@@ -45,7 +47,8 @@ export default function StudentOverview({ onNavigate }: { onNavigate: (view: Stu
       ])
 
       if (enrollRes.status === 'fulfilled' && enrollRes.value.success) setEnrollments(enrollRes.value.data)
-      if (liveRes.status === 'fulfilled' && liveRes.value.success) setUpcomingClasses(liveRes.value.data as UpcomingClass[])
+      if (liveRes.status === 'fulfilled' && liveRes.value.success)
+        setUpcomingClasses(liveRes.value.data as UpcomingClass[])
       if (assignRes.status === 'fulfilled' && assignRes.value.success) setAssignments(assignRes.value.data)
       if (annRes.status === 'fulfilled' && annRes.value.success) setAnnouncements(annRes.value.data)
       if (payRes.status === 'fulfilled' && payRes.value.success) setPayments(payRes.value.data)
@@ -53,6 +56,36 @@ export default function StudentOverview({ onNavigate }: { onNavigate: (view: Stu
     }
     fetchAll()
   }, [])
+
+  useEffect(() => {
+    if (!socket) return
+
+    const handleUpdated = (liveClass: UpcomingClass) => {
+      setUpcomingClasses((prev) => {
+        const filtered = prev.filter((c) => c._id !== liveClass._id)
+        if (liveClass.status === 'active' || liveClass.status === 'scheduled') {
+          return [...filtered, liveClass].sort((a, b) => {
+            if (a.scheduledAt && b.scheduledAt)
+              return new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime()
+            return 0
+          })
+        }
+        return filtered
+      })
+    }
+
+    const handleDeleted = ({ _id }: { _id: string }) => {
+      setUpcomingClasses((prev) => prev.filter((c) => c._id !== _id))
+    }
+
+    socket.on('live-class:updated', handleUpdated)
+    socket.on('live-class:deleted', handleDeleted)
+
+    return () => {
+      socket.off('live-class:updated', handleUpdated)
+      socket.off('live-class:deleted', handleDeleted)
+    }
+  }, [socket])
 
   const activeCourses = enrollments
   const avgAttendance = activeCourses.length > 0

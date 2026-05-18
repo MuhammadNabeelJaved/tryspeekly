@@ -169,6 +169,19 @@ export interface CourseSingleResponse {
 
 // ─── Enrollment Types ─────────────────────────────────────────────────────────
 
+export interface EnrolledPayment {
+  _id: string;
+  status: PaymentStatus;
+  method: PaymentMethod;
+  amount: number;
+  currency: 'PKR' | 'USD';
+  screenshotUrl?: string;
+  transactionId?: string;
+  rejectionReason?: string;
+  adminNote?: string;
+  createdAt: string;
+}
+
 export interface Enrollment {
   _id: string;
   student: { _id: string; name: string; email: string; profileImage?: string };
@@ -183,7 +196,8 @@ export interface Enrollment {
     recurringSchedule?: Array<{ day: string; time: string }>;
   };
   teacher: { _id: string; name: string; profileImage?: string };
-  payment?: string;
+  payment?: EnrolledPayment | null;
+  isActive: boolean;
   enrolledAt: string;
   attendance: Array<{ sessionNumber: number; duration?: number; date: string }>;
   progress: { sessionsAttended: number; totalSessions: number; lastAttendedAt?: string };
@@ -234,6 +248,17 @@ export interface CreatePaymentDto {
   amount: number;
   currency?: 'PKR' | 'USD';
   screenshot: File;
+}
+
+export interface AdminCreatePaymentDto {
+  studentId: string;
+  courseId: string;
+  teacherId: string;
+  method: PaymentMethod;
+  transactionId?: string;
+  amount: number;
+  currency?: 'PKR' | 'USD';
+  adminNote?: string;
 }
 
 // ─── Message Types ────────────────────────────────────────────────────────────
@@ -437,9 +462,12 @@ export interface SiteSettings {
 export interface AdminStats {
   totalStudents: number;
   totalInstructors: number;
+  totalCourses: number;
   revenue: Record<string, number>;
   pendingPayments: number;
+  failedPayments: number;
   pendingCourseReviews: number;
+  pendingFinancialAid: number;
   coursesByStatus: {
     published: number;
     pending: number;
@@ -447,6 +475,17 @@ export interface AdminStats {
     rejected: number;
     archived: number;
   };
+  studentsByCountry: Array<{ country: string; count: number }>;
+  paymentsByMethod: Array<{ method: string; count: number }>;
+  recentEnrollments: Array<{
+    _id: string;
+    studentName: string;
+    courseName: string;
+    country: string;
+    paymentStatus: string;
+    enrolledAt: string;
+  }>;
+  enrollmentsByCourse: Array<{ title: string; count: number }>;
 }
 
 // ─── Assignment Types ─────────────────────────────────────────────────────────

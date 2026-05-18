@@ -35,8 +35,9 @@ export const createEnrollment = asyncHandler(async (req, res) => {
 export const getMyEnrollments = asyncHandler(async (req, res) => {
   try {
     const enrollments = await Enrollment.find({ student: req.user.id })
-      .populate('course', 'title thumbnail type level sessionDuration recurringSchedule')
+      .populate('course', 'title thumbnail type level sessionDuration recurringSchedule totalSessions')
       .populate('teacher', 'name profileImage')
+      .populate('payment', '_id status method amount currency screenshotUrl rejectionReason adminNote createdAt')
       .sort({ enrolledAt: -1 })
     res.json({ success: true, data: enrollments })
   } catch (error) {

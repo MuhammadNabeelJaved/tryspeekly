@@ -2,6 +2,7 @@ import asyncHandler from '../utils/asyncHandler.js'
 import LiveClass from '../models/live-class.model.js'
 import Course from '../models/course.model.js'
 import Enrollment from '../models/enrollment.model.js'
+import { getIO } from '../utils/socket.js'
 
 // POST /api/v1/live-classes - Create/start a live class
 export const createLiveClass = asyncHandler(async (req, res) => {
@@ -34,6 +35,9 @@ export const createLiveClass = asyncHandler(async (req, res) => {
   })
 
   await liveClass.populate('course', 'title totalSessions')
+  await liveClass.populate('teacher', 'name profileImage')
+
+  getIO()?.to(`course:${liveClass.course._id}`).emit('live-class:updated', liveClass)
 
   res.status(201).json({
     success: true,
@@ -59,6 +63,9 @@ export const updateLiveClass = asyncHandler(async (req, res) => {
   await liveClass.save()
 
   await liveClass.populate('course', 'title totalSessions')
+  await liveClass.populate('teacher', 'name profileImage')
+
+  getIO()?.to(`course:${liveClass.course._id}`).emit('live-class:updated', liveClass)
 
   res.json({
     success: true,
@@ -82,6 +89,9 @@ export const completeLiveClass = asyncHandler(async (req, res) => {
   await liveClass.save()
 
   await liveClass.populate('course', 'title totalSessions')
+  await liveClass.populate('teacher', 'name profileImage')
+
+  getIO()?.to(`course:${liveClass.course._id}`).emit('live-class:updated', liveClass)
 
   res.json({
     success: true,
@@ -105,6 +115,9 @@ export const cancelLiveClass = asyncHandler(async (req, res) => {
   await liveClass.save()
 
   await liveClass.populate('course', 'title totalSessions')
+  await liveClass.populate('teacher', 'name profileImage')
+
+  getIO()?.to(`course:${liveClass.course._id}`).emit('live-class:updated', liveClass)
 
   res.json({
     success: true,
@@ -201,6 +214,9 @@ export const scheduleClass = asyncHandler(async (req, res) => {
   })
 
   await liveClass.populate('course', 'title totalSessions')
+  await liveClass.populate('teacher', 'name profileImage')
+
+  getIO()?.to(`course:${liveClass.course._id}`).emit('live-class:updated', liveClass)
 
   res.status(201).json({
     success: true,
@@ -234,6 +250,9 @@ export const updateSchedule = asyncHandler(async (req, res) => {
   await liveClass.save()
 
   await liveClass.populate('course', 'title totalSessions')
+  await liveClass.populate('teacher', 'name profileImage')
+
+  getIO()?.to(`course:${liveClass.course._id}`).emit('live-class:updated', liveClass)
 
   res.json({
     success: true,
@@ -275,6 +294,9 @@ export const deleteSchedule = asyncHandler(async (req, res) => {
 
   liveClass.isDeleted = true
   await liveClass.save()
+
+  // liveClass.course is unpopulated ObjectId here — template literal coercion is correct
+  getIO()?.to(`course:${liveClass.course}`).emit('live-class:deleted', { _id: liveClass._id })
 
   res.json({
     success: true,

@@ -1,5 +1,5 @@
 import { axiosClient } from '../lib/axiosClient';
-import type { Payment, CreatePaymentDto, ApiResponse, ApiPaginatedResponse } from '../types/api';
+import type { Payment, CreatePaymentDto, AdminCreatePaymentDto, ApiResponse, ApiPaginatedResponse } from '../types/api';
 
 export const paymentsService = {
   async createPayment(dto: CreatePaymentDto): Promise<{ success: boolean; data: Payment }> {
@@ -42,6 +42,14 @@ export const paymentsService = {
     const response = await axiosClient.patch<{ success: boolean; data: Payment }>(
       `/payments/${id}/reject`,
       { rejectionReason }
+    );
+    return response.data;
+  },
+
+  async adminCreatePayment(dto: AdminCreatePaymentDto): Promise<{ success: boolean; data: Payment }> {
+    const response = await axiosClient.post<{ success: boolean; data: Payment }>(
+      '/payments/admin',
+      dto
     );
     return response.data;
   },

@@ -61,6 +61,10 @@ export default function StudentCourseDetails() {
 
         if (enrollRes.success) {
           const found = enrollRes.data.find((e) => e.course._id === courseId) ?? null
+          if (found && !found.isActive) {
+            navigate('/dashboard/courses', { replace: true })
+            return
+          }
           setEnrollment(found)
         }
 

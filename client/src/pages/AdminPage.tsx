@@ -492,12 +492,12 @@ export default function AdminPage() {
             >
               <Suspense fallback={<Loader />}>
                 <Routes>
-                  <Route path="/" element={<AdminOverview store={store} onNavigate={handleNavigate} />} />
+                  <Route path="/" element={<AdminOverview onNavigate={handleNavigate} />} />
                   <Route path="/students" element={<AdminStudents store={store} />} />
                   <Route path="/instructors" element={<AdminInstructors store={store} />} />
                   <Route path="/courses" element={<AdminCourses store={store} />} />
                   <Route path="/certificates" element={<AdminCertificates store={store} />} />
-                  <Route path="/payments" element={<AdminPaymentsView store={store} />} />
+                  <Route path="/payments" element={<AdminPaymentsView />} />
                   <Route path="/financial-aid" element={<AdminFinancialAid store={store} />} />
                   <Route path="/cms/*" element={<AdminCMS store={store} />} />
                   <Route path="/blog" element={<AdminBlog />} />
