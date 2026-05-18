@@ -73,15 +73,16 @@ export const getAllPayments = asyncHandler(async (req, res) => {
   }
 })
 
-// PATCH /api/v1/payments/:id/approve — admin
+// PATCH /api/v1/payments/:id/approve — admin (can approve from any status)
 export const approvePayment = asyncHandler(async (req, res) => {
   try {
     const payment = await Payment.findById(req.params.id).populate('course', 'title')
     if (!payment) return res.status(404).json({ success: false, error: { message: 'Payment not found' } })
-    if (payment.status !== 'pending') return res.status(400).json({ success: false, error: { message: 'Payment already processed' } })
 
+    const previousStatus = payment.status
     payment.status = 'approved'
     payment.adminNote = req.body.adminNote || ''
+    payment.rejectionReason = ''
     await payment.save()
 
     await Enrollment.findOneAndUpdate(
@@ -89,15 +90,17 @@ export const approvePayment = asyncHandler(async (req, res) => {
       { isActive: true }
     )
 
-    await Notification.create({
-      recipient: payment.student,
-      title: 'Payment Approved',
-      message: `Your payment for "${payment.course.title}" has been approved. You now have full access.`,
-      type: 'payment',
-      severity: 'low',
-      relatedId: payment._id,
-      relatedType: 'Payment',
-    })
+    if (previousStatus !== 'approved') {
+      await Notification.create({
+        recipient: payment.student,
+        title: 'Payment Approved',
+        message: `Your payment for "${payment.course.title}" has been approved. You now have full access.`,
+        type: 'payment',
+        severity: 'low',
+        relatedId: payment._id,
+        relatedType: 'Payment',
+      })
+    }
 
     res.json({ success: true, message: 'Payment approved', data: payment })
   } catch (error) {
@@ -105,7 +108,7 @@ export const approvePayment = asyncHandler(async (req, res) => {
   }
 })
 
-// PATCH /api/v1/payments/:id/reject — admin
+// PATCH /api/v1/payments/:id/reject — admin (can reject from any status)
 export const rejectPayment = asyncHandler(async (req, res) => {
   try {
     const { rejectionReason } = req.body
@@ -113,21 +116,32 @@ export const rejectPayment = asyncHandler(async (req, res) => {
 
     const payment = await Payment.findById(req.params.id).populate('course', 'title')
     if (!payment) return res.status(404).json({ success: false, error: { message: 'Payment not found' } })
-    if (payment.status !== 'pending') return res.status(400).json({ success: false, error: { message: 'Payment already processed' } })
 
+    const previousStatus = payment.status
     payment.status = 'rejected'
     payment.rejectionReason = rejectionReason
+    payment.adminNote = ''
     await payment.save()
 
-    await Notification.create({
-      recipient: payment.student,
-      title: 'Payment Rejected',
-      message: `Your payment for "${payment.course.title}" was rejected: ${rejectionReason}. Please resubmit your payment proof.`,
-      type: 'payment',
-      severity: 'medium',
-      relatedId: payment._id,
-      relatedType: 'Payment',
-    })
+    // Deactivate enrollment when rejecting an approved payment
+    if (previousStatus === 'approved') {
+      await Enrollment.findOneAndUpdate(
+        { student: payment.student, course: payment.course._id },
+        { isActive: false }
+      )
+    }
+
+    if (previousStatus !== 'rejected') {
+      await Notification.create({
+        recipient: payment.student,
+        title: 'Payment Rejected',
+        message: `Your payment for "${payment.course.title}" was rejected: ${rejectionReason}. Please resubmit your payment proof.`,
+        type: 'payment',
+        severity: 'medium',
+        relatedId: payment._id,
+        relatedType: 'Payment',
+      })
+    }
 
     res.json({ success: true, message: 'Payment rejected', data: payment })
   } catch (error) {
