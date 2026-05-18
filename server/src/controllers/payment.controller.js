@@ -1,6 +1,8 @@
 import asyncHandler from '../utils/asyncHandler.js'
 import Payment from '../models/payment.model.js'
 import { uploadCourseMaterial, deleteFile, extractPublicId } from '../utils/cloudinary.js'
+import Enrollment from '../models/enrollment.model.js'
+import Notification from '../models/notification.model.js'
 
 // POST /api/v1/payments — student submits payment proof
 export const createPayment = asyncHandler(async (req, res) => {
@@ -21,6 +23,11 @@ export const createPayment = asyncHandler(async (req, res) => {
       amount,
       currency: currency || 'PKR',
     })
+
+    await Enrollment.findOneAndUpdate(
+      { student: req.user.id, course: courseId },
+      { payment: payment._id }
+    )
 
     res.status(201).json({ success: true, message: 'Payment submitted. Awaiting admin approval.', data: payment })
   } catch (error) {
