@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { CalendarBlank, CheckCircle, CreditCard, Clock, VideoCamera, HandWaving, Megaphone, ClipboardText, ChartLineUp, Certificate, ArrowRight } from '@phosphor-icons/react'
+import { CalendarBlank, CheckCircle, CreditCard, Clock, VideoCamera, HandWaving, Megaphone, ClipboardText, ChartLineUp, Certificate, ArrowRight, Warning } from '@phosphor-icons/react'
 import { useAuth } from '../../context/AuthContext'
 import { useSocket } from '@/context/SocketContext'
 import { enrollmentsService } from '../../services/enrollments.service'
@@ -11,6 +11,7 @@ import { announcementsService } from '@/services/announcements.service'
 import type { StudentView } from '../StudentDashboardPage'
 import type { Enrollment, Assignment, Announcement, Payment } from '../../types/api'
 import StudentAssignmentModal from './StudentAssignmentModal'
+import PaymentSubmitModal from './PaymentSubmitModal'
 
 type UpcomingClass = {
   _id: string
@@ -34,6 +35,7 @@ export default function StudentOverview({ onNavigate }: { onNavigate: (view: Stu
   const [isLoading, setIsLoading] = useState(true)
   const [submitModalOpen, setSubmitModalOpen] = useState(false)
   const [selectedTask, setSelectedTask] = useState<{ assignment: Assignment; enrollmentId: string } | null>(null)
+  const [selectedPayEnrollment, setSelectedPayEnrollment] = useState<Enrollment | null>(null)
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -100,6 +102,9 @@ export default function StudentOverview({ onNavigate }: { onNavigate: (view: Stu
 
   const pendingAssignments = assignments.filter(a => !a.submissions || a.submissions.length === 0)
   const recentPayments = payments.slice(0, 3)
+  const unpaidEnrollments = enrollments.filter(e =>
+    !e.isActive && (!e.payment || e.payment.status === 'rejected')
+  )
 
   // Prefer active live class over scheduled for banner
   const activeLiveClass = upcomingClasses.find(c => c.status === 'active') ?? null
@@ -238,6 +243,54 @@ export default function StudentOverview({ onNavigate }: { onNavigate: (view: Stu
           </div>
         </div>
       </div>
+
+      {/* Complete Your Enrollment Banner */}
+      {unpaidEnrollments.length > 0 && (
+        <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/40 rounded-2xl overflow-hidden">
+          <div className="px-5 py-4 border-b border-amber-200 dark:border-amber-800/40 flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center">
+              <CreditCard size={16} weight="fill" className="text-amber-600 dark:text-amber-400" />
+            </div>
+            <div>
+              <p className="font-black text-amber-900 dark:text-amber-200 text-sm">Complete Your Enrollment</p>
+              <p className="text-xs text-amber-700/70 dark:text-amber-400/70">Submit payment to activate your course access</p>
+            </div>
+          </div>
+          <div className="divide-y divide-amber-100 dark:divide-amber-800/20">
+            {unpaidEnrollments.map(enrollment => {
+              const isRejected = enrollment.payment?.status === 'rejected'
+              return (
+                <div key={enrollment._id} className="px-5 py-3.5 flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className={`w-7 h-7 rounded-md flex-shrink-0 flex items-center justify-center ${isRejected ? 'bg-red-100 dark:bg-red-900/30' : 'bg-amber-100 dark:bg-amber-900/30'}`}>
+                      {isRejected
+                        ? <Warning size={14} weight="fill" className="text-red-500 dark:text-red-400" />
+                        : <CreditCard size={14} weight="fill" className="text-amber-600 dark:text-amber-400" />
+                      }
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{enrollment.course.title}</p>
+                      {isRejected ? (
+                        <p className="text-xs text-red-500 dark:text-red-400">
+                          Payment rejected{enrollment.payment?.rejectionReason ? ` — ${enrollment.payment.rejectionReason}` : ''}
+                        </p>
+                      ) : (
+                        <p className="text-xs text-amber-600 dark:text-amber-400">Payment required to activate</p>
+                      )}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setSelectedPayEnrollment(enrollment)}
+                    className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold rounded-lg transition-colors whitespace-nowrap"
+                  >
+                    Pay Now <ArrowRight size={11} weight="bold" />
+                  </button>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         {/* Left Column */}
@@ -457,6 +510,23 @@ export default function StudentOverview({ onNavigate }: { onNavigate: (view: Stu
           ))
         }}
       />
+
+      {selectedPayEnrollment && (
+        <PaymentSubmitModal
+          courseId={selectedPayEnrollment.course._id}
+          teacherId={selectedPayEnrollment.teacher._id}
+          isOpen={true}
+          onClose={() => setSelectedPayEnrollment(null)}
+          onSuccess={() => {
+            setSelectedPayEnrollment(null)
+            setEnrollments(prev => prev.map(e =>
+              e._id === selectedPayEnrollment._id
+                ? { ...e, payment: { ...e.payment, status: 'pending' } as any }
+                : e
+            ))
+          }}
+        />
+      )}
     </div>
   )
 }

@@ -39,8 +39,6 @@ const NAV_PREFS: NavItem[] = [
   { view: 'settings', label: 'Settings', path: 'settings', Icon: GearSix as NavItem['Icon'] },
 ]
 
-const SESSION_KEY = 'enrollment_popup_dismissed'
-
 export default function StudentDashboardPage() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -59,9 +57,7 @@ export default function StudentDashboardPage() {
         !e.isActive && (!e.payment || e.payment.status === 'rejected')
       )
       setPendingEnrollments(unpaid)
-      if (unpaid.length > 0 && !sessionStorage.getItem(SESSION_KEY)) {
-        setShowEnrollmentPopup(true)
-      }
+      if (unpaid.length > 0) setShowEnrollmentPopup(true)
     } catch {
       // silently ignore — non-critical
     }
@@ -69,14 +65,10 @@ export default function StudentDashboardPage() {
 
   useEffect(() => { fetchPendingEnrollments() }, [fetchPendingEnrollments])
 
-  const handlePopupClose = () => {
-    setShowEnrollmentPopup(false)
-    sessionStorage.setItem(SESSION_KEY, '1')
-  }
+  const handlePopupClose = () => setShowEnrollmentPopup(false)
 
   const handlePaymentSuccess = () => {
     setShowEnrollmentPopup(false)
-    sessionStorage.removeItem(SESSION_KEY)
     fetchPendingEnrollments()
   }
 
