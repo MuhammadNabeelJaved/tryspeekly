@@ -9,13 +9,14 @@ cloudinary.config({
 
 // ─── Folder structure ──────────────────────────────────────────────────────────
 export const FOLDERS = {
-  userAvatar:        'english-platform/users/avatars',
-  courseThumbnail:   'english-platform/courses/thumbnails',
-  courseMaterial:    'english-platform/courses/materials',
-  lessonAudio:       'english-platform/lessons/audio',
-  lessonVideo:       'english-platform/lessons/video',
-  siteBanner:        'english-platform/site/banners',
-  siteLogo:          'english-platform/site/logo',
+  userAvatar:           'english-platform/users/avatars',
+  courseThumbnail:      'english-platform/courses/thumbnails',
+  courseMaterial:       'english-platform/courses/materials',
+  paymentScreenshot:    'english-platform/payments/screenshots',
+  lessonAudio:          'english-platform/lessons/audio',
+  lessonVideo:          'english-platform/lessons/video',
+  siteBanner:           'english-platform/site/banners',
+  siteLogo:             'english-platform/site/logo',
 }
 
 // ─── Core upload helper (multer memoryStorage buffer → Cloudinary) ────────────
@@ -65,6 +66,15 @@ export const uploadCourseMaterial = (buffer, filename) =>
     folder: FOLDERS.courseMaterial,
     public_id: filename,
     resource_type: 'raw', // PDFs / DOCX
+  })
+
+export const uploadPaymentScreenshot = (buffer, paymentRef) =>
+  uploadBuffer(buffer, {
+    folder: FOLDERS.paymentScreenshot,
+    public_id: `payment_${paymentRef}`,
+    overwrite: false,
+    resource_type: 'image',
+    transformation: [{ quality: 'auto', fetch_format: 'auto' }],
   })
 
 // ─── Lesson uploads ────────────────────────────────────────────────────────────

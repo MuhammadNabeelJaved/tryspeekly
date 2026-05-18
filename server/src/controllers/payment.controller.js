@@ -1,6 +1,6 @@
 import asyncHandler from '../utils/asyncHandler.js'
 import Payment from '../models/payment.model.js'
-import { uploadCourseMaterial, deleteFile, extractPublicId } from '../utils/cloudinary.js'
+import { uploadPaymentScreenshot, deleteFile, extractPublicId } from '../utils/cloudinary.js'
 import Enrollment from '../models/enrollment.model.js'
 import Notification from '../models/notification.model.js'
 
@@ -17,7 +17,7 @@ export const createPayment = asyncHandler(async (req, res) => {
       return res.status(409).json({ success: false, error: { message: 'A payment is already under review for this course' } })
     }
 
-    const result = await uploadCourseMaterial(req.file.buffer, `payment_${Date.now()}`)
+    const result = await uploadPaymentScreenshot(req.file.buffer, Date.now())
 
     const payment = await Payment.create({
       student: req.user.id,
