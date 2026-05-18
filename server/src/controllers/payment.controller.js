@@ -73,13 +73,28 @@ export const getAllPayments = asyncHandler(async (req, res) => {
 // PATCH /api/v1/payments/:id/approve — admin
 export const approvePayment = asyncHandler(async (req, res) => {
   try {
-    const payment = await Payment.findById(req.params.id)
+    const payment = await Payment.findById(req.params.id).populate('course', 'title')
     if (!payment) return res.status(404).json({ success: false, error: { message: 'Payment not found' } })
     if (payment.status !== 'pending') return res.status(400).json({ success: false, error: { message: 'Payment already processed' } })
 
     payment.status = 'approved'
     payment.adminNote = req.body.adminNote || ''
     await payment.save()
+
+    await Enrollment.findOneAndUpdate(
+      { student: payment.student, course: payment.course._id },
+      { isActive: true }
+    )
+
+    await Notification.create({
+      recipient: payment.student,
+      title: 'Payment Approved',
+      message: `Your payment for "${payment.course.title}" has been approved. You now have full access.`,
+      type: 'payment',
+      severity: 'low',
+      relatedId: payment._id,
+      relatedType: 'Payment',
+    })
 
     res.json({ success: true, message: 'Payment approved', data: payment })
   } catch (error) {
