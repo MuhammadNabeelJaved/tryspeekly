@@ -194,7 +194,7 @@ export default function MessagesView({ title, subtitle }: Props) {
   };
 
   const filteredConvs = conversations.filter(c =>
-    c.user.name.toLowerCase().includes(search.toLowerCase())
+    c.user && c.user.name.toLowerCase().includes(search.toLowerCase())
   );
 
   const filteredContacts = contacts.filter(c =>
@@ -246,7 +246,7 @@ export default function MessagesView({ title, subtitle }: Props) {
                 {filteredConvs.map(conv => {
                   const isSelected = selectedUserId === conv.user._id;
                   const lastMsg = conv.lastMessage;
-                  const isFromMe = lastMsg && typeof lastMsg.sender === 'object' && lastMsg.sender._id === user?._id;
+                  const isFromMe = lastMsg && lastMsg.sender != null && typeof lastMsg.sender === 'object' && lastMsg.sender._id === user?._id;
                   return (
                     <button
                       key={conv.user._id}
@@ -315,7 +315,7 @@ export default function MessagesView({ title, subtitle }: Props) {
                   </div>
                 ) : (
                   messages.map(msg => {
-                    const senderId = typeof msg.sender === 'object' ? msg.sender._id : msg.sender as string;
+                    const senderId = msg.sender != null && typeof msg.sender === 'object' ? msg.sender._id : msg.sender as string;
                     const isMe = senderId === user?._id;
                     return (
                       <div key={msg._id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
