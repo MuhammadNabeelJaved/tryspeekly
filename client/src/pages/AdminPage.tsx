@@ -14,7 +14,9 @@ import UserAvatar from '@/components/UserAvatar'
 import { useAuth } from '../context/AuthContext'
 import { useSocket } from '../context/SocketContext'
 import { notificationsService } from '../services/notifications.service'
+import { axiosClient } from '../lib/axiosClient'
 import type { Notification } from '../types/api'
+import { getNotificationPath } from '../utils/notificationNav'
 
 const AdminOverview = lazy(() => import('./admin/AdminOverview'))
 const AdminStudents = lazy(() => import('./admin/AdminStudents'))
@@ -182,6 +184,7 @@ export default function AdminPage() {
   const [darkMode, setDarkMode] = useState(() => document.documentElement.classList.contains('dark'))
   const { unreadNotifications, setUnreadNotifications, unreadMessages } = useSocket()
   const [notifs, setNotifs] = useState<Notification[]>([])
+  const [adminBadges, setAdminBadges] = useState({ students: 0, pendingPayments: 0, pendingCourses: 0, pendingFinancialAid: 0 })
 
   useEffect(() => {
     notificationsService.getMyNotifications({ limit: 5 })
@@ -189,10 +192,35 @@ export default function AdminPage() {
       .catch(() => {})
   }, [unreadNotifications])
 
+  useEffect(() => {
+    axiosClient.get('/stats/admin')
+      .then(res => {
+        const d = res.data?.data
+        if (d) setAdminBadges({
+          students: d.totalStudents ?? 0,
+          pendingPayments: (d.pendingPayments ?? 0) + (d.failedPayments ?? 0),
+          pendingCourses: d.pendingCourseReviews ?? 0,
+          pendingFinancialAid: d.pendingFinancialAid ?? 0,
+        })
+      })
+      .catch(() => {})
+  }, [])
+
   async function markAllAsRead() {
     await notificationsService.markAllAsRead()
     setUnreadNotifications(0)
     setNotifs(prev => prev.map(n => ({ ...n, read: true })))
+  }
+
+  async function handleNotifClick(notif: Notification) {
+    if (!notif.read) {
+      notificationsService.markAsRead(notif._id).catch(() => {})
+      setUnreadNotifications(prev => Math.max(0, prev - 1))
+      setNotifs(prev => prev.map(n => n._id === notif._id ? { ...n, read: true } : n))
+    }
+    const { path, state } = getNotificationPath(notif, 'admin')
+    setShowNotifications(false)
+    navigate(path, { state })
   }
 
 
@@ -265,17 +293,15 @@ export default function AdminPage() {
     return <LoginScreen onLogin={handleLogin} />
   }
 
-  const paymentAlerts = students.filter(s => s.paymentStatus === 'pending' || s.paymentStatus === 'failed').length
-  const pendingCourses = courses.filter(c => c.status === 'pending').length
-
   const renderNavItem = ({ view, label, path, Icon }: NavItem) => {
     const active = activeView === view
     const badge =
       view === 'messages' && unreadMessages > 0 ? unreadMessages :
       view === 'notifications' && unreadNotifications > 0 ? unreadNotifications :
-      view === 'students' ? students.length :
-      view === 'payments' && paymentAlerts > 0 ? paymentAlerts :
-      view === 'courses' && pendingCourses > 0 ? pendingCourses :
+      view === 'students' && adminBadges.students > 0 ? adminBadges.students :
+      view === 'payments' && adminBadges.pendingPayments > 0 ? adminBadges.pendingPayments :
+      view === 'courses' && adminBadges.pendingCourses > 0 ? adminBadges.pendingCourses :
+      view === 'financial-aid' && adminBadges.pendingFinancialAid > 0 ? adminBadges.pendingFinancialAid :
       null
 
     return (
@@ -411,16 +437,16 @@ export default function AdminPage() {
               {darkMode ? <Sun size={15} /> : <Moon size={15} />}
             </button>
 
-            {/* Messages badge */}
-            {unreadMessages > 0 && (
-              <button
-                onClick={() => navigate('/admin/messages')}
-                className="relative w-8 h-8 rounded-lg bg-slate-50 dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 flex items-center justify-center text-slate-500 dark:text-neutral-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
-              >
-                <Chats size={15} />
+            {/* Messages icon */}
+            <button
+              onClick={() => navigate('/admin/messages')}
+              className="relative w-8 h-8 rounded-lg bg-slate-50 dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 flex items-center justify-center text-slate-500 dark:text-neutral-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
+            >
+              <Chats size={15} />
+              {unreadMessages > 0 && (
                 <span className="absolute -top-1 -right-1 w-4 h-4 bg-violet-600 text-white text-[9px] font-bold rounded-full flex items-center justify-center">{unreadMessages > 9 ? '9+' : unreadMessages}</span>
-              </button>
-            )}
+              )}
+            </button>
 
             {/* Notifications */}
             <div className="relative" ref={notifRef}>
@@ -457,7 +483,7 @@ export default function AdminPage() {
                       ) : (
                         <div className="divide-y divide-slate-50 dark:divide-neutral-800/50">
                           {notifs.map(notif => (
-                            <div key={notif._id} className={`p-4 flex gap-3 hover:bg-slate-50 dark:hover:bg-neutral-800/50 transition-colors ${!notif.read ? 'bg-violet-50/30 dark:bg-violet-900/5' : ''}`}>
+                            <button key={notif._id} onClick={() => handleNotifClick(notif)} className={`w-full text-left p-4 flex gap-3 hover:bg-slate-50 dark:hover:bg-neutral-800/50 transition-colors cursor-pointer ${!notif.read ? 'bg-violet-50/30 dark:bg-violet-900/5' : ''}`}>
                               <div className="w-8 h-8 rounded-full bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 flex items-center justify-center flex-shrink-0">
                                 {!notif.read ? <Bell size={14} weight="fill" /> : <CheckCircle size={14} />}
                               </div>
@@ -465,7 +491,7 @@ export default function AdminPage() {
                                 <p className={`text-sm ${!notif.read ? 'font-bold text-slate-900 dark:text-white' : 'font-medium text-slate-600 dark:text-neutral-300'}`}>{notif.title}: {notif.message}</p>
                                 <p className="text-[10px] text-slate-400 mt-1">{new Date(notif.createdAt).toLocaleString()}</p>
                               </div>
-                            </div>
+                            </button>
                           ))}
                         </div>
                       )}

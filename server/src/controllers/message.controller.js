@@ -3,6 +3,7 @@ import Message from '../models/message.model.js'
 import User from '../models/user.model.js'
 import Enrollment from '../models/enrollment.model.js'
 import { emitToUser } from '../utils/socket.js'
+import { createAndEmitNotification } from '../utils/notify.js'
 import mongoose from 'mongoose'
 
 // POST /api/v1/messages — send a message
@@ -15,7 +16,20 @@ export const sendMessage = asyncHandler(async (req, res) => {
     const message = await Message.create({ sender: req.user.id, receiver: receiverId, content })
     await message.populate('sender', 'name profileImage role')
 
+    const senderName = message.sender?.name || 'Someone'
+    const preview = content.length > 60 ? content.slice(0, 60) + '…' : content
+
     emitToUser(receiverId, 'new_message', message)
+
+    createAndEmitNotification({
+      recipientId: receiverId,
+      title: `New message from ${senderName}`,
+      message: preview,
+      type: 'message',
+      severity: 'low',
+      relatedId: req.user.id,
+      relatedType: 'user',
+    }).catch(() => {})
 
     res.status(201).json({ success: true, data: message })
   } catch (error) {

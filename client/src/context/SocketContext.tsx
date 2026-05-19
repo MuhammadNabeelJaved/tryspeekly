@@ -17,6 +17,7 @@ interface SocketContextValue {
   setUnreadMessages: (n: number | ((prev: number) => number)) => void;
   setUnreadNotifications: (n: number | ((prev: number) => number)) => void;
   onNewMessage: (handler: (msg: Message) => void) => () => void;
+  setActiveConversation: (userId: string | null) => void;
 }
 
 const SocketContext = createContext<SocketContextValue>({
@@ -27,6 +28,7 @@ const SocketContext = createContext<SocketContextValue>({
   setUnreadMessages: () => {},
   setUnreadNotifications: () => {},
   onNewMessage: () => () => {},
+  setActiveConversation: () => {},
 });
 
 export function SocketProvider({ children }: { children: ReactNode }) {
@@ -37,10 +39,15 @@ export function SocketProvider({ children }: { children: ReactNode }) {
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const messageHandlersRef = useRef<Set<(msg: Message) => void>>(new Set());
+  const activeConversationRef = useRef<string | null>(null);
 
   const onNewMessage = useCallback((handler: (msg: Message) => void) => {
     messageHandlersRef.current.add(handler);
     return () => { messageHandlersRef.current.delete(handler); };
+  }, []);
+
+  const setActiveConversation = useCallback((userId: string | null) => {
+    activeConversationRef.current = userId;
   }, []);
 
   useEffect(() => {
@@ -82,7 +89,16 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       messageHandlersRef.current.forEach(h => h(msg));
     });
 
-    socket.on('new_notification', (_notif: Notification) => {
+    socket.on('new_notification', (notif: Notification) => {
+      // If user is actively viewing the conversation this notification is about, mark it read silently
+      if (
+        notif.type === 'message' &&
+        notif.relatedId &&
+        notif.relatedId === activeConversationRef.current
+      ) {
+        notificationsService.markAsRead(notif._id).catch(() => {});
+        return; // don't increment badge
+      }
       setUnreadNotifications(prev => prev + 1);
     });
 
@@ -103,6 +119,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       setUnreadMessages,
       setUnreadNotifications,
       onNewMessage,
+      setActiveConversation,
     }}>
       {children}
     </SocketContext.Provider>

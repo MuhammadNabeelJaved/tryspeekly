@@ -11,6 +11,7 @@ import { useAuth } from '@/context/AuthContext'
 import { useSocket } from '@/context/SocketContext'
 import { notificationsService } from '@/services/notifications.service'
 import type { Notification } from '@/types/api'
+import { getNotificationPath } from '@/utils/notificationNav'
 
 const InstructorOverview = lazy(() => import('./instructor/InstructorOverview'))
 const InstructorCourses = lazy(() => import('./instructor/InstructorCourses'))
@@ -74,6 +75,17 @@ export default function InstructorDashboardPage() {
     await notificationsService.markAllAsRead()
     setUnreadNotifications(0)
     setNotifs(prev => prev.map(n => ({ ...n, read: true })))
+  }
+
+  const handleNotifClick = async (notif: Notification) => {
+    if (!notif.read) {
+      notificationsService.markAsRead(notif._id).catch(() => {})
+      setUnreadNotifications(prev => Math.max(0, prev - 1))
+      setNotifs(prev => prev.map(n => n._id === notif._id ? { ...n, read: true } : n))
+    }
+    const { path, state } = getNotificationPath(notif, 'instructor')
+    setShowNotifications(false)
+    navigate(path, { state })
   }
 
   // Determine active view from current URL path
@@ -221,6 +233,17 @@ export default function InstructorDashboardPage() {
               {darkMode ? <Sun size={15} /> : <Moon size={15} />}
             </button>
 
+            {/* Messages icon */}
+            <button
+              onClick={() => navigate('/instructor/messages')}
+              className="relative w-8 h-8 rounded-lg bg-slate-50 dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 flex items-center justify-center text-slate-500 dark:text-neutral-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
+            >
+              <Chats size={15} />
+              {unreadMessages > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-violet-600 text-white text-[9px] font-bold rounded-full flex items-center justify-center">{unreadMessages > 9 ? '9+' : unreadMessages}</span>
+              )}
+            </button>
+
             {/* Notifications */}
             <div className="relative" ref={notifRef}>
               <button
@@ -256,7 +279,7 @@ export default function InstructorDashboardPage() {
                       ) : (
                         <div className="divide-y divide-slate-50 dark:divide-neutral-800/50">
                           {notifs.map(notif => (
-                            <div key={notif._id} className={`p-4 flex gap-3 hover:bg-slate-50 dark:hover:bg-neutral-800/50 transition-colors ${!notif.read ? 'bg-violet-50/30 dark:bg-violet-900/5' : ''}`}>
+                            <button key={notif._id} onClick={() => handleNotifClick(notif)} className={`w-full text-left p-4 flex gap-3 hover:bg-slate-50 dark:hover:bg-neutral-800/50 transition-colors cursor-pointer ${!notif.read ? 'bg-violet-50/30 dark:bg-violet-900/5' : ''}`}>
                               <div className="w-8 h-8 rounded-full bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 flex items-center justify-center flex-shrink-0">
                                 {!notif.read ? <Bell size={14} weight="fill" /> : <CheckCircle size={14} />}
                               </div>
@@ -264,7 +287,7 @@ export default function InstructorDashboardPage() {
                                 <p className={`text-sm ${!notif.read ? 'font-bold text-slate-900 dark:text-white' : 'font-medium text-slate-600 dark:text-neutral-300'}`}>{notif.title}: {notif.message}</p>
                                 <p className="text-[10px] text-slate-400 mt-1">{new Date(notif.createdAt).toLocaleString()}</p>
                               </div>
-                            </div>
+                            </button>
                           ))}
                         </div>
                       )}

@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
   MagnifyingGlass, PaperPlaneRight, CaretLeft, CheckCircle,
   Plus, X, UserCircle,
@@ -36,11 +37,15 @@ function Avatar({ name, image, size = 'md' }: { name: string; image?: string; si
 
 export default function MessagesView({ title, subtitle }: Props) {
   const { user } = useAuth();
-  const { socket, setUnreadMessages, onNewMessage } = useSocket();
+  const { socket, setUnreadMessages, onNewMessage, setActiveConversation } = useSocket();
+  const location = useLocation();
   if (!user) return null;
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const initialOpenUserIdRef = useRef<string | null>(
+    (location.state as { openUserId?: string } | null)?.openUserId ?? null
+  );
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [search, setSearch] = useState('');
@@ -55,6 +60,8 @@ export default function MessagesView({ title, subtitle }: Props) {
   const [loadingContacts, setLoadingContacts] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const chatScrollRef = useRef<HTMLDivElement>(null);
+  const justSwitchedConvRef = useRef(false);
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const selectedConv = conversations.find(c => c.user._id === selectedUserId);
@@ -69,28 +76,64 @@ export default function MessagesView({ title, subtitle }: Props) {
 
   useEffect(() => { loadConversations(); }, [loadConversations]);
 
+  // Auto-open a conversation when navigated from a notification click
+  useEffect(() => {
+    const targetId = initialOpenUserIdRef.current;
+    if (targetId && conversations.length > 0 && !selectedUserId) {
+      initialOpenUserIdRef.current = null;
+      setSelectedUserId(targetId);
+    }
+  }, [conversations, selectedUserId]);
+
+  // Tell SocketContext which conversation is active so message notifications are suppressed
+  useEffect(() => {
+    setActiveConversation(selectedUserId);
+    return () => { setActiveConversation(null); };
+  }, [selectedUserId, setActiveConversation]);
+
+  // Mark as "just switched" when conversation changes so first load uses instant scroll
+  useEffect(() => {
+    justSwitchedConvRef.current = true;
+  }, [selectedUserId]);
+
   // Load messages when a user is selected
   useEffect(() => {
     if (!selectedUserId) return;
     setLoadingMsgs(true);
     messagesService.getMessagesWith(selectedUserId)
-      .then(res => {
+      .then(async res => {
         if (res.success) setMessages(res.data);
-        // Reset unread count in conversations
+        // Reset unread count in conversations list
         setConversations(prev => prev.map(c =>
           c.user._id === selectedUserId ? { ...c, unreadCount: 0 } : c
         ));
         // Emit mark_read to notify sender
         socket?.emit('mark_read', { senderId: selectedUserId });
+        // Sync topbar badge with actual server count after marking read
+        const countRes = await messagesService.getUnreadCount();
+        setUnreadMessages(countRes.count);
       })
       .catch(() => {})
       .finally(() => setLoadingMsgs(false));
-  }, [selectedUserId, socket]);
+  }, [selectedUserId, socket, setUnreadMessages]);
 
-  // Scroll to bottom on new messages
+  // Scroll to bottom: instant on conversation open, smooth for new messages
+  // loadingMsgs is included so the effect re-fires after spinner disappears and messages paint
+  useEffect(() => {
+    if (loadingMsgs || messages.length === 0) return;
+    const container = chatScrollRef.current;
+    if (!container) return;
+    if (justSwitchedConvRef.current) {
+      container.scrollTop = container.scrollHeight;
+      justSwitchedConvRef.current = false;
+    } else {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages, loadingMsgs]);
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, typingFrom]);
+  }, [typingFrom]);
 
   // Socket: incoming messages
   useEffect(() => {
@@ -304,7 +347,7 @@ export default function MessagesView({ title, subtitle }: Props) {
                 </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50/30 dark:bg-neutral-900/30">
+              <div ref={chatScrollRef} className="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50/30 dark:bg-neutral-900/30">
                 {loadingMsgs ? (
                   <div className="flex items-center justify-center h-full">
                     <div className="w-6 h-6 border-2 border-violet-600 border-t-transparent rounded-full animate-spin" />
