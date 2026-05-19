@@ -3,10 +3,13 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import {
   House, BookOpen, CreditCard, Handshake, GearSix, ChatCircleDots,
-  List, X, SignOut, Bell, Sun, Moon, Certificate, CheckCircle
+  List, X, SignOut, Bell, Sun, Moon, Certificate, CheckCircle, Chats
 } from '@phosphor-icons/react'
 import Loader from '@/components/Loader'
 import { useAuth } from '../context/AuthContext'
+import { useSocket } from '../context/SocketContext'
+import { notificationsService } from '../services/notifications.service'
+import type { Notification } from '../types/api'
 
 const StudentOverview = lazy(() => import('./student/StudentOverview'))
 const StudentCourses = lazy(() => import('./student/StudentCourses'))
@@ -17,8 +20,9 @@ const StudentFinancialAid = lazy(() => import('./student/StudentFinancialAid'))
 const StudentSettings = lazy(() => import('./student/StudentSettings'))
 const StudentSupport = lazy(() => import('./student/StudentSupport'))
 const StudentNotifications = lazy(() => import('./student/StudentNotifications'))
+const StudentMessages = lazy(() => import('./student/StudentMessages'))
 
-export type StudentView = 'overview' | 'courses' | 'certificates' | 'payments' | 'financial-aid' | 'settings' | 'support' | 'notifications'
+export type StudentView = 'overview' | 'courses' | 'certificates' | 'payments' | 'financial-aid' | 'settings' | 'support' | 'notifications' | 'messages'
 
 type NavItem = { view: StudentView; label: string; path: string; Icon: React.FC<{ size?: number; weight?: string; className?: string }> }
 
@@ -28,6 +32,7 @@ const NAV_MAIN: NavItem[] = [
   { view: 'certificates', label: 'Certificates', path: 'certificates', Icon: Certificate as NavItem['Icon'] },
   { view: 'payments', label: 'Payments', path: 'payments', Icon: CreditCard as NavItem['Icon'] },
   { view: 'financial-aid', label: 'Financial Aid', path: 'financial-aid', Icon: Handshake as NavItem['Icon'] },
+  { view: 'messages', label: 'Messages', path: 'messages', Icon: Chats as NavItem['Icon'] },
 ]
 
 const NAV_PREFS: NavItem[] = [
@@ -40,18 +45,20 @@ export default function StudentDashboardPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { user, logout } = useAuth()
+  const { unreadNotifications, setUnreadNotifications, unreadMessages } = useSocket()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [darkMode, setDarkMode] = useState(() => document.documentElement.classList.contains('dark'))
 
   // Notification State
   const [showNotifications, setShowNotifications] = useState(false)
-  const [notifs, setNotifs] = useState([
-    { id: 1, text: 'Your assignment for Business English was graded', time: '1h ago', unread: true },
-    { id: 2, text: 'Live class: General English Mastery starts in 15 mins', time: '2h ago', unread: true },
-    { id: 3, text: 'Welcome to EnglishPro! Complete your profile.', time: '1d ago', unread: false },
-  ])
-  const unreadCount = notifs.filter(n => n.unread).length
+  const [notifs, setNotifs] = useState<Notification[]>([])
   const notifRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    notificationsService.getMyNotifications({ limit: 5 })
+      .then(res => { if (res.success) setNotifs(res.data) })
+      .catch(() => {})
+  }, [unreadNotifications])
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -63,8 +70,10 @@ export default function StudentDashboardPage() {
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
-  const markAllAsRead = () => {
-    setNotifs(notifs.map(n => ({ ...n, unread: false })))
+  const markAllAsRead = async () => {
+    await notificationsService.markAllAsRead()
+    setUnreadNotifications(0)
+    setNotifs(prev => prev.map(n => ({ ...n, read: true })))
   }
 
   // Determine active view from current URL path
@@ -92,6 +101,7 @@ export default function StudentDashboardPage() {
 
   const renderNavItem = ({ view, label, path, Icon }: NavItem) => {
     const active = activeView === view
+    const badge = view === 'messages' && unreadMessages > 0 ? unreadMessages : view === 'notifications' && unreadNotifications > 0 ? unreadNotifications : 0
 
     return (
       <button
@@ -104,6 +114,11 @@ export default function StudentDashboardPage() {
       >
         <Icon size={18} weight={active ? 'fill' : 'regular'} />
         {label}
+        {badge > 0 && (
+          <span className={`ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center ${active ? 'bg-white/30 text-white' : 'bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300'}`}>
+            {badge > 9 ? '9+' : badge}
+          </span>
+        )}
       </button>
     )
   }
@@ -216,21 +231,32 @@ export default function StudentDashboardPage() {
               {darkMode ? <Sun size={15} /> : <Moon size={15} />}
             </button>
 
+            {/* Messages badge */}
+            {unreadMessages > 0 && (
+              <button
+                onClick={() => navigate('/dashboard/messages')}
+                className="relative w-8 h-8 rounded-lg bg-slate-50 dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 flex items-center justify-center text-slate-500 dark:text-neutral-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
+              >
+                <Chats size={15} />
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-violet-600 text-white text-[9px] font-bold rounded-full flex items-center justify-center">{unreadMessages > 9 ? '9+' : unreadMessages}</span>
+              </button>
+            )}
+
             {/* Notifications */}
             <div className="relative" ref={notifRef}>
-              <button 
+              <button
                 onClick={() => setShowNotifications(!showNotifications)}
                 className={`relative w-8 h-8 rounded-lg border flex items-center justify-center transition-colors ${showNotifications ? 'bg-violet-50 dark:bg-violet-900/20 border-violet-200 dark:border-violet-800 text-violet-600 dark:text-violet-400' : 'bg-slate-50 dark:bg-neutral-800 border-slate-200 dark:border-neutral-700 text-slate-500 dark:text-neutral-400 hover:text-violet-600 dark:hover:text-violet-400'}`}
               >
-                <Bell size={15} weight={showNotifications ? "fill" : "regular"} />
-                {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">{unreadCount}</span>
+                <Bell size={15} weight={showNotifications ? 'fill' : 'regular'} />
+                {unreadNotifications > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">{unreadNotifications > 9 ? '9+' : unreadNotifications}</span>
                 )}
               </button>
 
               <AnimatePresence>
                 {showNotifications && (
-                  <motion.div 
+                  <motion.div
                     initial={{ opacity: 0, y: 10, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
@@ -239,7 +265,7 @@ export default function StudentDashboardPage() {
                   >
                     <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-neutral-800 bg-slate-50/50 dark:bg-neutral-900/50">
                       <h3 className="text-sm font-black text-slate-900 dark:text-white">Notifications</h3>
-                      {unreadCount > 0 && (
+                      {unreadNotifications > 0 && (
                         <button onClick={markAllAsRead} className="text-[10px] font-bold text-violet-600 dark:text-violet-400 hover:underline">
                           Mark all as read
                         </button>
@@ -251,13 +277,13 @@ export default function StudentDashboardPage() {
                       ) : (
                         <div className="divide-y divide-slate-50 dark:divide-neutral-800/50">
                           {notifs.map(notif => (
-                            <div key={notif.id} className={`p-4 flex gap-3 hover:bg-slate-50 dark:hover:bg-neutral-800/50 transition-colors ${notif.unread ? 'bg-violet-50/30 dark:bg-violet-900/5' : ''}`}>
+                            <div key={notif._id} className={`p-4 flex gap-3 hover:bg-slate-50 dark:hover:bg-neutral-800/50 transition-colors ${!notif.read ? 'bg-violet-50/30 dark:bg-violet-900/5' : ''}`}>
                               <div className="w-8 h-8 rounded-full bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 flex items-center justify-center flex-shrink-0">
-                                {notif.unread ? <Bell size={14} weight="fill" /> : <CheckCircle size={14} />}
+                                {!notif.read ? <Bell size={14} weight="fill" /> : <CheckCircle size={14} />}
                               </div>
                               <div>
-                                <p className={`text-sm ${notif.unread ? 'font-bold text-slate-900 dark:text-white' : 'font-medium text-slate-600 dark:text-neutral-300'}`}>{notif.text}</p>
-                                <p className="text-[10px] text-slate-400 mt-1">{notif.time}</p>
+                                <p className={`text-sm ${!notif.read ? 'font-bold text-slate-900 dark:text-white' : 'font-medium text-slate-600 dark:text-neutral-300'}`}>{notif.title}: {notif.message}</p>
+                                <p className="text-[10px] text-slate-400 mt-1">{new Date(notif.createdAt).toLocaleString()}</p>
                               </div>
                             </div>
                           ))}
@@ -265,7 +291,7 @@ export default function StudentDashboardPage() {
                       )}
                     </div>
                     <div className="p-2 border-t border-slate-100 dark:border-neutral-800 bg-slate-50/50 dark:bg-neutral-900/50">
-                      <button 
+                      <button
                         onClick={() => { navigate('/dashboard/notifications'); setShowNotifications(false); }}
                         className="w-full py-2 text-xs font-bold text-slate-500 hover:text-slate-900 dark:text-neutral-400 dark:hover:text-white transition-colors"
                       >
@@ -301,6 +327,7 @@ export default function StudentDashboardPage() {
                   <Route path="/settings" element={<StudentSettings />} />
                   <Route path="/support" element={<StudentSupport />} />
                   <Route path="/notifications" element={<StudentNotifications />} />
+                  <Route path="/messages" element={<StudentMessages />} />
                 </Routes>
               </Suspense>
             </motion.div>

@@ -277,8 +277,21 @@ export interface Message {
 
 export interface Conversation {
   _id: { s: string; r: string };
-  lastMessage: Message;
+  user: {
+    _id: string;
+    name: string;
+    profileImage?: string;
+    role: 'student' | 'teacher' | 'admin';
+  };
+  lastMessage: Message | null;
   unreadCount: number;
+}
+
+export interface Contact {
+  _id: string;
+  name: string;
+  profileImage?: string;
+  role: 'student' | 'teacher' | 'admin';
 }
 
 export interface SendMessageDto {
@@ -346,7 +359,7 @@ export interface Notification {
   recipient: string;
   title: string;
   message: string;
-  type: 'system' | 'user' | 'payment' | 'security' | 'course' | 'message';
+  type: 'system' | 'user' | 'payment' | 'security' | 'course' | 'message' | 'financial_aid';
   severity: 'low' | 'medium' | 'high';
   read: boolean;
   readAt?: string;

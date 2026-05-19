@@ -201,7 +201,7 @@ export default function StudentCourseDetails() {
   const sessionsAttended = enrollment.progress?.sessionsAttended ?? 0
   const totalSessions = enrollment.progress?.totalSessions ?? 0
   const attendancePct =
-    totalSessions > 0 ? Math.round((sessionsAttended / totalSessions) * 100) : 0
+    totalSessions > 0 ? Math.min(100, Math.round((sessionsAttended / totalSessions) * 100)) : 0
 
   const instructorName = enrollment.teacher?.name ?? '—'
   const schedule = course.recurringSchedule?.[0]

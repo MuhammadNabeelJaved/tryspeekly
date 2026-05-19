@@ -21,7 +21,7 @@ export const assignmentsService = {
     payload: { enrollmentId: string; file: File }
   ): Promise<ApiResponse<{ _id: string; fileUrl: string; status: string }>> {
     const form = new FormData();
-    form.append('file', payload.file);
+    form.append('document', payload.file);
     form.append('enrollmentId', payload.enrollmentId);
     const response = await axiosClient.post<ApiResponse<{ _id: string; fileUrl: string; status: string }>>(
       `/assignments/${assignmentId}/submit`,
@@ -53,6 +53,21 @@ export const assignmentsService = {
     const response = await axiosClient.get<{ success: boolean; data: Assignment[] }>(
       '/assignments/my'
     );
+    return response.data;
+  },
+
+  async createAssignment(dto: {
+    courseId: string;
+    title: string;
+    description: string;
+    dueDate: string;
+  }): Promise<ApiResponse<Assignment>> {
+    const response = await axiosClient.post<ApiResponse<Assignment>>('/assignments', dto);
+    return response.data;
+  },
+
+  async deleteAssignment(assignmentId: string): Promise<ApiResponse<null>> {
+    const response = await axiosClient.delete<ApiResponse<null>>(`/assignments/${assignmentId}`);
     return response.data;
   },
 };

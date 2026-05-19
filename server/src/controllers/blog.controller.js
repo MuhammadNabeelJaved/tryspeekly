@@ -37,9 +37,36 @@ export const getBlog = asyncHandler(async (req, res) => {
   }
 })
 
+// GET /api/v1/blogs/admin/all — admin: all blogs regardless of status
+export const getAdminBlogs = asyncHandler(async (req, res) => {
+  try {
+    const { page = 1, limit = 50, status, search } = req.query
+    const filter = { isDeleted: { $ne: true } }
+    if (status && status !== 'all') filter.status = status
+    if (search) filter.title = { $regex: search, $options: 'i' }
+
+    const skip = (Number(page) - 1) * Number(limit)
+    const [blogs, total] = await Promise.all([
+      Blog.find(filter).populate('author', 'name profileImage').select('-content').skip(skip).limit(Number(limit)).sort({ createdAt: -1 }),
+      Blog.countDocuments(filter),
+    ])
+
+    res.json({
+      success: true,
+      data: blogs,
+      pagination: { page: Number(page), limit: Number(limit), total, totalPages: Math.ceil(total / Number(limit)) },
+    })
+  } catch (error) {
+    res.status(400).json({ success: false, error: { message: error.message } })
+  }
+})
+
 // POST /api/v1/blogs — admin/teacher
 export const createBlog = asyncHandler(async (req, res) => {
   try {
+    if (!req.body.slug && req.body.title) {
+      req.body.slug = req.body.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + Date.now()
+    }
     const blog = await Blog.create({ ...req.body, author: req.user.id })
     res.status(201).json({ success: true, message: 'Blog created successfully', data: blog })
   } catch (error) {

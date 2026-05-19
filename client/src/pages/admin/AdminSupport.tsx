@@ -165,7 +165,7 @@ export default function AdminSupport() {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [activeTicket?._id, activeTicket?.messages.length])
+  }, [activeTicket?._id, activeTicket?.messages?.length])
 
   const fetchTickets = useCallback(() => {
     setLoading(true)
@@ -181,7 +181,6 @@ export default function AdminSupport() {
   useEffect(() => { fetchTickets() }, [fetchTickets])
 
   const filteredTickets = tickets
-    .filter(ticket => !!ticket.student)
     .filter(ticket => {
       const q = search.toLowerCase()
       const matchesSearch = !q || ticket.student.name.toLowerCase().includes(q) || ticket.subject.toLowerCase().includes(q)
@@ -199,6 +198,8 @@ export default function AdminSupport() {
       await supportService.replyToTicket(activeTicket._id, messageInput.trim())
       setMessageInput('')
       fetchTickets()
+      const res = await supportService.getTicketById(activeTicket._id)
+      if (res.success) setActiveTicket(res.data)
     } catch {
       // silent fail
     } finally {
@@ -278,7 +279,11 @@ export default function AdminSupport() {
                     <p className="p-6 text-center text-sm text-slate-400 dark:text-neutral-500">No tickets found.</p>
                   ) : (
                     filteredTickets.map(ticket => (
-                      <button key={ticket._id} onClick={() => setActiveTicket(ticket)}
+                      <button key={ticket._id} onClick={async () => {
+                        setActiveTicket(ticket)
+                        const res = await supportService.getTicketById(ticket._id)
+                        if (res.success) setActiveTicket(res.data)
+                      }}
                         className={`w-full text-left p-4 transition-colors hover:bg-slate-50 dark:hover:bg-neutral-800/50 ${activeTicket?._id === ticket._id ? 'bg-violet-50 dark:bg-violet-900/20' : ''}`}>
                         <div className="flex items-start gap-2.5 mb-2">
                           <div className="w-8 h-8 rounded-full bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 text-[10px] font-black flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -294,7 +299,7 @@ export default function AdminSupport() {
                           </div>
                         </div>
                         <p className="text-sm font-semibold text-slate-700 dark:text-neutral-300 line-clamp-1 mb-1">{ticket.subject}</p>
-                        <p className="text-xs text-slate-400 dark:text-neutral-500 line-clamp-1">{ticket.messages.at(-1)?.content}</p>
+                        <p className="text-xs text-slate-400 dark:text-neutral-500 line-clamp-1">{ticket.messages?.at(-1)?.content}</p>
                         <p className="text-[10px] text-slate-300 dark:text-neutral-600 mt-1.5 text-right">
                           {new Date(ticket.lastMessageAt).toLocaleString()}
                         </p>
@@ -331,7 +336,7 @@ export default function AdminSupport() {
                       </div>
 
                       <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50/40 dark:bg-neutral-950">
-                        {activeTicket.messages.map(msg => (
+                        {(activeTicket.messages ?? []).map(msg => (
                           <div key={msg._id} className={`flex ${msg.sender === 'admin' ? 'justify-end' : 'justify-start'}`}>
                             <div className="max-w-[80%]">
                               <div className={`px-4 py-2.5 rounded-2xl text-sm shadow-sm leading-relaxed ${msg.sender === 'admin' ? 'bg-violet-600 text-white rounded-tr-sm' : 'bg-white dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 text-slate-700 dark:text-neutral-300 rounded-tl-sm'}`}>

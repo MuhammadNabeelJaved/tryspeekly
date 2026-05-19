@@ -61,7 +61,7 @@ export default function StudentCourses() {
             {enrollments.map(enrollment => {
               const attended = enrollment.progress?.sessionsAttended ?? 0
               const total = enrollment.progress?.totalSessions ?? 0
-              const attendance = total > 0 ? Math.round((attended / total) * 100) : 0
+              const attendance = total > 0 ? Math.min(100, Math.round((attended / total) * 100)) : 0
               const isActive = enrollment.isActive
               const payment = enrollment.payment
               const hasPayment = !!payment

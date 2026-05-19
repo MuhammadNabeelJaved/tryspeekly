@@ -5,8 +5,9 @@ import { Server } from 'socket.io'
 import jwt from 'jsonwebtoken'
 import app from './app.js'
 import connectDB from './src/database/db.js'
-import { setIO } from './src/utils/socket.js'
+import { setIO, emitToUser } from './src/utils/socket.js'
 import Enrollment from './src/models/enrollment.model.js'
+import Message from './src/models/message.model.js'
 
 // Override DNS to use Google Public DNS for MongoDB Atlas SRV record lookup
 dns.setServers(['8.8.8.8', '8.8.4.4'])
@@ -50,6 +51,29 @@ io.on('connection', async (socket) => {
       console.warn('[Socket] failed to join course rooms for student:', err.message)
     }
   }
+
+  // ─── Typing indicators ─────────────────────────────────────────────────────
+  socket.on('typing', ({ receiverId }) => {
+    if (userId && receiverId) emitToUser(receiverId, 'user_typing', { senderId: userId })
+  })
+
+  socket.on('stop_typing', ({ receiverId }) => {
+    if (userId && receiverId) emitToUser(receiverId, 'user_stop_typing', { senderId: userId })
+  })
+
+  // ─── Mark messages as read ─────────────────────────────────────────────────
+  socket.on('mark_read', async ({ senderId }) => {
+    if (!userId || !senderId) return
+    try {
+      await Message.updateMany(
+        { sender: senderId, receiver: userId, isRead: false },
+        { isRead: true, readAt: new Date() }
+      )
+      emitToUser(senderId, 'messages_read', { by: userId })
+    } catch (err) {
+      console.warn('[Socket] mark_read error:', err.message)
+    }
+  })
 
   socket.on('disconnect', () => {
     if (userId) socket.leave(`user:${userId}`)

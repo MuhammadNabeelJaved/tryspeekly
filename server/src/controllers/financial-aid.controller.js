@@ -1,5 +1,6 @@
 import asyncHandler from '../utils/asyncHandler.js'
 import FinancialAid from '../models/financial-aid.model.js'
+import { createAndEmitNotification } from '../utils/notify.js'
 
 // POST /api/v1/financial-aid — student: apply (authenticated)
 export const applyForFinancialAid = asyncHandler(async (req, res) => {
@@ -75,11 +76,29 @@ export const updateApplicationStatus = asyncHandler(async (req, res) => {
     const application = await FinancialAid.findById(req.params.id)
     if (!application) return res.status(404).json({ success: false, error: { message: 'Application not found' } })
 
+    const prevStatus = application.status
     application.status = status
     application.decidedAt = new Date()
     if (notes !== undefined) application.notes = notes
     if (approvedAmount !== undefined) application.approvedAmount = approvedAmount
     await application.save()
+
+    if (prevStatus !== status && ['accepted', 'rejected', 'under_review'].includes(status)) {
+      const messages = {
+        accepted: 'Your financial aid application has been accepted.',
+        rejected: `Your financial aid application has been rejected.${notes ? ` Reason: ${notes}` : ''}`,
+        under_review: 'Your financial aid application is now under review.',
+      }
+      await createAndEmitNotification({
+        recipientId: application.student,
+        title: 'Financial Aid Update',
+        message: messages[status],
+        type: 'financial_aid',
+        severity: status === 'accepted' ? 'low' : status === 'rejected' ? 'medium' : 'low',
+        relatedId: application._id,
+        relatedType: 'FinancialAid',
+      })
+    }
 
     res.json({ success: true, message: 'Application status updated', data: application })
   } catch (error) {

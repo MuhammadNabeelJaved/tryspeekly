@@ -9,6 +9,13 @@ export const blogService = {
     return response.data;
   },
 
+  async getAdminBlogs(params?: {
+    status?: string; search?: string; page?: number; limit?: number;
+  }): Promise<BlogListResponse> {
+    const response = await axiosClient.get<BlogListResponse>('/blogs/admin/all', { params });
+    return response.data;
+  },
+
   async getBlogBySlug(slug: string): Promise<BlogSingleResponse> {
     const response = await axiosClient.get<BlogSingleResponse>(`/blogs/${slug}`);
     return response.data;

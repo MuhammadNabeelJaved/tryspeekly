@@ -454,7 +454,7 @@ export default function InstructorCourses() {
           const courseIdStr = (course.id || '').toString().trim()
           const completedCount = completedClassesMap[courseIdStr] || 0
           const totalClasses = course.totalClasses || 0
-          const progress = totalClasses > 0 ? Math.round((completedCount / totalClasses) * 100) : 0
+          const progress = totalClasses > 0 ? Math.min(100, Math.round((completedCount / totalClasses) * 100)) : 0
 
           return (
           <div key={course.id} className="bg-white dark:bg-neutral-900 rounded-3xl border border-slate-200 dark:border-neutral-800 overflow-hidden shadow-sm flex flex-col hover:shadow-lg hover:border-violet-300 dark:hover:border-violet-700/50 transition-all duration-300 group">

@@ -1,10 +1,10 @@
 import MessagesView from '../../components/MessagesView';
 
-export default function InstructorMessages() {
+export default function StudentMessages() {
   return (
     <MessagesView
       title="Messages"
-      subtitle="Chat with your students and admin in real time."
+      subtitle="Chat with your teachers and admin in real time."
     />
   );
 }

@@ -52,7 +52,7 @@ export default function InstructorOverview({ onNavigate }: InstructorOverviewPro
             const courseIdStr = c._id.toString().trim()
             const completedCount = completedMap[courseIdStr] || 0
             const totalClasses = c.totalSessions || 0
-            const progress = totalClasses > 0 ? Math.round((completedCount / totalClasses) * 100) : 0
+            const progress = totalClasses > 0 ? Math.min(100, Math.round((completedCount / totalClasses) * 100)) : 0
 
             return {
               id: c._id,

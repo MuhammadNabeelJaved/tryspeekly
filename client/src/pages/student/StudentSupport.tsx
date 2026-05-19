@@ -147,6 +147,18 @@ export default function StudentSupport() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [selectedTicket?.messages])
 
+  const refreshSelectedTicket = useCallback(async (id: string) => {
+    const res = await supportService.getTicketById(id)
+    if (res.success) setSelectedTicket(res.data)
+  }, [])
+
+  const handleSelectTicket = useCallback(async (ticket: SupportTicket) => {
+    setSelectedTicket(ticket)
+    setShowNewForm(false)
+    const res = await supportService.getTicketById(ticket._id)
+    if (res.success) setSelectedTicket(res.data)
+  }, [])
+
   const handleSendReply = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!selectedTicket || !reply.trim()) return
@@ -154,6 +166,7 @@ export default function StudentSupport() {
     try {
       await supportService.replyToTicket(selectedTicket._id, reply)
       setReply('')
+      await refreshSelectedTicket(selectedTicket._id)
       fetchTickets()
     } catch {
       // silent fail
@@ -207,7 +220,7 @@ export default function StudentSupport() {
               </div>
             ) : (
               tickets.map(ticket => (
-                <button key={ticket._id} onClick={() => { setSelectedTicket(ticket); setShowNewForm(false) }}
+                <button key={ticket._id} onClick={() => handleSelectTicket(ticket)}
                   className={`w-full text-left p-4 transition-colors hover:bg-slate-50 dark:hover:bg-neutral-800 ${selectedTicket?._id === ticket._id ? 'bg-violet-50 dark:bg-violet-900/10 border-r-2 border-violet-500' : ''}`}>
                   <div className="flex items-start justify-between gap-2 mb-1">
                     <p className="text-xs font-bold text-slate-900 dark:text-white line-clamp-1 flex-1">{ticket.subject}</p>
@@ -238,12 +251,12 @@ export default function StudentSupport() {
               </div>
 
               <div className="flex-1 p-4 overflow-y-auto space-y-3 bg-slate-50/50 dark:bg-neutral-900/50">
-                {selectedTicket.messages.length === 0 ? (
+                {(selectedTicket.messages ?? []).length === 0 ? (
                   <div className="text-center py-8">
                     <p className="text-xs text-slate-400">No messages yet. Start the conversation below.</p>
                   </div>
                 ) : (
-                  selectedTicket.messages.map(msg => (
+                  (selectedTicket.messages ?? []).map(msg => (
                     <div key={msg._id} className={`flex ${msg.sender === 'student' ? 'justify-end' : 'justify-start'}`}>
                       <div className={`rounded-2xl px-4 py-2 max-w-[80%] shadow-sm ${
                         msg.sender === 'student'

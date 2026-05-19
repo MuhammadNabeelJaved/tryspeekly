@@ -3,6 +3,7 @@ import { authenticate, authorize } from '../middlewares/auth.js'
 import { uploadProfileImage, handleMulterError } from '../middlewares/multer.js'
 import {
   getAllBlogs,
+  getAdminBlogs,
   getBlog,
   createBlog,
   updateBlog,
@@ -14,6 +15,10 @@ const router = express.Router()
 
 // ─── Public routes ─────────────────────────────────────────────────────────────
 router.route('/').get(getAllBlogs)
+
+// ─── Admin routes (must be before /:slug to avoid shadowing) ──────────────────
+router.route('/admin/all').get(authenticate, authorize('admin', 'teacher'), getAdminBlogs)
+
 router.route('/:slug').get(getBlog)
 
 // ─── Teacher/Admin routes ──────────────────────────────────────────────────────

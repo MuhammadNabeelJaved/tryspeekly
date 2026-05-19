@@ -6,6 +6,7 @@ import toast from 'react-hot-toast'
 import type { AdminStore } from '../AdminPage'
 import type { Course } from './adminData'
 import { coursesService } from '../../services/courses.service'
+import { usersService } from '../../services/users.service'
 
 const EMPTY: Course = {
   id: '', title: '', level: 'Beginner', duration: '', price: 0, currency: 'PKR',
@@ -49,10 +50,24 @@ function Input({ register, name, type = 'text', placeholder, valueAsNumber }: { 
   )
 }
 
+const REVERSE_STATUS: Record<string, string> = {
+  published: 'active',
+  archived: 'inactive',
+}
+
 export default function AdminCourses({ store }: { store: AdminStore }) {
-  const { courses, setCourses, instructors } = store
+  const { courses, setCourses } = store
 
   const [apiCourses, setApiCourses] = useState<Course[] | null>(null)
+  const [apiInstructors, setApiInstructors] = useState<{ id: string; name: string }[]>([])
+
+  useEffect(() => {
+    usersService.getAllUsers({ role: 'teacher', limit: 100 })
+      .then(res => setApiInstructors(res.data.map(u => ({ id: u._id ?? u.id, name: u.name }))))
+      .catch(() => {})
+  }, [])
+
+  const instructors = apiInstructors
 
   useEffect(() => {
     async function fetchCourses() {
@@ -117,7 +132,8 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
   }
 
   function openEdit(course: Course) {
-    reset({ ...course, featuresInput: course.features.join(', ') })
+    const formStatus = (REVERSE_STATUS[course.status] ?? course.status) as Course['status']
+    reset({ ...course, status: formStatus, featuresInput: course.features.join(', ') })
     setModalType('edit')
   }
 
@@ -159,21 +175,79 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
     }
   }
 
-  function onSave(data: Course & { featuresInput: string }) {
-    const course: Course = {
-      ...data,
-      features: data.featuresInput.split(',').map(f => f.trim()).filter(Boolean),
+  async function onSave(data: Course & { featuresInput: string }) {
+    if (!data.instructorId) {
+      toast.error('Please select an instructor.')
+      return
     }
-    if (modalType === 'add') {
-      setCourses([...courses, course])
-    } else {
-      setCourses(courses.map(c => c.id === course.id ? course : c))
+
+    const statusMap: Record<string, string> = {
+      active: 'published', inactive: 'archived',
+      draft: 'draft', pending: 'pending', rejected: 'rejected',
     }
-    setModalType(null)
+    const levelMap: Record<string, string> = {
+      Beginner: 'beginner', Intermediate: 'intermediate', Advanced: 'advanced',
+      Business: 'intermediate', Kids: 'beginner',
+    }
+
+    const dto = {
+      title: data.title,
+      description: data.description || 'No description provided.',
+      price: data.price,
+      currency: data.currency,
+      type: 'group',
+      level: levelMap[data.level] ?? 'beginner',
+      focus: 'general',
+      totalSessions: parseInt(data.duration) || 12,
+      sessionDuration: 60,
+      teacher: data.instructorId,
+      maxStudents: data.maxStudents,
+      status: statusMap[data.status] ?? 'draft',
+      meetLink: data.meetingLink || undefined,
+    }
+
+    try {
+      if (modalType === 'add') {
+        await coursesService.createCourse(dto as any)
+        toast.success('Course created!')
+      } else {
+        await coursesService.updateCourse(data.id, dto as any)
+        toast.success('Course updated!')
+      }
+      const res = await coursesService.getAdminCourses({ limit: 200 })
+      const apiData: any[] = res.data ?? []
+      setApiCourses(apiData.map((c: any, idx: number) => ({
+        id: c._id ?? c.id ?? `api-c${idx}`,
+        title: c.title ?? '',
+        level: c.level ? c.level.charAt(0).toUpperCase() + c.level.slice(1) : 'Beginner',
+        duration: `${c.totalSessions ?? 0} sessions`,
+        price: c.price ?? 0,
+        currency: c.currency ?? 'PKR',
+        instructorId: c.teacher?._id ?? '',
+        instructorName: c.teacher?.name ?? '',
+        totalStudents: (c.enrolledStudents ?? []).length,
+        maxStudents: c.maxStudents ?? 15,
+        status: c.status as Course['status'],
+        description: c.description ?? '',
+        startDate: c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '',
+        schedule: c.recurringSchedule?.[0] ? `${c.recurringSchedule[0].day} ${c.recurringSchedule[0].time}` : '',
+        features: [],
+      })))
+      setModalType(null)
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Failed to save course.')
+    }
   }
 
-  function handleDelete(id: string) {
-    setCourses(courses.filter(c => c.id !== id))
+  async function handleDelete(id: string) {
+    try {
+      await coursesService.deleteCourse(id)
+      setApiCourses(prev => prev ? prev.filter(c => c.id !== id) : null)
+      setCourses(courses.filter(c => c.id !== id))
+      toast.success('Course deleted.')
+    } catch {
+      toast.error('Failed to delete course.')
+    }
     setDeleteId(null)
   }
 

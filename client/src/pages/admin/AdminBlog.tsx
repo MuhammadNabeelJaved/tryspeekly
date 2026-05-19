@@ -67,7 +67,7 @@ export default function AdminBlog() {
       if (statusFilter !== 'All') params.status = statusFilter.toLowerCase()
       if (search) params.search = search
       
-      const response = await blogService.getAllBlogs(params)
+      const response = await blogService.getAdminBlogs(params)
       setBlogs(response.data)
     } catch (error: unknown) {
       toast.error(extractApiError(error, 'Failed to load blog posts.'))

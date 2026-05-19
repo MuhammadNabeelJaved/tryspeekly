@@ -1,5 +1,5 @@
 import { axiosClient } from '../lib/axiosClient';
-import type { Message, Conversation, SendMessageDto } from '../types/api';
+import type { Message, Conversation, Contact, SendMessageDto } from '../types/api';
 
 export const messagesService = {
   async sendMessage(dto: SendMessageDto): Promise<{ success: boolean; data: Message }> {
@@ -17,6 +17,11 @@ export const messagesService = {
       `/messages/${userId}`,
       { params }
     );
+    return response.data;
+  },
+
+  async getContacts(): Promise<{ success: boolean; data: Contact[] }> {
+    const response = await axiosClient.get<{ success: boolean; data: Contact[] }>('/messages/contacts');
     return response.data;
   },
 

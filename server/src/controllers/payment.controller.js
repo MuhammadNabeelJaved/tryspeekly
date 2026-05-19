@@ -2,7 +2,7 @@ import asyncHandler from '../utils/asyncHandler.js'
 import Payment from '../models/payment.model.js'
 import { uploadPaymentScreenshot, deleteFile, extractPublicId } from '../utils/cloudinary.js'
 import Enrollment from '../models/enrollment.model.js'
-import Notification from '../models/notification.model.js'
+import { createAndEmitNotification } from '../utils/notify.js'
 
 // POST /api/v1/payments — student submits payment proof
 export const createPayment = asyncHandler(async (req, res) => {
@@ -114,8 +114,8 @@ export const approvePayment = asyncHandler(async (req, res) => {
     )
 
     if (previousStatus !== 'approved') {
-      await Notification.create({
-        recipient: payment.student,
+      await createAndEmitNotification({
+        recipientId: payment.student,
         title: 'Payment Approved',
         message: `Your payment for "${payment.course.title}" has been approved. You now have full access.`,
         type: 'payment',
@@ -155,8 +155,8 @@ export const rejectPayment = asyncHandler(async (req, res) => {
     }
 
     if (previousStatus !== 'rejected') {
-      await Notification.create({
-        recipient: payment.student,
+      await createAndEmitNotification({
+        recipientId: payment.student,
         title: 'Payment Rejected',
         message: `Your payment for "${payment.course.title}" was rejected: ${rejectionReason}. Please resubmit your payment proof.`,
         type: 'payment',

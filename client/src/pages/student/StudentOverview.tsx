@@ -95,7 +95,7 @@ export default function StudentOverview({ onNavigate }: { onNavigate: (view: Stu
         activeCourses.reduce((acc, e) => {
           const total = e.progress.totalSessions
           const attended = e.progress.sessionsAttended
-          return acc + (total > 0 ? Math.round((attended / total) * 100) : 0)
+          return acc + (total > 0 ? Math.min(100, Math.round((attended / total) * 100)) : 0)
         }, 0) / activeCourses.length
       )
     : 0
@@ -311,7 +311,7 @@ export default function StudentOverview({ onNavigate }: { onNavigate: (view: Stu
               {activeCourses.length > 0 ? activeCourses.map(enrollment => {
                 const attended = enrollment.progress.sessionsAttended
                 const total = enrollment.progress.totalSessions
-                const attendance = total > 0 ? Math.round((attended / total) * 100) : 0
+                const attendance = total > 0 ? Math.min(100, Math.round((attended / total) * 100)) : 0
                 const schedule = scheduleLabel(enrollment)
                 const liveForCourse = upcomingClasses.find(c => c.course._id === enrollment.course._id)
 

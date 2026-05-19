@@ -1,5 +1,6 @@
 import asyncHandler from '../utils/asyncHandler.js'
 import Notification from '../models/notification.model.js'
+import { emitToUser } from '../utils/socket.js'
 
 // GET /api/v1/notifications — authenticated: own notifications
 export const getMyNotifications = asyncHandler(async (req, res) => {
@@ -77,6 +78,8 @@ export const createNotification = asyncHandler(async (req, res) => {
       relatedId,
       relatedType,
     })
+
+    emitToUser(recipientId, 'new_notification', notification)
 
     res.status(201).json({ success: true, data: notification })
   } catch (error) {

@@ -11,6 +11,7 @@ import { INITIAL_SETTINGS } from './adminData'
 import type { AdminSettings } from './adminData'
 import { useAuth } from '@/context/AuthContext'
 import { usersService } from '@/services/users.service'
+import { siteSettingsService } from '@/services/site-settings.service'
 import { extractApiError } from '@/utils/apiError'
 import UserAvatar from '@/components/UserAvatar'
 
@@ -106,8 +107,14 @@ export default function AdminSettings({ store }: { store: AdminStore }) {
   const metaTitle = watch('seo.metaTitle') || ''
   const metaDescription = watch('seo.metaDescription') || ''
 
-  function onSaveAll(data: AdminSettings) {
+  async function onSaveAll(data: AdminSettings) {
     localStorage.setItem('admin_settings', JSON.stringify(data))
+    try {
+      const { admin: _, ...siteData } = data
+      await siteSettingsService.update(siteData as any)
+    } catch {
+      // localStorage still saved — server sync is best-effort
+    }
     setSaved(true)
     setTimeout(() => setSaved(false), 2500)
   }

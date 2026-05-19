@@ -5,13 +5,16 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   ChartBar, Users, Chalkboard, BookOpen, CreditCard, PencilSimple,
   List, X, SignOut, Bell, MagnifyingGlass, Sun, Moon, GearSix,
-  Lock, Eye, EyeSlash, Handshake, Certificate, ChatCircleDots, CheckCircle
+  Lock, Eye, EyeSlash, Handshake, Certificate, ChatCircleDots, CheckCircle, Chats
 } from '@phosphor-icons/react'
 import type { Student, Instructor, Course, CMSPage } from './admin/adminData'
 import { INITIAL_STUDENTS, INITIAL_INSTRUCTORS, INITIAL_COURSES, INITIAL_CMS_PAGES } from './admin/adminData'
 import Loader from '@/components/Loader'
 import UserAvatar from '@/components/UserAvatar'
 import { useAuth } from '../context/AuthContext'
+import { useSocket } from '../context/SocketContext'
+import { notificationsService } from '../services/notifications.service'
+import type { Notification } from '../types/api'
 
 const AdminOverview = lazy(() => import('./admin/AdminOverview'))
 const AdminStudents = lazy(() => import('./admin/AdminStudents'))
@@ -25,10 +28,11 @@ const AdminBlog = lazy(() => import('./admin/AdminBlog'))
 const AdminSettings = lazy(() => import('./admin/AdminSettings'))
 const AdminSupport = lazy(() => import('./admin/AdminSupport'))
 const AdminNotifications = lazy(() => import('./admin/AdminNotifications'))
+const AdminMessages = lazy(() => import('./admin/AdminMessages'))
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 
-export type AdminView = 'overview' | 'students' | 'instructors' | 'courses' | 'certificates' | 'payments' | 'payments-setup' | 'financial-aid' | 'cms' | 'blog' | 'settings' | 'support' | 'notifications'
+export type AdminView = 'overview' | 'students' | 'instructors' | 'courses' | 'certificates' | 'payments' | 'payments-setup' | 'financial-aid' | 'cms' | 'blog' | 'settings' | 'support' | 'notifications' | 'messages'
 
 export interface AdminStore {
   students: Student[]
@@ -60,6 +64,7 @@ const NAV_MANAGEMENT: NavItem[] = [
   { view: 'financial-aid',  label: 'Financial Aid', path: 'financial-aid',  Icon: Handshake as NavItem['Icon'] },
   { view: 'cms',            label: 'CMS Editor',    path: 'cms',            Icon: PencilSimple as NavItem['Icon'] },
   { view: 'blog',           label: 'Blog Manager',  path: 'blog',           Icon: PencilSimple as NavItem['Icon'] },
+  { view: 'messages',        label: 'Messages',      path: 'messages',       Icon: Chats as NavItem['Icon'] },
   { view: 'notifications',  label: 'Notifications', path: 'notifications', Icon: Bell as NavItem['Icon'] },
   { view: 'settings',       label: 'Settings',      path: 'settings',       Icon: GearSix as NavItem['Icon'] },
   { view: 'support',        label: 'Support',       path: 'support',        Icon: ChatCircleDots as NavItem['Icon'] },
@@ -175,19 +180,19 @@ export default function AdminPage() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [darkMode, setDarkMode] = useState(() => document.documentElement.classList.contains('dark'))
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [notifs, setNotifs] = useState<{ id: number; text: string; time: string; unread: boolean }[]>([
-    { id: 1, text: 'New student registered: John Doe', time: '2 hours ago', unread: true },
-    { id: 2, text: 'Course "Advanced English" updated', time: '1 day ago', unread: true },
-    { id: 3, text: 'Payment reminder sent to Jane Smith', time: '3 days ago', unread: false },
-  ]);
+  const { unreadNotifications, setUnreadNotifications, unreadMessages } = useSocket()
+  const [notifs, setNotifs] = useState<Notification[]>([])
 
   useEffect(() => {
-    setUnreadCount(notifs.filter(n => n.unread).length);
-  }, [notifs]);
+    notificationsService.getMyNotifications({ limit: 5 })
+      .then(res => { if (res.success) setNotifs(res.data) })
+      .catch(() => {})
+  }, [unreadNotifications])
 
-  function markAllAsRead() {
-    setNotifs(notifs.map(n => ({ ...n, unread: false })));
+  async function markAllAsRead() {
+    await notificationsService.markAllAsRead()
+    setUnreadNotifications(0)
+    setNotifs(prev => prev.map(n => ({ ...n, read: true })))
   }
 
 
@@ -266,6 +271,8 @@ export default function AdminPage() {
   const renderNavItem = ({ view, label, path, Icon }: NavItem) => {
     const active = activeView === view
     const badge =
+      view === 'messages' && unreadMessages > 0 ? unreadMessages :
+      view === 'notifications' && unreadNotifications > 0 ? unreadNotifications :
       view === 'students' ? students.length :
       view === 'payments' && paymentAlerts > 0 ? paymentAlerts :
       view === 'courses' && pendingCourses > 0 ? pendingCourses :
@@ -288,7 +295,7 @@ export default function AdminPage() {
             view === 'students' ? 'bg-violet-100 dark:bg-violet-950/50 text-violet-600 dark:text-violet-400' :
             'bg-amber-400 text-white'
           }`}>
-            {badge}
+            {typeof badge === 'number' && badge > 9 ? '9+' : badge}
           </span>
         )}
       </button>
@@ -404,21 +411,32 @@ export default function AdminPage() {
               {darkMode ? <Sun size={15} /> : <Moon size={15} />}
             </button>
 
+            {/* Messages badge */}
+            {unreadMessages > 0 && (
+              <button
+                onClick={() => navigate('/admin/messages')}
+                className="relative w-8 h-8 rounded-lg bg-slate-50 dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 flex items-center justify-center text-slate-500 dark:text-neutral-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
+              >
+                <Chats size={15} />
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-violet-600 text-white text-[9px] font-bold rounded-full flex items-center justify-center">{unreadMessages > 9 ? '9+' : unreadMessages}</span>
+              </button>
+            )}
+
             {/* Notifications */}
             <div className="relative" ref={notifRef}>
-              <button 
+              <button
                 onClick={() => setShowNotifications(!showNotifications)}
                 className={`relative w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${showNotifications ? 'bg-violet-100 dark:bg-violet-900/40 text-violet-600 dark:text-violet-400' : 'bg-slate-50 dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 text-slate-500 dark:text-neutral-400 hover:text-violet-600 dark:hover:text-violet-400'}`}
               >
-                <Bell size={15} weight={showNotifications ? "fill" : "regular"} />
-                {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">{unreadCount}</span>
+                <Bell size={15} weight={showNotifications ? 'fill' : 'regular'} />
+                {unreadNotifications > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">{unreadNotifications > 9 ? '9+' : unreadNotifications}</span>
                 )}
               </button>
 
               <AnimatePresence>
                 {showNotifications && (
-                  <motion.div 
+                  <motion.div
                     initial={{ opacity: 0, y: 10, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
@@ -427,7 +445,7 @@ export default function AdminPage() {
                   >
                     <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-neutral-800 bg-slate-50/50 dark:bg-neutral-900/50">
                       <h3 className="text-sm font-black text-slate-900 dark:text-white">Notifications</h3>
-                      {unreadCount > 0 && (
+                      {unreadNotifications > 0 && (
                         <button onClick={markAllAsRead} className="text-[10px] font-bold text-violet-600 dark:text-violet-400 hover:underline">
                           Mark all as read
                         </button>
@@ -439,13 +457,13 @@ export default function AdminPage() {
                       ) : (
                         <div className="divide-y divide-slate-50 dark:divide-neutral-800/50">
                           {notifs.map(notif => (
-                            <div key={notif.id} className={`p-4 flex gap-3 hover:bg-slate-50 dark:hover:bg-neutral-800/50 transition-colors ${notif.unread ? 'bg-violet-50/30 dark:bg-violet-900/5' : ''}`}>
+                            <div key={notif._id} className={`p-4 flex gap-3 hover:bg-slate-50 dark:hover:bg-neutral-800/50 transition-colors ${!notif.read ? 'bg-violet-50/30 dark:bg-violet-900/5' : ''}`}>
                               <div className="w-8 h-8 rounded-full bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 flex items-center justify-center flex-shrink-0">
-                                {notif.unread ? <Bell size={14} weight="fill" /> : <CheckCircle size={14} />}
+                                {!notif.read ? <Bell size={14} weight="fill" /> : <CheckCircle size={14} />}
                               </div>
                               <div>
-                                <p className={`text-sm ${notif.unread ? 'font-bold text-slate-900 dark:text-white' : 'font-medium text-slate-600 dark:text-neutral-300'}`}>{notif.text}</p>
-                                <p className="text-[10px] text-slate-400 mt-1">{notif.time}</p>
+                                <p className={`text-sm ${!notif.read ? 'font-bold text-slate-900 dark:text-white' : 'font-medium text-slate-600 dark:text-neutral-300'}`}>{notif.title}: {notif.message}</p>
+                                <p className="text-[10px] text-slate-400 mt-1">{new Date(notif.createdAt).toLocaleString()}</p>
                               </div>
                             </div>
                           ))}
@@ -453,7 +471,7 @@ export default function AdminPage() {
                       )}
                     </div>
                     <div className="p-2 border-t border-slate-100 dark:border-neutral-800 bg-slate-50/50 dark:bg-neutral-900/50">
-                      <button 
+                      <button
                         onClick={() => { navigate('/admin/notifications'); setShowNotifications(false); }}
                         className="w-full py-2 text-xs font-bold text-slate-500 hover:text-slate-900 dark:text-neutral-400 dark:hover:text-white transition-colors"
                       >
@@ -495,6 +513,7 @@ export default function AdminPage() {
                    <Route path="/settings" element={<AdminSettings store={store} />} />
                   <Route path="/support" element={<AdminSupport />} />
                   <Route path="/notifications" element={<AdminNotifications />} />
+                  <Route path="/messages" element={<AdminMessages />} />
                   <Route path="*" element={<Navigate to="/admin" replace />} />
                 </Routes>
               </Suspense>
