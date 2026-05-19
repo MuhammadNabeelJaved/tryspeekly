@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   ChartBar, Users, Chalkboard, BookOpen, CreditCard, PencilSimple,
   List, X, SignOut, Bell, MagnifyingGlass, Sun, Moon, GearSix,
-  Lock, Eye, EyeSlash, Handshake, Certificate, ChatCircleDots, CheckCircle, Chats
+  Lock, Eye, EyeSlash, Handshake, Certificate, ChatCircleDots, CheckCircle, Chats, Globe
 } from '@phosphor-icons/react'
 import type { Student, Instructor, Course, CMSPage } from './admin/adminData'
 import { INITIAL_STUDENTS, INITIAL_INSTRUCTORS, INITIAL_COURSES, INITIAL_CMS_PAGES } from './admin/adminData'
@@ -31,10 +31,11 @@ const AdminSettings = lazy(() => import('./admin/AdminSettings'))
 const AdminSupport = lazy(() => import('./admin/AdminSupport'))
 const AdminNotifications = lazy(() => import('./admin/AdminNotifications'))
 const AdminMessages = lazy(() => import('./admin/AdminMessages'))
+const AdminSEO = lazy(() => import('./admin/AdminSEO'))
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 
-export type AdminView = 'overview' | 'students' | 'instructors' | 'courses' | 'certificates' | 'payments' | 'payments-setup' | 'financial-aid' | 'cms' | 'blog' | 'settings' | 'support' | 'notifications' | 'messages'
+export type AdminView = 'overview' | 'students' | 'instructors' | 'courses' | 'certificates' | 'payments' | 'payments-setup' | 'financial-aid' | 'cms' | 'blog' | 'settings' | 'support' | 'notifications' | 'messages' | 'seo'
 
 export interface AdminStore {
   students: Student[]
@@ -70,6 +71,7 @@ const NAV_MANAGEMENT: NavItem[] = [
   { view: 'notifications',  label: 'Notifications', path: 'notifications', Icon: Bell as NavItem['Icon'] },
   { view: 'settings',       label: 'Settings',      path: 'settings',       Icon: GearSix as NavItem['Icon'] },
   { view: 'support',        label: 'Support',       path: 'support',        Icon: ChatCircleDots as NavItem['Icon'] },
+  { view: 'seo',            label: 'SEO Manager',   path: 'seo',            Icon: Globe as NavItem['Icon'] },
 ]
 
 // ─── LOGIN SCREEN ─────────────────────────────────────────────────────────────
@@ -540,6 +542,7 @@ export default function AdminPage() {
                   <Route path="/support" element={<AdminSupport />} />
                   <Route path="/notifications" element={<AdminNotifications />} />
                   <Route path="/messages" element={<AdminMessages />} />
+                  <Route path="/seo" element={<AdminSEO />} />
                   <Route path="*" element={<Navigate to="/admin" replace />} />
                 </Routes>
               </Suspense>

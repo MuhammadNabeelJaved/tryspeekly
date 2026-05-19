@@ -11,6 +11,7 @@ cloudinary.config({
 export const FOLDERS = {
   userAvatar:           'english-platform/users/avatars',
   courseThumbnail:      'english-platform/courses/thumbnails',
+  courseVideoPreview:   'english-platform/courses/previews',
   courseMaterial:       'english-platform/courses/materials',
   paymentScreenshot:    'english-platform/payments/screenshots',
   lessonAudio:          'english-platform/lessons/audio',
@@ -59,6 +60,14 @@ export const uploadCourseThumbnail = (buffer, courseId) =>
       { width: 1280, height: 720, crop: 'fill' },
       { quality: 'auto', fetch_format: 'auto' },
     ],
+  })
+
+export const uploadCourseVideoPreview = (buffer, courseId) =>
+  uploadBuffer(buffer, {
+    folder: FOLDERS.courseVideoPreview,
+    public_id: `course_preview_${courseId}`,
+    overwrite: true,
+    resource_type: 'video',
   })
 
 export const uploadCourseMaterial = (buffer, filename) =>

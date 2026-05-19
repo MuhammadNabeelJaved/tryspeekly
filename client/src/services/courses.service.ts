@@ -33,12 +33,23 @@ export const coursesService = {
   async updateCourseThumbnail(id: string, file: File): Promise<{ thumbnail: string }> {
     const form = new FormData();
     form.append('image', file);
-    const response = await axiosClient.patch<ApiResponse<{ thumbnail: string }>>(
+    const response = await axiosClient.patch<{ success: boolean; thumbnail: string }>(
       `/courses/${id}/thumbnail`,
       form,
       { headers: { 'Content-Type': 'multipart/form-data' } }
     );
-    return response.data.data;
+    return response.data;
+  },
+
+  async updateCourseVideoPreview(id: string, file: File): Promise<{ videoPreview: string }> {
+    const form = new FormData();
+    form.append('video', file);
+    const response = await axiosClient.patch<{ success: boolean; videoPreview: string }>(
+      `/courses/${id}/video-preview`,
+      form,
+      { headers: { 'Content-Type': 'multipart/form-data' } }
+    );
+    return response.data;
   },
 
   async publishCourse(id: string): Promise<CourseSingleResponse> {

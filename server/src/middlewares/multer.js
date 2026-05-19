@@ -89,6 +89,20 @@ export const uploadDocument = multer({
   fileFilter: createFileFilter('document'),
 }).single('document')
 
+// Any single image field named 'image' → memory (thumbnails, banners, etc.)
+export const uploadImageFile = multer({
+  storage: memoryStorage,
+  limits: { fileSize: FILE_CONFIGS.image.maxSize },
+  fileFilter: createFileFilter('image'),
+}).single('image')
+
+// Course video preview → memory (field: 'video', max 100 MB)
+export const uploadVideoFile = multer({
+  storage: memoryStorage,
+  limits: { fileSize: Math.min(FILE_CONFIGS.video.maxSize, 100 * 1024 * 1024) },
+  fileFilter: createFileFilter('video'),
+}).single('video')
+
 // Lesson audio → disk
 export const uploadAudio = multer({
   storage: createDiskStorage('audio'),

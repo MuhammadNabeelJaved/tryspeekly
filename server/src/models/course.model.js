@@ -72,6 +72,7 @@ const courseSchema = new Schema(
       enum: ['speaking', 'grammar', 'ielts', 'business', 'general'],
     },
     thumbnail: { type: String, trim: true },
+    videoPreview: { type: String, trim: true },
     totalSessions: {
       type: Number,
       required: [true, 'Total sessions is required'],

@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { motion, AnimatePresence } from 'framer-motion'
 import toast from 'react-hot-toast'
 import { coursesService } from '../../services/courses.service'
 import { enrollmentsService } from '@/services/enrollments.service'
 
-import { BookOpen, Users, Clock, Plus, X, Check, PencilSimple, Trash, MagnifyingGlass, CheckCircle, CalendarBlank, ChartBar } from '@phosphor-icons/react'
+import { BookOpen, Users, Clock, Plus, X, Check, PencilSimple, Trash, MagnifyingGlass, CheckCircle, CalendarBlank, ChartBar, Link, UploadSimple, Image, VideoCamera } from '@phosphor-icons/react'
 
 type CourseItem = {
   id: string
@@ -134,6 +134,83 @@ function Input({ register, name, type = 'text', placeholder, valueAsNumber }: { 
   )
 }
 
+type MediaMode = 'url' | 'upload'
+
+function MediaUploadField({
+  label, urlRegister, urlName, urlPlaceholder,
+  mode, onModeChange, accept, file, onFileChange, preview, icon: Icon,
+}: {
+  label: string; urlRegister: any; urlName: string; urlPlaceholder: string;
+  mode: MediaMode; onModeChange: (m: MediaMode) => void;
+  accept: string; file: File | null; onFileChange: (f: File | null) => void;
+  preview?: string; icon: React.FC<any>;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null)
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-1.5">
+        <label className="text-[11px] font-semibold text-slate-500 dark:text-neutral-400 uppercase tracking-wide">{label}</label>
+        <div className="flex bg-slate-100 dark:bg-neutral-800 rounded-lg p-0.5 gap-0.5">
+          {(['url', 'upload'] as MediaMode[]).map(m => (
+            <button key={m} type="button" onClick={() => onModeChange(m)}
+              className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold transition-all ${
+                mode === m
+                  ? 'bg-white dark:bg-neutral-700 text-violet-600 dark:text-violet-400 shadow-sm'
+                  : 'text-slate-500 dark:text-neutral-400 hover:text-slate-700'
+              }`}>
+              {m === 'url' ? <Link size={10} /> : <UploadSimple size={10} />}
+              {m === 'url' ? 'Link' : 'Upload'}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {mode === 'url' ? (
+        <input type="url" {...urlRegister(urlName)} placeholder={urlPlaceholder}
+          className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-neutral-600 outline-none focus:border-violet-500 transition-colors"
+        />
+      ) : (
+        <div
+          onClick={() => inputRef.current?.click()}
+          className="relative w-full rounded-xl border-2 border-dashed border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800/50 hover:border-violet-400 dark:hover:border-violet-600 transition-colors cursor-pointer overflow-hidden"
+          style={{ minHeight: preview ? 120 : 80 }}
+        >
+          {preview ? (
+            accept.includes('image') ? (
+              <img src={preview} alt="preview" className="w-full h-full object-cover" style={{ maxHeight: 120 }} />
+            ) : (
+              <div className="flex flex-col items-center justify-center py-4 gap-2">
+                <Icon size={28} className="text-violet-500" weight="duotone" />
+                <p className="text-xs font-semibold text-slate-700 dark:text-neutral-300 truncate max-w-[90%] px-2">{file?.name}</p>
+                <p className="text-[10px] text-slate-400">{file ? `${(file.size / 1024 / 1024).toFixed(1)} MB` : ''}</p>
+              </div>
+            )
+          ) : (
+            <div className="flex flex-col items-center justify-center py-5 gap-2">
+              <Icon size={24} className="text-slate-300 dark:text-neutral-600" weight="duotone" />
+              <p className="text-xs text-slate-400 dark:text-neutral-500 font-medium">Click to choose file</p>
+              <p className="text-[10px] text-slate-300 dark:text-neutral-600">{accept.replace(/,/g, ' / ')}</p>
+            </div>
+          )}
+          {file && (
+            <button type="button" onClick={e => { e.stopPropagation(); onFileChange(null) }}
+              className="absolute top-1.5 right-1.5 w-5 h-5 bg-black/40 hover:bg-red-500 text-white rounded-full flex items-center justify-center transition-colors">
+              <X size={10} weight="bold" />
+            </button>
+          )}
+          <input ref={inputRef} type="file" accept={accept} className="hidden"
+            onChange={e => {
+              const f = e.target.files?.[0] ?? null
+              onFileChange(f)
+              e.target.value = ''
+            }}
+          />
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function InstructorCourses() {
   const [courses, setCourses] = useState<InstructorCourse[]>([])
   const [searchTerm, setSearchTerm] = useState('')
@@ -143,6 +220,13 @@ export default function InstructorCourses() {
   const [modalType, setModalType] = useState<'add' | 'edit' | null>(null)
   const [formTab, setFormTab] = useState<'basic' | 'logistics' | 'curriculum'>('basic')
   const [deleteId, setDeleteId] = useState<string | null>(null)
+
+  // Media upload state
+  const [thumbMode, setThumbMode] = useState<MediaMode>('url')
+  const [thumbFile, setThumbFile] = useState<File | null>(null)
+  const [thumbPreview, setThumbPreview] = useState<string>('')
+  const [videoMode, setVideoMode] = useState<MediaMode>('url')
+  const [videoFile, setVideoFile] = useState<File | null>(null)
   const [completedClassesMap, setCompletedClassesMap] = useState<Record<string, number>>({})
   const [isLoading, setIsLoading] = useState(true)
 
@@ -183,14 +267,21 @@ export default function InstructorCourses() {
     defaultValues: EMPTY_COURSE
   })
 
+  function resetMediaState() {
+    setThumbMode('url'); setThumbFile(null); setThumbPreview('')
+    setVideoMode('url'); setVideoFile(null)
+  }
+
   function openAdd() {
     reset({ ...EMPTY_COURSE, id: `c${Date.now()}`, curriculum: [] })
+    resetMediaState()
     setFormTab('basic')
     setModalType('add')
   }
 
   function openEdit(course: InstructorCourse) {
     reset({ ...course, curriculum: course.curriculum || [] })
+    resetMediaState()
     setFormTab('basic')
     setModalType('edit')
   }
@@ -206,25 +297,63 @@ export default function InstructorCourses() {
           type: (data.category === 'Recorded Course' ? 'one-to-one' : data.category === 'Hybrid' ? 'hybrid' : 'group') as 'group' | 'one-to-one' | 'hybrid',
           level: (data.level?.toLowerCase() || 'beginner') as 'beginner' | 'intermediate' | 'advanced',
           focus: 'general',
-          thumbnail: data.image || undefined,
+          thumbnail: thumbMode === 'url' ? (data.image || undefined) : undefined,
           totalSessions: data.totalClasses || 12,
           sessionDuration: 60,
           maxStudents: data.maxStudents,
         })
         if (res.success) {
-          setCourses([...courses, mapBackendCourse(res.data)])
+          const courseId = res.data._id
+          let updatedCourse = mapBackendCourse(res.data)
+
+          // Upload thumbnail file if selected
+          if (thumbMode === 'upload' && thumbFile) {
+            try {
+              const thumbRes = await coursesService.updateCourseThumbnail(courseId, thumbFile)
+              if (thumbRes.thumbnail) updatedCourse = { ...updatedCourse, image: thumbRes.thumbnail }
+            } catch { toast.error('Course created but thumbnail upload failed.') }
+          }
+
+          // Upload video file if selected
+          if (videoMode === 'upload' && videoFile) {
+            try {
+              await coursesService.updateCourseVideoPreview(courseId, videoFile)
+            } catch { toast.error('Course created but video upload failed.') }
+          }
+
+          setCourses([...courses, updatedCourse])
           toast.success('Course submitted for review. You will be notified when approved.')
         }
       } else {
-        const res = await coursesService.updateCourse(data.id, {
+        const updatePayload: any = {
           title: data.title,
           description: data.description,
           price: parseFloat(data.price?.replace(/[^0-9.]/g, '') || '0'),
-        })
-        if (res.success) setCourses(courses.map(c => c.id === data.id ? mapBackendCourse(res.data) : c))
+        }
+        if (thumbMode === 'url' && data.image) updatePayload.thumbnail = data.image
+        if (videoMode === 'url' && data.videoPreview) updatePayload.videoPreview = data.videoPreview
+
+        const res = await coursesService.updateCourse(data.id, updatePayload)
+        if (res.success) {
+          let updatedCourse = mapBackendCourse(res.data)
+
+          if (thumbMode === 'upload' && thumbFile) {
+            try {
+              const thumbRes = await coursesService.updateCourseThumbnail(data.id, thumbFile)
+              if (thumbRes.thumbnail) updatedCourse = { ...updatedCourse, image: thumbRes.thumbnail }
+            } catch { toast.error('Details saved but thumbnail upload failed.') }
+          }
+
+          if (videoMode === 'upload' && videoFile) {
+            try {
+              await coursesService.updateCourseVideoPreview(data.id, videoFile)
+            } catch { toast.error('Details saved but video upload failed.') }
+          }
+
+          setCourses(courses.map(c => c.id === data.id ? updatedCourse : c))
+        }
       }
     } catch {
-      // Fallback: update locally
       if (modalType === 'add') {
         setCourses([...courses, data])
       } else {
@@ -666,8 +795,27 @@ export default function InstructorCourses() {
                     
                     <div className="space-y-6">
                       <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider mb-2 border-b border-slate-200 dark:border-neutral-800 pb-2">Media & Assets</h4>
-                      <Field label="Cover Image URL"><Input register={register} name="image" placeholder="https://images.unsplash.com/..." type="url" /></Field>
-                      <Field label="Video Preview URL"><Input register={register} name="videoPreview" placeholder="https://youtube.com/..." type="url" /></Field>
+                      <MediaUploadField
+                        label="Course Thumbnail" urlRegister={register} urlName="image"
+                        urlPlaceholder="https://images.unsplash.com/..."
+                        mode={thumbMode} onModeChange={setThumbMode}
+                        accept="image/jpeg,image/png,image/webp"
+                        file={thumbFile}
+                        onFileChange={f => {
+                          setThumbFile(f)
+                          setThumbPreview(f ? URL.createObjectURL(f) : '')
+                        }}
+                        preview={thumbPreview}
+                        icon={Image}
+                      />
+                      <MediaUploadField
+                        label="Video Preview" urlRegister={register} urlName="videoPreview"
+                        urlPlaceholder="https://youtube.com/..."
+                        mode={videoMode} onModeChange={setVideoMode}
+                        accept="video/mp4,video/webm"
+                        file={videoFile} onFileChange={setVideoFile}
+                        icon={VideoCamera}
+                      />
 
                       <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider mb-2 border-b border-slate-200 dark:border-neutral-800 pb-2 mt-8">Pricing & Status</h4>
                       <div className="grid grid-cols-2 gap-4">

@@ -1,7 +1,7 @@
 import asyncHandler from '../utils/asyncHandler.js'
 import Course from '../models/course.model.js'
 import User from '../models/user.model.js'
-import { uploadCourseThumbnail, deleteFile, extractPublicId } from '../utils/cloudinary.js'
+import { uploadCourseThumbnail, uploadCourseVideoPreview, deleteFile, extractPublicId } from '../utils/cloudinary.js'
 
 // GET /api/v1/courses — public, with filters & pagination
 export const getAllCourses = asyncHandler(async (req, res) => {
@@ -103,6 +103,29 @@ export const updateCourseThumbnail = asyncHandler(async (req, res) => {
     await course.save()
 
     res.json({ success: true, message: 'Thumbnail updated successfully', thumbnail: course.thumbnail })
+  } catch (error) {
+    res.status(400).json({ success: false, error: { message: error.message } })
+  }
+})
+
+// PATCH /api/v1/courses/:id/video-preview — teacher/admin
+export const updateCourseVideoPreview = asyncHandler(async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ success: false, error: { message: 'No video file provided' } })
+
+    const course = await Course.findById(req.params.id)
+    if (!course) return res.status(404).json({ success: false, error: { message: 'Course not found' } })
+
+    if (course.videoPreview) {
+      const publicId = extractPublicId(course.videoPreview)
+      if (publicId) await deleteFile(publicId, 'video').catch(() => {})
+    }
+
+    const result = await uploadCourseVideoPreview(req.file.buffer, req.params.id)
+    course.videoPreview = result.secure_url
+    await course.save()
+
+    res.json({ success: true, message: 'Video preview updated successfully', videoPreview: course.videoPreview })
   } catch (error) {
     res.status(400).json({ success: false, error: { message: error.message } })
   }
