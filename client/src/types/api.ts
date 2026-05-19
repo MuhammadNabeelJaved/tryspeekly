@@ -197,6 +197,7 @@ export interface Enrollment {
   };
   teacher: { _id: string; name: string; profileImage?: string };
   payment?: EnrolledPayment | null;
+  financialAid?: { _id: string; status: string; name: string } | null;
   isActive: boolean;
   enrolledAt: string;
   attendance: Array<{ sessionNumber: number; duration?: number; date: string }>;
@@ -236,6 +237,7 @@ export interface Payment {
   status: PaymentStatus;
   adminNote?: string;
   rejectionReason?: string;
+  enrollmentActive?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -389,7 +391,7 @@ export interface CreateTicketDto {
 
 export interface FinancialAid {
   _id: string;
-  student: { _id: string; name: string; email: string };
+  student?: { _id: string; name: string; email: string };
   course?: { _id: string; title: string };
   name: string;
   email: string;

@@ -31,4 +31,14 @@ export const enrollmentsService = {
     const response = await axiosClient.patch<ApiResponse<any>>(`/enrollments/${id}/attendance`, dto);
     return response.data;
   },
+
+  async adminEnrollWithFinancialAid(dto: { financialAidId: string; courseId: string; studentId?: string }): Promise<ApiResponse<Enrollment>> {
+    const response = await axiosClient.post<ApiResponse<Enrollment>>('/enrollments/admin/financial-aid', dto);
+    return response.data;
+  },
+
+  async getEnrollmentByFinancialAid(aidId: string): Promise<ApiResponse<Enrollment>> {
+    const response = await axiosClient.get<ApiResponse<Enrollment>>(`/enrollments/by-financial-aid/${aidId}`);
+    return response.data;
+  },
 };

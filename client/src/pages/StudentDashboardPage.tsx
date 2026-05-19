@@ -1,4 +1,4 @@
-import React, { useState, Suspense, lazy, useRef, useEffect, useCallback } from 'react'
+import React, { useState, Suspense, lazy, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import {
@@ -7,9 +7,6 @@ import {
 } from '@phosphor-icons/react'
 import Loader from '@/components/Loader'
 import { useAuth } from '../context/AuthContext'
-import { enrollmentsService } from '@/services/enrollments.service'
-import PaymentSubmitModal from './student/PaymentSubmitModal'
-import type { Enrollment } from '@/types/api'
 
 const StudentOverview = lazy(() => import('./student/StudentOverview'))
 const StudentCourses = lazy(() => import('./student/StudentCourses'))
@@ -45,58 +42,6 @@ export default function StudentDashboardPage() {
   const { user, logout } = useAuth()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [darkMode, setDarkMode] = useState(() => document.documentElement.classList.contains('dark'))
-
-  // Payment modal for pending enrollments
-  // sessionStorage tracks which enrollment IDs have already been shown this session
-  const SHOWN_KEY = 'ep_shown_payment_modal'
-
-  const getShownIds = (): Set<string> => {
-    try {
-      const raw = sessionStorage.getItem(SHOWN_KEY)
-      return new Set(raw ? JSON.parse(raw) : [])
-    } catch {
-      return new Set()
-    }
-  }
-
-  const markAsShown = (id: string) => {
-    try {
-      const shown = getShownIds()
-      shown.add(id)
-      sessionStorage.setItem(SHOWN_KEY, JSON.stringify([...shown]))
-    } catch {
-      // ignore storage errors
-    }
-  }
-
-  const [pendingEnrollments, setPendingEnrollments] = useState<Enrollment[]>([])
-  const [paymentModalEnrollment, setPaymentModalEnrollment] = useState<Enrollment | null>(null)
-
-  const fetchPendingEnrollments = useCallback(async () => {
-    try {
-      const res = await enrollmentsService.getMyEnrollments()
-      const unpaid = res.data.filter(e =>
-        !e.isActive && (!e.payment || e.payment.status === 'rejected')
-      )
-      setPendingEnrollments(unpaid)
-      // Only auto-open for enrollments not yet shown this session
-      const shown = getShownIds()
-      const unseen = unpaid.find(e => !shown.has(e._id))
-      if (unseen) {
-        markAsShown(unseen._id)
-        setPaymentModalEnrollment(unseen)
-      }
-    } catch {
-      // silently ignore — non-critical
-    }
-  }, [])
-
-  useEffect(() => { fetchPendingEnrollments() }, [fetchPendingEnrollments])
-
-  const handlePaymentSuccess = () => {
-    setPaymentModalEnrollment(null)
-    fetchPendingEnrollments()
-  }
 
   // Notification State
   const [showNotifications, setShowNotifications] = useState(false)
@@ -167,7 +112,6 @@ export default function StudentDashboardPage() {
   const activeLabel = allNavItems.find(n => n.view === activeView)?.label ?? 'Dashboard'
 
   return (
-    <>
     <div className="flex h-screen bg-slate-50 dark:bg-neutral-950 overflow-hidden transition-colors duration-300">
       {/* ── SIDEBAR ── */}
       <>
@@ -364,18 +308,5 @@ export default function StudentDashboardPage() {
         </main>
       </div>
     </div>
-
-    {/* Payment modal — opens directly when there are pending enrollments */}
-    {paymentModalEnrollment && (
-      <PaymentSubmitModal
-        courseId={paymentModalEnrollment.course._id}
-        teacherId={paymentModalEnrollment.teacher._id}
-        courseName={paymentModalEnrollment.course.title}
-        isOpen={true}
-        onClose={() => setPaymentModalEnrollment(null)}
-        onSuccess={handlePaymentSuccess}
-      />
-    )}
-    </>
   )
 }

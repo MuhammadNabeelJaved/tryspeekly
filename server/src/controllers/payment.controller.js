@@ -45,7 +45,17 @@ export const getMyPayments = asyncHandler(async (req, res) => {
       .populate('course', 'title')
       .populate('teacher', 'name')
       .sort({ createdAt: -1 })
-    res.json({ success: true, data: payments })
+
+    const enrollments = await Enrollment.find({ student: req.user.id }).select('course isActive')
+    const enrollmentMap = {}
+    enrollments.forEach(e => { enrollmentMap[e.course.toString()] = e.isActive })
+
+    const data = payments.map(p => ({
+      ...p.toObject(),
+      enrollmentActive: enrollmentMap[p.course._id.toString()] ?? false,
+    }))
+
+    res.json({ success: true, data })
   } catch (error) {
     res.status(400).json({ success: false, error: { message: error.message } })
   }
@@ -63,9 +73,22 @@ export const getAllPayments = asyncHandler(async (req, res) => {
       Payment.countDocuments(filter),
     ])
 
+    const enrollmentDocs = await Enrollment.find({
+      student: { $in: payments.map(p => p.student._id) },
+      course: { $in: payments.map(p => p.course._id) },
+    }).select('student course isActive')
+
+    const enrollmentMap = {}
+    enrollmentDocs.forEach(e => { enrollmentMap[`${e.student}_${e.course}`] = e.isActive })
+
+    const data = payments.map(p => ({
+      ...p.toObject(),
+      enrollmentActive: enrollmentMap[`${p.student._id}_${p.course._id}`] ?? false,
+    }))
+
     res.json({
       success: true,
-      data: payments,
+      data,
       pagination: { page: Number(page), limit: Number(limit), total, totalPages: Math.ceil(total / Number(limit)) },
     })
   } catch (error) {

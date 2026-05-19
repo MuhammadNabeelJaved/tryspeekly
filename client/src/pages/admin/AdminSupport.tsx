@@ -181,6 +181,7 @@ export default function AdminSupport() {
   useEffect(() => { fetchTickets() }, [fetchTickets])
 
   const filteredTickets = tickets
+    .filter(ticket => !!ticket.student)
     .filter(ticket => {
       const q = search.toLowerCase()
       const matchesSearch = !q || ticket.student.name.toLowerCase().includes(q) || ticket.subject.toLowerCase().includes(q)
@@ -281,10 +282,10 @@ export default function AdminSupport() {
                         className={`w-full text-left p-4 transition-colors hover:bg-slate-50 dark:hover:bg-neutral-800/50 ${activeTicket?._id === ticket._id ? 'bg-violet-50 dark:bg-violet-900/20' : ''}`}>
                         <div className="flex items-start gap-2.5 mb-2">
                           <div className="w-8 h-8 rounded-full bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 text-[10px] font-black flex items-center justify-center flex-shrink-0 mt-0.5">
-                            {ticket.student.name.split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2)}
+                            {(ticket.student?.name ?? '?').split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2)}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="font-bold text-slate-900 dark:text-white text-sm truncate leading-tight">{ticket.student.name}</p>
+                            <p className="font-bold text-slate-900 dark:text-white text-sm truncate leading-tight">{ticket.student?.name ?? 'Unknown'}</p>
                             <p className="text-[10px] text-slate-400 dark:text-neutral-500 truncate">{ticket.course?.title ?? 'General'}</p>
                           </div>
                           <div className="flex flex-col items-end gap-1 flex-shrink-0">
@@ -314,10 +315,10 @@ export default function AdminSupport() {
                           <ArrowLeft size={17} weight="bold" />
                         </button>
                         <div className="w-9 h-9 rounded-full bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 font-black text-[10px] flex items-center justify-center flex-shrink-0">
-                          {activeTicket.student.name.split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2)}
+                          {(activeTicket.student?.name ?? '?').split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2)}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-black text-slate-900 dark:text-white text-sm truncate leading-tight">{activeTicket.student.name}</p>
+                          <p className="font-black text-slate-900 dark:text-white text-sm truncate leading-tight">{activeTicket.student?.name ?? 'Unknown'}</p>
                           <p className="text-xs text-slate-400 dark:text-neutral-500 truncate">{activeTicket.subject}</p>
                         </div>
                         <select value={activeTicket.status}

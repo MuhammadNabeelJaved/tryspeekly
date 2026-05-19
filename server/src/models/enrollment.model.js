@@ -17,6 +17,7 @@ const enrollmentSchema = new Schema(
     course: { type: Schema.Types.ObjectId, ref: 'Course', required: true },
     teacher: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     payment: { type: Schema.Types.ObjectId, ref: 'Payment' },
+    financialAid: { type: Schema.Types.ObjectId, ref: 'FinancialAid' },
     enrolledAt: { type: Date, default: Date.now },
     expiresAt: { type: Date },
     isActive: { type: Boolean, default: false },

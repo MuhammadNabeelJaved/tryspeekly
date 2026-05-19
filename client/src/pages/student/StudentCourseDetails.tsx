@@ -564,9 +564,10 @@ export default function StudentCourseDetails() {
             </div>
           )}
 
-          {schedule && (
-            <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200 dark:border-neutral-800 p-6 shadow-sm">
-              <h3 className="font-bold text-slate-900 dark:text-white mb-4">Schedule Details</h3>
+          <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200 dark:border-neutral-800 p-6 shadow-sm">
+            <h3 className="font-bold text-slate-900 dark:text-white mb-4">Schedule Details</h3>
+
+            {schedule ? (
               <div className="flex items-center gap-3 bg-slate-50 dark:bg-neutral-800 p-4 rounded-xl border border-slate-100 dark:border-neutral-700">
                 <div className="w-10 h-10 rounded-lg bg-white dark:bg-neutral-900 flex items-center justify-center text-slate-400 dark:text-neutral-500 shadow-sm flex-shrink-0">
                   <CalendarBlank size={20} weight="fill" />
@@ -580,17 +581,31 @@ export default function StudentCourseDetails() {
                   </p>
                 </div>
               </div>
-            </div>
-          )}
-
-          {!schedule && (
-            <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200 dark:border-neutral-800 p-6 shadow-sm">
-              <h3 className="font-bold text-slate-900 dark:text-white mb-4">Schedule Details</h3>
+            ) : (
               <p className="text-sm text-slate-500 dark:text-neutral-400">
                 No schedule set for this course yet.
               </p>
-            </div>
-          )}
+            )}
+
+            {course.meetLink ? (
+              <a
+                href={course.meetLink}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-4 w-full flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-700 text-white font-bold px-5 py-3 rounded-xl transition-colors text-sm shadow-[0_4px_14px_rgba(124,58,237,0.25)]"
+              >
+                <VideoCamera size={18} weight="fill" />
+                Join Live Class
+              </a>
+            ) : (
+              <div className="mt-4 flex items-center gap-2 bg-slate-50 dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 rounded-xl px-4 py-3">
+                <VideoCamera size={16} className="text-slate-400 flex-shrink-0" />
+                <p className="text-xs text-slate-500 dark:text-neutral-400">
+                  Live class link not set yet. Your instructor will add it soon.
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

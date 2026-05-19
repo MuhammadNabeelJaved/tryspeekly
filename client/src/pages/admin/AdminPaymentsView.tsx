@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
-import { CreditCard, CheckCircle, WarningCircle, XCircle, MagnifyingGlass, FunnelSimple, Plus, Image } from '@phosphor-icons/react'
+import { CreditCard, CheckCircle, WarningCircle, XCircle, MagnifyingGlass, FunnelSimple, Plus, Image, LockSimple } from '@phosphor-icons/react'
 import { paymentsService } from '@/services/payments.service'
 import type { Payment } from '@/types/api'
 import AdminPaymentCreateModal from './AdminPaymentCreateModal'
@@ -124,7 +124,7 @@ export default function AdminPaymentsView() {
       {action && (
         <div className="mb-4 p-4 rounded-2xl bg-slate-50 dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 space-y-3">
           <p className="text-sm font-bold text-slate-900 dark:text-white">
-            {action.type === 'approve' ? '✓ Approve Payment' : '✕ Reject Payment'}
+            {action.type === 'approve' ? '✓ Approve Payment — will activate course access' : '✕ Reject Payment — will lock course access'}
           </p>
           <input
             value={action.note}
@@ -181,14 +181,23 @@ export default function AdminPaymentsView() {
                   <td className="px-4 py-3 text-xs text-slate-600 dark:text-neutral-300 whitespace-nowrap capitalize">{p.method.replace('_', ' ')}</td>
                   <td className="px-4 py-3 text-xs font-black text-slate-900 dark:text-white whitespace-nowrap">{p.currency} {p.amount.toLocaleString()}</td>
                   <td className="px-4 py-3">
-                    <div>
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                    <div className="space-y-1">
+                      <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold ${
                         p.status === 'approved' ? 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400'
                         : p.status === 'pending' ? 'bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400'
                         : 'bg-red-100 dark:bg-red-950/40 text-red-600 dark:text-red-400'
                       }`}>{p.status}</span>
+                      {p.enrollmentActive ? (
+                        <div className="flex items-center gap-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                          <CheckCircle size={10} weight="fill" /> Course Active
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1 text-[10px] font-semibold text-slate-400 dark:text-neutral-500">
+                          <LockSimple size={10} weight="fill" /> Access Locked
+                        </div>
+                      )}
                       {p.status === 'rejected' && p.rejectionReason && (
-                        <p className="text-[10px] text-red-500 dark:text-red-400 mt-0.5 max-w-[140px] truncate" title={p.rejectionReason}>
+                        <p className="text-[10px] text-red-500 dark:text-red-400 max-w-[140px] truncate" title={p.rejectionReason}>
                           {p.rejectionReason}
                         </p>
                       )}
@@ -212,7 +221,7 @@ export default function AdminPaymentsView() {
                       {p.status !== 'approved' && (
                         <button
                           onClick={() => setAction({ paymentId: p._id, type: 'approve', note: '' })}
-                          title="Approve"
+                          title="Approve — activates course access"
                           className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 flex items-center justify-center transition-colors">
                           <CheckCircle size={13} weight="fill" />
                         </button>
@@ -220,7 +229,7 @@ export default function AdminPaymentsView() {
                       {p.status !== 'rejected' && (
                         <button
                           onClick={() => setAction({ paymentId: p._id, type: 'reject', note: '' })}
-                          title="Reject"
+                          title="Reject — locks course access"
                           className="w-7 h-7 rounded-lg bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 hover:bg-red-100 flex items-center justify-center transition-colors">
                           <XCircle size={13} weight="fill" />
                         </button>

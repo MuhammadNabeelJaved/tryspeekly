@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { VideoCamera, CalendarBlank, FilePdf, ShieldCheck, ChatCircleDots, LockSimple, Warning } from '@phosphor-icons/react'
+import { VideoCamera, CalendarBlank, FilePdf, ShieldCheck, ChatCircleDots, LockSimple, Warning, Handshake } from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
 import { enrollmentsService } from '@/services/enrollments.service'
 import type { Enrollment, EnrolledPayment } from '@/types/api'
@@ -66,28 +66,36 @@ export default function StudentCourses() {
               const payment = enrollment.payment
               const hasPayment = !!payment
               const isRejected = payment?.status === 'rejected'
+              const isFinancialAid = !!enrollment.financialAid
 
               const cardContent = (
                 <>
                   <div className="p-6 flex-1 border-b md:border-b-0 md:border-r border-slate-100 dark:border-neutral-800">
                     <div className="flex justify-between items-start mb-2">
-                      {isActive ? (
-                        <span className="text-[10px] font-bold px-2 py-1 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-md uppercase tracking-wide">
-                          Active
-                        </span>
-                      ) : isRejected ? (
-                        <span className="text-[10px] font-bold px-2 py-1 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-md uppercase tracking-wide flex items-center gap-1">
-                          <Warning size={10} weight="fill" /> Payment Rejected
-                        </span>
-                      ) : hasPayment ? (
-                        <span className="text-[10px] font-bold px-2 py-1 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 rounded-md uppercase tracking-wide flex items-center gap-1">
-                          <LockSimple size={10} weight="fill" /> Payment Pending
-                        </span>
-                      ) : (
-                        <span className="text-[10px] font-bold px-2 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-md uppercase tracking-wide flex items-center gap-1">
-                          <LockSimple size={10} weight="fill" /> Submit Payment
-                        </span>
-                      )}
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {isActive ? (
+                          <span className="text-[10px] font-bold px-2 py-1 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-md uppercase tracking-wide">
+                            Active
+                          </span>
+                        ) : isRejected ? (
+                          <span className="text-[10px] font-bold px-2 py-1 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-md uppercase tracking-wide flex items-center gap-1">
+                            <Warning size={10} weight="fill" /> Payment Rejected
+                          </span>
+                        ) : hasPayment ? (
+                          <span className="text-[10px] font-bold px-2 py-1 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 rounded-md uppercase tracking-wide flex items-center gap-1">
+                            <LockSimple size={10} weight="fill" /> Payment Pending
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-bold px-2 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-md uppercase tracking-wide flex items-center gap-1">
+                            <LockSimple size={10} weight="fill" /> Submit Payment
+                          </span>
+                        )}
+                        {isFinancialAid && (
+                          <span className="text-[10px] font-bold px-2 py-1 bg-teal-50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400 rounded-md uppercase tracking-wide flex items-center gap-1">
+                            <Handshake size={10} weight="fill" /> Financial Aid
+                          </span>
+                        )}
+                      </div>
                       <span className={`text-[10px] font-bold flex items-center gap-1 ${attendance >= 80 ? 'text-green-500' : 'text-amber-500'}`}>
                         <ShieldCheck size={14} weight="fill" />
                         {attendance}% ({attended}/{total})

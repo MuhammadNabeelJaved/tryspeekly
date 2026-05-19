@@ -2,11 +2,6 @@ import { axiosClient } from '../lib/axiosClient';
 import type { FinancialAid, ApplyFinancialAidDto, ApiResponse, ApiPaginatedResponse } from '../types/api';
 
 export const financialAidService = {
-  async publicApply(dto: Omit<ApplyFinancialAidDto, 'courseId'>): Promise<ApiResponse<FinancialAid>> {
-    const response = await axiosClient.post<ApiResponse<FinancialAid>>('/financial-aid/public', dto);
-    return response.data;
-  },
-
   async apply(dto: ApplyFinancialAidDto): Promise<ApiResponse<FinancialAid>> {
     const response = await axiosClient.post<ApiResponse<FinancialAid>>('/financial-aid', dto);
     return response.data;

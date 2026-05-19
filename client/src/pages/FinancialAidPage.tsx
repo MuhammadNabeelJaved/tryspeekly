@@ -1,17 +1,12 @@
 import { useState, useEffect } from 'react'
-import { useForm, Controller } from 'react-hook-form'
 import { motion } from 'framer-motion'
-import { Heart, Handshake, VideoCamera, CheckCircle, WarningCircle, CaretRight, ShieldCheck, GraduationCap, Question, CaretDown, Star, Certificate, Target } from '@phosphor-icons/react'
-import { Link } from 'react-router-dom'
-import PhoneInput from '@/components/auth/PhoneInput'
-import { financialAidService } from '@/services/financial-aid.service'
+import { Heart, Handshake, VideoCamera, CheckCircle, WarningCircle, CaretRight, ShieldCheck, GraduationCap, Question, CaretDown, Star, Certificate, Target, LockSimple, UserPlus } from '@phosphor-icons/react'
+import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '@/context/AuthContext'
 
 export default function FinancialAidPage() {
-  const { register, handleSubmit, control, formState: { errors }, reset } = useForm({
-    defaultValues: { name: '', email: '', phone: '', reason: '', agree: false }
-  })
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [isSubmitted, setIsSubmitted] = useState(false)
+  const { user } = useAuth()
+  const navigate = useNavigate()
   const [openFaq, setOpenFaq] = useState<number | null>(null)
 
   const FAQS = [
@@ -30,19 +25,6 @@ export default function FinancialAidPage() {
   useEffect(() => {
     window.scrollTo(0, 0)
   }, [])
-
-  const onSubmit = async (data: { name: string; email: string; phone: string; reason: string; agree: boolean }) => {
-    setIsSubmitting(true)
-    try {
-      await financialAidService.publicApply({ name: data.name, email: data.email, phone: data.phone || undefined, reason: data.reason })
-      setIsSubmitted(true)
-      reset()
-    } catch {
-      // show generic error — form stays open for retry
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
 
   return (
     <div className="bg-slate-50 dark:bg-neutral-950 min-h-screen pt-[72px] lg:pt-[80px] pb-24 selection:bg-emerald-200 dark:selection:bg-emerald-900/50">
@@ -170,122 +152,77 @@ export default function FinancialAidPage() {
 
             </div>
 
-            {/* Right Column: Application Form */}
+            {/* Right Column: Auth Gate */}
             <div className="lg:col-span-5">
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, y: 40 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.4 }}
                 className="bg-white dark:bg-neutral-900 rounded-3xl p-6 sm:p-8 shadow-xl shadow-slate-200/50 dark:shadow-black/50 border border-slate-200 dark:border-neutral-800 sticky top-[100px]"
               >
-                <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-6">Application Form</h3>
-                
-                {isSubmitted ? (
-                  <div className="text-center py-10">
-                    <div className="w-20 h-20 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6">
-                      <CheckCircle size={40} weight="fill" />
+                {user?.role === 'student' ? (
+                  /* Logged-in student — redirect to dashboard */
+                  <div className="text-center py-6">
+                    <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-5">
+                      <Handshake size={32} weight="fill" />
                     </div>
-                    <h4 className="text-xl font-bold text-slate-900 dark:text-white mb-3">Application Received</h4>
-                    <p className="text-slate-600 dark:text-neutral-400 text-sm leading-relaxed mb-8">
-                      Thank you for applying. Our team will review your application and contact you via email or WhatsApp within 3-5 business days to schedule your verification call.
+                    <h3 className="text-xl font-black text-slate-900 dark:text-white mb-2">Ready to Apply?</h3>
+                    <p className="text-slate-500 dark:text-neutral-400 text-sm leading-relaxed mb-6">
+                      You're signed in as <span className="font-bold text-slate-700 dark:text-neutral-200">{user.name}</span>. Head to your dashboard to submit your financial aid application.
                     </p>
-                    <button 
-                      onClick={() => setIsSubmitted(false)}
-                      className="text-violet-600 dark:text-violet-400 font-bold text-sm hover:underline underline-offset-4"
+                    <button
+                      onClick={() => navigate('/dashboard/financial-aid')}
+                      className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-bold py-4 rounded-xl shadow-[0_8px_20px_rgba(16,185,129,0.3)] transition-all"
                     >
-                      Submit another application
+                      Apply for Financial Aid <CaretRight size={18} weight="bold" />
                     </button>
                   </div>
+                ) : user ? (
+                  /* Logged in but not a student */
+                  <div className="text-center py-6">
+                    <div className="w-16 h-16 bg-amber-100 dark:bg-amber-900/30 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-5">
+                      <WarningCircle size={32} weight="fill" />
+                    </div>
+                    <h3 className="text-xl font-black text-slate-900 dark:text-white mb-2">Student Accounts Only</h3>
+                    <p className="text-slate-500 dark:text-neutral-400 text-sm leading-relaxed">
+                      Financial aid is available for student accounts only. Please sign in or register with a student account to apply.
+                    </p>
+                  </div>
                 ) : (
-                  <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-                    <div>
-                      <label htmlFor="name" className="block text-sm font-bold text-slate-700 dark:text-neutral-300 mb-2">Full Name <span className="text-rose-500">*</span></label>
-                      <input 
-                        type="text" 
-                        id="name" 
-                        {...register('name', { required: 'Name is required' })}
-                        className="w-full bg-slate-50 dark:bg-neutral-950 border border-slate-200 dark:border-neutral-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent dark:text-white transition-shadow"
-                        placeholder="John Doe"
-                      />
-                      {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name.message as string}</p>}
-                    </div>
-                    
-                    <div>
-                      <label htmlFor="email" className="block text-sm font-bold text-slate-700 dark:text-neutral-300 mb-2">Email Address <span className="text-rose-500">*</span></label>
-                      <input 
-                        type="email" 
-                        id="email" 
-                        {...register('email', { 
-                          required: 'Email is required',
-                          pattern: { value: /^\S+@\S+$/i, message: 'Invalid email address' }
-                        })}
-                        className="w-full bg-slate-50 dark:bg-neutral-950 border border-slate-200 dark:border-neutral-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent dark:text-white transition-shadow"
-                        placeholder="john@example.com"
-                      />
-                      {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email.message as string}</p>}
+                  /* Not logged in */
+                  <div className="space-y-6">
+                    <div className="text-center">
+                      <div className="w-16 h-16 bg-slate-100 dark:bg-neutral-800 text-slate-400 dark:text-neutral-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <LockSimple size={28} weight="fill" />
+                      </div>
+                      <h3 className="text-xl font-black text-slate-900 dark:text-white mb-2">Account Required</h3>
+                      <p className="text-slate-500 dark:text-neutral-400 text-sm leading-relaxed">
+                        You need a free student account to apply for financial aid. Create one in seconds — it's completely free.
+                      </p>
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-bold text-slate-700 dark:text-neutral-300 mb-2">WhatsApp Number <span className="text-rose-500">*</span></label>
-                      <Controller
-                        name="phone"
-                        control={control}
-                        rules={{ required: 'Phone number is required' }}
-                        render={({ field }) => (
-                          <PhoneInput
-                            {...field}
-                            placeholder="Enter phone number"
-                            error={errors.phone?.message as string}
-                          />
-                        )}
-                      />
-                      {!errors.phone && <p className="text-xs text-slate-500 mt-2">Required for scheduling the verification call.</p>}
+                    <div className="space-y-3">
+                      <Link
+                        to="/register"
+                        className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-bold py-4 rounded-xl shadow-[0_8px_20px_rgba(16,185,129,0.3)] transition-all"
+                      >
+                        <UserPlus size={18} weight="bold" /> Create Free Account
+                      </Link>
+                      <Link
+                        to="/login"
+                        className="w-full flex items-center justify-center gap-2 bg-slate-100 dark:bg-neutral-800 hover:bg-slate-200 dark:hover:bg-neutral-700 text-slate-700 dark:text-neutral-200 font-bold py-4 rounded-xl transition-all"
+                      >
+                        Already have an account? Sign In <CaretRight size={16} weight="bold" />
+                      </Link>
                     </div>
 
-                    <div>
-                      <label htmlFor="reason" className="block text-sm font-bold text-slate-700 dark:text-neutral-300 mb-2">Why do you need financial aid? <span className="text-rose-500">*</span></label>
-                      <textarea 
-                        id="reason" 
-                        rows={4}
-                        {...register('reason', { required: 'Reason is required' })}
-                        className="w-full bg-slate-50 dark:bg-neutral-950 border border-slate-200 dark:border-neutral-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent dark:text-white transition-shadow resize-none"
-                        placeholder="Please explain your financial situation honestly..."
-                      ></textarea>
-                      {errors.reason && <p className="text-xs text-red-500 mt-1">{errors.reason.message as string}</p>}
+                    <div className="flex items-start gap-3 bg-violet-50 dark:bg-violet-900/10 border border-violet-100 dark:border-violet-900/30 rounded-2xl p-4">
+                      <CheckCircle size={16} weight="fill" className="text-violet-500 flex-shrink-0 mt-0.5" />
+                      <p className="text-xs text-violet-700 dark:text-violet-300 leading-relaxed">
+                        Registration is free and takes less than a minute. Once signed in, you can submit your financial aid application directly from your student dashboard.
+                      </p>
                     </div>
-
-                    <div className="pt-2">
-                      <label className="flex items-start gap-3 cursor-pointer group">
-                        <div className="relative flex items-center justify-center mt-0.5">
-                          <input type="checkbox" {...register('agree', { required: 'You must agree to continue' })} className="peer sr-only" />
-                          <div className="w-5 h-5 rounded border-2 border-slate-300 dark:border-neutral-700 peer-checked:bg-violet-600 peer-checked:border-violet-600 transition-colors" />
-                          <CheckCircle size={14} weight="bold" className="absolute text-white opacity-0 peer-checked:opacity-100 transition-opacity" />
-                        </div>
-                        <span className="text-xs text-slate-600 dark:text-neutral-400 leading-relaxed">
-                          I confirm that the information provided is accurate and truthful. I agree to participate in a live verification call to prove my eligibility.
-                        </span>
-                      </label>
-                      {errors.agree && <p className="text-xs text-red-500 mt-1">{errors.agree.message as string}</p>}
-                    </div>
-
-                    <button 
-                      type="submit" 
-                      disabled={isSubmitting}
-                      className="w-full mt-4 flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-bold py-4 rounded-xl shadow-[0_8px_20px_rgba(16,185,129,0.3)] transition-all disabled:opacity-70 disabled:cursor-not-allowed"
-                    >
-                      {isSubmitting ? (
-                        <span className="flex items-center gap-2">
-                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                          Submitting...
-                        </span>
-                      ) : (
-                        <>Submit Application <CaretRight size={18} weight="bold" /></>
-                      )}
-                    </button>
-                  </form>
+                  </div>
                 )}
               </motion.div>
             </div>
