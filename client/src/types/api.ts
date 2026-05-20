@@ -526,3 +526,48 @@ export interface Assignment {
   submissions: Submission[];
   createdAt: string;
 }
+
+// ─── Review Types ─────────────────────────────────────────────────────────────
+
+export interface Review {
+  _id: string;
+  type: 'platform' | 'course';
+  author: {
+    _id: string;
+    name: string;
+    profileImage?: string;
+    role: 'student' | 'teacher' | 'admin';
+    email?: string;
+  };
+  course?: {
+    _id: string;
+    title: string;
+  };
+  rating: number;
+  content: string;
+  status: 'pending' | 'approved' | 'rejected';
+  featuredOnHome: boolean;
+  adminNote?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SubmitReviewDto {
+  type: 'platform' | 'course';
+  courseId?: string;
+  rating: number;
+  content: string;
+}
+
+export interface UpdateReviewDto {
+  rating?: number;
+  content?: string;
+}
+
+export interface AdminUpdateReviewStatusDto {
+  status: 'approved' | 'rejected';
+  adminNote?: string;
+}
+
+export type ReviewListResponse = ApiPaginatedResponse<Review>;
+export type ReviewSingleResponse = ApiResponse<Review>;
