@@ -3,9 +3,10 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import {
   House, BookOpen, Users, GearSix, VideoCamera,
-  List, X, SignOut, Bell, Sun, Moon, Headset, Chats, CheckCircle
+  List, X, SignOut, Bell, Sun, Moon, Headset, Chats, CheckCircle, Sparkle
 } from '@phosphor-icons/react'
 import Loader from '@/components/Loader'
+import TourGuide, { type TourStep } from '@/components/TourGuide'
 import UserAvatar from '@/components/UserAvatar'
 import { useAuth } from '@/context/AuthContext'
 import { useSocket } from '@/context/SocketContext'
@@ -24,6 +25,58 @@ const InstructorNotifications = lazy(() => import('./instructor/InstructorNotifi
 const InstructorAssignments = lazy(() => import('./instructor/InstructorAssignments'))
 
 export type InstructorView = 'overview' | 'courses' | 'live' | 'students' | 'messages' | 'assignments' | 'settings' | 'support' | 'notifications'
+
+const INSTRUCTOR_TOUR_STEPS: TourStep[] = [
+  {
+    title: 'Welcome, Instructor!',
+    content: "Let's take a quick tour of your instructor dashboard so you can start teaching effectively. Click Next to continue.",
+  },
+  {
+    target: 'instructor-nav-overview',
+    title: 'Dashboard Overview',
+    content: 'Your home screen shows key stats: total students, active courses, upcoming sessions, and recent activity.',
+  },
+  {
+    target: 'instructor-nav-courses',
+    title: 'My Courses',
+    content: 'Create and manage your courses here. Upload videos or images, set schedules, and publish courses for students to enroll.',
+  },
+  {
+    target: 'instructor-nav-live',
+    title: 'Live Classes',
+    content: 'Schedule and manage your live teaching sessions. Students are notified automatically when you add a new session.',
+  },
+  {
+    target: 'instructor-nav-students',
+    title: 'My Students',
+    content: 'View all students enrolled in your courses, track their attendance, and monitor their progress.',
+  },
+  {
+    target: 'instructor-nav-assignments',
+    title: 'Assignments',
+    content: 'Create assignments for your students and review their submissions all in one place.',
+  },
+  {
+    target: 'instructor-nav-messages',
+    title: 'Messages',
+    content: 'Communicate directly with your students. Answer questions and provide personalized guidance.',
+  },
+  {
+    target: 'instructor-nav-notifications',
+    title: 'Notifications',
+    content: 'Get notified about new enrollments, student messages, and platform updates.',
+  },
+  {
+    target: 'instructor-nav-settings',
+    title: 'Settings',
+    content: 'Update your profile, bio, and teaching preferences that are visible to students.',
+  },
+  {
+    target: 'instructor-take-tour',
+    title: "You're ready to teach!",
+    content: "That's the full tour. Click \"Take Tour\" here anytime to revisit these tips. Good luck with your students!",
+  },
+]
 
 type NavItem = { view: InstructorView; label: string; path: string; Icon: React.FC<{ size?: number; weight?: string; className?: string }> }
 
@@ -49,6 +102,7 @@ export default function InstructorDashboardPage() {
   const { unreadNotifications, setUnreadNotifications, unreadMessages } = useSocket()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [darkMode, setDarkMode] = useState(() => document.documentElement.classList.contains('dark'))
+  const restartTourRef = useRef<(() => void) | null>(null)
 
   // Notification State
   const [showNotifications, setShowNotifications] = useState(false)
@@ -115,6 +169,7 @@ export default function InstructorDashboardPage() {
 
     return (
       <button
+        data-tour={`instructor-nav-${view}`}
         onClick={() => { navigate(`/instructor${path ? `/${path}` : ''}`); setSidebarOpen(false) }}
         className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm font-semibold transition-all duration-150 ${
           active
@@ -201,6 +256,14 @@ export default function InstructorDashboardPage() {
               </div>
             </div>
             <button
+              data-tour="instructor-take-tour"
+              onClick={() => restartTourRef.current?.()}
+              className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-semibold text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-950/30 transition-all mb-1"
+            >
+              <Sparkle size={18} weight="fill" />
+              Take Tour
+            </button>
+            <button
               onClick={handleLogout}
               className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all"
             >
@@ -210,6 +273,12 @@ export default function InstructorDashboardPage() {
           </div>
         </motion.aside>
       </>
+
+      <TourGuide
+        steps={INSTRUCTOR_TOUR_STEPS}
+        tourKey="instructor"
+        onRestartRef={(fn) => { restartTourRef.current = fn }}
+      />
 
       {/* ── MAIN CONTENT ── */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">

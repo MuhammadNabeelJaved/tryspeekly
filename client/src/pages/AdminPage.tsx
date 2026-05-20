@@ -5,8 +5,9 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   ChartBar, Users, Chalkboard, BookOpen, CreditCard, PencilSimple,
   List, X, SignOut, Bell, MagnifyingGlass, Sun, Moon, GearSix,
-  Lock, Eye, EyeSlash, Handshake, Certificate, ChatCircleDots, CheckCircle, Chats, Globe, Star
+  Lock, Eye, EyeSlash, Handshake, Certificate, ChatCircleDots, CheckCircle, Chats, Globe, Star, Sparkle
 } from '@phosphor-icons/react'
+import TourGuide, { type TourStep } from '@/components/TourGuide'
 import type { Student, Instructor, Course, CMSPage } from './admin/adminData'
 import { INITIAL_STUDENTS, INITIAL_INSTRUCTORS, INITIAL_COURSES, INITIAL_CMS_PAGES } from './admin/adminData'
 import Loader from '@/components/Loader'
@@ -81,6 +82,85 @@ const NAV_CONTENT: NavItem[] = [
   { view: 'seo',      label: 'SEO Manager',  path: 'seo',      Icon: Globe as NavItem['Icon'] },
   { view: 'cms',      label: 'CMS Editor',   path: 'cms',      Icon: PencilSimple as NavItem['Icon'] },
   { view: 'settings', label: 'Settings',     path: 'settings', Icon: GearSix as NavItem['Icon'] },
+]
+
+// ─── TOUR STEPS ───────────────────────────────────────────────────────────────
+
+const ADMIN_TOUR_STEPS: TourStep[] = [
+  {
+    title: 'Welcome to Admin Dashboard!',
+    content: "This tour walks you through everything you can manage here. Click Next to explore each section.",
+  },
+  {
+    target: 'admin-nav-overview',
+    title: 'Overview',
+    content: 'Your command center — see platform-wide stats: total students, revenue, active courses, and pending tasks at a glance.',
+  },
+  {
+    target: 'admin-nav-students',
+    title: 'Students',
+    content: 'View and manage all registered students, check their enrolled courses, payment totals, and account status.',
+  },
+  {
+    target: 'admin-nav-courses',
+    title: 'Courses',
+    content: 'Review, approve, or reject courses submitted by instructors. Manage published and draft courses.',
+  },
+  {
+    target: 'admin-nav-instructors',
+    title: 'Instructors',
+    content: 'Manage all instructors on the platform. View their courses count, profile details, and contact info.',
+  },
+  {
+    target: 'admin-nav-payments',
+    title: 'Payments',
+    content: 'Review payment submissions from students. Approve or reject payment proofs and track revenue.',
+  },
+  {
+    target: 'admin-nav-financial-aid',
+    title: 'Financial Aid',
+    content: 'Review financial aid applications from students. Accept or reject and trigger free enrollments.',
+  },
+  {
+    target: 'admin-nav-certificates',
+    title: 'Certificates',
+    content: 'Issue certificates to students who have completed their courses.',
+  },
+  {
+    target: 'admin-nav-messages',
+    title: 'Messages',
+    content: 'Handle direct messages between students, instructors, and the admin team.',
+  },
+  {
+    target: 'admin-nav-support',
+    title: 'Support',
+    content: 'View and respond to support tickets submitted by students and instructors.',
+  },
+  {
+    target: 'admin-nav-reviews',
+    title: 'Reviews',
+    content: 'Moderate course reviews submitted by students before they go public.',
+  },
+  {
+    target: 'admin-nav-blog',
+    title: 'Blog Manager',
+    content: 'Create and publish blog posts to keep your students and visitors engaged.',
+  },
+  {
+    target: 'admin-nav-seo',
+    title: 'SEO Manager',
+    content: 'Manage meta titles, descriptions, and keywords to improve your site\'s search engine visibility.',
+  },
+  {
+    target: 'admin-nav-settings',
+    title: 'Settings',
+    content: 'Configure platform-wide settings, site info, and admin preferences.',
+  },
+  {
+    target: 'admin-take-tour',
+    title: "Tour complete!",
+    content: 'You now know your way around the admin dashboard. Click "Take Tour" anytime to restart this walkthrough.',
+  },
 ]
 
 // ─── LOGIN SCREEN ─────────────────────────────────────────────────────────────
@@ -190,6 +270,7 @@ export default function AdminPage() {
     return localStorage.getItem('admin_auth') === 'true'
   })
   const notifRef = useRef(null);
+  const restartTourRef = useRef<(() => void) | null>(null)
   const [showNotifications, setShowNotifications] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [darkMode, setDarkMode] = useState(() => document.documentElement.classList.contains('dark'))
@@ -330,6 +411,7 @@ export default function AdminPage() {
 
     return (
       <button
+        data-tour={`admin-nav-${view}`}
         onClick={() => { navigate(`/admin${path ? `/${path}` : ''}`); setSidebarOpen(false) }}
         className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm font-semibold transition-all duration-150 ${
           active
@@ -434,6 +516,14 @@ export default function AdminPage() {
               </div>
             </div>
             <button
+              data-tour="admin-take-tour"
+              onClick={() => restartTourRef.current?.()}
+              className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-semibold text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-950/30 transition-all mb-1"
+            >
+              <Sparkle size={18} weight="fill" />
+              Take Tour
+            </button>
+            <button
               onClick={handleLogout}
               className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all"
             >
@@ -443,6 +533,12 @@ export default function AdminPage() {
           </div>
         </motion.aside>
       </>
+
+      <TourGuide
+        steps={ADMIN_TOUR_STEPS}
+        tourKey="admin"
+        onRestartRef={(fn) => { restartTourRef.current = fn }}
+      />
 
       {/* ── MAIN CONTENT ── */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">

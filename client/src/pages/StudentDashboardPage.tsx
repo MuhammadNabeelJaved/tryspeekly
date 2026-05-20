@@ -3,9 +3,10 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import {
   House, BookOpen, CreditCard, Handshake, GearSix, ChatCircleDots,
-  List, X, SignOut, Bell, Sun, Moon, Certificate, CheckCircle, Chats
+  List, X, SignOut, Bell, Sun, Moon, Certificate, CheckCircle, Chats, Sparkle
 } from '@phosphor-icons/react'
 import Loader from '@/components/Loader'
+import TourGuide, { type TourStep } from '@/components/TourGuide'
 import { useAuth } from '../context/AuthContext'
 import { useSocket } from '../context/SocketContext'
 import { notificationsService } from '../services/notifications.service'
@@ -24,6 +25,63 @@ const StudentNotifications = lazy(() => import('./student/StudentNotifications')
 const StudentMessages = lazy(() => import('./student/StudentMessages'))
 
 export type StudentView = 'overview' | 'courses' | 'certificates' | 'payments' | 'financial-aid' | 'settings' | 'support' | 'notifications' | 'messages'
+
+const STUDENT_TOUR_STEPS: TourStep[] = [
+  {
+    title: 'Welcome to EnglishPro!',
+    content: 'This quick tour shows you how to use your student dashboard. Click Next to explore, or Skip to close.',
+  },
+  {
+    target: 'student-nav-overview',
+    title: 'Home — Your Dashboard',
+    content: 'Your home screen shows your progress, upcoming sessions, and a quick summary of everything in one place.',
+  },
+  {
+    target: 'student-nav-courses',
+    title: 'My Courses',
+    content: 'Browse all courses you are enrolled in. Track your progress and continue learning from where you left off.',
+  },
+  {
+    target: 'student-nav-certificates',
+    title: 'Certificates',
+    content: 'View and download certificates you have earned after completing courses.',
+  },
+  {
+    target: 'student-nav-payments',
+    title: 'Payments',
+    content: 'Check your payment history, upload payment proofs, and see the approval status for each enrollment.',
+  },
+  {
+    target: 'student-nav-financial-aid',
+    title: 'Financial Aid',
+    content: 'Apply for financial aid if you need help covering course costs. Track your application status here.',
+  },
+  {
+    target: 'student-nav-messages',
+    title: 'Messages',
+    content: 'Chat directly with your instructors in real-time. Ask questions and get personalized guidance.',
+  },
+  {
+    target: 'student-nav-notifications',
+    title: 'Notifications',
+    content: 'Stay up to date with enrollment approvals, instructor messages, and important announcements.',
+  },
+  {
+    target: 'student-nav-support',
+    title: 'Support',
+    content: 'Need help? Submit a support ticket and our team will assist you as soon as possible.',
+  },
+  {
+    target: 'student-nav-settings',
+    title: 'Settings',
+    content: 'Update your profile photo, change your password, and manage your account preferences.',
+  },
+  {
+    target: 'student-take-tour',
+    title: "You're all set!",
+    content: 'That covers everything! Click "Take Tour" here anytime to restart this walkthrough. Happy learning!',
+  },
+]
 
 type NavItem = { view: StudentView; label: string; path: string; Icon: React.FC<{ size?: number; weight?: string; className?: string }> }
 
@@ -49,6 +107,7 @@ export default function StudentDashboardPage() {
   const { unreadNotifications, setUnreadNotifications, unreadMessages } = useSocket()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [darkMode, setDarkMode] = useState(() => document.documentElement.classList.contains('dark'))
+  const restartTourRef = useRef<(() => void) | null>(null)
 
   // Notification State
   const [showNotifications, setShowNotifications] = useState(false)
@@ -117,6 +176,7 @@ export default function StudentDashboardPage() {
 
     return (
       <button
+        data-tour={`student-nav-${view}`}
         onClick={() => { navigate(`/dashboard${path ? `/${path}` : ''}`); setSidebarOpen(false) }}
         className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm font-semibold transition-all duration-150 ${
           active
@@ -211,6 +271,14 @@ export default function StudentDashboardPage() {
               </div>
             </div>
             <button
+              data-tour="student-take-tour"
+              onClick={() => restartTourRef.current?.()}
+              className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-semibold text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-950/30 transition-all mb-1"
+            >
+              <Sparkle size={18} weight="fill" />
+              Take Tour
+            </button>
+            <button
               onClick={handleLogout}
               className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all"
             >
@@ -220,6 +288,12 @@ export default function StudentDashboardPage() {
           </div>
         </motion.aside>
       </>
+
+      <TourGuide
+        steps={STUDENT_TOUR_STEPS}
+        tourKey="student"
+        onRestartRef={(fn) => { restartTourRef.current = fn }}
+      />
 
       {/* ── MAIN CONTENT ── */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
