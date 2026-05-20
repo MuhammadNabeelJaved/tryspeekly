@@ -5,10 +5,9 @@ import toast from 'react-hot-toast'
 import {
   Star, Users, Clock, GraduationCap, CheckCircle,
   PlayCircle, Certificate, FileText, CaretDown,
-  ArrowLeft, ArrowRight, Sparkle,
+  ArrowLeft, ArrowRight,
   ChartBar, Tag, Chats, CaretLeft, CaretRight, ThumbsUp, PencilSimple,
   Calendar, VideoCamera, UsersThree, ChalkboardTeacher, Laptop,
-  CreditCard, Bank, PaypalLogo, ShieldCheck, Phone, Globe
 } from '@phosphor-icons/react'
 import { coursesService } from '../services/courses.service'
 import { enrollmentsService } from '../services/enrollments.service'
@@ -114,207 +113,6 @@ const COURSE = {
 
 const REVIEWS_PER_PAGE = 3
 
-// ─── LOGO COMPONENTS (Copied from PaymentsPage.tsx) ───────────────────────────
-
-function PaymentLogo({ src, alt, fallbackBg }: { src: string; alt: string; fallbackBg: string }) {
-  return (
-    <div className="w-full h-full rounded-2xl overflow-hidden flex items-center justify-center" style={{ backgroundColor: fallbackBg }}>
-      <img
-        src={src}
-        alt={alt}
-        className="w-full h-full object-cover"
-        loading="lazy"
-        onError={(e) => {
-          (e.target as HTMLImageElement).style.display = 'none';
-        }}
-      />
-    </div>
-  );
-}
-
-function BankTransferIcon({ international = false }: { international?: boolean }) {
-  return (
-    <div
-      className="w-full h-full rounded-2xl flex items-center justify-center"
-      style={{ background: international ? 'linear-gradient(135deg,#1E40AF,#3B82F6)' : 'linear-gradient(135deg,#334155,#64748B)' }}
-    >
-      <Bank size={28} weight="fill" className="text-white" />
-    </div>
-  );
-}
-
-// ─── REAL LOGO URLS (Copied from PaymentsPage.tsx) ────────────────────────────
-
-const LOGOS = {
-  easypaisa: 'https://play-lh.googleusercontent.com/ahBZCpNP4elK4uI-gImTdi7pLpEwZUMLFngwCfWWHlzOI1GZqwipiv_ekRT--mDcVg4=s512-rw',
-  jazzcash:  'https://play-lh.googleusercontent.com/uG93WUUyYVhe-B-5hBqKhr1X--UvgiICOFgD9rK4dbYG3TdqXKjq_TsJU7Pg034dOA=s512-rw',
-  sadapay:   'https://play-lh.googleusercontent.com/jLxWI86qzbYgHs7KvooLG9dYRFwmOXhWYwuSMD0KHRgzNrjR6mnSdcJQ2-ZjZICKig=s512-rw',
-  nayapay:   'https://play-lh.googleusercontent.com/OaLId--7-ubuipOHiNGR4N-EpFVg9wIGYIw6trOt5tOFKcjvcxdpsuEDfYcWLWJTUx4=s512-rw',
-  nsave:     'https://play-lh.googleusercontent.com/EepJU_3DjuHfGCsFtBd2bhRhDS_dUGLcqLpfLZc3oPqu_PLgNV6IJ4Ui4fv6XfxRv0c=s512-rw',
-  paypal:    'https://play-lh.googleusercontent.com/bE_qL120v2g60K0L2K5vXw_hT662gI84wB3n_f3a-nO_n8W6_k_q_k_k_q_k_q_k_q_k=s512-rw',
-  credit_card: 'https://www.citypng.com/public/uploads/preview/white-credit-card-icon-hd-png-316246372138kgy50h76u.png',
-};
-
-// ─── DATA (Copied from PaymentsPage.tsx and extended for Credit Card/PayPal) ──
-
-type PaymentMethod = {
-  id: string;
-  name: string;
-  tagline: string;
-  description: string;
-  features: string[];
-  logoKey: keyof typeof LOGOS | 'bank-local' | 'bank-intl';
-  fallbackBg: string;
-  accentColor: string;
-  recommended?: boolean;
-  processingTime: string;
-};
-
-const LOCAL_METHODS: PaymentMethod[] = [
-  {
-    id: 'easypaisa',
-    name: 'Easypaisa',
-    tagline: "Pakistan's #1 Mobile Wallet",
-    description: 'Pay instantly using your Easypaisa mobile account or app. No bank account required.',
-    features: ['Instant transfer', 'Available 24/7', 'No transaction fee', 'Easy app payment'],
-    logoKey: 'easypaisa',
-    fallbackBg: '#1BA462',
-    accentColor: '#1BA462',
-    recommended: true,
-    processingTime: 'Instant',
-  },
-  {
-    id: 'jazzcash',
-    name: 'JazzCash',
-    tagline: "Pakistan's Trusted Mobile Banking",
-    description: 'Pay seamlessly through your JazzCash wallet, mobile account, or debit card.',
-    features: ['Instant confirmation', 'Mobile number payment', 'Debit card support', 'Secure & encrypted'],
-    logoKey: 'jazzcash',
-    fallbackBg: '#CC1F00',
-    accentColor: '#CC1F00',
-    processingTime: 'Instant',
-  },
-  {
-    id: 'sadapay-local',
-    name: 'SadaPay',
-    tagline: 'Simple. Modern. Pakistani.',
-    description: 'Transfer directly from your SadaPay IBAN account to ours in seconds.',
-    features: ['IBAN transfer', 'Real-time confirmation', 'Zero fees', 'App & web support'],
-    logoKey: 'sadapay',
-    fallbackBg: '#161616',
-    accentColor: '#7C3AED',
-    processingTime: 'Instant',
-  },
-  {
-    id: 'nayapay-local',
-    name: 'NayaPay',
-    tagline: "Pakistan's Digital Wallet",
-    description: 'Pay via NayaPay e-money account using your registered phone number or IBAN.',
-    features: ['IBAN & phone transfer', 'Instant settlement', 'No hidden charges', 'SBP regulated'],
-    logoKey: 'nayapay',
-    fallbackBg: '#5F4FBD',
-    accentColor: '#5F4FBD',
-    processingTime: 'Instant',
-  },
-  {
-    id: 'nsave',
-    name: 'NSave',
-    tagline: "Pakistan's Smart Savings App",
-    description: 'Use your NSave balance or linked account to pay your course fee securely.',
-    features: ['Wallet payment', 'Easy transfer', 'Instant receipt', 'Bank-grade security'],
-    logoKey: 'nsave',
-    fallbackBg: '#00A896',
-    accentColor: '#00A896',
-    processingTime: 'Instant',
-  },
-  {
-    id: 'bank-local',
-    name: 'Local Bank Transfer',
-    tagline: 'All Pakistani Banks Accepted',
-    description: 'Transfer from any Pakistani bank — HBL, MCB, UBL, Meezan, Allied, etc. — via IBFT.',
-    features: ['All banks supported', 'IBFT / online banking', '1-3 hour clearance', 'Receipt confirmation'],
-    logoKey: 'bank-local',
-    fallbackBg: '#334155',
-    accentColor: '#334155',
-    processingTime: '1–3 hours',
-  },
-  {
-    id: 'credit_card',
-    name: 'Credit Card',
-    tagline: 'Secure Online Payment',
-    description: 'Pay using your Visa, MasterCard, or other major credit/debit cards.',
-    features: ['Instant payment', 'Globally accepted', 'Secure & encrypted', 'Fraud protection'],
-    logoKey: 'credit_card',
-    fallbackBg: '#6B7280',
-    accentColor: '#8B5CF6',
-    processingTime: 'Instant',
-    recommended: true,
-  },
-];
-
-const INTL_METHODS: PaymentMethod[] = [
-  {
-    id: 'sadapay-intl',
-    name: 'SadaPay',
-    tagline: 'Receive from Abroad',
-    description: "Send payment from any country using SadaPay's international receiving IBAN.",
-    features: ['International IBAN', 'SWIFT-compatible', 'Real-time alerts', 'Regulated by SBP'],
-    logoKey: 'sadapay',
-    fallbackBg: '#161616',
-    accentColor: '#7C3AED',
-    recommended: true,
-    processingTime: '1–2 business days',
-  },
-  {
-    id: 'nayapay-intl',
-    name: 'NayaPay',
-    tagline: 'Global Transfers Welcome',
-    description: "Receive international remittances through NayaPay's global transfer partnerships.",
-    features: ['Global remittance', 'Partner networks', 'Secure & compliant', 'Easy notification'],
-    logoKey: 'nayapay',
-    fallbackBg: '#5F4FBD',
-    accentColor: '#5F4FBD',
-    processingTime: '1–3 business days',
-  },
-  {
-    id: 'bank-intl',
-    name: 'International Bank Transfer',
-    tagline: 'SWIFT / Wire Transfer',
-    description: 'Send via SWIFT from any bank worldwide. Accepted from UK, US, UAE, Canada, Australia.',
-    features: ['SWIFT / IBAN', 'All currencies', 'All countries', 'Fully secure'],
-    logoKey: 'bank-intl',
-    fallbackBg: '#1E40AF',
-    accentColor: '#1E40AF',
-    processingTime: '2–5 business days',
-  },
-  {
-    id: 'paypal',
-    name: 'PayPal',
-    tagline: 'The Safer, Easier Way to Pay Online',
-    description: 'Pay quickly and securely using your PayPal account balance or linked cards.',
-    features: ['Instant payment', 'Buyer protection', 'Global reach', 'No card details shared'],
-    logoKey: 'paypal',
-    fallbackBg: '#0070BA',
-    accentColor: '#0070BA',
-    processingTime: 'Instant',
-  },
-];
-
-// ─── LOGO RENDERER (Copied from PaymentsPage.tsx) ────────────────────────────
-
-function MethodLogo({ method }: { method: PaymentMethod }) {
-  if (method.logoKey === 'bank-local') return <BankTransferIcon />;
-  if (method.logoKey === 'bank-intl') return <BankTransferIcon international />;
-  return (
-    <PaymentLogo
-      src={LOGOS[method.logoKey as keyof typeof LOGOS]}
-      alt={`${method.name} logo`}
-      fallbackBg={method.fallbackBg}
-    />
-  );
-}
-
-
 export default function CourseDetailsPage() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -329,10 +127,7 @@ export default function CourseDetailsPage() {
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false)
   const [myExistingCourseReview, setMyExistingCourseReview] = useState<Review | null>(null)
 
-  // New states for enrollment modal
-  const [showEnrollmentModal, setShowEnrollmentModal] = useState(false);
-  const [activeTab, setActiveTab] = useState<'local' | 'international'>('local');
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
+  const [isEnrolling, setIsEnrolling] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -436,13 +231,22 @@ export default function CourseDetailsPage() {
     }
   }
 
-  // New function to scroll to payment section
-  const openEnrollmentModal = () => {
+  const handleEnroll = async () => {
     if (!isAuthenticated) {
       navigate('/login', { state: { from: { pathname: `/courses/${id}` } } });
       return;
     }
-    setShowEnrollmentModal(true);
+    setIsEnrolling(true);
+    try {
+      await enrollmentsService.enroll({ courseId: activeCourse.id });
+      toast.success('Enrolled! Go to your dashboard to submit payment and unlock the course.');
+      navigate('/dashboard/courses');
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { error?: { message?: string }; message?: string } } };
+      toast.error(e?.response?.data?.error?.message || e?.response?.data?.message || 'Enrollment failed. Please try again.');
+    } finally {
+      setIsEnrolling(false);
+    }
   };
 
   const handlePageChange = (page: number) => {
@@ -466,114 +270,6 @@ export default function CourseDetailsPage() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  const allMethods = [...LOCAL_METHODS, ...INTL_METHODS];
-  const selectedPaymentDetails = allMethods.find(m => m.id === selectedPaymentMethod);
-  const methodsToDisplay = activeTab === 'local' ? LOCAL_METHODS : INTL_METHODS;
-
-
-  const renderPaymentDetails = () => {
-    if (!selectedPaymentDetails) {
-      return (
-        <p className="text-slate-500 dark:text-neutral-400 mt-6 text-center">
-          Please select a payment method to see details.
-        </p>
-      );
-    }
-
-    // Handle generic Credit Card form
-    if (selectedPaymentDetails.id === 'credit_card') {
-      return (
-        <div className="space-y-4">
-          <div>
-            <label htmlFor="cardNumber" className="block text-sm font-medium text-slate-700 dark:text-neutral-300 mb-1">Card Number</label>
-            <input type="text" id="cardNumber" className="w-full p-3 border border-slate-300 dark:border-neutral-700 rounded-xl bg-slate-50 dark:bg-neutral-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all" placeholder="XXXX XXXX XXXX XXXX" />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-                  <label htmlFor="expiryDate" className="block text-sm font-medium text-slate-700 dark:text-neutral-300 mb-1">Expiry Date</label>
-                  <input type="text" id="expiryDate" className="w-full p-3 border border-slate-300 dark:border-neutral-700 rounded-xl bg-slate-50 dark:bg-neutral-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all" placeholder="MM/YY" />
-                </div>
-                <div>
-                  <label htmlFor="cvv" className="block text-sm font-medium text-slate-700 dark:text-neutral-300 mb-1">CVV</label>
-                  <input type="text" id="cvv" className="w-full p-3 border border-slate-300 dark:border-neutral-700 rounded-xl bg-slate-50 dark:bg-neutral-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all" placeholder="123" />
-                </div>
-          </div>
-            <div>
-              <label htmlFor="cardName" className="block text-sm font-medium text-slate-700 dark:text-neutral-300 mb-1">Name on Card</label>
-              <input type="text" id="cardName" className="w-full p-3 border border-slate-300 dark:border-neutral-700 rounded-xl bg-slate-50 dark:bg-neutral-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all" placeholder="Full Name" />
-            </div>
-            <button className="mt-8 w-full bg-gradient-to-r from-violet-600 to-purple-600 text-white font-bold py-3 px-4 rounded-xl shadow-[0_4px_14px_rgba(124,58,237,0.35)] hover:shadow-[0_6px_20px_rgba(124,58,237,0.45)] transition-all flex items-center justify-center gap-2">
-              Complete Payment
-            </button>
-        </div>
-      );
-    }
-
-    // Handle generic PayPal button
-    if (selectedPaymentDetails.id === 'paypal') {
-      return (
-        <div className="space-y-4">
-          <p className="text-slate-700 dark:text-neutral-300 mb-4">
-            Click the button below to be redirected to PayPal's secure payment gateway.
-          </p>
-          <button className="mt-8 w-full bg-[#0070BA] hover:bg-[#005F99] text-white font-bold py-3 px-4 rounded-xl shadow-[0_4px_14px_rgba(0,112,186,0.35)] hover:shadow-[0_6px_20px_rgba(0,112,186,0.45)] transition-all flex items-center justify-center gap-2">
-            <PaypalLogo size={24} weight="fill" /> Pay with PayPal
-          </button>
-        </div>
-      );
-    }
-
-    // Default rendering for other payment methods (e.g., bank transfers, mobile wallets)
-    return (
-      <div className="space-y-3">
-        <p className="text-slate-700 dark:text-neutral-300 mb-4">
-          {selectedPaymentDetails.description}
-        </p>
-        <div className="space-y-3 mb-5">
-          {[
-            { label: 'Account Title', value: 'EnglishPro Academy' },
-            { label: 'Account / IBAN', value: 'PK36 MEZN 0001 2345 0100 6543' }, // Dummy IBAN
-            { label: 'Bank Name', value: 'Meezan Bank Ltd.' },
-            { label: 'Reference', value: 'Your Full Name / Course ID: ' + activeCourse.id },
-            { label: 'Amount', value: activeCourse.price },
-          ].map(({ label, value }) => (
-            <div key={label} className="bg-slate-50 dark:bg-neutral-800/60 rounded-2xl px-4 py-3">
-              <p className="text-[10px] font-semibold text-slate-400 dark:text-neutral-500 uppercase tracking-wide mb-1">{label}</p>
-              <p className="text-sm font-bold text-slate-900 dark:text-white select-all break-all">{value}</p>
-            </div>
-          ))}
-        </div>
-
-        <div className="flex items-center gap-2 px-3 py-2 bg-violet-50 dark:bg-violet-950/40 rounded-xl border border-violet-100 dark:border-violet-900 mb-5">
-          <Clock size={13} weight="fill" className="text-violet-500" />
-          <span className="text-xs text-violet-600 dark:text-violet-400 font-medium">Processing time:</span>
-          <span className="text-xs font-bold text-violet-700 dark:text-violet-300 ml-auto">{selectedPaymentDetails.processingTime}</span>
-        </div>
-
-        <div className="flex flex-col gap-2.5">
-          <a
-            href="https://wa.me/92XXXXXXXXXX" // Replace with actual WhatsApp number
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 rounded-2xl text-sm transition-colors shadow-[0_4px_14px_rgba(16,185,129,0.35)] hover:shadow-[0_6px_20px_rgba(16,185,129,0.45)]"
-          >
-            <Phone size={15} weight="fill" />
-            Send Receipt on WhatsApp
-          </a>
-          <a
-            href="mailto:payments@englishpro.com"
-            className="flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 rounded-2xl text-sm transition-colors shadow-[0_4px_14px_rgba(124,58,237,0.35)] hover:shadow-[0_6px_20px_rgba(124,58,237,0.45)]"
-          >
-            <CreditCard size={15} weight="fill" />
-            Email Payment Receipt
-          </a>
-        </div>
-        <p className="text-[11px] text-slate-400 dark:text-neutral-600 text-center mt-4 leading-relaxed">
-          Enrollment confirmed within 1 hour during working hours (9 AM – 6 PM PKT).
-        </p>
-      </div>
-    );
-  };
 
   return (
     <div className="bg-slate-50 dark:bg-neutral-950 min-h-screen pt-[72px] lg:pt-[80px] pb-24 lg:pb-0 selection:bg-violet-200 dark:selection:bg-violet-900/50">
@@ -1071,12 +767,13 @@ export default function CourseDetailsPage() {
 
                   {/* Primary CTA */}
                   <motion.button
-                    whileHover={{ scale: 1.02, boxShadow: '0 16px 40px rgba(124,58,237,0.45)' }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={openEnrollmentModal} // Open enrollment modal
-                    className="w-full flex items-center justify-center bg-gradient-to-r from-violet-600 to-purple-600 text-white font-bold py-4 rounded-2xl shadow-[0_8px_28px_rgba(124,58,237,0.35)] transition-all mb-4 text-lg"
+                    whileHover={{ scale: isEnrolling ? 1 : 1.02, boxShadow: '0 16px 40px rgba(124,58,237,0.45)' }}
+                    whileTap={{ scale: isEnrolling ? 1 : 0.98 }}
+                    onClick={handleEnroll}
+                    disabled={isEnrolling}
+                    className="w-full flex items-center justify-center bg-gradient-to-r from-violet-600 to-purple-600 text-white font-bold py-4 rounded-2xl shadow-[0_8px_28px_rgba(124,58,237,0.35)] transition-all mb-4 text-lg disabled:opacity-70 disabled:cursor-not-allowed"
                   >
-                    Enroll Now
+                    {isEnrolling ? 'Enrolling…' : 'Enroll Now'}
                   </motion.button>
                   <p className="text-center text-xs text-slate-500 dark:text-neutral-400 mb-8 font-medium">
                     7-Day Refund Policy • Session Recordings Included
@@ -1139,24 +836,11 @@ export default function CourseDetailsPage() {
         </div>
       </section>
 
-      {/* ─── ENROLLMENT MODAL ──────────────────────────────── */}
+      {/* ─── ENROLLMENT MODAL REMOVED — payment happens in dashboard ── */}
       <AnimatePresence>
-        {showEnrollmentModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-            onClick={() => setShowEnrollmentModal(false)}
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
-              className="relative w-full max-w-6xl max-h-[90vh] overflow-y-auto bg-white dark:bg-neutral-900 rounded-3xl border border-slate-200 dark:border-neutral-800 shadow-2xl"
-              onClick={(e) => e.stopPropagation()}
+        {false && (
+          <motion.div className="hidden">
+            <motion.div className="hidden"
             >
               {/* Close button */}
               <button
@@ -1470,9 +1154,10 @@ export default function CourseDetailsPage() {
                 <div className="text-2xl font-black text-slate-900 dark:text-white">{activeCourse.price}</div>
               </div>
               <button
-                onClick={openEnrollmentModal} // Open enrollment modal
-                className="flex-1 max-w-[200px] bg-gradient-to-r from-violet-600 to-purple-600 text-white font-bold py-3.5 px-6 rounded-2xl shadow-[0_8px_28px_rgba(124,58,237,0.35)] text-center text-sm">
-                Enroll Now
+                onClick={handleEnroll}
+                disabled={isEnrolling}
+                className="flex-1 max-w-[200px] bg-gradient-to-r from-violet-600 to-purple-600 text-white font-bold py-3.5 px-6 rounded-2xl shadow-[0_8px_28px_rgba(124,58,237,0.35)] text-center text-sm disabled:opacity-70 disabled:cursor-not-allowed">
+                {isEnrolling ? 'Enrolling…' : 'Enroll Now'}
               </button>
             </div>
           </motion.div>
