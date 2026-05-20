@@ -6,6 +6,7 @@ import toast from 'react-hot-toast'
 import type { AdminStore } from '../AdminPage'
 import type { Instructor } from './adminData'
 import { axiosClient } from '../../lib/axiosClient'
+import { coursesService } from '../../services/courses.service'
 
 const EMPTY: Instructor = {
   id: '', name: '', email: '', phone: '', country: '', specialization: '',
@@ -44,37 +45,54 @@ export default function AdminInstructors({ store }: { store: AdminStore }) {
 
   const [apiInstructors, setApiInstructors] = useState<Instructor[] | null>(null)
   const [loading, setLoading] = useState(true)
+  const [courseCountMap, setCourseCountMap] = useState<Record<string, number>>({})
 
   useEffect(() => {
-    async function fetchInstructors() {
+    async function fetchData() {
       try {
-        const res = await axiosClient.get('/users', { params: { role: 'teacher', limit: 200 } })
-        const users: any[] = res.data?.data ?? []
-        const mapped: Instructor[] = users.map((u: any, idx: number) => ({
-          id: u._id ?? u.id ?? `api-i${idx}`,
-          name: u.name ?? '',
-          email: u.email ?? '',
-          phone: u.phone ?? '',
-          country: u.country ?? '',
-          specialization: '',
-          experience: '',
-          courses: [],
-          totalStudents: 0,
-          rating: 5.0,
-          status: 'active' as const,
-          bio: u.bio ?? '',
-          joinedAt: u.createdAt?.split('T')[0] ?? '',
-          avatar: (u.name ?? '').split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2),
-          salary: 0,
-        }))
-        setApiInstructors(mapped)
+        const [instRes, coursesRes] = await Promise.allSettled([
+          axiosClient.get('/users', { params: { role: 'teacher', limit: 200 } }),
+          coursesService.getAdminCourses({ limit: 500 }),
+        ])
+
+        if (instRes.status === 'fulfilled') {
+          const users: any[] = instRes.value.data?.data ?? []
+          const mapped: Instructor[] = users.map((u: any, idx: number) => ({
+            id: u._id ?? u.id ?? `api-i${idx}`,
+            name: u.name ?? '',
+            email: u.email ?? '',
+            phone: u.phone ?? '',
+            country: u.country ?? '',
+            specialization: '',
+            experience: '',
+            courses: [],
+            totalStudents: 0,
+            rating: 5.0,
+            status: 'active' as const,
+            bio: u.bio ?? '',
+            joinedAt: u.createdAt?.split('T')[0] ?? '',
+            avatar: (u.name ?? '').split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2),
+            salary: 0,
+          }))
+          setApiInstructors(mapped)
+        }
+
+        if (coursesRes.status === 'fulfilled') {
+          const courses: any[] = (coursesRes.value as any).data ?? []
+          const countMap: Record<string, number> = {}
+          courses.forEach((c: any) => {
+            const tid = c.teacher?._id
+            if (tid) countMap[tid] = (countMap[tid] ?? 0) + 1
+          })
+          setCourseCountMap(countMap)
+        }
       } catch {
         // Fallback to store data
       } finally {
         setLoading(false)
       }
     }
-    fetchInstructors()
+    fetchData()
   }, [])
 
   const displayInstructors = apiInstructors ?? instructors
@@ -225,10 +243,7 @@ export default function AdminInstructors({ store }: { store: AdminStore }) {
                     </div>
                   ))}
                 </div>
-                <div className="flex gap-1 mb-3">
-                  <div className="h-4 w-20 rounded-lg animate-pulse bg-slate-200 dark:bg-neutral-800" />
-                  <div className="h-4 w-16 rounded-lg animate-pulse bg-slate-200 dark:bg-neutral-800" />
-                </div>
+                <div className="h-9 rounded-xl animate-pulse bg-slate-200 dark:bg-neutral-800 mb-3" />
                 <div className="h-3 rounded animate-pulse bg-slate-200 dark:bg-neutral-800 w-2/3" />
               </div>
               <div className="flex border-t border-slate-100 dark:border-neutral-800">
@@ -276,8 +291,8 @@ export default function AdminInstructors({ store }: { store: AdminStore }) {
               <div className="grid grid-cols-3 gap-2 mb-4">
                 {[
                   { label: 'Students', value: inst.totalStudents },
-                  { label: 'Experience', value: inst.experience },
-                  { label: 'Country', value: inst.country.split(' ')[0] },
+                  { label: 'Country', value: inst.country.split(' ')[0] || '—' },
+                  { label: 'Joined', value: inst.joinedAt || '—' },
                 ].map(({ label, value }) => (
                   <div key={label} className="bg-slate-50 dark:bg-neutral-800/60 rounded-xl p-2 text-center">
                     <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{value}</p>
@@ -286,12 +301,18 @@ export default function AdminInstructors({ store }: { store: AdminStore }) {
                 ))}
               </div>
 
-              {/* Courses */}
-              <div className="flex flex-wrap gap-1 mb-3">
-                {inst.courses.map(c => (
-                  <span key={c} className="px-2 py-0.5 bg-violet-50 dark:bg-violet-950/30 text-violet-700 dark:text-violet-400 text-[10px] font-semibold rounded-lg border border-violet-100 dark:border-violet-900">{c}</span>
-                ))}
-              </div>
+              {/* Course count */}
+              {(() => {
+                const count = courseCountMap[inst.id] ?? 0
+                return (
+                  <div className="flex items-center justify-between bg-violet-50 dark:bg-violet-950/20 border border-violet-100 dark:border-violet-900/40 rounded-xl px-3 py-2 mb-3">
+                    <span className="text-[11px] font-semibold text-violet-600 dark:text-violet-400">Courses on website</span>
+                    <span className={`text-sm font-black ${count > 0 ? 'text-violet-700 dark:text-violet-300' : 'text-slate-400 dark:text-neutral-600'}`}>
+                      {count} {count === 1 ? 'course' : 'courses'}
+                    </span>
+                  </div>
+                )
+              })()}
 
               <p className="text-xs text-slate-400 dark:text-neutral-600 truncate">{inst.email}</p>
             </div>
