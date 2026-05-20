@@ -238,7 +238,7 @@ export default function StudentCourses() {
   const [enrollments, setEnrollments] = useState<Enrollment[]>([])
   const [loading, setLoading] = useState(true)
   const [myReviews, setMyReviews] = useState<Review[]>([])
-  const [chatModal, setChatModal] = useState<{ name: string; courseTitle: string } | null>(null)
+  const [chatModal, setChatModal] = useState<{ name: string; courseTitle: string; instructorId: string; profileImage?: string } | null>(null)
   const [submitModal, setSubmitModal] = useState<{ courseId: string; teacherId: string } | null>(null)
   const [statusModal, setStatusModal] = useState<{ payment: EnrolledPayment; courseId: string; teacherId: string } | null>(null)
 
@@ -324,7 +324,7 @@ export default function StudentCourses() {
                   key={enrollment._id}
                   enrollment={enrollment}
                   courseReview={courseReview}
-                  onChat={() => setChatModal({ name: enrollment.teacher?.name ?? '—', courseTitle: enrollment.course.title })}
+                  onChat={() => setChatModal({ name: enrollment.teacher?.name ?? '—', courseTitle: enrollment.course.title, instructorId: enrollment.teacher._id, profileImage: enrollment.teacher.profileImage })}
                   onSubmitPayment={() => setSubmitModal({ courseId: enrollment.course._id, teacherId: enrollment.teacher._id })}
                   onViewStatus={() => setStatusModal({ payment: enrollment.payment!, courseId: enrollment.course._id, teacherId: enrollment.teacher._id })}
                 />
@@ -348,7 +348,7 @@ export default function StudentCourses() {
               <EnrollmentCard
                 key={enrollment._id}
                 enrollment={enrollment}
-                onChat={() => setChatModal({ name: enrollment.teacher?.name ?? '—', courseTitle: enrollment.course.title })}
+                onChat={() => setChatModal({ name: enrollment.teacher?.name ?? '—', courseTitle: enrollment.course.title, instructorId: enrollment.teacher._id, profileImage: enrollment.teacher.profileImage })}
                 onSubmitPayment={() => setSubmitModal({ courseId: enrollment.course._id, teacherId: enrollment.teacher._id })}
                 onViewStatus={() => setStatusModal({ payment: enrollment.payment!, courseId: enrollment.course._id, teacherId: enrollment.teacher._id })}
               />
@@ -362,6 +362,8 @@ export default function StudentCourses() {
         isOpen={!!chatModal}
         onClose={() => setChatModal(null)}
         instructorName={chatModal?.name ?? ''}
+        instructorId={chatModal?.instructorId ?? ''}
+        instructorProfileImage={chatModal?.profileImage}
         courseTitle={chatModal?.courseTitle ?? ''}
       />
 

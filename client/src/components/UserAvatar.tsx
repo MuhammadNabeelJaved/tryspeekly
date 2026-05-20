@@ -1,6 +1,7 @@
 import { useState } from 'react'
 
 const SIZES = {
+  xs: 'w-6 h-6 text-[10px] rounded-md',
   sm: 'w-8 h-8 text-xs rounded-lg shadow-[0_2px_8px_rgba(124,58,237,0.4)]',
   md: 'w-9 h-9 text-sm rounded-xl shadow-[0_4px_12px_rgba(124,58,237,0.4)]',
   lg: 'w-16 h-16 text-2xl rounded-xl shadow-[0_4px_12px_rgba(124,58,237,0.4)]',
@@ -9,7 +10,7 @@ const SIZES = {
 interface UserAvatarProps {
   src?: string
   name?: string
-  size: 'sm' | 'md' | 'lg'
+  size: 'xs' | 'sm' | 'md' | 'lg'
   className?: string
 }
 
