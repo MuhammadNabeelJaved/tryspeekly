@@ -23,9 +23,11 @@ import { enrollmentsService } from '@/services/enrollments.service'
 import { coursesService } from '@/services/courses.service'
 import { assignmentsService } from '@/services/assignments.service'
 import { certificatesService } from '@/services/certificates.service'
-import type { Enrollment, Course, Assignment, CourseMaterial, SyllabusTopic } from '@/types/api'
+import { reviewsService } from '@/services/reviews.service'
+import type { Enrollment, Course, Assignment, CourseMaterial, SyllabusTopic, Review } from '@/types/api'
 import StudentAssignmentModal from './StudentAssignmentModal'
 import InstructorChatModal from './InstructorChatModal'
+import ReviewModal from '@/components/ReviewModal'
 
 type ActiveTab = 'overview' | 'assignments' | 'materials' | 'syllabus'
 
@@ -46,6 +48,8 @@ export default function StudentCourseDetails() {
   const [syllabus, setSyllabus] = useState<SyllabusTopic[]>([])
   const [isLoadingSyllabus, setIsLoadingSyllabus] = useState(false)
   const [isClaiming, setIsClaiming] = useState(false)
+  const [existingCourseReview, setExistingCourseReview] = useState<Review | null>(null)
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false)
 
   // ─── Fetch enrollment + course ─────────────────────────────────────────────
   useEffect(() => {
@@ -118,6 +122,19 @@ export default function StudentCourseDetails() {
       .catch(() => toast.error('Failed to load syllabus.'))
       .finally(() => setIsLoadingSyllabus(false))
   }, [courseId, activeTab])
+
+  // ─── Fetch existing review when course is complete ────────────────────────
+  useEffect(() => {
+    if (!courseId || !enrollment) return
+    const sessionsA = enrollment.progress?.sessionsAttended ?? 0
+    const totalS = enrollment.progress?.totalSessions ?? 0
+    const isComplete = totalS > 0 && sessionsA >= totalS
+    if (isComplete) {
+      reviewsService.getMyCourseReview(courseId)
+        .then(res => { if (res.success) setExistingCourseReview(res.data) })
+        .catch(() => {})
+    }
+  }, [courseId, enrollment])
 
   // ─── Refresh assignments after submission ──────────────────────────────────
   async function refreshAssignments() {
@@ -200,6 +217,7 @@ export default function StudentCourseDetails() {
   // ─── Derived values ────────────────────────────────────────────────────────
   const sessionsAttended = enrollment.progress?.sessionsAttended ?? 0
   const totalSessions = enrollment.progress?.totalSessions ?? 0
+  const isCourseComplete = totalSessions > 0 && sessionsAttended >= totalSessions
   const attendancePct =
     totalSessions > 0 ? Math.min(100, Math.round((sessionsAttended / totalSessions) * 100)) : 0
 
@@ -245,7 +263,7 @@ export default function StudentCourseDetails() {
             </div>
           </div>
 
-          {course.meetLink && (
+          {course.meetLink && !isCourseComplete && (
             <a
               href={course.meetLink}
               target="_blank"
@@ -539,7 +557,7 @@ export default function StudentCourseDetails() {
         {/* Right Column: Schedule */}
         <div className="space-y-6">
           {/* Certificate CTA — only when course is complete */}
-          {totalSessions > 0 && sessionsAttended >= totalSessions && (
+          {isCourseComplete && (
             <div className="bg-gradient-to-br from-violet-600 to-violet-700 rounded-2xl p-6 shadow-lg shadow-violet-600/20">
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
@@ -562,6 +580,17 @@ export default function StudentCourseDetails() {
                 )}
               </button>
             </div>
+          )}
+
+          {/* Leave a Review — only when course is complete */}
+          {isCourseComplete && (
+            <button
+              onClick={() => setIsReviewModalOpen(true)}
+              className="w-full py-3 px-4 rounded-xl font-semibold text-sm border-2 border-violet-200 dark:border-violet-800 text-violet-700 dark:text-violet-300 hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-colors flex items-center justify-center gap-2"
+            >
+              <Star size={18} weight="fill" className="text-violet-500" />
+              {existingCourseReview ? 'Edit Your Review' : 'Leave a Review'}
+            </button>
           )}
 
           <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200 dark:border-neutral-800 p-6 shadow-sm">
@@ -587,7 +616,7 @@ export default function StudentCourseDetails() {
               </p>
             )}
 
-            {course.meetLink ? (
+            {!isCourseComplete && (course.meetLink ? (
               <a
                 href={course.meetLink}
                 target="_blank"
@@ -604,7 +633,7 @@ export default function StudentCourseDetails() {
                   Live class link not set yet. Your instructor will add it soon.
                 </p>
               </div>
-            )}
+            ))}
           </div>
         </div>
       </div>
@@ -627,6 +656,16 @@ export default function StudentCourseDetails() {
         onClose={() => setChatModalOpen(false)}
         instructorName={instructorName}
         courseTitle={course.title}
+      />
+
+      {/* Review Modal */}
+      <ReviewModal
+        isOpen={isReviewModalOpen}
+        onClose={() => setIsReviewModalOpen(false)}
+        type="course"
+        courseId={courseId}
+        existingReview={existingCourseReview}
+        onSuccess={(review) => setExistingCourseReview(review)}
       />
     </div>
   )
