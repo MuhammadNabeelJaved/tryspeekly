@@ -56,25 +56,31 @@ const ADMIN_PASSWORD = 'admin123'
 
 type NavItem = { view: AdminView; label: string; path: string; Icon: React.FC<{ size?: number; weight?: string; className?: string }> }
 
-const NAV_ANALYTICS: NavItem[] = [
-  { view: 'overview',     label: 'Overview',     path: '',          Icon: ChartBar as NavItem['Icon'] },
-  { view: 'students',     label: 'Students',     path: 'students',    Icon: Users as NavItem['Icon'] },
-  { view: 'instructors',  label: 'Instructors',  path: 'instructors', Icon: Chalkboard as NavItem['Icon'] },
+const NAV_CORE: NavItem[] = [
+  { view: 'overview',    label: 'Overview',    path: '',            Icon: ChartBar as NavItem['Icon'] },
+  { view: 'students',    label: 'Students',    path: 'students',    Icon: Users as NavItem['Icon'] },
+  { view: 'courses',     label: 'Courses',     path: 'courses',     Icon: BookOpen as NavItem['Icon'] },
+  { view: 'instructors', label: 'Instructors', path: 'instructors', Icon: Chalkboard as NavItem['Icon'] },
 ]
 
-const NAV_MANAGEMENT: NavItem[] = [
-  { view: 'courses',        label: 'Courses',       path: 'courses',        Icon: BookOpen as NavItem['Icon'] },
-  { view: 'certificates',   label: 'Certificates',  path: 'certificates',   Icon: Certificate as NavItem['Icon'] },
-  { view: 'payments',       label: 'Payments',      path: 'payments',       Icon: CreditCard as NavItem['Icon'] },
-  { view: 'financial-aid',  label: 'Financial Aid', path: 'financial-aid',  Icon: Handshake as NavItem['Icon'] },
-  { view: 'cms',            label: 'CMS Editor',    path: 'cms',            Icon: PencilSimple as NavItem['Icon'] },
-  { view: 'blog',           label: 'Blog Manager',  path: 'blog',           Icon: PencilSimple as NavItem['Icon'] },
-  { view: 'messages',        label: 'Messages',      path: 'messages',       Icon: Chats as NavItem['Icon'] },
-  { view: 'notifications',  label: 'Notifications', path: 'notifications', Icon: Bell as NavItem['Icon'] },
-  { view: 'settings',       label: 'Settings',      path: 'settings',       Icon: GearSix as NavItem['Icon'] },
-  { view: 'support',        label: 'Support',       path: 'support',        Icon: ChatCircleDots as NavItem['Icon'] },
-  { view: 'seo',            label: 'SEO Manager',   path: 'seo',            Icon: Globe as NavItem['Icon'] },
-  { view: 'reviews',        label: 'Reviews',       path: 'reviews',        Icon: Star as NavItem['Icon'] },
+const NAV_FINANCE: NavItem[] = [
+  { view: 'payments',      label: 'Payments',      path: 'payments',      Icon: CreditCard as NavItem['Icon'] },
+  { view: 'financial-aid', label: 'Financial Aid', path: 'financial-aid', Icon: Handshake as NavItem['Icon'] },
+  { view: 'certificates',  label: 'Certificates',  path: 'certificates',  Icon: Certificate as NavItem['Icon'] },
+]
+
+const NAV_COMMUNICATION: NavItem[] = [
+  { view: 'messages',      label: 'Messages',      path: 'messages',      Icon: Chats as NavItem['Icon'] },
+  { view: 'support',       label: 'Support',       path: 'support',       Icon: ChatCircleDots as NavItem['Icon'] },
+  { view: 'reviews',       label: 'Reviews',       path: 'reviews',       Icon: Star as NavItem['Icon'] },
+  { view: 'notifications', label: 'Notifications', path: 'notifications', Icon: Bell as NavItem['Icon'] },
+]
+
+const NAV_CONTENT: NavItem[] = [
+  { view: 'blog',     label: 'Blog Manager', path: 'blog',     Icon: PencilSimple as NavItem['Icon'] },
+  { view: 'seo',      label: 'SEO Manager',  path: 'seo',      Icon: Globe as NavItem['Icon'] },
+  { view: 'cms',      label: 'CMS Editor',   path: 'cms',      Icon: PencilSimple as NavItem['Icon'] },
+  { view: 'settings', label: 'Settings',     path: 'settings', Icon: GearSix as NavItem['Icon'] },
 ]
 
 // ─── LOGIN SCREEN ─────────────────────────────────────────────────────────────
@@ -242,7 +248,7 @@ export default function AdminPage() {
 
 
   const currentPath = location.pathname.replace('/admin', '').replace(/^\//, '')
-  const allNavItems = [...NAV_ANALYTICS, ...NAV_MANAGEMENT]
+  const allNavItems = [...NAV_CORE, ...NAV_FINANCE, ...NAV_COMMUNICATION, ...NAV_CONTENT]
   const activeView = allNavItems.find(item => item.path === currentPath)?.view || 'overview'
 
   function handleNavigate(view: AdminView) {
@@ -390,18 +396,30 @@ export default function AdminPage() {
           </div>
 
           {/* Nav */}
-          <nav className="flex-1 px-3 py-4 overflow-y-auto">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-neutral-600 px-3 mb-1">
-              Analytics
-            </p>
-            <div className="space-y-0.5 mb-4">
-              {NAV_ANALYTICS.map(item => <React.Fragment key={item.view}>{renderNavItem(item)}</React.Fragment>)}
+          <nav className="flex-1 px-3 py-4 overflow-y-auto space-y-4">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-neutral-600 px-3 mb-1">Core</p>
+              <div className="space-y-0.5">
+                {NAV_CORE.map(item => <React.Fragment key={item.view}>{renderNavItem(item)}</React.Fragment>)}
+              </div>
             </div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-neutral-600 px-3 mb-1">
-              Management
-            </p>
-            <div className="space-y-0.5">
-              {NAV_MANAGEMENT.map(item => <React.Fragment key={item.view}>{renderNavItem(item)}</React.Fragment>)}
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-neutral-600 px-3 mb-1">Finance</p>
+              <div className="space-y-0.5">
+                {NAV_FINANCE.map(item => <React.Fragment key={item.view}>{renderNavItem(item)}</React.Fragment>)}
+              </div>
+            </div>
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-neutral-600 px-3 mb-1">Communication</p>
+              <div className="space-y-0.5">
+                {NAV_COMMUNICATION.map(item => <React.Fragment key={item.view}>{renderNavItem(item)}</React.Fragment>)}
+              </div>
+            </div>
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-neutral-600 px-3 mb-1">Content & System</p>
+              <div className="space-y-0.5">
+                {NAV_CONTENT.map(item => <React.Fragment key={item.view}>{renderNavItem(item)}</React.Fragment>)}
+              </div>
             </div>
           </nav>
 
