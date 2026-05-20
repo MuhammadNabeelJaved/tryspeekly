@@ -7,6 +7,7 @@ import type { AdminStore } from '../AdminPage'
 import type { Instructor } from './adminData'
 import { axiosClient } from '../../lib/axiosClient'
 import { coursesService } from '../../services/courses.service'
+import UserAvatar from '../../components/UserAvatar'
 
 const EMPTY: Instructor = {
   id: '', name: '', email: '', phone: '', country: '', specialization: '',
@@ -46,6 +47,7 @@ export default function AdminInstructors({ store }: { store: AdminStore }) {
   const [apiInstructors, setApiInstructors] = useState<Instructor[] | null>(null)
   const [loading, setLoading] = useState(true)
   const [courseCountMap, setCourseCountMap] = useState<Record<string, number>>({})
+  const [profileImageMap, setProfileImageMap] = useState<Record<string, string>>({})
 
   useEffect(() => {
     async function fetchData() {
@@ -57,24 +59,30 @@ export default function AdminInstructors({ store }: { store: AdminStore }) {
 
         if (instRes.status === 'fulfilled') {
           const users: any[] = instRes.value.data?.data ?? []
-          const mapped: Instructor[] = users.map((u: any, idx: number) => ({
-            id: u._id ?? u.id ?? `api-i${idx}`,
-            name: u.name ?? '',
-            email: u.email ?? '',
-            phone: u.phone ?? '',
-            country: u.country ?? '',
-            specialization: '',
-            experience: '',
-            courses: [],
-            totalStudents: 0,
-            rating: 5.0,
-            status: 'active' as const,
-            bio: u.bio ?? '',
-            joinedAt: u.createdAt?.split('T')[0] ?? '',
-            avatar: (u.name ?? '').split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2),
-            salary: 0,
-          }))
+          const imgMap: Record<string, string> = {}
+          const mapped: Instructor[] = users.map((u: any, idx: number) => {
+            const id = u._id ?? u.id ?? `api-i${idx}`
+            if (u.profileImage) imgMap[id] = u.profileImage
+            return {
+              id,
+              name: u.name ?? '',
+              email: u.email ?? '',
+              phone: u.phone ?? '',
+              country: u.country ?? '',
+              specialization: '',
+              experience: '',
+              courses: [],
+              totalStudents: 0,
+              rating: 5.0,
+              status: 'active' as const,
+              bio: u.bio ?? '',
+              joinedAt: u.createdAt?.split('T')[0] ?? '',
+              avatar: (u.name ?? '').split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2),
+              salary: 0,
+            }
+          })
           setApiInstructors(mapped)
+          setProfileImageMap(imgMap)
         }
 
         if (coursesRes.status === 'fulfilled') {
@@ -273,9 +281,12 @@ export default function AdminInstructors({ store }: { store: AdminStore }) {
                   onClick={e => e.stopPropagation()}
                   className="mt-1 w-4 h-4 rounded accent-violet-600 flex-shrink-0 cursor-pointer"
                 />
-                <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${AVATAR_GRADIENTS[idx % AVATAR_GRADIENTS.length]} flex items-center justify-center text-white font-black text-base shadow-md flex-shrink-0`}>
-                  {inst.avatar}
-                </div>
+                <UserAvatar
+                  src={profileImageMap[inst.id]}
+                  name={inst.name}
+                  size="lg"
+                  className="rounded-2xl shadow-md"
+                />
                 <div className="flex-1 min-w-0">
                   <h3 className="text-sm font-black text-slate-900 dark:text-white truncate">{inst.name}</h3>
                   <p className="text-xs text-slate-400 dark:text-neutral-500 truncate">{inst.specialization}</p>
@@ -403,7 +414,7 @@ export default function AdminInstructors({ store }: { store: AdminStore }) {
               </div>
               <div className="p-6">
                 <div className="flex items-center gap-4 mb-5">
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white text-lg font-black shadow-lg">{viewInst.avatar}</div>
+                  <UserAvatar src={profileImageMap[viewInst.id]} name={viewInst.name} size="lg" className="rounded-2xl shadow-lg" />
                   <div>
                     <h4 className="text-base font-black text-slate-900 dark:text-white">{viewInst.name}</h4>
                     <p className="text-xs text-slate-500">{viewInst.specialization}</p>
