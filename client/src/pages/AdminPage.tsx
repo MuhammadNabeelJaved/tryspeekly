@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   ChartBar, Users, Chalkboard, BookOpen, CreditCard, PencilSimple,
   List, X, SignOut, Bell, MagnifyingGlass, Sun, Moon, GearSix,
-  Lock, Eye, EyeSlash, Handshake, Certificate, ChatCircleDots, CheckCircle, Chats, Globe
+  Lock, Eye, EyeSlash, Handshake, Certificate, ChatCircleDots, CheckCircle, Chats, Globe, Star
 } from '@phosphor-icons/react'
 import type { Student, Instructor, Course, CMSPage } from './admin/adminData'
 import { INITIAL_STUDENTS, INITIAL_INSTRUCTORS, INITIAL_COURSES, INITIAL_CMS_PAGES } from './admin/adminData'
@@ -14,6 +14,7 @@ import UserAvatar from '@/components/UserAvatar'
 import { useAuth } from '../context/AuthContext'
 import { useSocket } from '../context/SocketContext'
 import { notificationsService } from '../services/notifications.service'
+import { reviewsService } from '../services/reviews.service'
 import { axiosClient } from '../lib/axiosClient'
 import type { Notification } from '../types/api'
 import { getNotificationPath } from '../utils/notificationNav'
@@ -32,10 +33,11 @@ const AdminSupport = lazy(() => import('./admin/AdminSupport'))
 const AdminNotifications = lazy(() => import('./admin/AdminNotifications'))
 const AdminMessages = lazy(() => import('./admin/AdminMessages'))
 const AdminSEO = lazy(() => import('./admin/AdminSEO'))
+const AdminReviews = lazy(() => import('./admin/AdminReviews'))
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 
-export type AdminView = 'overview' | 'students' | 'instructors' | 'courses' | 'certificates' | 'payments' | 'payments-setup' | 'financial-aid' | 'cms' | 'blog' | 'settings' | 'support' | 'notifications' | 'messages' | 'seo'
+export type AdminView = 'overview' | 'students' | 'instructors' | 'courses' | 'certificates' | 'payments' | 'payments-setup' | 'financial-aid' | 'cms' | 'blog' | 'settings' | 'support' | 'notifications' | 'messages' | 'seo' | 'reviews'
 
 export interface AdminStore {
   students: Student[]
@@ -72,6 +74,7 @@ const NAV_MANAGEMENT: NavItem[] = [
   { view: 'settings',       label: 'Settings',      path: 'settings',       Icon: GearSix as NavItem['Icon'] },
   { view: 'support',        label: 'Support',       path: 'support',        Icon: ChatCircleDots as NavItem['Icon'] },
   { view: 'seo',            label: 'SEO Manager',   path: 'seo',            Icon: Globe as NavItem['Icon'] },
+  { view: 'reviews',        label: 'Reviews',       path: 'reviews',        Icon: Star as NavItem['Icon'] },
 ]
 
 // ─── LOGIN SCREEN ─────────────────────────────────────────────────────────────
@@ -186,7 +189,7 @@ export default function AdminPage() {
   const [darkMode, setDarkMode] = useState(() => document.documentElement.classList.contains('dark'))
   const { unreadNotifications, setUnreadNotifications, unreadMessages } = useSocket()
   const [notifs, setNotifs] = useState<Notification[]>([])
-  const [adminBadges, setAdminBadges] = useState({ students: 0, pendingPayments: 0, pendingCourses: 0, pendingFinancialAid: 0 })
+  const [adminBadges, setAdminBadges] = useState({ students: 0, pendingPayments: 0, pendingCourses: 0, pendingFinancialAid: 0, pendingReviews: 0 })
 
   useEffect(() => {
     notificationsService.getMyNotifications({ limit: 5 })
@@ -195,17 +198,29 @@ export default function AdminPage() {
   }, [unreadNotifications])
 
   useEffect(() => {
-    axiosClient.get('/stats/admin')
-      .then(res => {
-        const d = res.data?.data
-        if (d) setAdminBadges({
-          students: d.totalStudents ?? 0,
-          pendingPayments: (d.pendingPayments ?? 0) + (d.failedPayments ?? 0),
-          pendingCourses: d.pendingCourseReviews ?? 0,
-          pendingFinancialAid: d.pendingFinancialAid ?? 0,
+    const fetchBadges = async () => {
+      let pendingReviews = 0
+      try {
+        const reviewsRes = await reviewsService.getAdminReviews({ status: 'pending', limit: 1 })
+        if (reviewsRes.success) {
+          pendingReviews = reviewsRes.pagination?.total ?? 0
+        }
+      } catch { /* ignore */ }
+
+      axiosClient.get('/stats/admin')
+        .then(res => {
+          const d = res.data?.data
+          if (d) setAdminBadges({
+            students: d.totalStudents ?? 0,
+            pendingPayments: (d.pendingPayments ?? 0) + (d.failedPayments ?? 0),
+            pendingCourses: d.pendingCourseReviews ?? 0,
+            pendingFinancialAid: d.pendingFinancialAid ?? 0,
+            pendingReviews,
+          })
         })
-      })
-      .catch(() => {})
+        .catch(() => {})
+    }
+    fetchBadges()
   }, [])
 
   async function markAllAsRead() {
@@ -304,6 +319,7 @@ export default function AdminPage() {
       view === 'payments' && adminBadges.pendingPayments > 0 ? adminBadges.pendingPayments :
       view === 'courses' && adminBadges.pendingCourses > 0 ? adminBadges.pendingCourses :
       view === 'financial-aid' && adminBadges.pendingFinancialAid > 0 ? adminBadges.pendingFinancialAid :
+      view === 'reviews' && adminBadges.pendingReviews > 0 ? adminBadges.pendingReviews :
       null
 
     return (
@@ -543,6 +559,7 @@ export default function AdminPage() {
                   <Route path="/notifications" element={<AdminNotifications />} />
                   <Route path="/messages" element={<AdminMessages />} />
                   <Route path="/seo" element={<AdminSEO />} />
+                  <Route path="/reviews" element={<AdminReviews />} />
                   <Route path="*" element={<Navigate to="/admin" replace />} />
                 </Routes>
               </Suspense>
