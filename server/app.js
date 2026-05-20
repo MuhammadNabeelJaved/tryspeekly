@@ -69,6 +69,7 @@ import siteSettingsRoutes from './src/routes/site-settings.route.js'
 import statsRoutes from './src/routes/stats.route.js'
 import liveClassRoutes from './src/routes/live-class.route.js'
 import seoRoutes from './src/routes/seo.route.js'
+import reviewRoutes from './src/routes/review.route.js'
 
 app.use('/api/v1/users', userRoutes)
 app.use('/api/v1/live-classes', liveClassRoutes)
@@ -88,6 +89,7 @@ app.use('/api/v1/announcements', announcementRoutes)
 app.use('/api/v1/site-settings', siteSettingsRoutes)
 app.use('/api/v1/stats', statsRoutes)
 app.use('/api/v1/seo', seoRoutes)
+app.use('/api/v1/reviews', reviewRoutes)
 
 app.use((req, res) => {
     res.status(404).json({
