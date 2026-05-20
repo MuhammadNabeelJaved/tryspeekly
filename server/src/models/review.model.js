@@ -18,17 +18,28 @@ const reviewSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: 'Course',
       default: null,
+      validate: {
+        validator: function (v) {
+          return this.type !== 'course' || v != null
+        },
+        message: 'course is required when type is "course"',
+      },
     },
     rating: {
       type: Number,
       required: [true, 'Rating is required'],
       min: [1, 'Rating must be at least 1'],
       max: [5, 'Rating cannot exceed 5'],
+      validate: {
+        validator: Number.isInteger,
+        message: 'Rating must be a whole number',
+      },
     },
     content: {
       type: String,
       required: [true, 'Review content is required'],
       trim: true,
+      minlength: [10, 'Review must be at least 10 characters'],
       maxlength: [1000, 'Review cannot exceed 1000 characters'],
     },
     status: {
@@ -43,6 +54,7 @@ const reviewSchema = new Schema(
     adminNote: {
       type: String,
       trim: true,
+      maxlength: [500, 'Admin note cannot exceed 500 characters'],
     },
     isDeleted: {
       type: Boolean,
@@ -52,6 +64,7 @@ const reviewSchema = new Schema(
   { timestamps: true, versionKey: false }
 )
 
+// ─── Indexes ──────────────────────────────────────────────────────────────────
 // One platform review per user
 reviewSchema.index(
   { author: 1, type: 1 },
@@ -67,6 +80,7 @@ reviewSchema.index({ status: 1, featuredOnHome: 1 })
 // Fast course review listing
 reviewSchema.index({ course: 1, status: 1 })
 
+// ─── Middleware ───────────────────────────────────────────────────────────────
 reviewSchema.pre(/^find/, function () {
   this.where({ isDeleted: false })
 })
