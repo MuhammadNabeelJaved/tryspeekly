@@ -5,6 +5,7 @@ import Review from '../models/review.model.js'
 import Enrollment from '../models/enrollment.model.js'
 import {
   BadRequestError,
+  ConflictError,
   ForbiddenError,
   NotFoundError,
 } from '../utils/apiErrors.js'
@@ -90,13 +91,25 @@ export const submitReview = asyncHandler(async (req, res) => {
     }
   }
 
-  const review = await Review.create({
-    type,
-    author: authorId,
-    course: type === 'course' ? courseId : undefined,
-    rating,
-    content,
-  })
+  let review
+  try {
+    review = await Review.create({
+      type,
+      author: authorId,
+      course: type === 'course' ? courseId : undefined,
+      rating,
+      content,
+    })
+  } catch (err) {
+    if (err.code === 11000) {
+      throw new ConflictError(
+        type === 'course'
+          ? 'You have already reviewed this course'
+          : 'You have already submitted a platform review'
+      )
+    }
+    throw err
+  }
 
   await review.populate('author', 'name profileImage role')
 
