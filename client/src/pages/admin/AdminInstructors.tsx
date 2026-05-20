@@ -43,6 +43,7 @@ export default function AdminInstructors({ store }: { store: AdminStore }) {
   const { instructors, setInstructors } = store
 
   const [apiInstructors, setApiInstructors] = useState<Instructor[] | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function fetchInstructors() {
@@ -69,6 +70,8 @@ export default function AdminInstructors({ store }: { store: AdminStore }) {
         setApiInstructors(mapped)
       } catch {
         // Fallback to store data
+      } finally {
+        setLoading(false)
       }
     }
     fetchInstructors()
@@ -202,7 +205,42 @@ export default function AdminInstructors({ store }: { store: AdminStore }) {
 
       {/* Cards grid */}
       <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
-        {filtered.map((inst, idx) => (
+        {loading ? (
+          [...Array(6)].map((_, i) => (
+            <div key={i} className="bg-white dark:bg-neutral-900 rounded-[20px] border border-slate-100 dark:border-neutral-800 overflow-hidden">
+              <div className="p-5 pb-4">
+                <div className="flex items-start gap-3 mb-4">
+                  <div className="w-12 h-12 rounded-2xl animate-pulse bg-slate-200 dark:bg-neutral-800 flex-shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-3.5 rounded animate-pulse bg-slate-200 dark:bg-neutral-800 w-3/4" />
+                    <div className="h-3 rounded animate-pulse bg-slate-200 dark:bg-neutral-800 w-1/2" />
+                    <div className="h-3 rounded animate-pulse bg-slate-200 dark:bg-neutral-800 w-1/3" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-2 mb-4">
+                  {[1, 2, 3].map(j => (
+                    <div key={j} className="bg-slate-50 dark:bg-neutral-800/60 rounded-xl p-2 text-center space-y-1">
+                      <div className="h-3 rounded animate-pulse bg-slate-200 dark:bg-neutral-700 mx-auto w-3/4" />
+                      <div className="h-2.5 rounded animate-pulse bg-slate-200 dark:bg-neutral-700 mx-auto w-1/2" />
+                    </div>
+                  ))}
+                </div>
+                <div className="flex gap-1 mb-3">
+                  <div className="h-4 w-20 rounded-lg animate-pulse bg-slate-200 dark:bg-neutral-800" />
+                  <div className="h-4 w-16 rounded-lg animate-pulse bg-slate-200 dark:bg-neutral-800" />
+                </div>
+                <div className="h-3 rounded animate-pulse bg-slate-200 dark:bg-neutral-800 w-2/3" />
+              </div>
+              <div className="flex border-t border-slate-100 dark:border-neutral-800">
+                {[1, 2, 3].map(j => (
+                  <div key={j} className="flex-1 py-2.5 flex items-center justify-center">
+                    <div className="h-3 w-10 rounded animate-pulse bg-slate-200 dark:bg-neutral-800" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))
+        ) : filtered.map((inst, idx) => (
           <motion.div key={inst.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.06 }}
             className={`bg-white dark:bg-neutral-900 rounded-[20px] border overflow-hidden hover:shadow-lg hover:shadow-violet-100/30 dark:hover:shadow-violet-950/20 transition-all duration-200 group ${
               selectedIds.has(inst.id)
@@ -276,14 +314,14 @@ export default function AdminInstructors({ store }: { store: AdminStore }) {
         ))}
 
         {/* Add card */}
-        <motion.button initial={{ opacity: 0 }} animate={{ opacity: 1 }} onClick={openAdd}
+        {!loading && <motion.button initial={{ opacity: 0 }} animate={{ opacity: 1 }} onClick={openAdd}
           className="border-2 border-dashed border-slate-200 dark:border-neutral-800 rounded-[20px] p-8 flex flex-col items-center justify-center gap-3 text-slate-300 dark:text-neutral-700 hover:border-violet-300 dark:hover:border-violet-700 hover:text-violet-400 dark:hover:text-violet-500 transition-all group"
         >
           <div className="w-12 h-12 rounded-2xl border-2 border-dashed border-current flex items-center justify-center group-hover:scale-110 transition-transform">
             <Plus size={20} />
           </div>
           <p className="text-sm font-semibold">Add Instructor</p>
-        </motion.button>
+        </motion.button>}
       </div>
 
       {/* ADD / EDIT MODAL */}

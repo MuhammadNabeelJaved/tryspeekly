@@ -62,6 +62,7 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
   const { students, setStudents } = store
 
   const [apiStudents, setApiStudents] = useState<Student[] | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function fetchStudents() {
@@ -90,6 +91,8 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
         setApiStudents(mapped)
       } catch {
         // Fallback to store data
+      } finally {
+        setLoading(false)
       }
     }
     fetchStudents()
@@ -296,10 +299,20 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50 dark:divide-neutral-800">
-              {filtered.length === 0 && (
+              {loading ? (
+                [...Array(7)].map((_, i) => (
+                  <tr key={i}>
+                    {[10, 160, 80, 120, 80, 60, 60, 60, 70, 70].map((w, j) => (
+                      <td key={j} className="px-4 py-3.5">
+                        <div className={`h-3 rounded animate-pulse bg-slate-200 dark:bg-neutral-800`} style={{ width: w }} />
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              ) : filtered.length === 0 ? (
                 <tr><td colSpan={10} className="text-center py-10 text-slate-400 dark:text-neutral-600 text-sm">No students found</td></tr>
-              )}
-              {filtered.map(s => (
+              ) : null}
+              {!loading && filtered.map(s => (
                 <tr key={s.id} className={`transition-colors group ${selectedIds.has(s.id) ? 'bg-violet-50 dark:bg-violet-950/20' : 'hover:bg-slate-50 dark:hover:bg-neutral-800/40'}`}>
                   <td className="px-4 py-3">
                     <input

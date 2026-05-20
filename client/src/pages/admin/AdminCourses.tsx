@@ -59,6 +59,7 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
   const { courses, setCourses } = store
 
   const [apiCourses, setApiCourses] = useState<Course[] | null>(null)
+  const [loading, setLoading] = useState(true)
   const [apiInstructors, setApiInstructors] = useState<{ id: string; name: string }[]>([])
 
   useEffect(() => {
@@ -94,6 +95,8 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
         setApiCourses(mapped)
       } catch {
         // fallback to store data
+      } finally {
+        setLoading(false)
       }
     }
     fetchCourses()
@@ -313,7 +316,17 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
 
       {/* Summary stats */}
       <div className="grid grid-cols-3 gap-3 mb-5 flex-shrink-0">
-        {[
+        {loading ? (
+          [1, 2, 3].map(i => (
+            <div key={i} className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-100 dark:border-neutral-800 p-4 flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl animate-pulse bg-slate-200 dark:bg-neutral-800 flex-shrink-0" />
+              <div className="space-y-1.5 flex-1">
+                <div className="h-4 rounded animate-pulse bg-slate-200 dark:bg-neutral-800 w-1/2" />
+                <div className="h-2.5 rounded animate-pulse bg-slate-200 dark:bg-neutral-800 w-3/4" />
+              </div>
+            </div>
+          ))
+        ) : [
           { label: 'Total Courses', value: displayCourses.length, Icon: CurrencyCircleDollar, color: 'from-violet-500 to-purple-600' },
           { label: 'Total Enrolled', value: totalEnrolled, Icon: Users, color: 'from-blue-500 to-blue-700' },
           { label: 'Est. Revenue', value: `₨${totalRevenue.toLocaleString()}`, Icon: Clock, color: 'from-emerald-500 to-emerald-700' },
@@ -393,7 +406,47 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
 
       {/* Course cards */}
       <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4 pb-10">
-        {filtered.length === 0 ? (
+        {loading ? (
+          [...Array(6)].map((_, i) => (
+            <div key={i} className="bg-white dark:bg-neutral-900 rounded-[20px] border border-slate-100 dark:border-neutral-800 overflow-hidden flex flex-col">
+              <div className="p-5 pb-4 flex-1 space-y-3">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1 space-y-2 pr-2">
+                    <div className="flex gap-2">
+                      <div className="h-4 w-16 rounded-full animate-pulse bg-slate-200 dark:bg-neutral-800" />
+                      <div className="h-4 w-14 rounded-full animate-pulse bg-slate-200 dark:bg-neutral-800" />
+                    </div>
+                    <div className="h-3.5 rounded animate-pulse bg-slate-200 dark:bg-neutral-800 w-3/4" />
+                    <div className="h-3 rounded animate-pulse bg-slate-200 dark:bg-neutral-800 w-1/2" />
+                  </div>
+                  <div className="h-5 w-16 rounded animate-pulse bg-slate-200 dark:bg-neutral-800 flex-shrink-0" />
+                </div>
+                <div className="h-3 rounded animate-pulse bg-slate-200 dark:bg-neutral-800 w-full" />
+                <div className="h-3 rounded animate-pulse bg-slate-200 dark:bg-neutral-800 w-4/5" />
+                <div className="flex gap-4">
+                  <div className="h-3 w-20 rounded animate-pulse bg-slate-200 dark:bg-neutral-800" />
+                  <div className="h-3 w-16 rounded animate-pulse bg-slate-200 dark:bg-neutral-800" />
+                </div>
+                <div className="space-y-1">
+                  <div className="flex justify-between">
+                    <div className="h-2.5 w-16 rounded animate-pulse bg-slate-200 dark:bg-neutral-800" />
+                    <div className="h-2.5 w-8 rounded animate-pulse bg-slate-200 dark:bg-neutral-800" />
+                  </div>
+                  <div className="h-1.5 bg-slate-100 dark:bg-neutral-800 rounded-full overflow-hidden">
+                    <div className="h-full w-1/3 rounded-full animate-pulse bg-slate-200 dark:bg-neutral-700" />
+                  </div>
+                </div>
+              </div>
+              <div className="flex border-t border-slate-100 dark:border-neutral-800 mt-auto">
+                {[1, 2].map(j => (
+                  <div key={j} className="flex-1 py-2.5 flex items-center justify-center">
+                    <div className="h-3 w-10 rounded animate-pulse bg-slate-200 dark:bg-neutral-800" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))
+        ) : filtered.length === 0 ? (
            <div className="col-span-full py-12 text-center border-2 border-dashed border-slate-200 dark:border-neutral-800 rounded-[20px]">
              <p className="text-slate-400 dark:text-neutral-500 text-sm">No courses found.</p>
            </div>
@@ -476,7 +529,7 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
         })}
 
         {/* Add card */}
-        {activeTab === 'manage' && (
+        {!loading && activeTab === 'manage' && (
           <motion.button initial={{ opacity: 0 }} animate={{ opacity: 1 }} onClick={openAdd}
             className="border-2 border-dashed border-slate-200 dark:border-neutral-800 rounded-[20px] p-8 flex flex-col items-center justify-center gap-3 text-slate-300 dark:text-neutral-700 hover:border-violet-300 dark:hover:border-violet-700 hover:text-violet-400 dark:hover:text-violet-500 transition-all min-h-[200px]"
           >
