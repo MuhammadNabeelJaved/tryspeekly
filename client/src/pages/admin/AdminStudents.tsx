@@ -69,6 +69,19 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
   const [enrollmentCountMap, setEnrollmentCountMap] = useState<Record<string, number>>({})
   const [enrollmentCoursesMap, setEnrollmentCoursesMap] = useState<Record<string, string[]>>({})
 
+  type EnrollmentDetail = {
+    courseTitle: string; courseLevel: string; teacherName: string
+    paymentMethod: string; paymentAmount: number; paymentCurrency: string
+    paymentStatus: string; enrolledAt: string; isActive: boolean; financialAid: boolean
+    sessionsAttended: number; totalSessions: number
+  }
+  type PaymentSummary = {
+    totalPaid: number; pendingTotal: number; currency: string
+    methods: string[]; approvedCount: number; pendingCount: number
+  }
+  const [enrollmentDetailsMap, setEnrollmentDetailsMap] = useState<Record<string, EnrollmentDetail[]>>({})
+  const [paymentSummaryMap, setPaymentSummaryMap] = useState<Record<string, PaymentSummary>>({})
+
   useEffect(() => {
     async function fetchData() {
       try {
@@ -111,22 +124,53 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
           const enrollments = enrollRes.value.data ?? []
           const countMap: Record<string, number> = {}
           const coursesMap: Record<string, string[]> = {}
+          const detailsMap: Record<string, EnrollmentDetail[]> = {}
+          const summaryMap: Record<string, PaymentSummary> = {}
+
           enrollments.forEach((e: any) => {
             const sid = e.student?._id
-            const title = e.course?.title
             if (!sid) return
+            const title = e.course?.title ?? '—'
+            const payStatus = e.payment?.status ?? ''
+            const payAmount = e.payment?.amount ?? 0
+            const payCurrency = e.payment?.currency ?? 'PKR'
+            const payMethod = e.payment?.method ?? ''
+
             countMap[sid] = (countMap[sid] ?? 0) + 1
-            if (title) {
+            if (title && !coursesMap[sid]?.includes(title)) {
               if (!coursesMap[sid]) coursesMap[sid] = []
-              if (!coursesMap[sid].includes(title)) coursesMap[sid].push(title)
+              coursesMap[sid].push(title)
             }
-            // also capture profile image from enrollment if not already in map
-            if (e.student?.profileImage) {
-              setProfileImageMap(prev => prev[sid] ? prev : { ...prev, [sid]: e.student.profileImage })
+
+            const detail: EnrollmentDetail = {
+              courseTitle: title,
+              courseLevel: e.course?.level ?? '',
+              teacherName: e.teacher?.name ?? '',
+              paymentMethod: payMethod,
+              paymentAmount: payAmount,
+              paymentCurrency: payCurrency,
+              paymentStatus: payStatus,
+              enrolledAt: e.enrolledAt ? new Date(e.enrolledAt).toLocaleDateString() : '',
+              isActive: e.isActive ?? false,
+              financialAid: !!e.financialAid,
+              sessionsAttended: e.progress?.sessionsAttended ?? 0,
+              totalSessions: e.progress?.totalSessions ?? 0,
             }
+            if (!detailsMap[sid]) detailsMap[sid] = []
+            detailsMap[sid].push(detail)
+
+            const isApproved = payStatus === 'approved'
+            const isPending = payStatus === 'pending'
+            if (!summaryMap[sid]) summaryMap[sid] = { totalPaid: 0, pendingTotal: 0, currency: payCurrency, methods: [], approvedCount: 0, pendingCount: 0 }
+            if (isApproved) { summaryMap[sid].totalPaid += payAmount; summaryMap[sid].approvedCount++ }
+            if (isPending) { summaryMap[sid].pendingTotal += payAmount; summaryMap[sid].pendingCount++ }
+            if (payMethod && !summaryMap[sid].methods.includes(payMethod)) summaryMap[sid].methods.push(payMethod)
           })
+
           setEnrollmentCountMap(countMap)
           setEnrollmentCoursesMap(coursesMap)
+          setEnrollmentDetailsMap(detailsMap)
+          setPaymentSummaryMap(summaryMap)
         }
       } catch {
         // Fallback to store data
@@ -332,7 +376,7 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
                     className="w-4 h-4 rounded accent-violet-600 cursor-pointer"
                   />
                 </th>
-                {['Student', 'Country / City', 'Course', 'Payment Method', 'Amount', 'Pay Status', 'Status', 'Enrolled', 'Actions'].map(h => (
+                {['Student', 'Country / City', 'Enrolled Courses', 'Payment Methods', 'Total Paid', 'Status', 'Joined', 'Actions'].map(h => (
                   <th key={h} className="text-left px-4 py-3 text-[10px] font-bold text-slate-400 dark:text-neutral-500 uppercase tracking-wide whitespace-nowrap">{h}</th>
                 ))}
               </tr>
@@ -389,16 +433,39 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
                       )
                     })()}
                   </td>
-                  <td className="px-4 py-3 text-xs text-slate-600 dark:text-neutral-300 whitespace-nowrap">
-                    {s.paymentMethod}
-                    {s.financialAid && (
-                      <div className="mt-1 flex items-center gap-1 w-max px-1.5 py-0.5 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-[9px] font-bold rounded uppercase tracking-wide">
-                        <Handshake size={10} weight="fill" /> Financial Aid
-                      </div>
-                    )}
+                  <td className="px-4 py-3">
+                    {(() => {
+                      const summary = paymentSummaryMap[s.id]
+                      const methods = summary?.methods ?? []
+                      if (methods.length === 0) return <span className="text-[11px] text-slate-400 dark:text-neutral-600">—</span>
+                      return (
+                        <div className="flex flex-col gap-1">
+                          {methods.map(m => (
+                            <span key={m} className="w-max px-1.5 py-0.5 bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400 text-[9px] font-bold rounded uppercase tracking-wide">
+                              {m.replace('_', ' ')}
+                            </span>
+                          ))}
+                        </div>
+                      )
+                    })()}
                   </td>
-                  <td className="px-4 py-3 text-xs font-bold text-slate-900 dark:text-white whitespace-nowrap">{s.paymentCurrency === 'PKR' ? `₨${s.paymentAmount.toLocaleString()}` : `$${s.paymentAmount}`}</td>
-                  <td className="px-4 py-3"><Badge value={s.paymentStatus} /></td>
+                  <td className="px-4 py-3">
+                    {(() => {
+                      const summary = paymentSummaryMap[s.id]
+                      if (!summary || (summary.totalPaid === 0 && summary.pendingTotal === 0)) return <span className="text-[11px] text-slate-400 dark:text-neutral-600">—</span>
+                      const cur = summary.currency === 'PKR' ? '₨' : '$'
+                      return (
+                        <div>
+                          {summary.totalPaid > 0 && (
+                            <p className="text-xs font-black text-emerald-600 dark:text-emerald-400">{cur}{summary.totalPaid.toLocaleString()}</p>
+                          )}
+                          {summary.pendingTotal > 0 && (
+                            <p className="text-[10px] text-amber-500 dark:text-amber-400">{cur}{summary.pendingTotal.toLocaleString()} pending</p>
+                          )}
+                        </div>
+                      )
+                    })()}
+                  </td>
                   <td className="px-4 py-3"><Badge value={s.status} /></td>
                   <td className="px-4 py-3 text-[10px] text-slate-400 dark:text-neutral-600 whitespace-nowrap">{s.enrolledAt}</td>
                   <td className="px-4 py-3">
@@ -476,46 +543,146 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
       <AnimatePresence>
         {modalType === 'view' && viewStudent && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-white dark:bg-neutral-900 rounded-[24px] w-full max-w-lg border border-slate-100 dark:border-neutral-800 shadow-2xl overflow-hidden">
-              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-neutral-800">
-                <h3 className="text-base font-black text-slate-900 dark:text-white">Student Details</h3>
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-white dark:bg-neutral-900 rounded-[24px] w-full max-w-xl border border-slate-100 dark:border-neutral-800 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+
+              {/* Header */}
+              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-neutral-800 flex-shrink-0">
+                <h3 className="text-base font-black text-slate-900 dark:text-white">Student Profile</h3>
                 <button onClick={() => setModalType(null)} className="w-8 h-8 rounded-full bg-slate-100 dark:bg-neutral-800 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors"><X size={15} /></button>
               </div>
-              <div className="p-6">
-                <div className="flex items-center gap-4 mb-6 pb-6 border-b border-slate-100 dark:border-neutral-800">
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white text-lg font-black shadow-lg">{viewStudent.avatar}</div>
-                  <div>
-                    <h4 className="text-lg font-black text-slate-900 dark:text-white">{viewStudent.name}</h4>
-                    <p className="text-sm text-slate-500 dark:text-neutral-400">{viewStudent.email}</p>
-                    <div className="flex gap-2 mt-1.5">
-                      <Badge value={viewStudent.status} />
-                      <Badge value={viewStudent.paymentStatus} />
-                      {viewStudent.financialAid && <Badge value="Financial Aid" />}
-                      {viewStudent.certificateId && <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-yellow-100 text-yellow-700 flex items-center gap-1"><Certificate size={10} weight="fill"/> Certified</span>}
+
+              <div className="overflow-y-auto flex-1">
+                <div className="p-6 space-y-5">
+
+                  {/* Profile hero */}
+                  <div className="flex items-center gap-4">
+                    <UserAvatar src={profileImageMap[viewStudent.id]} name={viewStudent.name} size="lg" className="rounded-2xl shadow-lg flex-shrink-0" />
+                    <div className="min-w-0">
+                      <h4 className="text-lg font-black text-slate-900 dark:text-white truncate">{viewStudent.name}</h4>
+                      <p className="text-sm text-slate-500 dark:text-neutral-400 truncate">{viewStudent.email}</p>
+                      <div className="flex flex-wrap gap-1.5 mt-1.5">
+                        <Badge value={viewStudent.status} />
+                        {viewStudent.certificateId && (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 flex items-center gap-1">
+                            <Certificate size={10} weight="fill" /> Certified
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3 mb-4">
-                  {[
-                    { label: 'Phone', value: viewStudent.phone },
-                    { label: 'Country', value: `${viewStudent.city}, ${viewStudent.country}` },
-                    { label: 'Course', value: viewStudent.courseName },
-                    { label: 'Level', value: viewStudent.courseLevel },
-                    { label: 'Attendance', value: `${viewStudent.attendance || 0}% (${viewStudent.attendedClasses || 0} / ${viewStudent.totalClasses || 0})` },
-                    { label: 'Cert ID', value: viewStudent.certificateId || 'Not issued' },
-                    { label: 'Payment Method', value: viewStudent.paymentMethod },
-                    { label: 'Amount', value: viewStudent.paymentCurrency === 'PKR' ? `₨${viewStudent.paymentAmount.toLocaleString()}` : `$${viewStudent.paymentAmount}` },
-                    { label: 'Enrolled', value: viewStudent.enrolledAt },
-                    { label: 'Notes', value: viewStudent.notes || '—' },
-                  ].map(({ label, value }) => (
-                    <div key={label} className="bg-slate-50 dark:bg-neutral-800/60 rounded-xl p-3">
-                      <p className="text-[10px] font-semibold text-slate-400 dark:text-neutral-500 uppercase tracking-wide mb-0.5">{label}</p>
-                      <p className="text-sm font-semibold text-slate-900 dark:text-white">{value}</p>
+
+                  {/* Personal info */}
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-neutral-500 mb-2">Personal Info</p>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        { label: 'Phone', value: viewStudent.phone || '—' },
+                        { label: 'Country', value: viewStudent.country || '—' },
+                        { label: 'Member Since', value: viewStudent.enrolledAt || '—' },
+                      ].map(({ label, value }) => (
+                        <div key={label} className="bg-slate-50 dark:bg-neutral-800/60 rounded-xl p-2.5">
+                          <p className="text-[9px] font-bold text-slate-400 dark:text-neutral-500 uppercase tracking-wide mb-0.5">{label}</p>
+                          <p className="text-xs font-semibold text-slate-900 dark:text-white">{value}</p>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  </div>
+
+                  {/* Payment summary */}
+                  {(() => {
+                    const summary = paymentSummaryMap[viewStudent.id]
+                    if (!summary) return null
+                    const cur = summary.currency === 'PKR' ? '₨' : '$'
+                    return (
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-neutral-500 mb-2">Payment Summary</p>
+                        <div className="grid grid-cols-2 gap-2 mb-2">
+                          <div className="bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30 rounded-xl p-3">
+                            <p className="text-[9px] font-bold text-emerald-600 dark:text-emerald-500 uppercase tracking-wide mb-0.5">Total Paid</p>
+                            <p className="text-base font-black text-emerald-700 dark:text-emerald-400">{cur}{summary.totalPaid.toLocaleString()}</p>
+                            <p className="text-[9px] text-emerald-500 dark:text-emerald-600 mt-0.5">{summary.approvedCount} approved</p>
+                          </div>
+                          <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/30 rounded-xl p-3">
+                            <p className="text-[9px] font-bold text-amber-600 dark:text-amber-500 uppercase tracking-wide mb-0.5">Pending</p>
+                            <p className="text-base font-black text-amber-700 dark:text-amber-400">{cur}{summary.pendingTotal.toLocaleString()}</p>
+                            <p className="text-[9px] text-amber-500 dark:text-amber-600 mt-0.5">{summary.pendingCount} pending</p>
+                          </div>
+                        </div>
+                        {summary.methods.length > 0 && (
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-[10px] text-slate-400 dark:text-neutral-500 font-semibold">Methods:</span>
+                            {summary.methods.map(m => (
+                              <span key={m} className="px-2 py-0.5 bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400 text-[9px] font-bold rounded-full uppercase tracking-wide">
+                                {m.replace(/_/g, ' ')}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })()}
+
+                  {/* Enrolled courses */}
+                  {(() => {
+                    const details = enrollmentDetailsMap[viewStudent.id] ?? []
+                    if (details.length === 0) return (
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-neutral-500 mb-2">Enrolled Courses</p>
+                        <p className="text-sm text-slate-400 dark:text-neutral-600 text-center py-4">No enrollments found</p>
+                      </div>
+                    )
+                    return (
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-neutral-500 mb-2">
+                          Enrolled Courses <span className="text-violet-500">({details.length})</span>
+                        </p>
+                        <div className="space-y-2">
+                          {details.map((d, i) => (
+                            <div key={i} className="bg-slate-50 dark:bg-neutral-800/60 rounded-xl p-3 flex items-start gap-3">
+                              <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${d.isActive ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-neutral-600'}`} />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{d.courseTitle}</p>
+                                <p className="text-[10px] text-slate-400 dark:text-neutral-500 mt-0.5">
+                                  {d.courseLevel && <span className="capitalize">{d.courseLevel}</span>}
+                                  {d.courseLevel && d.teacherName && ' · '}
+                                  {d.teacherName && <span>{d.teacherName}</span>}
+                                  {d.enrolledAt && <span> · {d.enrolledAt}</span>}
+                                </p>
+                                {d.sessionsAttended > 0 && (
+                                  <p className="text-[10px] text-slate-400 dark:text-neutral-500">{d.sessionsAttended}/{d.totalSessions} sessions</p>
+                                )}
+                              </div>
+                              <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                                {d.paymentStatus && <Badge value={d.paymentStatus} />}
+                                {d.financialAid && (
+                                  <span className="flex items-center gap-1 px-1.5 py-0.5 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-[9px] font-bold rounded uppercase">
+                                    <Handshake size={9} weight="fill" /> Aid
+                                  </span>
+                                )}
+                                {d.paymentAmount > 0 && (
+                                  <p className="text-[10px] font-bold text-slate-600 dark:text-neutral-300">
+                                    {d.paymentCurrency === 'PKR' ? '₨' : '$'}{d.paymentAmount.toLocaleString()}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )
+                  })()}
+
+                  {viewStudent.notes && (
+                    <div className="bg-slate-50 dark:bg-neutral-800/60 rounded-xl p-3">
+                      <p className="text-[9px] font-bold text-slate-400 dark:text-neutral-500 uppercase tracking-wide mb-1">Notes</p>
+                      <p className="text-xs text-slate-600 dark:text-neutral-300">{viewStudent.notes}</p>
+                    </div>
+                  )}
                 </div>
               </div>
-              <div className="flex gap-3 px-6 pb-6">
+
+              {/* Footer actions */}
+              <div className="flex gap-3 px-6 py-4 border-t border-slate-100 dark:border-neutral-800 flex-shrink-0">
                 <button onClick={() => { setModalType(null); setTimeout(() => openEdit(viewStudent), 50) }} className="flex-1 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold flex items-center justify-center gap-2 transition-colors">
                   <PencilSimple size={14} />Edit
                 </button>
