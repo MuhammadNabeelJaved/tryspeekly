@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { VideoCamera, CalendarBlank, FilePdf, ShieldCheck, ChatCircleDots, LockSimple, Warning, Handshake } from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
 import { enrollmentsService } from '@/services/enrollments.service'
-import type { Enrollment, EnrolledPayment } from '@/types/api'
+import { reviewsService } from '@/services/reviews.service'
+import type { Enrollment, EnrolledPayment, Review } from '@/types/api'
 import InstructorChatModal from '@/pages/student/InstructorChatModal'
 import PaymentSubmitModal from '@/pages/student/PaymentSubmitModal'
 import PaymentStatusModal from '@/pages/student/PaymentStatusModal'
@@ -10,6 +11,7 @@ import PaymentStatusModal from '@/pages/student/PaymentStatusModal'
 export default function StudentCourses() {
   const [enrollments, setEnrollments] = useState<Enrollment[]>([])
   const [loading, setLoading] = useState(true)
+  const [myReviews, setMyReviews] = useState<Review[]>([])
   const [chatModal, setChatModal] = useState<{ name: string; courseTitle: string } | null>(null)
   const [submitModal, setSubmitModal] = useState<{ courseId: string; teacherId: string } | null>(null)
   const [statusModal, setStatusModal] = useState<{ payment: EnrolledPayment; courseId: string; teacherId: string } | null>(null)
@@ -23,6 +25,12 @@ export default function StudentCourses() {
   }, [])
 
   useEffect(() => { fetchEnrollments() }, [fetchEnrollments])
+
+  useEffect(() => {
+    reviewsService.getMyReviews()
+      .then(res => { if (res.success) setMyReviews(res.data) })
+      .catch(() => {})
+  }, [])
 
   const handlePaymentSuccess = () => {
     setSubmitModal(null)
@@ -67,6 +75,10 @@ export default function StudentCourses() {
               const hasPayment = !!payment
               const isRejected = payment?.status === 'rejected'
               const isFinancialAid = !!enrollment.financialAid
+              const isCourseComplete = total > 0 && attended >= total
+              const courseReview = isCourseComplete
+                ? myReviews.find(r => r.type === 'course' && r.course?._id === enrollment.course._id)
+                : undefined
 
               const cardContent = (
                 <>
@@ -93,6 +105,15 @@ export default function StudentCourses() {
                         {isFinancialAid && (
                           <span className="text-[10px] font-bold px-2 py-1 bg-teal-50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400 rounded-md uppercase tracking-wide flex items-center gap-1">
                             <Handshake size={10} weight="fill" /> Financial Aid
+                          </span>
+                        )}
+                        {courseReview && (
+                          <span className={`text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wide flex items-center gap-1 ${
+                            courseReview.status === 'approved'
+                              ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400'
+                              : 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400'
+                          }`}>
+                            {courseReview.status === 'approved' ? '✓ Reviewed' : 'Review Pending'}
                           </span>
                         )}
                       </div>
