@@ -2,8 +2,11 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '@/context/AuthContext'
 import { coursesService } from '@/services/courses.service'
 import { enrollmentsService } from '@/services/enrollments.service'
-import { BookOpen, Users, ArrowRight, MagnifyingGlass, X } from '@phosphor-icons/react'
+import { reviewsService } from '@/services/reviews.service'
+import { BookOpen, Users, ArrowRight, MagnifyingGlass, X, Star } from '@phosphor-icons/react'
+import ReviewModal from '@/components/ReviewModal'
 import type { InstructorView } from '@/pages/InstructorDashboardPage'
+import type { Review } from '@/types/api'
 
 interface CourseItem {
   id: string
@@ -24,6 +27,21 @@ export default function InstructorOverview({ onNavigate }: InstructorOverviewPro
   const [earnings, setEarnings] = useState(0)
   const [courses, setCourses] = useState<CourseItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false)
+  const [existingPlatformReview, setExistingPlatformReview] = useState<Review | null>(null)
+
+  async function handleWriteReview() {
+    try {
+      const res = await reviewsService.getMyReviews()
+      if (res.success) {
+        const platform = res.data.find((r) => r.type === 'platform') ?? null
+        setExistingPlatformReview(platform)
+      }
+    } catch {
+      setExistingPlatformReview(null)
+    }
+    setIsReviewModalOpen(true)
+  }
 
   useEffect(() => {
     const fetchData = async () => {
@@ -254,7 +272,7 @@ export default function InstructorOverview({ onNavigate }: InstructorOverviewPro
           </div>
         </div>
 
-        {/* Assignments */}
+        {/* Sidebar */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-black text-slate-900 dark:text-white">Assignments</h2>
@@ -270,8 +288,35 @@ export default function InstructorOverview({ onNavigate }: InstructorOverviewPro
               Go to Assignments <ArrowRight size={14} weight="bold" />
             </button>
           </div>
+
+          {/* Share Your Experience */}
+          <div className="bg-white dark:bg-neutral-800 rounded-2xl p-6 border border-gray-100 dark:border-neutral-700 shadow-sm">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center">
+                <Star size={20} weight="fill" className="text-violet-600 dark:text-violet-400" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-900 dark:text-white text-sm">Share Your Experience</h3>
+                <p className="text-xs text-gray-500 dark:text-neutral-400">Help other teachers by sharing your feedback</p>
+              </div>
+            </div>
+            <button
+              onClick={handleWriteReview}
+              className="w-full py-2.5 px-4 text-sm font-semibold bg-violet-600 hover:bg-violet-700 text-white rounded-xl transition-colors"
+            >
+              Write a Platform Review
+            </button>
+          </div>
         </div>
       </div>
+
+      <ReviewModal
+        isOpen={isReviewModalOpen}
+        onClose={() => setIsReviewModalOpen(false)}
+        type="platform"
+        existingReview={existingPlatformReview}
+        onSuccess={(review) => setExistingPlatformReview(review)}
+      />
     </div>
   )
 }
