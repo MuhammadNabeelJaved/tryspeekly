@@ -1,13 +1,82 @@
 import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import toast from 'react-hot-toast'
-import { Star, PencilSimple } from '@phosphor-icons/react'
+import { Star, PencilSimple, X } from '@phosphor-icons/react'
 
 import { useAuth } from '@/context/AuthContext'
 import { reviewsService } from '@/services/reviews.service'
 import ReviewModal from '@/components/ReviewModal'
 import UserAvatar from '@/components/UserAvatar'
 import type { Review } from '@/types/api'
+
+const CONTENT_LIMIT = 200
+
+function ReviewDetailModal({ review, onClose }: { review: Review; onClose: () => void }) {
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', handleKey)
+    return () => document.removeEventListener('keydown', handleKey)
+  }, [onClose])
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      >
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 20 }}
+          onClick={(e) => e.stopPropagation()}
+          className="bg-white dark:bg-neutral-900 w-full max-w-lg rounded-2xl shadow-2xl border border-gray-100 dark:border-neutral-800 overflow-hidden"
+        >
+          <div className="flex items-center justify-between p-6 border-b border-gray-100 dark:border-neutral-800">
+            <div className="flex gap-1">
+              {Array.from({ length: review.rating }).map((_, i) => (
+                <Star key={i} size={18} weight="fill" className="text-violet-500" />
+              ))}
+            </div>
+            <button
+              onClick={onClose}
+              className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-neutral-800 transition-colors"
+            >
+              <X size={20} weight="bold" />
+            </button>
+          </div>
+
+          <div className="p-6">
+            <p className="text-gray-700 dark:text-gray-300 leading-relaxed italic mb-6">
+              "{review.content}"
+            </p>
+
+            <div className="flex items-center gap-4 pt-4 border-t border-gray-100 dark:border-neutral-800">
+              <UserAvatar
+                src={review.author.profileImage}
+                name={review.author.name}
+                size="sm"
+              />
+              <div>
+                <h4 className="font-bold text-gray-900 dark:text-white text-sm">
+                  {review.author.name}
+                </h4>
+                <p className="text-gray-500 dark:text-gray-400 text-xs capitalize">
+                  {review.author.role}
+                </p>
+              </div>
+              <p className="ml-auto text-xs text-gray-400 dark:text-neutral-500">
+                {new Date(review.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+              </p>
+            </div>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  )
+}
 
 export default function Reviews() {
   const { isAuthenticated } = useAuth()
@@ -16,6 +85,7 @@ export default function Reviews() {
   const [isLoading, setIsLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [existingReview, setExistingReview] = useState<Review | null>(null)
+  const [viewingReview, setViewingReview] = useState<Review | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -156,7 +226,6 @@ export default function Reviews() {
   }
 
   // ─── Main render (with reviews) ───────────────────────────────────────────────
-  // Double the array so the marquee loops seamlessly
   const marqueeItems = [...reviews, ...reviews]
 
   return (
@@ -184,9 +253,9 @@ export default function Reviews() {
         </div>
 
         <div className="relative overflow-hidden mb-16">
-          {/* Infinite Scroll Container */}
+          {/* Infinite Scroll Container — items-stretch enforces equal height */}
           <motion.div
-            className="flex gap-8 w-max"
+            className="flex items-stretch gap-8 w-max"
             animate={{ x: ['0%', '-50%'] }}
             transition={{
               duration: 40,
@@ -195,39 +264,56 @@ export default function Reviews() {
             }}
             whileHover={{ animationPlayState: 'paused' }}
           >
-            {marqueeItems.map((review, i) => (
-              <motion.div
-                key={`${review._id}-${i}`}
-                className="w-[350px] sm:w-[450px] p-8 rounded-2xl bg-gray-50 dark:bg-neutral-900 border border-gray-100 dark:border-neutral-800 flex flex-col h-full shrink-0 shadow-sm"
-              >
-                <div className="flex gap-1 mb-6">
-                  {Array.from({ length: review.rating }).map((_, si) => (
-                    <Star key={si} size={18} weight="fill" className="text-violet-500" />
-                  ))}
-                </div>
+            {marqueeItems.map((review, i) => {
+              const isLong = review.content.length > CONTENT_LIMIT
+              const displayContent = isLong
+                ? review.content.slice(0, CONTENT_LIMIT) + '…'
+                : review.content
 
-                <p className="text-gray-700 dark:text-gray-300 leading-relaxed mb-8 flex-grow italic">
-                  "{review.content}"
-                </p>
+              return (
+                <div
+                  key={`${review._id}-${i}`}
+                  className="w-[350px] sm:w-[420px] p-8 rounded-2xl bg-gray-50 dark:bg-neutral-900 border border-gray-100 dark:border-neutral-800 flex flex-col shrink-0 shadow-sm"
+                >
+                  <div className="flex gap-1 mb-6">
+                    {Array.from({ length: review.rating }).map((_, si) => (
+                      <Star key={si} size={18} weight="fill" className="text-violet-500" />
+                    ))}
+                  </div>
 
-                <div className="flex items-center gap-4 mt-auto">
-                  <UserAvatar
-                    src={review.author.profileImage}
-                    name={review.author.name}
-                    size="sm"
-                    className="grayscale hover:grayscale-0 transition-all duration-300"
-                  />
-                  <div>
-                    <h4 className="font-bold text-gray-900 dark:text-white text-sm">
-                      {review.author.name}
-                    </h4>
-                    <p className="text-gray-500 dark:text-gray-400 text-xs capitalize">
-                      {review.author.role}
-                    </p>
+                  <p className="text-gray-700 dark:text-gray-300 leading-relaxed mb-3 flex-grow italic">
+                    "{displayContent}"
+                  </p>
+
+                  {isLong && (
+                    <button
+                      onClick={() => setViewingReview(review)}
+                      className="self-start text-xs font-semibold text-violet-600 dark:text-violet-400 hover:underline mb-5"
+                    >
+                      View full review
+                    </button>
+                  )}
+                  {!isLong && <div className="mb-5" />}
+
+                  <div className="flex items-center gap-4 mt-auto pt-4 border-t border-gray-100 dark:border-neutral-800">
+                    <UserAvatar
+                      src={review.author.profileImage}
+                      name={review.author.name}
+                      size="sm"
+                      className="grayscale hover:grayscale-0 transition-all duration-300"
+                    />
+                    <div>
+                      <h4 className="font-bold text-gray-900 dark:text-white text-sm">
+                        {review.author.name}
+                      </h4>
+                      <p className="text-gray-500 dark:text-gray-400 text-xs capitalize">
+                        {review.author.role}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </motion.div>
-            ))}
+              )
+            })}
           </motion.div>
 
           {/* Fade gradients for seamless look */}
@@ -265,6 +351,13 @@ export default function Reviews() {
         existingReview={existingReview}
         onSuccess={handleReviewSuccess}
       />
+
+      {viewingReview && (
+        <ReviewDetailModal
+          review={viewingReview}
+          onClose={() => setViewingReview(null)}
+        />
+      )}
     </section>
   )
 }

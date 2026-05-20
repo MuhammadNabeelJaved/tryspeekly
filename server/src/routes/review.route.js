@@ -13,6 +13,7 @@ import {
   updateReviewStatus,
   toggleFeatured,
   adminDeleteReview,
+  adminCreateReview,
 } from '../controllers/review.controller.js'
 
 const router = express.Router()
@@ -23,6 +24,7 @@ router.get('/course/:courseId', getCourseReviews)
 
 // ─── Admin (before /:id to avoid shadowing) ──────────────────────────────────
 router.get('/admin', authenticate, authorize('admin'), getAdminReviews)
+router.post('/admin', authenticate, authorize('admin'), adminCreateReview)
 router.patch('/admin/:id/status', authenticate, authorize('admin'), updateReviewStatus)
 router.patch('/admin/:id/feature', authenticate, authorize('admin'), toggleFeatured)
 router.delete('/admin/:id', authenticate, authorize('admin'), adminDeleteReview)

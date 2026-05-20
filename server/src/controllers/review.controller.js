@@ -3,6 +3,8 @@ import Joi from 'joi'
 import asyncHandler from '../utils/asyncHandler.js'
 import Review from '../models/review.model.js'
 import Enrollment from '../models/enrollment.model.js'
+import User from '../models/user.model.js'
+import { createAndEmitNotification } from '../utils/notify.js'
 import {
   BadRequestError,
   ConflictError,
@@ -112,6 +114,23 @@ export const submitReview = asyncHandler(async (req, res) => {
   }
 
   await review.populate('author', 'name profileImage role')
+
+  // Notify all admins in real-time
+  try {
+    const admins = await User.find({ role: 'admin' }).select('_id')
+    const authorName = review.author.name ?? 'Someone'
+    const notifPayload = {
+      title: 'New Review Submitted',
+      message: `${authorName} submitted a ${type} review. Review it in the admin panel.`,
+      type: 'system',
+      severity: 'low',
+      relatedId: review._id,
+      relatedType: 'Review',
+    }
+    await Promise.all(admins.map(admin => createAndEmitNotification({ recipientId: admin._id, ...notifPayload })))
+  } catch {
+    // Notification failure must not break the response
+  }
 
   res.status(201).json({
     success: true,
@@ -229,4 +248,45 @@ export const adminDeleteReview = asyncHandler(async (req, res) => {
   if (!review) throw new NotFoundError('Review not found')
 
   res.json({ success: true, message: 'Review permanently deleted' })
+})
+
+const adminCreateSchema = Joi.object({
+  type: Joi.string().valid('platform', 'course').required(),
+  courseId: Joi.when('type', {
+    is: 'course',
+    then: Joi.string().required().messages({ 'any.required': 'courseId is required for course reviews' }),
+    otherwise: Joi.forbidden(),
+  }),
+  rating: Joi.number().integer().min(1).max(5).required(),
+  content: Joi.string().trim().min(10).max(1000).required(),
+  status: Joi.string().valid('pending', 'approved').default('approved'),
+  featuredOnHome: Joi.boolean().default(false),
+})
+
+export const adminCreateReview = asyncHandler(async (req, res) => {
+  const { error, value } = adminCreateSchema.validate(req.body)
+  if (error) throw new BadRequestError(error.details[0].message)
+
+  const { type, courseId, rating, content, status, featuredOnHome } = value
+
+  let review
+  try {
+    review = await Review.create({
+      type,
+      author: req.user.id,
+      course: type === 'course' ? courseId : undefined,
+      rating,
+      content,
+      status,
+      featuredOnHome: status === 'approved' ? featuredOnHome : false,
+    })
+  } catch (err) {
+    if (err.code === 11000) throw new ConflictError('A review from this account for this target already exists')
+    throw err
+  }
+
+  await review.populate('author', 'name profileImage role email')
+  if (type === 'course') await review.populate('course', 'title')
+
+  res.status(201).json({ success: true, message: 'Review created', data: review })
 })

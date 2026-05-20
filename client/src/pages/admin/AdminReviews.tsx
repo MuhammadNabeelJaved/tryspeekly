@@ -7,9 +7,11 @@ import {
   X,
   MagnifyingGlass,
   ChatText,
+  Plus,
 } from '@phosphor-icons/react'
 import toast from 'react-hot-toast'
 import { reviewsService } from '@/services/reviews.service'
+import { coursesService } from '@/services/courses.service'
 import type { Review } from '@/types/api'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -232,7 +234,7 @@ function RejectInlineRow({
 }) {
   return (
     <tr className="bg-red-50 dark:bg-red-950/20">
-      <td colSpan={10} className="px-4 py-3">
+      <td colSpan={11} className="px-4 py-3">
         <div className="flex items-center gap-3">
           <span
             className={
@@ -282,6 +284,10 @@ const TABLE_HEADERS = [
 
 const LIMIT = 20
 
+type CourseOption = { _id: string; title: string }
+
+const STAR_HOVER_CLS = 'p-1 transition-transform hover:scale-110 focus:outline-none'
+
 export default function AdminReviews() {
   const [reviews, setReviews] = useState<Review[]>([])
   const [total, setTotal] = useState(0)
@@ -292,6 +298,20 @@ export default function AdminReviews() {
   const [search, setSearch] = useState('')
   const [rejectingId, setRejectingId] = useState<string | null>(null)
   const [rejectNote, setRejectNote] = useState('')
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false)
+
+  // ─── Admin Create Review state ────────────────────────────────────────────────
+  const [isCreateOpen, setIsCreateOpen] = useState(false)
+  const [courses, setCourses] = useState<CourseOption[]>([])
+  const [createType, setCreateType] = useState<'platform' | 'course'>('platform')
+  const [createCourseId, setCreateCourseId] = useState('')
+  const [createRating, setCreateRating] = useState(0)
+  const [createHover, setCreateHover] = useState(0)
+  const [createContent, setCreateContent] = useState('')
+  const [createStatus, setCreateStatus] = useState<'pending' | 'approved'>('approved')
+  const [createFeatured, setCreateFeatured] = useState(false)
+  const [isCreating, setIsCreating] = useState(false)
 
   const totalPages = Math.max(1, Math.ceil(total / LIMIT))
 
@@ -325,6 +345,45 @@ export default function AdminReviews() {
   useEffect(() => {
     setPage(1)
   }, [statusFilter, typeFilter])
+
+  // Fetch courses for "Add Review" dropdown
+  useEffect(() => {
+    coursesService.getAllCourses({ limit: 100 })
+      .then(res => setCourses((res.data ?? []).map((c: any) => ({ _id: c._id, title: c.title }))))
+      .catch(() => setCourses([]))
+  }, [])
+
+  async function handleAdminCreate(e: React.FormEvent) {
+    e.preventDefault()
+    if (createRating === 0) { toast.error('Please select a rating'); return }
+    if (createContent.trim().length < 10) { toast.error('Review must be at least 10 characters'); return }
+    if (createType === 'course' && !createCourseId) { toast.error('Please select a course'); return }
+
+    setIsCreating(true)
+    try {
+      await reviewsService.adminCreateReview({
+        type: createType,
+        courseId: createType === 'course' ? createCourseId : undefined,
+        rating: createRating,
+        content: createContent.trim(),
+        status: createStatus,
+        featuredOnHome: createStatus === 'approved' ? createFeatured : false,
+      })
+      toast.success('Review created')
+      setIsCreateOpen(false)
+      setCreateType('platform')
+      setCreateCourseId('')
+      setCreateRating(0)
+      setCreateContent('')
+      setCreateStatus('approved')
+      setCreateFeatured(false)
+      fetchReviews()
+    } catch {
+      toast.error('Failed to create review')
+    } finally {
+      setIsCreating(false)
+    }
+  }
 
   // ─── Action Handlers ──────────────────────────────────────────────────────────
 
@@ -373,6 +432,38 @@ export default function AdminReviews() {
     }
   }
 
+  function toggleSelect(id: string) {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  function toggleSelectAll() {
+    if (displayed.length > 0 && selectedIds.size === displayed.length) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(displayed.map(r => r._id)))
+    }
+  }
+
+  async function handleBulkDelete() {
+    if (!window.confirm(`Permanently delete ${selectedIds.size} review${selectedIds.size > 1 ? 's' : ''}? This cannot be undone.`)) return
+    setIsBulkDeleting(true)
+    const ids = Array.from(selectedIds)
+    const results = await Promise.allSettled(ids.map(id => reviewsService.adminDeleteReview(id)))
+    const failed = results.filter(r => r.status === 'rejected').length
+    if (failed > 0) {
+      toast.error(`${failed} deletion${failed > 1 ? 's' : ''} failed`)
+    } else {
+      toast.success(`${ids.length} review${ids.length > 1 ? 's' : ''} deleted`)
+    }
+    setSelectedIds(new Set())
+    setIsBulkDeleting(false)
+    fetchReviews()
+  }
+
   // ─── Client-side search filter ────────────────────────────────────────────────
 
   const q = search.toLowerCase()
@@ -402,6 +493,13 @@ export default function AdminReviews() {
             Moderate platform and course reviews
           </p>
         </div>
+        <button
+          onClick={() => setIsCreateOpen(true)}
+          className="flex items-center gap-1.5 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-sm font-semibold transition-colors shadow-sm shrink-0"
+        >
+          <Plus size={15} weight="bold" />
+          Add Review
+        </button>
       </div>
 
       {/* Filters */}
@@ -462,6 +560,15 @@ export default function AdminReviews() {
                   'bg-slate-50 dark:bg-neutral-800/50'
                 }
               >
+                <th className="px-4 py-3 w-10">
+                  <input
+                    type="checkbox"
+                    checked={displayed.length > 0 && selectedIds.size === displayed.length}
+                    ref={el => { if (el) el.indeterminate = selectedIds.size > 0 && selectedIds.size < displayed.length }}
+                    onChange={toggleSelectAll}
+                    className="w-4 h-4 rounded accent-violet-600 cursor-pointer"
+                  />
+                </th>
                 {TABLE_HEADERS.map(h => (
                   <th key={h} className={TH_CLS}>
                     {h}
@@ -472,14 +579,14 @@ export default function AdminReviews() {
             <tbody className="divide-y divide-slate-50 dark:divide-neutral-800">
               {isLoading && (
                 <tr>
-                  <td colSpan={10} className={TD_EMPTY_CLS}>
+                  <td colSpan={11} className={TD_EMPTY_CLS}>
                     Loading reviews…
                   </td>
                 </tr>
               )}
               {!isLoading && displayed.length === 0 && (
                 <tr>
-                  <td colSpan={10} className={TD_EMPTY_CLS}>
+                  <td colSpan={11} className={TD_EMPTY_CLS}>
                     <ChatText size={32} className="mx-auto mb-2 opacity-30" />
                     No reviews found
                   </td>
@@ -495,11 +602,22 @@ export default function AdminReviews() {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      className={
-                        'hover:bg-slate-50 dark:hover:bg-neutral-800/40 ' +
-                        'transition-colors group'
-                      }
+                      className={`transition-colors group ${
+                        selectedIds.has(review._id)
+                          ? 'bg-violet-50 dark:bg-violet-950/20'
+                          : 'hover:bg-slate-50 dark:hover:bg-neutral-800/40'
+                      }`}
                     >
+                      {/* Checkbox */}
+                      <td className="px-4 py-3">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(review._id)}
+                          onChange={() => toggleSelect(review._id)}
+                          className="w-4 h-4 rounded accent-violet-600 cursor-pointer"
+                        />
+                      </td>
+
                       {/* Author */}
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2.5">
@@ -749,6 +867,217 @@ export default function AdminReviews() {
           </div>
         )}
       </div>
+
+      {/* ─── Bulk Action Bar ─────────────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {selectedIds.size > 0 && (
+          <motion.div
+            initial={{ y: 80, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 80, opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 px-5 py-3 bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-neutral-700 min-w-max"
+          >
+            <span className="text-sm font-bold text-slate-700 dark:text-white">
+              {selectedIds.size} selected
+            </span>
+            <button
+              onClick={() => setSelectedIds(new Set())}
+              className="text-xs text-slate-400 dark:text-neutral-500 hover:text-slate-600 dark:hover:text-white transition-colors font-medium"
+            >
+              Clear
+            </button>
+            <div className="w-px h-5 bg-slate-200 dark:bg-neutral-700" />
+            <button
+              onClick={handleBulkDelete}
+              disabled={isBulkDeleting}
+              className="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 disabled:opacity-60 text-white rounded-xl text-sm font-bold transition-colors"
+            >
+              <Trash size={14} weight="bold" />
+              {isBulkDeleting ? 'Deleting…' : `Delete ${selectedIds.size}`}
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ─── Admin Create Review Modal ─────────────────────────────────────────── */}
+      <AnimatePresence>
+        {isCreateOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsCreateOpen(false)}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white dark:bg-neutral-900 w-full max-w-lg rounded-2xl shadow-2xl border border-slate-100 dark:border-neutral-800 overflow-hidden"
+            >
+              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-neutral-800">
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">Add Review</h3>
+                <button
+                  onClick={() => setIsCreateOpen(false)}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-neutral-800 transition-colors"
+                >
+                  <X size={18} weight="bold" />
+                </button>
+              </div>
+
+              <form className="p-6 space-y-4" onSubmit={handleAdminCreate}>
+                {/* Type */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 dark:text-neutral-400 uppercase tracking-wide mb-2">
+                    Review Type
+                  </label>
+                  <div className="flex gap-2">
+                    {(['platform', 'course'] as const).map(t => (
+                      <button
+                        key={t}
+                        type="button"
+                        onClick={() => { setCreateType(t); setCreateCourseId('') }}
+                        className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-all capitalize ${
+                          createType === t
+                            ? 'bg-violet-600 text-white shadow-sm'
+                            : 'bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-400'
+                        }`}
+                      >
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Course selector */}
+                {createType === 'course' && (
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-500 dark:text-neutral-400 uppercase tracking-wide mb-2">
+                      Course
+                    </label>
+                    <select
+                      value={createCourseId}
+                      onChange={e => setCreateCourseId(e.target.value)}
+                      className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-sm text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors"
+                    >
+                      <option value="">Select a course…</option>
+                      {courses.map(c => (
+                        <option key={c._id} value={c._id}>{c.title}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {/* Star Rating */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 dark:text-neutral-400 uppercase tracking-wide mb-2">
+                    Rating
+                  </label>
+                  <div className="flex gap-1">
+                    {[1, 2, 3, 4, 5].map(star => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => setCreateRating(star)}
+                        onMouseEnter={() => setCreateHover(star)}
+                        onMouseLeave={() => setCreateHover(0)}
+                        className={STAR_HOVER_CLS}
+                      >
+                        <Star
+                          size={28}
+                          weight={(createHover || createRating) >= star ? 'fill' : 'regular'}
+                          className={(createHover || createRating) >= star ? 'text-violet-500' : 'text-slate-300 dark:text-neutral-600'}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Content */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 dark:text-neutral-400 uppercase tracking-wide mb-2">
+                    Review Content
+                  </label>
+                  <textarea
+                    rows={4}
+                    value={createContent}
+                    onChange={e => setCreateContent(e.target.value)}
+                    placeholder="Write review content (min 10 characters)…"
+                    maxLength={1000}
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-sm text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors resize-none"
+                  />
+                  <p className="text-[10px] text-slate-400 dark:text-neutral-500 text-right mt-1">{createContent.length}/1000</p>
+                </div>
+
+                {/* Status */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 dark:text-neutral-400 uppercase tracking-wide mb-2">
+                    Status
+                  </label>
+                  <div className="flex gap-2">
+                    {(['approved', 'pending'] as const).map(s => (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => { setCreateStatus(s); if (s === 'pending') setCreateFeatured(false) }}
+                        className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-all capitalize ${
+                          createStatus === s
+                            ? s === 'approved'
+                              ? 'bg-emerald-600 text-white shadow-sm'
+                              : 'bg-amber-500 text-white shadow-sm'
+                            : 'bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-400'
+                        }`}
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Featured */}
+                {createStatus === 'approved' && (
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={createFeatured}
+                      onChange={e => setCreateFeatured(e.target.checked)}
+                      className="w-4 h-4 rounded accent-violet-600"
+                    />
+                    <span className="text-sm text-slate-700 dark:text-neutral-300 font-medium">
+                      Feature on home page
+                    </span>
+                  </label>
+                )}
+
+                <div className="flex justify-end gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsCreateOpen(false)}
+                    className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isCreating}
+                    className="flex items-center gap-2 px-5 py-2 bg-violet-600 hover:bg-violet-700 disabled:opacity-60 text-white rounded-xl text-sm font-semibold transition-colors"
+                  >
+                    {isCreating && (
+                      <svg className="animate-spin h-3.5 w-3.5" viewBox="0 0 24 24" fill="none">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
+                    )}
+                    Create Review
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

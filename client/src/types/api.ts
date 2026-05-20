@@ -569,5 +569,14 @@ export interface AdminUpdateReviewStatusDto {
   adminNote?: string;
 }
 
+export interface AdminCreateReviewDto {
+  type: 'platform' | 'course';
+  courseId?: string;
+  rating: number;
+  content: string;
+  status?: 'pending' | 'approved';
+  featuredOnHome?: boolean;
+}
+
 export type ReviewListResponse = ApiPaginatedResponse<Review>;
 export type ReviewSingleResponse = ApiResponse<Review>;

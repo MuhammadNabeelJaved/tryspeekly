@@ -5,6 +5,7 @@ import type {
   SubmitReviewDto,
   UpdateReviewDto,
   AdminUpdateReviewStatusDto,
+  AdminCreateReviewDto,
   ReviewListResponse,
   ReviewSingleResponse,
 } from '../types/api';
@@ -90,6 +91,11 @@ export const reviewsService = {
       success: boolean;
       message: string;
     }>(`/reviews/admin/${id}`);
+    return response.data;
+  },
+
+  async adminCreateReview(data: AdminCreateReviewDto): Promise<ReviewSingleResponse> {
+    const response = await axiosClient.post<ReviewSingleResponse>('/reviews/admin', data);
     return response.data;
   },
 };

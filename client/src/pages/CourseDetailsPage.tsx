@@ -6,7 +6,7 @@ import {
   Star, Users, Clock, GraduationCap, CheckCircle,
   PlayCircle, Certificate, FileText, CaretDown,
   ArrowLeft, ArrowRight, Sparkle,
-  ChartBar, Tag, Chats, CaretLeft, CaretRight, ThumbsUp,
+  ChartBar, Tag, Chats, CaretLeft, CaretRight, ThumbsUp, PencilSimple,
   Calendar, VideoCamera, UsersThree, ChalkboardTeacher, Laptop,
   CreditCard, Bank, PaypalLogo, ShieldCheck, Phone, Globe
 } from '@phosphor-icons/react'
@@ -14,6 +14,7 @@ import { coursesService } from '../services/courses.service'
 import { enrollmentsService } from '../services/enrollments.service'
 import { reviewsService } from '../services/reviews.service'
 import { useAuth } from '../context/AuthContext'
+import ReviewModal from '../components/ReviewModal'
 import type { Review } from '../types/api'
 
 // Dummy Data for the specific course
@@ -324,6 +325,9 @@ export default function CourseDetailsPage() {
   const [apiCourse, setApiCourse] = useState<any>(null)
   const [courseReviews, setCourseReviews] = useState<Review[]>([])
   const [isLoadingReviews, setIsLoadingReviews] = useState(false)
+  const [reviewSort, setReviewSort] = useState<'newest' | 'oldest' | 'highest' | 'lowest'>('newest')
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false)
+  const [myExistingCourseReview, setMyExistingCourseReview] = useState<Review | null>(null)
 
   // New states for enrollment modal
   const [showEnrollmentModal, setShowEnrollmentModal] = useState(false);
@@ -340,6 +344,14 @@ export default function CourseDetailsPage() {
         })
     }
   }, [id])
+
+  useEffect(() => {
+    if (id && isAuthenticated && user?.role === 'student') {
+      reviewsService.getMyCourseReview(id)
+        .then(res => setMyExistingCourseReview(res.data))
+        .catch(() => setMyExistingCourseReview(null))
+    }
+  }, [id, isAuthenticated, user?.role])
 
   useEffect(() => {
     if (id) {
@@ -408,6 +420,13 @@ export default function CourseDetailsPage() {
     (currentReviewPage - 1) * REVIEWS_PER_PAGE,
     currentReviewPage * REVIEWS_PER_PAGE
   )
+
+  const sortedCourseReviews = [...courseReviews].sort((a, b) => {
+    if (reviewSort === 'oldest') return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    if (reviewSort === 'highest') return b.rating - a.rating
+    if (reviewSort === 'lowest') return a.rating - b.rating
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  })
 
   const scrollToReviews = () => {
     const el = document.getElementById('reviews-section')
@@ -873,187 +892,140 @@ export default function CourseDetailsPage() {
                 viewport={{ once: true, margin: "-100px" }}
                 className="scroll-mt-32 pt-4"
               >
-                <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4">
-                  <div>
-                    <h2 className="text-2xl lg:text-3xl font-black text-slate-900 dark:text-white mb-2 flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center text-violet-600 dark:text-violet-400">
-                        <Chats size={24} weight="fill" />
-                      </div>
-                      Student Reviews
-                    </h2>
-                    {activeCourse.rating > 0 && (
-                      <div className="flex items-center gap-3 ml-13">
-                        <div className="flex gap-1 text-yellow-400">
-                          {[1, 2, 3, 4, 5].map((s) => (
-                            <Star key={s} size={18} weight={s <= Math.floor(activeCourse.rating) ? "fill" : "regular"} />
-                          ))}
-                        </div>
-                        <span className="font-bold text-slate-900 dark:text-white">{activeCourse.rating} Course Rating</span>
-                        <span className="text-slate-400 dark:text-neutral-500">•</span>
-                        <span className="text-slate-500 dark:text-neutral-400">{activeCourse.reviews.toLocaleString()} reviews</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {activeCourse.reviewsList.length === 0 && (
-                  <p className="text-slate-400 dark:text-neutral-500 text-sm italic mb-8">No reviews yet. Be the first to enroll and share your experience!</p>
-                )}
-                <div className="space-y-4 mb-8">
-                  <AnimatePresence mode="popLayout">
-                    {currentReviews.map((review) => (
-                      <motion.div
-                        key={review.id}
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        transition={{ duration: 0.3 }}
-                        className="bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-3xl p-6 sm:p-8 shadow-sm hover:shadow-md hover:border-violet-200 dark:hover:border-violet-900/50 transition-all"
-                      >
-                        <div className="flex flex-col sm:flex-row gap-5 items-start">
-                          <img
-                            src={review.avatar}
-                            alt={review.author}
-                            className="w-14 h-14 rounded-full object-cover border border-slate-100 dark:border-neutral-800"
-                          />
-                          <div className="flex-1">
-                            <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-                              <h4 className="font-bold text-slate-900 dark:text-white text-lg">{review.author}</h4>
-                              <span className="text-xs text-slate-500 dark:text-neutral-400 font-medium">{review.date}</span>
-                            </div>
-                            <div className="flex gap-1 text-yellow-400 mb-4">
-                              {[1, 2, 3, 4, 5].map((s) => (
-                                <Star key={s} size={14} weight={s <= review.rating ? "fill" : "regular"} />
-                              ))}
-                            </div>
-                            <p className="text-slate-600 dark:text-neutral-300 text-sm leading-relaxed mb-4">
-                              {review.content}
-                            </p>
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs text-slate-400 dark:text-neutral-500 font-medium mr-2">Helpful?</span>
-                              <button className="w-8 h-8 rounded-full border border-slate-200 dark:border-neutral-800 flex items-center justify-center text-slate-400 hover:text-violet-600 hover:border-violet-600 hover:bg-violet-50 transition-colors">
-                                <ThumbsUp size={14} />
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </AnimatePresence>
-                </div>
-
-                {/* Pagination */}
-                {totalReviewPages > 1 && (
-                  <div className="flex items-center justify-between border-t border-slate-200 dark:border-neutral-800 pt-6">
-                    <button
-                      onClick={() => handlePageChange(Math.max(1, currentReviewPage - 1))}
-                      disabled={currentReviewPage === 1}
-                      className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-100 dark:hover:bg-neutral-800 text-slate-700 dark:text-neutral-300"
-                    >
-                      <CaretLeft size={16} weight="bold" /> Previous
-                    </button>
-
-                    <div className="flex items-center gap-2">
-                      {Array.from({ length: totalReviewPages }).map((_, i) => (
-                        <button
-                          key={i}
-                          onClick={() => handlePageChange(i + 1)}
-                          className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold transition-all ${
-                            currentReviewPage === i + 1
-                              ? 'bg-violet-600 text-white shadow-md shadow-violet-600/30'
-                              : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-neutral-800 dark:text-neutral-400'
-                          }`}
-                        >
-                          {i + 1}
-                        </button>
-                      ))}
+                {/* Header row */}
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-6 gap-4">
+                  <h2 className="text-2xl lg:text-3xl font-black text-slate-900 dark:text-white flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center text-violet-600 dark:text-violet-400">
+                      <Chats size={24} weight="fill" />
                     </div>
+                    Student Reviews
+                    {courseReviews.length > 0 && (
+                      <span className="text-base font-semibold text-slate-400 dark:text-neutral-500">
+                        ({courseReviews.length})
+                      </span>
+                    )}
+                  </h2>
 
+                  {/* Write a Review button */}
+                  {isAuthenticated && user?.role === 'student' && (
                     <button
-                      onClick={() => handlePageChange(Math.min(totalReviewPages, currentReviewPage + 1))}
-                      disabled={currentReviewPage === totalReviewPages}
-                      className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-100 dark:hover:bg-neutral-800 text-slate-700 dark:text-neutral-300"
+                      onClick={() => setIsReviewModalOpen(true)}
+                      className="flex items-center gap-2 px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-sm font-semibold transition-colors shadow-sm shrink-0"
                     >
-                      Next <CaretRight size={16} weight="bold" />
+                      <PencilSimple size={16} weight="bold" />
+                      {myExistingCourseReview ? 'Edit My Review' : 'Write a Review'}
                     </button>
+                  )}
+                </div>
+
+                {/* Sort filters */}
+                {courseReviews.length > 1 && (
+                  <div className="flex flex-wrap gap-2 mb-6">
+                    {(['newest', 'oldest', 'highest', 'lowest'] as const).map((s) => (
+                      <button
+                        key={s}
+                        onClick={() => setReviewSort(s)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                          reviewSort === s
+                            ? 'bg-violet-600 text-white shadow-sm'
+                            : 'bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-400 hover:bg-slate-200 dark:hover:bg-neutral-700'
+                        }`}
+                      >
+                        {s === 'newest' ? 'Newest' : s === 'oldest' ? 'Oldest' : s === 'highest' ? 'Highest Rated' : 'Lowest Rated'}
+                      </button>
+                    ))}
                   </div>
                 )}
-              </motion.div>
 
-              {/* ── STUDENT REVIEWS (API) ── */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: '-100px' }}
-                className="pt-4"
-              >
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Student Reviews</h2>
-
+                {/* Loading */}
                 {isLoadingReviews && (
                   <div className="flex items-center justify-center py-12">
                     <div className="w-8 h-8 border-4 border-violet-200 border-t-violet-600 rounded-full animate-spin" />
                   </div>
                 )}
 
+                {/* Empty state */}
                 {!isLoadingReviews && courseReviews.length === 0 && (
-                  <p className="text-slate-400 dark:text-neutral-500 text-sm italic">
-                    No reviews yet for this course.
-                  </p>
+                  <div className="text-center py-12 bg-slate-50 dark:bg-neutral-900 rounded-2xl border border-slate-100 dark:border-neutral-800">
+                    <Star size={36} className="mx-auto mb-3 text-slate-300 dark:text-neutral-700" />
+                    <p className="text-slate-500 dark:text-neutral-400 text-sm font-medium">No reviews yet for this course.</p>
+                    {isAuthenticated && user?.role === 'student' && (
+                      <p className="text-slate-400 dark:text-neutral-500 text-xs mt-1">
+                        Complete the course to be the first to share your experience!
+                      </p>
+                    )}
+                  </div>
                 )}
 
-                {!isLoadingReviews && courseReviews.length > 0 && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {courseReviews.map((review) => (
-                      <div
-                        key={review._id}
-                        className="bg-white dark:bg-neutral-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-neutral-700"
-                      >
-                        {/* Header: avatar + name + date + stars */}
-                        <div className="flex items-start justify-between mb-4">
-                          <div className="flex items-center gap-3">
+                {/* Review cards */}
+                {!isLoadingReviews && sortedCourseReviews.length > 0 && (
+                  <div className="space-y-4">
+                    <AnimatePresence mode="popLayout">
+                      {sortedCourseReviews.map((review) => (
+                        <motion.div
+                          key={review._id}
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, scale: 0.95 }}
+                          transition={{ duration: 0.3 }}
+                          className="bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-3xl p-6 sm:p-8 shadow-sm hover:shadow-md hover:border-violet-200 dark:hover:border-violet-900/50 transition-all"
+                        >
+                          <div className="flex flex-col sm:flex-row gap-5 items-start">
                             {review.author.profileImage ? (
                               <img
                                 src={review.author.profileImage}
                                 alt={review.author.name}
-                                className="w-10 h-10 rounded-full object-cover"
+                                className="w-14 h-14 rounded-full object-cover border border-slate-100 dark:border-neutral-800"
                               />
                             ) : (
-                              <div className="w-10 h-10 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center font-bold text-violet-600 dark:text-violet-400 text-sm">
+                              <div className="w-14 h-14 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center font-bold text-violet-600 dark:text-violet-400 text-xl shrink-0">
                                 {review.author.name.charAt(0).toUpperCase()}
                               </div>
                             )}
-                            <div>
-                              <p className="font-semibold text-gray-900 dark:text-white text-sm">
-                                {review.author.name}
-                              </p>
-                              <p className="text-xs text-gray-500 dark:text-neutral-400">
-                                {new Date(review.createdAt).toLocaleDateString()}
+                            <div className="flex-1">
+                              <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                                <h4 className="font-bold text-slate-900 dark:text-white text-lg">{review.author.name}</h4>
+                                <span className="text-xs text-slate-500 dark:text-neutral-400 font-medium">
+                                  {new Date(review.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                                </span>
+                              </div>
+                              <div className="flex gap-1 text-yellow-400 mb-4">
+                                {[1, 2, 3, 4, 5].map((s) => (
+                                  <Star key={s} size={14} weight={s <= review.rating ? "fill" : "regular"} />
+                                ))}
+                              </div>
+                              <p className="text-slate-600 dark:text-neutral-300 text-sm leading-relaxed">
+                                {review.content}
                               </p>
                             </div>
                           </div>
-                          <div className="flex gap-0.5">
-                            {[1, 2, 3, 4, 5].map((s) => (
-                              <Star
-                                key={s}
-                                size={16}
-                                weight={s <= review.rating ? 'fill' : 'regular'}
-                                className={
-                                  s <= review.rating
-                                    ? 'text-yellow-400'
-                                    : 'text-gray-300 dark:text-neutral-600'
-                                }
-                              />
-                            ))}
-                          </div>
-                        </div>
-                        <p className="text-gray-700 dark:text-neutral-300 text-sm leading-relaxed">
-                          {review.content}
-                        </p>
-                      </div>
-                    ))}
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
                   </div>
                 )}
               </motion.div>
+
+              {/* Review Modal */}
+              <ReviewModal
+                isOpen={isReviewModalOpen}
+                onClose={() => setIsReviewModalOpen(false)}
+                type="course"
+                courseId={id}
+                existingReview={myExistingCourseReview}
+                onSuccess={(review) => {
+                  setMyExistingCourseReview(review)
+                  setCourseReviews((prev) => {
+                    const idx = prev.findIndex((r) => r._id === review._id)
+                    if (idx !== -1) {
+                      const next = [...prev]
+                      next[idx] = review
+                      return next
+                    }
+                    return prev
+                  })
+                }}
+              />
             </div>
 
             {/* ── Right Column (Sticky Floating Sidebar) ── */}

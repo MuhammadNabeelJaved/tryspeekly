@@ -109,6 +109,8 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState('All')
   const [activeTab, setActiveTab] = useState<'manage' | 'pending'>('manage')
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false)
 
   const { register, handleSubmit, reset, setValue } = useForm<Course & { featuresInput: string }>({
     defaultValues: { ...EMPTY, featuresInput: '' }
@@ -251,6 +253,40 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
     setDeleteId(null)
   }
 
+  function toggleSelect(id: string) {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  function toggleSelectAll() {
+    if (filtered.length > 0 && selectedIds.size === filtered.length) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(filtered.map(c => c.id)))
+    }
+  }
+
+  async function handleBulkDelete() {
+    if (!window.confirm(`Permanently delete ${selectedIds.size} course${selectedIds.size > 1 ? 's' : ''}? This cannot be undone.`)) return
+    setIsBulkDeleting(true)
+    const ids = Array.from(selectedIds)
+    const results = await Promise.allSettled(ids.map(id => coursesService.deleteCourse(id)))
+    const failed = results.filter(r => r.status === 'rejected').length
+    const deletedIds = new Set(ids.filter((_, i) => results[i].status === 'fulfilled'))
+    if (failed > 0) {
+      toast.error(`${failed} deletion${failed > 1 ? 's' : ''} failed`)
+    } else {
+      toast.success(`${ids.length} course${ids.length > 1 ? 's' : ''} deleted`)
+    }
+    setApiCourses(prev => prev ? prev.filter(c => !deletedIds.has(c.id)) : null)
+    setCourses(courses.filter(c => !deletedIds.has(c.id)))
+    setSelectedIds(new Set())
+    setIsBulkDeleting(false)
+  }
+
   function pickInstructor(id: string) {
     const inst = instructors.find(i => i.id === id)
     setValue('instructorId', id)
@@ -335,9 +371,23 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
           />
         </div>
         {activeTab === 'manage' && (
-          <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-sm text-slate-700 dark:text-neutral-300 outline-none focus:border-violet-500 transition-colors">
-            {['All', 'active', 'inactive', 'draft', 'rejected'].map(v => <option key={v}>{v}</option>)}
-          </select>
+          <>
+            <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-sm text-slate-700 dark:text-neutral-300 outline-none focus:border-violet-500 transition-colors">
+              {['All', 'active', 'inactive', 'draft', 'rejected'].map(v => <option key={v}>{v}</option>)}
+            </select>
+            {filtered.length > 0 && (
+              <label className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-neutral-400 cursor-pointer whitespace-nowrap">
+                <input
+                  type="checkbox"
+                  checked={selectedIds.size === filtered.length}
+                  ref={el => { if (el) el.indeterminate = selectedIds.size > 0 && selectedIds.size < filtered.length }}
+                  onChange={toggleSelectAll}
+                  className="w-4 h-4 rounded accent-violet-600"
+                />
+                Select all
+              </label>
+            )}
+          </>
         )}
       </div>
 
@@ -351,13 +401,26 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
           const fillPct = course.maxStudents > 0 ? Math.min((course.totalStudents / course.maxStudents) * 100, 100) : 0
           return (
             <motion.div key={course.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.05 }}
-              className="bg-white dark:bg-neutral-900 rounded-[20px] border border-slate-100 dark:border-neutral-800 overflow-hidden hover:border-violet-200 dark:hover:border-violet-800 hover:shadow-lg hover:shadow-violet-100/30 dark:hover:shadow-violet-950/20 transition-all duration-200 flex flex-col"
+              className={`bg-white dark:bg-neutral-900 rounded-[20px] border overflow-hidden hover:shadow-lg hover:shadow-violet-100/30 dark:hover:shadow-violet-950/20 transition-all duration-200 flex flex-col ${
+                selectedIds.has(course.id)
+                  ? 'border-violet-400 dark:border-violet-600 ring-2 ring-violet-200 dark:ring-violet-900/50'
+                  : 'border-slate-100 dark:border-neutral-800 hover:border-violet-200 dark:hover:border-violet-800'
+              }`}
             >
               {/* Header */}
               <div className="p-5 pb-4 flex-1">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1 min-w-0 pr-2">
                     <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                      {activeTab === 'manage' && (
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(course.id)}
+                          onChange={() => toggleSelect(course.id)}
+                          onClick={e => e.stopPropagation()}
+                          className="w-4 h-4 rounded accent-violet-600 flex-shrink-0 cursor-pointer"
+                        />
+                      )}
                       <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap ${LEVEL_COLORS[course.level] ?? 'bg-slate-100 text-slate-500'}`}>{course.level}</span>
                       <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap ${STATUS_COLORS[course.status]}`}>{course.status}</span>
                     </div>
@@ -424,6 +487,37 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
           </motion.button>
         )}
       </div>
+
+      {/* BULK ACTION BAR */}
+      <AnimatePresence>
+        {selectedIds.size > 0 && (
+          <motion.div
+            initial={{ y: 80, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 80, opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-700 rounded-2xl shadow-2xl px-5 py-3"
+          >
+            <span className="text-sm font-bold text-slate-700 dark:text-white whitespace-nowrap">
+              {selectedIds.size} selected
+            </span>
+            <button
+              onClick={() => setSelectedIds(new Set())}
+              className="text-xs font-semibold text-slate-400 dark:text-neutral-500 hover:text-slate-600 dark:hover:text-neutral-300 transition-colors"
+            >
+              Clear
+            </button>
+            <button
+              onClick={handleBulkDelete}
+              disabled={isBulkDeleting}
+              className="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 disabled:opacity-60 text-white text-sm font-bold rounded-xl transition-colors"
+            >
+              <Trash size={14} weight="bold" />
+              {isBulkDeleting ? 'Deleting…' : 'Delete Selected'}
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ADD / EDIT MODAL */}
       <AnimatePresence>

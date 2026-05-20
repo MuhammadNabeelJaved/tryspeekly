@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, PencilSimple, Trash, X, Check, Star, Eye } from '@phosphor-icons/react'
+import toast from 'react-hot-toast'
 import type { AdminStore } from '../AdminPage'
 import type { Instructor } from './adminData'
 import { axiosClient } from '../../lib/axiosClient'
@@ -79,6 +80,8 @@ export default function AdminInstructors({ store }: { store: AdminStore }) {
   const [viewInst, setViewInst] = useState<Instructor | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [search, setSearch] = useState('')
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false)
 
   const { register, handleSubmit, reset } = useForm<Instructor & { coursesInput: string }>({
     defaultValues: { ...EMPTY, coursesInput: '' }
@@ -119,9 +122,47 @@ export default function AdminInstructors({ store }: { store: AdminStore }) {
     setModalType(null)
   }
 
-  function handleDelete(id: string) {
+  async function handleDelete(id: string) {
+    try {
+      await axiosClient.delete(`/users/${id}`)
+    } catch { /* ignore errors for local-only records */ }
+    setApiInstructors(prev => prev ? prev.filter(i => i.id !== id) : null)
     setInstructors(instructors.filter(i => i.id !== id))
     setDeleteId(null)
+  }
+
+  function toggleSelect(id: string) {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  function toggleSelectAll() {
+    if (filtered.length > 0 && selectedIds.size === filtered.length) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(filtered.map(i => i.id)))
+    }
+  }
+
+  async function handleBulkDelete() {
+    if (!window.confirm(`Permanently delete ${selectedIds.size} instructor${selectedIds.size > 1 ? 's' : ''}? This cannot be undone.`)) return
+    setIsBulkDeleting(true)
+    const ids = Array.from(selectedIds)
+    const results = await Promise.allSettled(ids.map(id => axiosClient.delete(`/users/${id}`)))
+    const failed = results.filter(r => r.status === 'rejected').length
+    const deletedIds = new Set(ids.filter((_, i) => results[i].status === 'fulfilled'))
+    if (failed > 0) {
+      toast.error(`${failed} deletion${failed > 1 ? 's' : ''} failed`)
+    } else {
+      toast.success(`${ids.length} instructor${ids.length > 1 ? 's' : ''} deleted`)
+    }
+    setApiInstructors(prev => prev ? prev.filter(i => !deletedIds.has(i.id)) : null)
+    setInstructors(instructors.filter(i => !deletedIds.has(i.id)))
+    setSelectedIds(new Set())
+    setIsBulkDeleting(false)
   }
 
   const AVATAR_GRADIENTS = ['from-violet-500 to-purple-600', 'from-blue-500 to-blue-700', 'from-emerald-500 to-emerald-700', 'from-pink-500 to-rose-600']
@@ -140,20 +181,45 @@ export default function AdminInstructors({ store }: { store: AdminStore }) {
         </button>
       </div>
 
-      {/* Search */}
-      <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search instructors…"
-        className="w-full mb-5 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-sm text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-neutral-600 outline-none focus:border-violet-500 transition-colors"
-      />
+      {/* Search + select-all row */}
+      <div className="flex items-center gap-3 mb-5">
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search instructors…"
+          className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-sm text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-neutral-600 outline-none focus:border-violet-500 transition-colors"
+        />
+        {filtered.length > 0 && (
+          <label className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-neutral-400 cursor-pointer whitespace-nowrap">
+            <input
+              type="checkbox"
+              checked={selectedIds.size === filtered.length}
+              ref={el => { if (el) el.indeterminate = selectedIds.size > 0 && selectedIds.size < filtered.length }}
+              onChange={toggleSelectAll}
+              className="w-4 h-4 rounded accent-violet-600"
+            />
+            Select all
+          </label>
+        )}
+      </div>
 
       {/* Cards grid */}
       <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
         {filtered.map((inst, idx) => (
           <motion.div key={inst.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.06 }}
-            className="bg-white dark:bg-neutral-900 rounded-[20px] border border-slate-100 dark:border-neutral-800 overflow-hidden hover:border-violet-200 dark:hover:border-violet-800 hover:shadow-lg hover:shadow-violet-100/30 dark:hover:shadow-violet-950/20 transition-all duration-200 group"
+            className={`bg-white dark:bg-neutral-900 rounded-[20px] border overflow-hidden hover:shadow-lg hover:shadow-violet-100/30 dark:hover:shadow-violet-950/20 transition-all duration-200 group ${
+              selectedIds.has(inst.id)
+                ? 'border-violet-400 dark:border-violet-600 ring-2 ring-violet-200 dark:ring-violet-900/50'
+                : 'border-slate-100 dark:border-neutral-800 hover:border-violet-200 dark:hover:border-violet-800'
+            }`}
           >
             {/* Top */}
             <div className="p-5 pb-4">
               <div className="flex items-start gap-3 mb-4">
+                <input
+                  type="checkbox"
+                  checked={selectedIds.has(inst.id)}
+                  onChange={() => toggleSelect(inst.id)}
+                  onClick={e => e.stopPropagation()}
+                  className="mt-1 w-4 h-4 rounded accent-violet-600 flex-shrink-0 cursor-pointer"
+                />
                 <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${AVATAR_GRADIENTS[idx % AVATAR_GRADIENTS.length]} flex items-center justify-center text-white font-black text-base shadow-md flex-shrink-0`}>
                   {inst.avatar}
                 </div>
@@ -318,6 +384,37 @@ export default function AdminInstructors({ store }: { store: AdminStore }) {
                 <button onClick={() => { setModalType(null); setDeleteId(viewInst.id) }} className="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-bold flex items-center justify-center gap-2 transition-colors"><Trash size={14} />Delete</button>
               </div>
             </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* BULK ACTION BAR */}
+      <AnimatePresence>
+        {selectedIds.size > 0 && (
+          <motion.div
+            initial={{ y: 80, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 80, opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-700 rounded-2xl shadow-2xl px-5 py-3"
+          >
+            <span className="text-sm font-bold text-slate-700 dark:text-white whitespace-nowrap">
+              {selectedIds.size} selected
+            </span>
+            <button
+              onClick={() => setSelectedIds(new Set())}
+              className="text-xs font-semibold text-slate-400 dark:text-neutral-500 hover:text-slate-600 dark:hover:text-neutral-300 transition-colors"
+            >
+              Clear
+            </button>
+            <button
+              onClick={handleBulkDelete}
+              disabled={isBulkDeleting}
+              className="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 disabled:opacity-60 text-white text-sm font-bold rounded-xl transition-colors"
+            >
+              <Trash size={14} weight="bold" />
+              {isBulkDeleting ? 'Deleting…' : 'Delete Selected'}
+            </button>
           </motion.div>
         )}
       </AnimatePresence>
