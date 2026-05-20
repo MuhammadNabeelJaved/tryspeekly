@@ -177,7 +177,15 @@ export const getAllEnrollments = asyncHandler(async (req, res) => {
     const { page = 1, limit = 20 } = req.query
     const skip = (Number(page) - 1) * Number(limit)
     const [enrollments, total] = await Promise.all([
-      Enrollment.find().populate('student', 'name email').populate('course', 'title').skip(skip).limit(Number(limit)).sort({ enrolledAt: -1 }),
+      Enrollment.find()
+        .populate('student', 'name email profileImage')
+        .populate('course', 'title level')
+        .populate('teacher', 'name profileImage')
+        .populate('payment', 'method amount currency status transactionId createdAt')
+        .populate('financialAid', 'status name')
+        .skip(skip)
+        .limit(Number(limit))
+        .sort({ enrolledAt: -1 }),
       Enrollment.countDocuments(),
     ])
     res.json({
