@@ -276,7 +276,7 @@ export default function InstructorDashboardPage() {
 
       <TourGuide
         steps={INSTRUCTOR_TOUR_STEPS}
-        tourKey="instructor"
+        tourKey={`instructor_${user?.email || 'guest'}`}
         onRestartRef={(fn) => { restartTourRef.current = fn }}
       />
 

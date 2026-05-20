@@ -536,7 +536,7 @@ export default function AdminPage() {
 
       <TourGuide
         steps={ADMIN_TOUR_STEPS}
-        tourKey="admin"
+        tourKey={`admin_${user?.email || 'guest'}`}
         onRestartRef={(fn) => { restartTourRef.current = fn }}
       />
 
