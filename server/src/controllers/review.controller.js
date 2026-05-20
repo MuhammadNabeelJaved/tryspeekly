@@ -162,3 +162,71 @@ export const deleteReview = asyncHandler(async (req, res) => {
 
   res.json({ success: true, message: 'Review deleted' })
 })
+
+// ─── Admin ─────────────────────────────────────────────────────────────────────
+
+export const getAdminReviews = asyncHandler(async (req, res) => {
+  const { status, type, page = 1, limit = 20 } = req.query
+  const filter = {}
+  if (status && status !== 'all') filter.status = status
+  if (type && type !== 'all') filter.type = type
+
+  const skip = (Number(page) - 1) * Number(limit)
+  const [reviews, total] = await Promise.all([
+    Review.find(filter)
+      .populate('author', 'name profileImage role email')
+      .populate('course', 'title')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(Number(limit)),
+    Review.countDocuments(filter),
+  ])
+
+  res.json({
+    success: true,
+    data: reviews,
+    pagination: {
+      page: Number(page),
+      limit: Number(limit),
+      total,
+      totalPages: Math.ceil(total / Number(limit)),
+    },
+  })
+})
+
+export const updateReviewStatus = asyncHandler(async (req, res) => {
+  const { error, value } = statusSchema.validate(req.body)
+  if (error) throw new BadRequestError(error.details[0].message)
+
+  const review = await Review.findById(req.params.id)
+  if (!review) throw new NotFoundError('Review not found')
+
+  review.status = value.status
+  if (value.adminNote) review.adminNote = value.adminNote
+  if (value.status === 'rejected') review.featuredOnHome = false
+  await review.save()
+
+  res.json({ success: true, message: `Review ${value.status}`, data: review })
+})
+
+export const toggleFeatured = asyncHandler(async (req, res) => {
+  const review = await Review.findById(req.params.id)
+  if (!review) throw new NotFoundError('Review not found')
+  if (review.status !== 'approved') throw new BadRequestError('Only approved reviews can be featured')
+
+  review.featuredOnHome = !review.featuredOnHome
+  await review.save()
+
+  res.json({
+    success: true,
+    message: review.featuredOnHome ? 'Review featured on home page' : 'Review removed from home page',
+    data: review,
+  })
+})
+
+export const adminDeleteReview = asyncHandler(async (req, res) => {
+  const review = await Review.findByIdAndDelete(req.params.id)
+  if (!review) throw new NotFoundError('Review not found')
+
+  res.json({ success: true, message: 'Review permanently deleted' })
+})
