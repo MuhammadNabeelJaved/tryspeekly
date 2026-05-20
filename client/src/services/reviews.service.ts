@@ -19,7 +19,10 @@ export const reviewsService = {
     courseId: string,
     params?: { page?: number; limit?: number }
   ): Promise<ReviewListResponse> {
-    const response = await axiosClient.get<ReviewListResponse>(`/reviews/course/${courseId}`, { params });
+    const response = await axiosClient.get<ReviewListResponse>(
+      `/reviews/course/${courseId}`,
+      { params }
+    );
     return response.data;
   },
 
@@ -34,7 +37,9 @@ export const reviewsService = {
   },
 
   async getMyCourseReview(courseId: string): Promise<ReviewSingleResponse> {
-    const response = await axiosClient.get<ReviewSingleResponse>(`/reviews/my/course/${courseId}`);
+    const response = await axiosClient.get<ReviewSingleResponse>(
+      `/reviews/my/course/${courseId}`
+    );
     return response.data;
   },
 
@@ -44,7 +49,10 @@ export const reviewsService = {
   },
 
   async deleteReview(id: string): Promise<{ success: boolean; message: string }> {
-    const response = await axiosClient.delete<{ success: boolean; message: string }>(`/reviews/${id}`);
+    const response = await axiosClient.delete<{
+      success: boolean;
+      message: string;
+    }>(`/reviews/${id}`);
     return response.data;
   },
 
@@ -62,17 +70,26 @@ export const reviewsService = {
     id: string,
     data: AdminUpdateReviewStatusDto
   ): Promise<ReviewSingleResponse> {
-    const response = await axiosClient.patch<ReviewSingleResponse>(`/reviews/admin/${id}/status`, data);
+    const response = await axiosClient.patch<ReviewSingleResponse>(
+      `/reviews/admin/${id}/status`,
+      data
+    );
     return response.data;
   },
 
   async toggleFeatured(id: string): Promise<ReviewSingleResponse> {
-    const response = await axiosClient.patch<ReviewSingleResponse>(`/reviews/admin/${id}/feature`, {});
+    const response = await axiosClient.patch<ReviewSingleResponse>(
+      `/reviews/admin/${id}/feature`,
+      {}
+    );
     return response.data;
   },
 
   async adminDeleteReview(id: string): Promise<{ success: boolean; message: string }> {
-    const response = await axiosClient.delete<{ success: boolean; message: string }>(`/reviews/admin/${id}`);
+    const response = await axiosClient.delete<{
+      success: boolean;
+      message: string;
+    }>(`/reviews/admin/${id}`);
     return response.data;
   },
 };
