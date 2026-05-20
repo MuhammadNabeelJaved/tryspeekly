@@ -6,6 +6,8 @@ import toast from 'react-hot-toast'
 import type { AdminStore } from '../AdminPage'
 import type { Student } from './adminData'
 import { axiosClient } from '../../lib/axiosClient'
+import { enrollmentsService } from '../../services/enrollments.service'
+import UserAvatar from '../../components/UserAvatar'
 
 const EMPTY: Student = {
   id: '', name: '', email: '', phone: '', country: '', city: '',
@@ -63,39 +65,76 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
 
   const [apiStudents, setApiStudents] = useState<Student[] | null>(null)
   const [loading, setLoading] = useState(true)
+  const [profileImageMap, setProfileImageMap] = useState<Record<string, string>>({})
+  const [enrollmentCountMap, setEnrollmentCountMap] = useState<Record<string, number>>({})
+  const [enrollmentCoursesMap, setEnrollmentCoursesMap] = useState<Record<string, string[]>>({})
 
   useEffect(() => {
-    async function fetchStudents() {
+    async function fetchData() {
       try {
-        const res = await axiosClient.get('/users', { params: { role: 'student', limit: 200 } })
-        const users: any[] = res.data?.data ?? []
-        const mapped: Student[] = users.map((u: any, idx: number) => ({
-          id: u._id ?? u.id ?? `api-s${idx}`,
-          name: u.name ?? '',
-          email: u.email ?? '',
-          phone: u.phone ?? '',
-          country: u.country ?? '',
-          city: '',
-          courseId: '',
-          courseName: '',
-          courseLevel: '',
-          paymentMethod: '',
-          paymentAmount: 0,
-          paymentCurrency: 'PKR',
-          paymentStatus: 'paid' as const,
-          enrolledAt: u.createdAt?.split('T')[0] ?? '',
-          status: 'active' as const,
-          notes: '',
-          avatar: (u.name ?? '').split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2),
-        }))
-        setApiStudents(mapped)
+        const [usersRes, enrollRes] = await Promise.allSettled([
+          axiosClient.get('/users', { params: { role: 'student', limit: 200 } }),
+          enrollmentsService.getAllEnrollments({ limit: 1000 }),
+        ])
+
+        if (usersRes.status === 'fulfilled') {
+          const users: any[] = usersRes.value.data?.data ?? []
+          const imgMap: Record<string, string> = {}
+          const mapped: Student[] = users.map((u: any, idx: number) => {
+            const id = u._id ?? u.id ?? `api-s${idx}`
+            if (u.profileImage) imgMap[id] = u.profileImage
+            return {
+              id,
+              name: u.name ?? '',
+              email: u.email ?? '',
+              phone: u.phone ?? '',
+              country: u.country ?? '',
+              city: '',
+              courseId: '',
+              courseName: '',
+              courseLevel: '',
+              paymentMethod: '',
+              paymentAmount: 0,
+              paymentCurrency: 'PKR',
+              paymentStatus: 'paid' as const,
+              enrolledAt: u.createdAt?.split('T')[0] ?? '',
+              status: 'active' as const,
+              notes: '',
+              avatar: (u.name ?? '').split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2),
+            }
+          })
+          setApiStudents(mapped)
+          setProfileImageMap(imgMap)
+        }
+
+        if (enrollRes.status === 'fulfilled') {
+          const enrollments = enrollRes.value.data ?? []
+          const countMap: Record<string, number> = {}
+          const coursesMap: Record<string, string[]> = {}
+          enrollments.forEach((e: any) => {
+            const sid = e.student?._id
+            const title = e.course?.title
+            if (!sid) return
+            countMap[sid] = (countMap[sid] ?? 0) + 1
+            if (title) {
+              if (!coursesMap[sid]) coursesMap[sid] = []
+              if (!coursesMap[sid].includes(title)) coursesMap[sid].push(title)
+            }
+            // also capture profile image from enrollment if not already in map
+            if (e.student?.profileImage) {
+              setProfileImageMap(prev => prev[sid] ? prev : { ...prev, [sid]: e.student.profileImage })
+            }
+          })
+          setEnrollmentCountMap(countMap)
+          setEnrollmentCoursesMap(coursesMap)
+        }
       } catch {
         // Fallback to store data
       } finally {
         setLoading(false)
       }
     }
-    fetchStudents()
+    fetchData()
   }, [])
 
   const [search, setSearch] = useState('')
@@ -324,7 +363,7 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">{s.avatar}</div>
+                      <UserAvatar src={profileImageMap[s.id]} name={s.name} size="xs" className="rounded-lg" />
                       <div>
                         <p className="font-semibold text-slate-900 dark:text-white text-xs">{s.name}</p>
                         <p className="text-[10px] text-slate-400 dark:text-neutral-600 truncate max-w-[140px]">{s.email}</p>
@@ -332,9 +371,23 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
                     </div>
                   </td>
                   <td className="px-4 py-3 text-xs text-slate-600 dark:text-neutral-300 whitespace-nowrap">{s.country}<br /><span className="text-[10px] text-slate-400 dark:text-neutral-600">{s.city}</span></td>
-                  <td className="px-4 py-3 text-xs text-slate-600 dark:text-neutral-300 whitespace-nowrap">
-                    {s.courseName}<br />
-                    <span className="text-[10px] text-slate-400 dark:text-neutral-600">{s.courseLevel}</span>
+                  <td className="px-4 py-3">
+                    {(() => {
+                      const count = enrollmentCountMap[s.id] ?? 0
+                      const titles = enrollmentCoursesMap[s.id] ?? []
+                      if (count === 0) return <span className="text-[11px] text-slate-400 dark:text-neutral-600">—</span>
+                      return (
+                        <div>
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-violet-100 dark:bg-violet-950/40 text-violet-700 dark:text-violet-400 text-[10px] font-black rounded-full mb-1">
+                            {count} {count === 1 ? 'course' : 'courses'}
+                          </span>
+                          <p className="text-[11px] text-slate-600 dark:text-neutral-300 truncate max-w-[130px]">{titles[0]}</p>
+                          {titles.length > 1 && (
+                            <p className="text-[10px] text-slate-400 dark:text-neutral-600">+{titles.length - 1} more</p>
+                          )}
+                        </div>
+                      )
+                    })()}
                   </td>
                   <td className="px-4 py-3 text-xs text-slate-600 dark:text-neutral-300 whitespace-nowrap">
                     {s.paymentMethod}
