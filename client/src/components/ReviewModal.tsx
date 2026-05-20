@@ -38,6 +38,15 @@ export default function ReviewModal({
     }
   }, [isOpen, existingReview])
 
+  useEffect(() => {
+    if (!isOpen) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen, onClose])
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (rating === 0) {
@@ -127,7 +136,7 @@ export default function ReviewModal({
                       onClick={() => setRating(star)}
                       onMouseEnter={() => setHoverRating(star)}
                       onMouseLeave={() => setHoverRating(0)}
-                      className="p-1 -ml-1 transition-transform hover:scale-110 focus:outline-none"
+                      className="p-1 -ml-1 transition-transform hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 rounded"
                     >
                       <Star
                         size={32}
