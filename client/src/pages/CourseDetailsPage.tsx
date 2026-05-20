@@ -12,7 +12,9 @@ import {
 } from '@phosphor-icons/react'
 import { coursesService } from '../services/courses.service'
 import { enrollmentsService } from '../services/enrollments.service'
+import { reviewsService } from '../services/reviews.service'
 import { useAuth } from '../context/AuthContext'
+import type { Review } from '../types/api'
 
 // Dummy Data for the specific course
 const COURSE = {
@@ -320,6 +322,8 @@ export default function CourseDetailsPage() {
   const [showMobileNav, setShowMobileNav] = useState(false)
   const [currentReviewPage, setCurrentReviewPage] = useState(1)
   const [apiCourse, setApiCourse] = useState<any>(null)
+  const [courseReviews, setCourseReviews] = useState<Review[]>([])
+  const [isLoadingReviews, setIsLoadingReviews] = useState(false)
 
   // New states for enrollment modal
   const [showEnrollmentModal, setShowEnrollmentModal] = useState(false);
@@ -334,6 +338,16 @@ export default function CourseDetailsPage() {
           toast.error('Course not found.')
           navigate('/courses', { replace: true })
         })
+    }
+  }, [id])
+
+  useEffect(() => {
+    if (id) {
+      setIsLoadingReviews(true)
+      reviewsService.getCourseReviews(id)
+        .then(res => setCourseReviews(res.data))
+        .catch(() => setCourseReviews([]))
+        .finally(() => setIsLoadingReviews(false))
     }
   }, [id])
 
@@ -962,6 +976,81 @@ export default function CourseDetailsPage() {
                     >
                       Next <CaretRight size={16} weight="bold" />
                     </button>
+                  </div>
+                )}
+              </motion.div>
+
+              {/* ── STUDENT REVIEWS (API) ── */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: '-100px' }}
+                className="pt-4"
+              >
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Student Reviews</h2>
+
+                {isLoadingReviews && (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="w-8 h-8 border-4 border-violet-200 border-t-violet-600 rounded-full animate-spin" />
+                  </div>
+                )}
+
+                {!isLoadingReviews && courseReviews.length === 0 && (
+                  <p className="text-slate-400 dark:text-neutral-500 text-sm italic">
+                    No reviews yet for this course.
+                  </p>
+                )}
+
+                {!isLoadingReviews && courseReviews.length > 0 && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {courseReviews.map((review) => (
+                      <div
+                        key={review._id}
+                        className="bg-white dark:bg-neutral-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-neutral-700"
+                      >
+                        {/* Header: avatar + name + date + stars */}
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex items-center gap-3">
+                            {review.author.profileImage ? (
+                              <img
+                                src={review.author.profileImage}
+                                alt={review.author.name}
+                                className="w-10 h-10 rounded-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-10 h-10 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center font-bold text-violet-600 dark:text-violet-400 text-sm">
+                                {review.author.name.charAt(0).toUpperCase()}
+                              </div>
+                            )}
+                            <div>
+                              <p className="font-semibold text-gray-900 dark:text-white text-sm">
+                                {review.author.name}
+                              </p>
+                              <p className="text-xs text-gray-500 dark:text-neutral-400">
+                                {new Date(review.createdAt).toLocaleDateString()}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex gap-0.5">
+                            {[1, 2, 3, 4, 5].map((s) => (
+                              <Star
+                                key={s}
+                                size={16}
+                                weight={s <= review.rating ? 'fill' : 'regular'}
+                                className={
+                                  s <= review.rating
+                                    ? 'text-yellow-400'
+                                    : 'text-gray-300 dark:text-neutral-600'
+                                }
+                              />
+                            ))}
+                          </div>
+                        </div>
+                        <p className="text-gray-700 dark:text-neutral-300 text-sm leading-relaxed">
+                          {review.content}
+                        </p>
+                      </div>
+                    ))}
                   </div>
                 )}
               </motion.div>
