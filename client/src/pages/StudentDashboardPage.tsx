@@ -108,6 +108,7 @@ export default function StudentDashboardPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [darkMode, setDarkMode] = useState(() => document.documentElement.classList.contains('dark'))
   const restartTourRef = useRef<(() => void) | null>(null)
+  const [tourSeen, setTourSeen] = useState(() => !!localStorage.getItem(`tour_done_student_${user?.email || 'guest'}`))
 
   // Notification State
   const [showNotifications, setShowNotifications] = useState(false)
@@ -272,10 +273,15 @@ export default function StudentDashboardPage() {
             </div>
             <button
               data-tour="student-take-tour"
-              onClick={() => restartTourRef.current?.()}
+              onClick={() => { restartTourRef.current?.(); setTourSeen(true) }}
               className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-semibold text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-950/30 transition-all mb-1"
             >
-              <Sparkle size={18} weight="fill" />
+              <span className="relative inline-flex items-center justify-center">
+                {!tourSeen && (
+                  <span className="absolute -inset-1.5 rounded-full animate-ping bg-violet-400 opacity-60" />
+                )}
+                <Sparkle size={18} weight="fill" />
+              </span>
               Take Tour
             </button>
             <button
@@ -293,6 +299,7 @@ export default function StudentDashboardPage() {
         steps={STUDENT_TOUR_STEPS}
         tourKey={`student_${user?.email || 'guest'}`}
         onRestartRef={(fn) => { restartTourRef.current = fn }}
+        onFinish={() => setTourSeen(true)}
       />
 
       {/* ── MAIN CONTENT ── */}
