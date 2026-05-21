@@ -3,6 +3,7 @@ import { useEffect, Suspense, lazy, Component, type ReactNode } from 'react'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider } from '@/context/AuthContext'
 import { SocketProvider } from '@/context/SocketContext'
+import { GeoProvider, useGeo } from '@/context/GeoContext'
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
@@ -104,12 +105,33 @@ function PublicLayout() {
   )
 }
 
+function GeoWall({ children }: { children: React.ReactNode }) {
+  const { isBlocked, loading } = useGeo()
+  if (loading) return <Loader fullScreen />
+  if (isBlocked) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-neutral-950 px-4">
+        <div className="text-center max-w-md">
+          <div className="text-6xl mb-4">🌍</div>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Not Available in Your Region</h1>
+          <p className="text-slate-500 dark:text-neutral-400">
+            We're sorry, but this service is currently not available in your country.
+          </p>
+        </div>
+      </div>
+    )
+  }
+  return <>{children}</>
+}
+
 function App() {
   return (
     <AppErrorBoundary>
     <BrowserRouter>
+      <GeoProvider>
       <AuthProvider>
         <SocketProvider>
+          <GeoWall>
           <Toaster
             position="top-right"
             toastOptions={{
@@ -154,8 +176,10 @@ function App() {
               <Route path="/*" element={<PublicLayout />} />
             </Routes>
           </Suspense>
+          </GeoWall>
         </SocketProvider>
       </AuthProvider>
+      </GeoProvider>
     </BrowserRouter>
     </AppErrorBoundary>
   )

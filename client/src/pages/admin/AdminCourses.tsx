@@ -81,6 +81,7 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
           level: c.level ? c.level.charAt(0).toUpperCase() + c.level.slice(1) : 'Beginner',
           duration: `${c.totalSessions ?? 0} sessions`,
           price: c.price ?? 0,
+          priceUSD: c.priceUSD ?? 0,
           currency: c.currency ?? 'PKR',
           instructorId: c.teacher?._id ?? '',
           instructorName: c.teacher?.name ?? '',
@@ -110,6 +111,7 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
   const [reviewLoading, setReviewLoading] = useState(false)
   const [rejectReason, setRejectReason] = useState('')
   const [reviewPrice, setReviewPrice] = useState<number>(0)
+  const [reviewPriceUSD, setReviewPriceUSD] = useState<number>(0)
   const [reviewCurrency, setReviewCurrency] = useState<'PKR' | 'USD'>('PKR')
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState('All')
@@ -147,6 +149,7 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
   function openReview(course: Course) {
     setReviewCourse(course)
     setReviewPrice(course.price ?? 0)
+    setReviewPriceUSD(course.priceUSD ?? 0)
     setReviewCurrency((course.currency as 'PKR' | 'USD') ?? 'PKR')
   }
 
@@ -157,7 +160,7 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
         courseId,
         action === 'accept' ? 'approve' : 'reject',
         reason,
-        action === 'accept' ? { price: reviewPrice, currency: reviewCurrency } : undefined
+        action === 'accept' ? { price: reviewPrice, priceUSD: reviewPriceUSD, currency: reviewCurrency } : undefined
       )
       const res = await coursesService.getAdminCourses({ limit: 200 })
       const apiData: any[] = res.data ?? []
@@ -208,7 +211,8 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
       title: data.title,
       description: data.description || 'No description provided.',
       price: data.price,
-      currency: data.currency,
+      priceUSD: data.priceUSD ?? 0,
+      currency: 'PKR',
       type: 'group',
       level: levelMap[data.level] ?? 'beginner',
       focus: 'general',
@@ -489,7 +493,10 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
                     <h3 className="text-sm font-black text-slate-900 dark:text-white truncate">{course.title}</h3>
                     <p className="text-[11px] text-slate-400 dark:text-neutral-500 mt-0.5 truncate">{course.instructorName}</p>
                   </div>
-                  <p className="text-base font-black text-violet-600 dark:text-violet-400 flex-shrink-0">₨{course.price.toLocaleString()}</p>
+                  <div className="flex-shrink-0 text-right">
+                    <p className="text-sm font-black text-violet-600 dark:text-violet-400">₨{course.price.toLocaleString()}</p>
+                    {(course.priceUSD ?? 0) > 0 && <p className="text-[10px] font-semibold text-slate-400 dark:text-neutral-500">${course.priceUSD}</p>}
+                  </div>
                 </div>
                 <p className="text-xs text-slate-500 dark:text-neutral-400 leading-relaxed mb-3 line-clamp-2">{course.description}</p>
                 <div className="flex items-center gap-3 text-[11px] text-slate-400 dark:text-neutral-600 mb-3">
@@ -598,14 +605,11 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
                   </select>
                 </Field>
                 <Field label="Duration"><Input register={register} name="duration" placeholder="3 months" /></Field>
-                <Field label="Price">
-                  <div className="flex gap-2">
-                    <select {...register('currency')} className="px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors">
-                      <option value="PKR">PKR</option>
-                      <option value="USD">USD</option>
-                    </select>
-                    <Input register={register} name="price" type="number" placeholder="8000" valueAsNumber />
-                  </div>
+                <Field label="PKR Price">
+                  <Input register={register} name="price" type="number" placeholder="8000" valueAsNumber />
+                </Field>
+                <Field label="USD Price">
+                  <Input register={register} name="priceUSD" type="number" placeholder="30" valueAsNumber />
                 </Field>
                 <Field label="Max Students"><Input register={register} name="maxStudents" type="number" placeholder="15" valueAsNumber /></Field>
                 <Field label="Instructor">
@@ -680,25 +684,26 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
                     <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold inline-block mt-0.5 ${LEVEL_COLORS[reviewCourse.level] ?? 'bg-slate-100 text-slate-500'}`}>{reviewCourse.level}</span>
                   </div>
                   <div>
-                    <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-1">Set Price</p>
-                    <div className="flex gap-2 mt-1">
-                      <select
-                        value={reviewCurrency}
-                        onChange={e => setReviewCurrency(e.target.value as 'PKR' | 'USD')}
-                        className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors"
-                      >
-                        <option value="PKR">PKR</option>
-                        <option value="USD">USD</option>
-                      </select>
-                      <input
-                        type="number"
-                        min={0}
-                        value={reviewPrice}
-                        onChange={e => setReviewPrice(Number(e.target.value))}
-                        className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors"
-                        placeholder="e.g. 8000"
-                      />
-                    </div>
+                    <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-1">PKR Price (Pakistan)</p>
+                    <input
+                      type="number"
+                      min={0}
+                      value={reviewPrice}
+                      onChange={e => setReviewPrice(Number(e.target.value))}
+                      className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors"
+                      placeholder="e.g. 8000"
+                    />
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-1">USD Price (International)</p>
+                    <input
+                      type="number"
+                      min={0}
+                      value={reviewPriceUSD}
+                      onChange={e => setReviewPriceUSD(Number(e.target.value))}
+                      className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors"
+                      placeholder="e.g. 30"
+                    />
                   </div>
                   <div>
                     <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-1">Duration & Schedule</p>

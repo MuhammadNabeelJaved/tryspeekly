@@ -86,6 +86,7 @@ export interface Course {
   level: string
   duration: string
   price: number
+  priceUSD?: number
   currency: string
   instructorId: string
   instructorName: string

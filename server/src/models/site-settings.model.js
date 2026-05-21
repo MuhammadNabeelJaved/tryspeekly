@@ -30,6 +30,7 @@ const siteSettingsSchema = new Schema(
       keywords: { type: String, trim: true },
     },
     paymentsSetup: { type: mongoose.Schema.Types.Mixed, default: null },
+    blockedCountries: { type: [String], default: ['IN'] },
   },
   { timestamps: true, versionKey: false }
 )

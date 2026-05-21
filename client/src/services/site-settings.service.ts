@@ -33,4 +33,19 @@ export const siteSettingsService = {
     );
     return response.data.data;
   },
+
+  async getBlockedCountries(): Promise<string[]> {
+    const response = await axiosClient.get<ApiResponse<string[]>>('/site-settings/blocked-countries');
+    return response.data.data;
+  },
+
+  async blockCountry(code: string): Promise<string[]> {
+    const response = await axiosClient.post<ApiResponse<string[]>>('/site-settings/blocked-countries', { code });
+    return response.data.data;
+  },
+
+  async unblockCountry(code: string): Promise<string[]> {
+    const response = await axiosClient.delete<ApiResponse<string[]>>(`/site-settings/blocked-countries/${code}`);
+    return response.data.data;
+  },
 };

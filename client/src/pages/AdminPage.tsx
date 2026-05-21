@@ -36,10 +36,11 @@ const AdminNotifications = lazy(() => import('./admin/AdminNotifications'))
 const AdminMessages = lazy(() => import('./admin/AdminMessages'))
 const AdminSEO = lazy(() => import('./admin/AdminSEO'))
 const AdminReviews = lazy(() => import('./admin/AdminReviews'))
+const AdminGeoAccess = lazy(() => import('./admin/AdminGeoAccess'))
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 
-export type AdminView = 'overview' | 'students' | 'instructors' | 'courses' | 'certificates' | 'payments' | 'payments-setup' | 'financial-aid' | 'cms' | 'blog' | 'settings' | 'support' | 'notifications' | 'messages' | 'seo' | 'reviews'
+export type AdminView = 'overview' | 'students' | 'instructors' | 'courses' | 'certificates' | 'payments' | 'payments-setup' | 'financial-aid' | 'cms' | 'blog' | 'settings' | 'support' | 'notifications' | 'messages' | 'seo' | 'reviews' | 'geo-access'
 
 export interface AdminStore {
   students: Student[]
@@ -79,10 +80,11 @@ const NAV_COMMUNICATION: NavItem[] = [
 ]
 
 const NAV_CONTENT: NavItem[] = [
-  { view: 'blog',     label: 'Blog Manager', path: 'blog',     Icon: PencilSimple as NavItem['Icon'] },
-  { view: 'seo',      label: 'SEO Manager',  path: 'seo',      Icon: Globe as NavItem['Icon'] },
-  { view: 'cms',      label: 'CMS Editor',   path: 'cms',      Icon: PencilSimple as NavItem['Icon'] },
-  { view: 'settings', label: 'Settings',     path: 'settings', Icon: GearSix as NavItem['Icon'] },
+  { view: 'blog',       label: 'Blog Manager',  path: 'blog',       Icon: PencilSimple as NavItem['Icon'] },
+  { view: 'seo',        label: 'SEO Manager',   path: 'seo',        Icon: Globe as NavItem['Icon'] },
+  { view: 'cms',        label: 'CMS Editor',    path: 'cms',        Icon: PencilSimple as NavItem['Icon'] },
+  { view: 'geo-access', label: 'Geo Access',    path: 'geo-access', Icon: Globe as NavItem['Icon'] },
+  { view: 'settings',   label: 'Settings',      path: 'settings',   Icon: GearSix as NavItem['Icon'] },
 ]
 
 // ─── TOUR STEPS ───────────────────────────────────────────────────────────────
@@ -685,6 +687,7 @@ export default function AdminPage() {
                   <Route path="/messages" element={<AdminMessages />} />
                   <Route path="/seo" element={<AdminSEO />} />
                   <Route path="/reviews" element={<AdminReviews />} />
+                  <Route path="/geo-access" element={<AdminGeoAccess />} />
                   <Route path="*" element={<Navigate to="/admin" replace />} />
                 </Routes>
               </Suspense>

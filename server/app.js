@@ -6,6 +6,7 @@ import morgan from 'morgan'
 import cookieParser from 'cookie-parser'
 import rateLimit from 'express-rate-limit'
 import { errorHandler } from './src/utils/apiErrors.js'
+import { geoBlockMiddleware } from './src/middlewares/geo.middleware.js'
 
 const app = express()
 
@@ -42,6 +43,7 @@ const globalLimiter = rateLimit({
     message: { success: false, error: { message: 'Too many requests, please try again later.' } }
 })
 app.use(globalLimiter)
+app.use(geoBlockMiddleware)
 
 app.get('/api/health', (req, res) => {
     res.status(200).json({
@@ -70,6 +72,7 @@ import statsRoutes from './src/routes/stats.route.js'
 import liveClassRoutes from './src/routes/live-class.route.js'
 import seoRoutes from './src/routes/seo.route.js'
 import reviewRoutes from './src/routes/review.route.js'
+import geoRoutes from './src/routes/geo.route.js'
 
 app.use('/api/v1/users', userRoutes)
 app.use('/api/v1/live-classes', liveClassRoutes)
@@ -90,6 +93,7 @@ app.use('/api/v1/site-settings', siteSettingsRoutes)
 app.use('/api/v1/stats', statsRoutes)
 app.use('/api/v1/seo', seoRoutes)
 app.use('/api/v1/reviews', reviewRoutes)
+app.use('/api/v1/geo', geoRoutes)
 
 app.use((req, res) => {
     res.status(404).json({

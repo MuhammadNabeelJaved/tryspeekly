@@ -55,6 +55,11 @@ const courseSchema = new Schema(
       default: 0,
       min: [0, 'Price cannot be negative'],
     },
+    priceUSD: {
+      type: Number,
+      default: 0,
+      min: [0, 'USD price cannot be negative'],
+    },
     currency: { type: String, enum: ['PKR', 'USD'], default: 'PKR' },
     type: {
       type: String,

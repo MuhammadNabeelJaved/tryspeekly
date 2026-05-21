@@ -9,6 +9,7 @@ import {
 import { useState, useEffect, useRef } from 'react'
 import { coursesService } from '../services/courses.service'
 import type { Course } from '../types/api'
+import { useGeo } from '../context/GeoContext'
 
 // Animated Counter Component
 function AnimatedCounter({ from, to, duration = 1.5, format }: { from: number, to: number, duration?: number, format?: (val: number) => string }) {
@@ -60,6 +61,8 @@ export interface CourseCard {
   students: number
   image: string | undefined
   price: string
+  pricePKR?: number
+  priceUSD?: number
   popular: boolean
 }
 
@@ -300,6 +303,7 @@ export default function Courses() {
   const [openFaq, setOpenFaq] = useState<number | null>(null)
   const [cardsHovered, setCardsHovered] = useState(false)
   const [apiCourses, setApiCourses] = useState<CourseCard[] | null>(null)
+  const { currency } = useGeo()
 
   // Fetch courses from the API on mount
   useEffect(() => {
@@ -318,7 +322,9 @@ export default function Courses() {
           rating: 4.8,
           students: course.enrolledStudents?.length || 0,
           image: course.thumbnail,
-          price: course.currency === 'PKR' ? `Rs.${course.price.toLocaleString()}` : `$${course.price}`,
+          price: '',
+          pricePKR: course.price,
+          priceUSD: course.priceUSD,
           popular: false,
         }))
         setApiCourses(mapped)
@@ -631,7 +637,11 @@ export default function Courses() {
                         {course.title}
                       </h3>
                       <span className="flex-shrink-0 text-xl font-black text-violet-600 dark:text-violet-400">
-                        {course.price}
+                        {course.pricePKR !== undefined || course.priceUSD !== undefined
+                          ? currency === 'PKR'
+                            ? `Rs.${(course.pricePKR ?? 0).toLocaleString()}`
+                            : `$${course.priceUSD ?? 0}`
+                          : course.price}
                       </span>
                     </div>
 

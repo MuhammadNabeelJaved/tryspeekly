@@ -1,6 +1,7 @@
 import asyncHandler from '../utils/asyncHandler.js'
 import SiteSettings from '../models/site-settings.model.js'
 import { uploadSiteLogo, uploadSiteBanner, deleteFile, extractPublicId } from '../utils/cloudinary.js'
+import { invalidateGeoCache } from '../middlewares/geo.middleware.js'
 
 const getOrCreate = async () => {
   let settings = await SiteSettings.findOne()
@@ -59,6 +60,52 @@ export const updateSiteLogo = asyncHandler(async (req, res) => {
     await settings.save()
 
     res.json({ success: true, message: 'Logo updated', logoUrl: settings.logoUrl })
+  } catch (error) {
+    res.status(400).json({ success: false, error: { message: error.message } })
+  }
+})
+
+// GET /api/v1/site-settings/blocked-countries — admin: list blocked countries
+export const getBlockedCountries = asyncHandler(async (req, res) => {
+  try {
+    const settings = await getOrCreate()
+    res.json({ success: true, data: settings.blockedCountries || [] })
+  } catch (error) {
+    res.status(400).json({ success: false, error: { message: error.message } })
+  }
+})
+
+// POST /api/v1/site-settings/blocked-countries — admin: block a country
+export const blockCountry = asyncHandler(async (req, res) => {
+  try {
+    const { code } = req.body
+    if (!code || typeof code !== 'string' || code.length !== 2) {
+      return res.status(400).json({ success: false, error: { message: 'Valid 2-letter country code required' } })
+    }
+    const upper = code.toUpperCase()
+    const settings = await getOrCreate()
+    if (!settings.blockedCountries.includes(upper)) {
+      settings.blockedCountries.push(upper)
+      settings.markModified('blockedCountries')
+      await settings.save()
+      invalidateGeoCache()
+    }
+    res.json({ success: true, message: `${upper} blocked`, data: settings.blockedCountries })
+  } catch (error) {
+    res.status(400).json({ success: false, error: { message: error.message } })
+  }
+})
+
+// DELETE /api/v1/site-settings/blocked-countries/:code — admin: unblock a country
+export const unblockCountry = asyncHandler(async (req, res) => {
+  try {
+    const upper = req.params.code.toUpperCase()
+    const settings = await getOrCreate()
+    settings.blockedCountries = settings.blockedCountries.filter(c => c !== upper)
+    settings.markModified('blockedCountries')
+    await settings.save()
+    invalidateGeoCache()
+    res.json({ success: true, message: `${upper} unblocked`, data: settings.blockedCountries })
   } catch (error) {
     res.status(400).json({ success: false, error: { message: error.message } })
   }

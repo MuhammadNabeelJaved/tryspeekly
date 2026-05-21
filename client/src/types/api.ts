@@ -119,6 +119,7 @@ export interface Course {
   title: string;
   description: string;
   price: number;
+  priceUSD?: number;
   currency: 'PKR' | 'USD';
   type: 'group' | 'one-to-one' | 'hybrid';
   level: 'beginner' | 'intermediate' | 'advanced';
@@ -142,6 +143,7 @@ export interface CreateCourseDto {
   title: string;
   description: string;
   price?: number;
+  priceUSD?: number;
   currency?: 'PKR' | 'USD';
   type: 'group' | 'one-to-one' | 'hybrid';
   level: 'beginner' | 'intermediate' | 'advanced';
@@ -472,6 +474,7 @@ export interface SiteSettings {
   logoUrl?: string;
   bannerUrl?: string;
   paymentsSetup?: Record<string, unknown>;
+  blockedCountries?: string[];
   updatedAt: string;
 }
 

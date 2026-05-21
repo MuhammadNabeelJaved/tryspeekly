@@ -56,6 +56,7 @@ export const createCourse = asyncHandler(async (req, res) => {
     // Teachers cannot set price or currency — admin controls pricing
     if (req.user.role !== 'admin') {
       delete req.body.price
+      delete req.body.priceUSD
       delete req.body.currency
     }
     const course = await Course.create({ ...req.body, teacher: req.user.id, status })
@@ -77,7 +78,7 @@ export const updateCourse = asyncHandler(async (req, res) => {
     }
 
     const disallowed = ['teacher', 'enrolledStudents']
-    if (req.user.role !== 'admin') disallowed.push('status', 'price', 'currency')
+    if (req.user.role !== 'admin') disallowed.push('status', 'price', 'priceUSD', 'currency')
     disallowed.forEach((f) => delete req.body[f])
 
     Object.assign(course, req.body)
@@ -220,7 +221,7 @@ export const submitCourseForReview = asyncHandler(async (req, res) => {
 // PATCH /api/v1/courses/:id/review — admin: approve or reject
 export const reviewCourse = asyncHandler(async (req, res) => {
   try {
-    const { action, reason, price, currency } = req.body
+    const { action, reason, price, priceUSD, currency } = req.body
 
     if (!['approve', 'reject'].includes(action)) {
       return res.status(400).json({ success: false, error: { message: 'action must be "approve" or "reject"' } })
@@ -238,6 +239,7 @@ export const reviewCourse = asyncHandler(async (req, res) => {
     // Admin sets price and currency at approval time
     if (action === 'approve') {
       if (price !== undefined && price >= 0) course.price = price
+      if (priceUSD !== undefined && priceUSD >= 0) course.priceUSD = priceUSD
       if (currency && ['PKR', 'USD'].includes(currency)) course.currency = currency
     }
     await course.save()

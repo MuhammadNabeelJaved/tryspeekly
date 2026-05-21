@@ -6,6 +6,9 @@ import {
   updateSiteSettings,
   updateSiteLogo,
   updateSiteBanner,
+  getBlockedCountries,
+  blockCountry,
+  unblockCountry,
 } from '../controllers/site-settings.controller.js'
 
 const router = express.Router()
@@ -17,5 +20,7 @@ router.route('/').get(getSiteSettings)
 router.route('/').patch(authenticate, authorize('admin'), updateSiteSettings)
 router.route('/logo').patch(authenticate, authorize('admin'), uploadProfileImage, handleMulterError, updateSiteLogo)
 router.route('/banner').patch(authenticate, authorize('admin'), uploadProfileImage, handleMulterError, updateSiteBanner)
+router.route('/blocked-countries').get(authenticate, authorize('admin'), getBlockedCountries).post(authenticate, authorize('admin'), blockCountry)
+router.route('/blocked-countries/:code').delete(authenticate, authorize('admin'), unblockCountry)
 
 export default router

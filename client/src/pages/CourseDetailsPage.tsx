@@ -13,6 +13,7 @@ import { coursesService } from '../services/courses.service'
 import { enrollmentsService } from '../services/enrollments.service'
 import { reviewsService } from '../services/reviews.service'
 import { useAuth } from '../context/AuthContext'
+import { useGeo } from '../context/GeoContext'
 import ReviewModal from '../components/ReviewModal'
 import type { Review } from '../types/api'
 
@@ -117,6 +118,7 @@ export default function CourseDetailsPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { isAuthenticated, user } = useAuth()
+  const { currency } = useGeo()
   const [openModule, setOpenModule] = useState<number | null>(0)
   const [showMobileNav, setShowMobileNav] = useState(false)
   const [currentReviewPage, setCurrentReviewPage] = useState(1)
@@ -168,9 +170,9 @@ export default function CourseDetailsPage() {
         category: apiCourse.type
           ? apiCourse.type.charAt(0).toUpperCase() + apiCourse.type.slice(1)
           : '',
-        price: apiCourse.currency === 'PKR'
-          ? `Rs.${apiCourse.price?.toLocaleString()}`
-          : `$${apiCourse.price}`,
+        price: currency === 'PKR'
+          ? `Rs.${(apiCourse.price ?? 0).toLocaleString()}`
+          : `$${apiCourse.priceUSD ?? 0}`,
         originalPrice: '',
         level: apiCourse.level
           ? apiCourse.level.charAt(0).toUpperCase() + apiCourse.level.slice(1)
