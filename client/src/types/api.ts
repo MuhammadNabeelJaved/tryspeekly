@@ -584,3 +584,79 @@ export interface AdminCreateReviewDto {
 
 export type ReviewListResponse = ApiPaginatedResponse<Review>;
 export type ReviewSingleResponse = ApiResponse<Review>;
+
+// ─── Salary Types ─────────────────────────────────────────────────────────────
+
+export type SalaryType = 'monthly' | 'weekly' | 'per_course' | 'hourly' | 'custom';
+export type SalaryPackageStatus = 'active' | 'inactive';
+export type SalaryPaymentStatus = 'paid' | 'pending' | 'overdue';
+
+export interface SalaryPackage {
+  _id: string;
+  teacher: Pick<User, '_id' | 'name' | 'email' | 'profileImage'>;
+  amount: number;
+  type: SalaryType;
+  customType?: string;
+  startDate: string;
+  endDate?: string;
+  status: SalaryPackageStatus;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SalaryPayment {
+  _id: string;
+  package: string;
+  teacher: string;
+  amount: number;
+  periodLabel?: string;
+  periodStart: string;
+  periodEnd?: string;
+  status: SalaryPaymentStatus;
+  paidDate?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateSalaryPackageDto {
+  teacher: string;
+  amount: number;
+  type: SalaryType;
+  customType?: string;
+  startDate: string;
+  endDate?: string;
+  status?: SalaryPackageStatus;
+  notes?: string;
+}
+
+export interface UpdateSalaryPackageDto {
+  amount?: number;
+  type?: SalaryType;
+  customType?: string;
+  startDate?: string;
+  endDate?: string;
+  status?: SalaryPackageStatus;
+  notes?: string;
+}
+
+export interface CreateSalaryPaymentDto {
+  amount: number;
+  periodLabel?: string;
+  periodStart: string;
+  periodEnd?: string;
+  status?: SalaryPaymentStatus;
+  paidDate?: string;
+  notes?: string;
+}
+
+export interface UpdateSalaryPaymentDto {
+  amount?: number;
+  periodLabel?: string;
+  periodStart?: string;
+  periodEnd?: string;
+  status?: SalaryPaymentStatus;
+  paidDate?: string;
+  notes?: string;
+}
