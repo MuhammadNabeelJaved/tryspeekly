@@ -53,10 +53,13 @@ export default function TourGuide({ steps, tourKey, onRestartRef }: Props) {
     onRestartRef?.(start)
   }, [onRestartRef, start])
 
-  // auto-start once per role
+  // auto-start once per role — mark seen immediately so refresh/re-login never re-triggers
   useEffect(() => {
     if (!localStorage.getItem(`tour_done_${tourKey}`)) {
-      const t = setTimeout(() => setActive(true), 900)
+      const t = setTimeout(() => {
+        localStorage.setItem(`tour_done_${tourKey}`, 'true')
+        setActive(true)
+      }, 900)
       return () => clearTimeout(t)
     }
   }, [tourKey])
