@@ -163,6 +163,9 @@ export default function AdminSalaries() {
     setSelected(row)
     setShowPaymentForm(false)
     setEditingPayment(null)
+    setPmValue('')
+    setPmSearch('')
+    setPmOpen(false)
     if (row.pkg) {
       pkgForm.reset({
         amount: row.pkg.amount,
@@ -521,7 +524,7 @@ export default function AdminSalaries() {
                     </div>
                     {!showPaymentForm && (
                       <button
-                        onClick={() => { setShowPaymentForm(true); setEditingPayment(null); payForm.reset(); setPmValue(''); setPmSearch('') }}
+                        onClick={() => { setShowPaymentForm(true); setEditingPayment(null); payForm.reset(); setPmValue(''); setPmSearch(''); setPmOpen(false) }}
                         className="flex items-center gap-1.5 text-xs font-semibold text-violet-600 dark:text-violet-400 hover:underline"
                       >
                         <Plus size={13} weight="bold" /> Add Payment
@@ -583,14 +586,14 @@ export default function AdminSalaries() {
                                   <div className="flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800">
                                     {pmValue === 'cash' ? (
                                       <Money size={20} className="text-emerald-500 flex-shrink-0" />
-                                    ) : (
+                                    ) : getMethodById(pmValue)?.domain ? (
                                       <img
-                                        src={getFaviconUrl(getMethodById(pmValue)?.domain ?? '')}
+                                        src={getFaviconUrl(getMethodById(pmValue)!.domain)}
                                         alt=""
                                         className="w-5 h-5 rounded object-cover flex-shrink-0"
                                         onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
                                       />
-                                    )}
+                                    ) : null}
                                     <span className="flex-1 text-sm text-slate-900 dark:text-white">
                                       {getMethodById(pmValue)?.name ?? pmValue}
                                     </span>
@@ -688,7 +691,7 @@ export default function AdminSalaries() {
                           <div className="col-span-2 flex gap-2 justify-end">
                             <button
                               type="button"
-                              onClick={() => { setShowPaymentForm(false); setEditingPayment(null); setPmValue(''); setPmSearch('') }}
+                              onClick={() => { setShowPaymentForm(false); setEditingPayment(null); setPmValue(''); setPmSearch(''); setPmOpen(false) }}
                               className="px-4 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 text-sm font-semibold text-slate-600 dark:text-neutral-400 hover:bg-slate-50 dark:hover:bg-neutral-800 transition-colors"
                             >
                               Cancel
@@ -739,14 +742,14 @@ export default function AdminSalaries() {
                               <div className="flex items-center gap-1 mt-0.5">
                                 {p.paymentMethod === 'cash' ? (
                                   <Money size={11} className="text-emerald-500" />
-                                ) : (
+                                ) : getMethodById(p.paymentMethod)?.domain ? (
                                   <img
-                                    src={getFaviconUrl(getMethodById(p.paymentMethod)?.domain ?? '')}
+                                    src={getFaviconUrl(getMethodById(p.paymentMethod)!.domain)}
                                     alt=""
                                     className="w-3 h-3 rounded object-cover"
                                     onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
                                   />
-                                )}
+                                ) : null}
                                 <span className="text-[10px] text-slate-400 dark:text-neutral-500">
                                   {getMethodById(p.paymentMethod)?.name ?? p.paymentMethod}
                                 </span>
