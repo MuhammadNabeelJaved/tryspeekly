@@ -52,8 +52,12 @@ export const getCourse = asyncHandler(async (req, res) => {
 // POST /api/v1/courses — teacher/admin
 export const createCourse = asyncHandler(async (req, res) => {
   try {
-    // Teachers always submit for review; admins can set their own status
     const status = req.user.role === 'admin' ? (req.body.status ?? 'draft') : 'pending'
+    // Teachers cannot set price or currency — admin controls pricing
+    if (req.user.role !== 'admin') {
+      delete req.body.price
+      delete req.body.currency
+    }
     const course = await Course.create({ ...req.body, teacher: req.user.id, status })
     res.status(201).json({ success: true, message: 'Course submitted for review', data: course })
   } catch (error) {
@@ -73,7 +77,7 @@ export const updateCourse = asyncHandler(async (req, res) => {
     }
 
     const disallowed = ['teacher', 'enrolledStudents']
-    if (req.user.role !== 'admin') disallowed.push('status')
+    if (req.user.role !== 'admin') disallowed.push('status', 'price', 'currency')
     disallowed.forEach((f) => delete req.body[f])
 
     Object.assign(course, req.body)
@@ -216,7 +220,7 @@ export const submitCourseForReview = asyncHandler(async (req, res) => {
 // PATCH /api/v1/courses/:id/review — admin: approve or reject
 export const reviewCourse = asyncHandler(async (req, res) => {
   try {
-    const { action, reason } = req.body
+    const { action, reason, price, currency } = req.body
 
     if (!['approve', 'reject'].includes(action)) {
       return res.status(400).json({ success: false, error: { message: 'action must be "approve" or "reject"' } })
@@ -231,6 +235,11 @@ export const reviewCourse = asyncHandler(async (req, res) => {
     }
 
     course.status = action === 'approve' ? 'published' : 'rejected'
+    // Admin sets price and currency at approval time
+    if (action === 'approve') {
+      if (price !== undefined && price >= 0) course.price = price
+      if (currency && ['PKR', 'USD'].includes(currency)) course.currency = currency
+    }
     await course.save()
 
     // Push in-app notification to teacher (fire-and-forget — notification failure must not roll back status change)

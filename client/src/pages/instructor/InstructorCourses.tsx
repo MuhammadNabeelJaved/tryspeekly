@@ -292,8 +292,6 @@ export default function InstructorCourses() {
         const res = await coursesService.createCourse({
           title: data.title,
           description: data.description || '',
-          price: parseFloat(data.price?.replace(/[^0-9.]/g, '') || '0'),
-          currency: 'USD',
           type: (data.category === 'Recorded Course' ? 'one-to-one' : data.category === 'Hybrid' ? 'hybrid' : 'group') as 'group' | 'one-to-one' | 'hybrid',
           level: (data.level?.toLowerCase() || 'beginner') as 'beginner' | 'intermediate' | 'advanced',
           focus: 'general',
@@ -328,7 +326,6 @@ export default function InstructorCourses() {
         const updatePayload: any = {
           title: data.title,
           description: data.description,
-          price: parseFloat(data.price?.replace(/[^0-9.]/g, '') || '0'),
         }
         if (thumbMode === 'url' && data.image) updatePayload.thumbnail = data.image
         if (videoMode === 'url' && data.videoPreview) updatePayload.videoPreview = data.videoPreview
@@ -818,9 +815,12 @@ export default function InstructorCourses() {
                       />
 
                       <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider mb-2 border-b border-slate-200 dark:border-neutral-800 pb-2 mt-8">Pricing & Status</h4>
-                      <div className="grid grid-cols-2 gap-4">
-                        <Field label="Selling Price"><Input register={register} name="price" placeholder="e.g. $299" /></Field>
-                        <Field label="Original Price"><Input register={register} name="originalPrice" placeholder="e.g. $399" /></Field>
+                      <div className="flex items-start gap-3 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/30 rounded-xl p-4">
+                        <span className="text-amber-500 text-lg shrink-0">₨</span>
+                        <div>
+                          <p className="text-xs font-bold text-amber-700 dark:text-amber-400">Pricing is managed by Admin</p>
+                          <p className="text-xs text-amber-600/80 dark:text-amber-500/70 mt-0.5 leading-relaxed">Course price and currency are set by the admin when your course is reviewed and approved. You don't need to worry about pricing.</p>
+                        </div>
                       </div>
 
                       <Field label="Course Status">

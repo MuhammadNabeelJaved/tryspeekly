@@ -109,6 +109,8 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [reviewLoading, setReviewLoading] = useState(false)
   const [rejectReason, setRejectReason] = useState('')
+  const [reviewPrice, setReviewPrice] = useState<number>(0)
+  const [reviewCurrency, setReviewCurrency] = useState<'PKR' | 'USD'>('PKR')
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState('All')
   const [activeTab, setActiveTab] = useState<'manage' | 'pending'>('manage')
@@ -144,12 +146,19 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
 
   function openReview(course: Course) {
     setReviewCourse(course)
+    setReviewPrice(course.price ?? 0)
+    setReviewCurrency((course.currency as 'PKR' | 'USD') ?? 'PKR')
   }
 
   async function handleReviewAction(courseId: string, action: 'accept' | 'reject', reason?: string) {
     setReviewLoading(true)
     try {
-      await coursesService.reviewCourse(courseId, action === 'accept' ? 'approve' : 'reject', reason)
+      await coursesService.reviewCourse(
+        courseId,
+        action === 'accept' ? 'approve' : 'reject',
+        reason,
+        action === 'accept' ? { price: reviewPrice, currency: reviewCurrency } : undefined
+      )
       const res = await coursesService.getAdminCourses({ limit: 200 })
       const apiData: any[] = res.data ?? []
       const mapped: Course[] = apiData.map((c: any, idx: number) => ({
@@ -589,7 +598,15 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
                   </select>
                 </Field>
                 <Field label="Duration"><Input register={register} name="duration" placeholder="3 months" /></Field>
-                <Field label="Price (PKR)"><Input register={register} name="price" type="number" placeholder="8000" valueAsNumber /></Field>
+                <Field label="Price">
+                  <div className="flex gap-2">
+                    <select {...register('currency')} className="px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors">
+                      <option value="PKR">PKR</option>
+                      <option value="USD">USD</option>
+                    </select>
+                    <Input register={register} name="price" type="number" placeholder="8000" valueAsNumber />
+                  </div>
+                </Field>
                 <Field label="Max Students"><Input register={register} name="maxStudents" type="number" placeholder="15" valueAsNumber /></Field>
                 <Field label="Instructor">
                   <select {...register('instructorId', { onChange: e => pickInstructor(e.target.value) })} className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors">
@@ -663,8 +680,25 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
                     <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold inline-block mt-0.5 ${LEVEL_COLORS[reviewCourse.level] ?? 'bg-slate-100 text-slate-500'}`}>{reviewCourse.level}</span>
                   </div>
                   <div>
-                    <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-1">Price</p>
-                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">₨{reviewCourse.price.toLocaleString()}</p>
+                    <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-1">Set Price</p>
+                    <div className="flex gap-2 mt-1">
+                      <select
+                        value={reviewCurrency}
+                        onChange={e => setReviewCurrency(e.target.value as 'PKR' | 'USD')}
+                        className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors"
+                      >
+                        <option value="PKR">PKR</option>
+                        <option value="USD">USD</option>
+                      </select>
+                      <input
+                        type="number"
+                        min={0}
+                        value={reviewPrice}
+                        onChange={e => setReviewPrice(Number(e.target.value))}
+                        className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors"
+                        placeholder="e.g. 8000"
+                      />
+                    </div>
                   </div>
                   <div>
                     <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-1">Duration & Schedule</p>

@@ -52,7 +52,7 @@ const courseSchema = new Schema(
     },
     price: {
       type: Number,
-      required: [true, 'Course price is required'],
+      default: 0,
       min: [0, 'Price cannot be negative'],
     },
     currency: { type: String, enum: ['PKR', 'USD'], default: 'PKR' },

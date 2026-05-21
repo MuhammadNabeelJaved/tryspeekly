@@ -141,7 +141,7 @@ export interface Course {
 export interface CreateCourseDto {
   title: string;
   description: string;
-  price: number;
+  price?: number;
   currency?: 'PKR' | 'USD';
   type: 'group' | 'one-to-one' | 'hybrid';
   level: 'beginner' | 'intermediate' | 'advanced';
