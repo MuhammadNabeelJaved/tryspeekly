@@ -271,9 +271,11 @@ export default function AdminPage() {
   })
   const notifRef = useRef(null);
   const restartTourRef = useRef<(() => void) | null>(null)
-  const [tourSeen, setTourSeen] = useState(false)
+  const [tourSeen, setTourSeen] = useState(
+    () => !!user?.email && !!localStorage.getItem(`tour_done_admin_${user.email}`)
+  )
   useEffect(() => {
-    setTourSeen(!!localStorage.getItem(`tour_done_admin_${user?.email || 'guest'}`))
+    if (user?.email) setTourSeen(!!localStorage.getItem(`tour_done_admin_${user.email}`))
   }, [user?.email])
   const [showNotifications, setShowNotifications] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false)

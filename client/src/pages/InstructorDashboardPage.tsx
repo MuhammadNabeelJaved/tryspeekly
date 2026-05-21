@@ -103,9 +103,11 @@ export default function InstructorDashboardPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [darkMode, setDarkMode] = useState(() => document.documentElement.classList.contains('dark'))
   const restartTourRef = useRef<(() => void) | null>(null)
-  const [tourSeen, setTourSeen] = useState(false)
+  const [tourSeen, setTourSeen] = useState(
+    () => !!user?.email && !!localStorage.getItem(`tour_done_instructor_${user.email}`)
+  )
   useEffect(() => {
-    setTourSeen(!!localStorage.getItem(`tour_done_instructor_${user?.email || 'guest'}`))
+    if (user?.email) setTourSeen(!!localStorage.getItem(`tour_done_instructor_${user.email}`))
   }, [user?.email])
 
   // Notification State

@@ -83,6 +83,8 @@ export default function TourGuide({ steps, tourKey, onRestartRef, onFinish }: Pr
   const [tipW, setTipW]           = useState(computeTipW)
   const [showToast, setShowToast] = useState(false)
   const toastTimer                = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const prevFocusRef              = useRef<Element | null>(null)
+  const dialogRef                 = useRef<HTMLDivElement>(null)
   const stepRef                   = useRef(step)
 
   useEffect(() => { stepRef.current = step }, [step])
@@ -96,6 +98,7 @@ export default function TourGuide({ steps, tourKey, onRestartRef, onFinish }: Pr
 
   const completeTour = useCallback(() => {
     finish()
+    if (toastTimer.current) clearTimeout(toastTimer.current)
     setShowToast(true)
     toastTimer.current = setTimeout(() => setShowToast(false), 3000)
   }, [finish])
@@ -176,6 +179,42 @@ export default function TourGuide({ steps, tourKey, onRestartRef, onFinish }: Pr
     return () => { if (toastTimer.current) clearTimeout(toastTimer.current) }
   }, [])
 
+  // save/restore focus on tour open/close
+  useEffect(() => {
+    if (active) {
+      prevFocusRef.current = document.activeElement
+      const t = setTimeout(() => {
+        dialogRef.current?.querySelector<HTMLElement>('button')?.focus()
+      }, 50)
+      return () => clearTimeout(t)
+    } else {
+      if (prevFocusRef.current instanceof HTMLElement) prevFocusRef.current.focus()
+    }
+  }, [active])
+
+  // trap Tab key inside dialog
+  useEffect(() => {
+    if (!active) return
+    function handleTab(e: KeyboardEvent) {
+      if (e.key !== 'Tab' || !dialogRef.current) return
+      const focusable = Array.from(
+        dialogRef.current.querySelectorAll<HTMLElement>(
+          'button, [href], input, [tabindex]:not([tabindex="-1"])',
+        ),
+      )
+      if (!focusable.length) return
+      const first = focusable[0]
+      const last  = focusable[focusable.length - 1]
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault(); last.focus()
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault(); first.focus()
+      }
+    }
+    window.addEventListener('keydown', handleTab)
+    return () => window.removeEventListener('keydown', handleTab)
+  }, [active])
+
   if (!active && !showToast) return null
   if (!steps.length) return null
 
@@ -213,6 +252,7 @@ export default function TourGuide({ steps, tourKey, onRestartRef, onFinish }: Pr
           <AnimatePresence mode="wait">
             <motion.div
               key={step}
+              ref={dialogRef}
               initial={{ opacity: 0, y: 8, scale: 0.96 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -6, scale: 0.96 }}
@@ -322,6 +362,7 @@ export default function TourGuide({ steps, tourKey, onRestartRef, onFinish }: Pr
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
             transition={{ duration: 0.2 }}
+            role="status"
             className="fixed bottom-6 right-6 z-[99999] flex items-center gap-3 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-700 rounded-2xl px-4 py-3 shadow-2xl"
           >
             <CheckCircle size={18} weight="fill" className="text-violet-600 flex-shrink-0" />
