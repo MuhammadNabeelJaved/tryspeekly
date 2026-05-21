@@ -3,6 +3,20 @@ import { BadRequestError, NotFoundError, ConflictError } from '../utils/apiError
 import SalaryPackage from '../models/salary-package.model.js'
 import SalaryPayment from '../models/salary-payment.model.js'
 import User from '../models/user.model.js'
+import { createAndEmitNotification } from '../utils/notify.js'
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function formatPeriod(start, end) {
+  const opts = { month: 'long', year: 'numeric' }
+  const s = new Date(start)
+  if (!end) return s.toLocaleDateString('en-PK', opts)
+  const e = new Date(end)
+  if (s.getMonth() === e.getMonth() && s.getFullYear() === e.getFullYear()) {
+    return `${s.toLocaleDateString('en-PK', { month: 'long' })} ${s.getDate()}–${e.getDate()}, ${s.getFullYear()}`
+  }
+  return `${s.toLocaleDateString('en-PK', opts)} – ${e.toLocaleDateString('en-PK', opts)}`
+}
 
 // ─── Package Handlers ─────────────────────────────────────────────────────────
 
@@ -109,7 +123,7 @@ export const addPayment = asyncHandler(async (req, res) => {
   const pkg = await SalaryPackage.findById(req.params.id)
   if (!pkg) throw new NotFoundError('Salary package not found')
 
-  const { amount, periodLabel, periodStart, periodEnd, status, paidDate, notes } = req.body
+  const { amount, periodLabel, periodStart, periodEnd, status, paidDate, notes, paymentMethod } = req.body
 
   if (!amount || !periodStart) {
     throw new BadRequestError('amount and periodStart are required')
@@ -126,12 +140,25 @@ export const addPayment = asyncHandler(async (req, res) => {
   if (periodEnd !== undefined) paymentData.periodEnd = periodEnd
   if (status !== undefined) paymentData.status = status
   if (notes !== undefined) paymentData.notes = notes
+  if (paymentMethod !== undefined) paymentData.paymentMethod = paymentMethod
 
   if (status === 'paid') {
     paymentData.paidDate = paidDate !== undefined ? paidDate : new Date()
   }
 
   const payment = await SalaryPayment.create(paymentData)
+
+  if (status === 'paid') {
+    await createAndEmitNotification({
+      recipientId: pkg.teacher,
+      title: 'Salary Payment Received',
+      message: `Your salary of ₨${amount} for ${periodLabel || formatPeriod(periodStart, periodEnd)} has been paid via ${paymentMethod || 'bank transfer'}.`,
+      type: 'salary_payment',
+      severity: 'low',
+      relatedId: payment._id,
+      relatedType: 'SalaryPayment',
+    })
+  }
 
   res.status(201).json({ success: true, message: 'Payment record added', data: payment })
 })
@@ -144,13 +171,15 @@ export const updatePayment = asyncHandler(async (req, res) => {
   })
   if (!payment) throw new NotFoundError('Payment record not found')
 
-  const { amount, periodLabel, periodStart, periodEnd, status, paidDate, notes } = req.body
+  const { amount, periodLabel, periodStart, periodEnd, status, paidDate, notes, paymentMethod } = req.body
+  const wasNotPaid = payment.status !== 'paid'
 
   if (amount !== undefined) payment.amount = amount
   if (periodLabel !== undefined) payment.periodLabel = periodLabel
   if (periodStart !== undefined) payment.periodStart = periodStart
   if (periodEnd !== undefined) payment.periodEnd = periodEnd
   if (notes !== undefined) payment.notes = notes
+  if (paymentMethod !== undefined) payment.paymentMethod = paymentMethod
 
   if (status !== undefined) {
     payment.status = status
@@ -162,6 +191,21 @@ export const updatePayment = asyncHandler(async (req, res) => {
   }
 
   await payment.save()
+
+  if (status === 'paid' && wasNotPaid) {
+    const pkg = await SalaryPackage.findById(payment.package)
+    if (pkg) {
+      await createAndEmitNotification({
+        recipientId: pkg.teacher,
+        title: 'Salary Payment Received',
+        message: `Your salary of ₨${payment.amount} for ${payment.periodLabel || formatPeriod(payment.periodStart, payment.periodEnd)} has been paid via ${payment.paymentMethod || 'bank transfer'}.`,
+        type: 'salary_payment',
+        severity: 'low',
+        relatedId: payment._id,
+        relatedType: 'SalaryPayment',
+      })
+    }
+  }
 
   res.json({ success: true, message: 'Payment record updated', data: payment })
 })
