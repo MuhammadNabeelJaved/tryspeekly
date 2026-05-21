@@ -58,7 +58,7 @@ export const createUser = asyncHandler(async (req, res) => {
       return res.status(409).json({ success: false, error: { message: 'Email already in use' } })
     }
 
-    const user = new User({ name, email, password, phone, role })
+    const user = new User({ name, email, password, phone, role, isOnboardingDone: false })
     const otp = user.generateVerificationToken()
     if (process.env.NODE_ENV === 'development') user.isVerified = true
 

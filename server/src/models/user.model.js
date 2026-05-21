@@ -69,7 +69,7 @@ const userSchema = new Schema(
     },
     isOnboardingDone: {
       type: Boolean,
-      default: false,
+      default: true,
     },
     twoStepEnabled: {
       type: Boolean,
