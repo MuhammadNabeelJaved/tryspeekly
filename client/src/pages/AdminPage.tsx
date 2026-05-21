@@ -13,6 +13,7 @@ import { INITIAL_STUDENTS, INITIAL_INSTRUCTORS, INITIAL_COURSES, INITIAL_CMS_PAG
 import Loader from '@/components/Loader'
 import UserAvatar from '@/components/UserAvatar'
 import { useAuth } from '../context/AuthContext'
+import { usersService } from '../services/users.service'
 import { useSocket } from '../context/SocketContext'
 import { notificationsService } from '../services/notifications.service'
 import { reviewsService } from '../services/reviews.service'
@@ -262,7 +263,7 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
 export default function AdminPage() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { isAuthenticated, user, logout } = useAuth()
+  const { isAuthenticated, user, logout, setUser } = useAuth()
   const isAdmin = isAuthenticated && user?.role === 'admin'
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(() => {
     // Dev mode: auto-authenticate
@@ -271,12 +272,7 @@ export default function AdminPage() {
   })
   const notifRef = useRef(null);
   const restartTourRef = useRef<(() => void) | null>(null)
-  const [tourSeen, setTourSeen] = useState(
-    () => !!user?.email && !!localStorage.getItem(`tour_done_admin_${user.email}`)
-  )
-  useEffect(() => {
-    if (user?.email) setTourSeen(!!localStorage.getItem(`tour_done_admin_${user.email}`))
-  }, [user?.email])
+  const tourSeen = !!user?.isOnboardingDone
   const [showNotifications, setShowNotifications] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [darkMode, setDarkMode] = useState(() => document.documentElement.classList.contains('dark'))
@@ -548,8 +544,11 @@ export default function AdminPage() {
       <TourGuide
         steps={ADMIN_TOUR_STEPS}
         tourKey={`admin_${user?.email || 'guest'}`}
+        autoStart={!user?.isOnboardingDone}
         onRestartRef={(fn) => { restartTourRef.current = fn }}
-        onFinish={() => setTourSeen(true)}
+        onFinish={async () => {
+          try { const updated = await usersService.markOnboardingDone(); setUser(updated) } catch { /* ignore */ }
+        }}
       />
 
       {/* ── MAIN CONTENT ── */}

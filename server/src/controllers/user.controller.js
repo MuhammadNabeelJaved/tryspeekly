@@ -40,6 +40,7 @@ const safeUser = (user) => ({
   city: user.city,
   timezone: user.timezone,
   isVerified: user.isVerified,
+  isOnboardingDone: user.isOnboardingDone,
   createdAt: user.createdAt,
   updatedAt: user.updatedAt,
 })
@@ -386,6 +387,22 @@ export const updateProfileImage = asyncHandler(async (req, res) => {
 })
 
 // DELETE /api/v1/users/:id — admin (soft delete)
+// PATCH /api/v1/users/onboarding-done
+export const markOnboardingDone = asyncHandler(async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      { isOnboardingDone: true },
+      { new: true }
+    )
+    if (!user) return res.status(404).json({ success: false, error: { message: 'User not found' } })
+    res.json({ success: true, message: 'Onboarding marked as done', data: { user: safeUser(user) } })
+  } catch (error) {
+    res.status(400).json({ success: false, error: { message: error.message } })
+  }
+})
+
+// DELETE /api/v1/users/:id
 export const deleteUser = asyncHandler(async (req, res) => {
   try {
     const user = await User.findById(req.params.id)

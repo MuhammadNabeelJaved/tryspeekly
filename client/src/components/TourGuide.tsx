@@ -12,7 +12,8 @@ export type TooltipPlacement = 'below' | 'above' | 'right' | 'left' | 'center'
 
 interface Props {
   steps: TourStep[]
-  tourKey: string       // unique per role — used as localStorage key
+  tourKey: string       // unique per role — used as localStorage key (session cache)
+  autoStart?: boolean   // true = start automatically (controlled by parent via server flag)
   onRestartRef?: (fn: () => void) => void
   onFinish?: () => void // called on skip OR on completion
 }
@@ -76,7 +77,7 @@ const ARROW_ZERO_BORDERS: Record<TooltipPlacement, React.CSSProperties> = {
   center: {},
 }
 
-export default function TourGuide({ steps, tourKey, onRestartRef, onFinish }: Props) {
+export default function TourGuide({ steps, tourKey, autoStart = false, onRestartRef, onFinish }: Props) {
   const [active, setActive]       = useState(false)
   const [step, setStep]           = useState(0)
   const [rect, setRect]           = useState<DOMRect | null>(null)
@@ -90,11 +91,10 @@ export default function TourGuide({ steps, tourKey, onRestartRef, onFinish }: Pr
   useEffect(() => { stepRef.current = step }, [step])
 
   const finish = useCallback(() => {
-    localStorage.setItem(`tour_done_${tourKey}`, 'true')
     setActive(false)
     setStep(0)
     onFinish?.()
-  }, [tourKey, onFinish])
+  }, [onFinish])
 
   const completeTour = useCallback(() => {
     finish()
@@ -125,16 +125,13 @@ export default function TourGuide({ steps, tourKey, onRestartRef, onFinish }: Pr
     onRestartRef?.(start)
   }, [onRestartRef, start])
 
-  // auto-start once per user — mark seen immediately so refresh never re-triggers
+  // auto-start for new users — controlled by parent via server-side isOnboardingDone flag
   useEffect(() => {
-    if (!localStorage.getItem(`tour_done_${tourKey}`)) {
-      const t = setTimeout(() => {
-        localStorage.setItem(`tour_done_${tourKey}`, 'true')
-        setActive(true)
-      }, 900)
+    if (autoStart) {
+      const t = setTimeout(() => setActive(true), 900)
       return () => clearTimeout(t)
     }
-  }, [tourKey])
+  }, [autoStart])
 
   // keyboard navigation
   useEffect(() => {

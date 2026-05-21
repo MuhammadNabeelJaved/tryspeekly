@@ -9,6 +9,7 @@ import Loader from '@/components/Loader'
 import TourGuide, { type TourStep } from '@/components/TourGuide'
 import UserAvatar from '@/components/UserAvatar'
 import { useAuth } from '@/context/AuthContext'
+import { usersService } from '@/services/users.service'
 import { useSocket } from '@/context/SocketContext'
 import { notificationsService } from '@/services/notifications.service'
 import type { Notification } from '@/types/api'
@@ -98,17 +99,12 @@ const NAV_PREFS: NavItem[] = [
 export default function InstructorDashboardPage() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { user, logout } = useAuth()
+  const { user, logout, setUser } = useAuth()
   const { unreadNotifications, setUnreadNotifications, unreadMessages } = useSocket()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [darkMode, setDarkMode] = useState(() => document.documentElement.classList.contains('dark'))
   const restartTourRef = useRef<(() => void) | null>(null)
-  const [tourSeen, setTourSeen] = useState(
-    () => !!user?.email && !!localStorage.getItem(`tour_done_instructor_${user.email}`)
-  )
-  useEffect(() => {
-    if (user?.email) setTourSeen(!!localStorage.getItem(`tour_done_instructor_${user.email}`))
-  }, [user?.email])
+  const tourSeen = !!user?.isOnboardingDone
 
   // Notification State
   const [showNotifications, setShowNotifications] = useState(false)
@@ -288,8 +284,11 @@ export default function InstructorDashboardPage() {
       <TourGuide
         steps={INSTRUCTOR_TOUR_STEPS}
         tourKey={`instructor_${user?.email || 'guest'}`}
+        autoStart={!user?.isOnboardingDone}
         onRestartRef={(fn) => { restartTourRef.current = fn }}
-        onFinish={() => setTourSeen(true)}
+        onFinish={async () => {
+          try { const updated = await usersService.markOnboardingDone(); setUser(updated) } catch { /* ignore */ }
+        }}
       />
 
       {/* ── MAIN CONTENT ── */}

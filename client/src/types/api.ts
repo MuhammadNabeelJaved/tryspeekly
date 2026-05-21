@@ -41,6 +41,7 @@ export interface User {
   photo?: string;
   bio?: string;
   isVerified?: boolean;
+  isOnboardingDone?: boolean;
   createdAt: string;
   updatedAt: string;
 }

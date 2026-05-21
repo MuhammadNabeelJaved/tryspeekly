@@ -48,4 +48,9 @@ export const usersService = {
     const response = await axiosClient.delete<ApiResponse<null>>(`/users/${id}`);
     return { message: response.data.message || 'User deleted' };
   },
+
+  async markOnboardingDone(): Promise<User> {
+    const response = await axiosClient.patch<ApiResponse<{ user: User }>>('/users/onboarding-done');
+    return normalizeUser(response.data.data.user);
+  },
 };

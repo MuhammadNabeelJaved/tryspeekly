@@ -17,6 +17,7 @@ import {
     requestPasswordReset,
     resetPassword,
     deleteUser,
+    markOnboardingDone,
 } from '../controllers/user.controller.js'
 
 const router = express.Router()
@@ -32,6 +33,7 @@ router.route('/reset-password').post(resetPassword)
 
 // ─── Protected routes (login required) ────────────────────────────────────────
 router.route('/logout').post(authenticate, logoutUser)
+router.route('/onboarding-done').patch(authenticate, markOnboardingDone)
 router.route('/profile')
     .get(authenticate, getUserProfile)
     .patch(authenticate, updateUserProfile)
