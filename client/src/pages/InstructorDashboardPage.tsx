@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import {
   House, BookOpen, Users, GearSix, VideoCamera,
-  List, X, SignOut, Bell, Sun, Moon, Headset, Chats, CheckCircle, Sparkle
+  List, X, SignOut, Bell, Sun, Moon, Headset, Chats, CheckCircle, Sparkle, Money
 } from '@phosphor-icons/react'
 import Loader from '@/components/Loader'
 import TourGuide, { type TourStep } from '@/components/TourGuide'
@@ -24,8 +24,9 @@ const InstructorSettings = lazy(() => import('./instructor/InstructorSettings'))
 const InstructorSupport = lazy(() => import('./instructor/InstructorSupport'))
 const InstructorNotifications = lazy(() => import('./instructor/InstructorNotifications'))
 const InstructorAssignments = lazy(() => import('./instructor/InstructorAssignments'))
+const InstructorSalary = lazy(() => import('./instructor/InstructorSalary'))
 
-export type InstructorView = 'overview' | 'courses' | 'live' | 'students' | 'messages' | 'assignments' | 'settings' | 'support' | 'notifications'
+export type InstructorView = 'overview' | 'courses' | 'live' | 'students' | 'messages' | 'assignments' | 'salary' | 'settings' | 'support' | 'notifications'
 
 const INSTRUCTOR_TOUR_STEPS: TourStep[] = [
   {
@@ -87,6 +88,7 @@ const NAV_MAIN: NavItem[] = [
   { view: 'live', label: 'Live Classes', path: 'live', Icon: VideoCamera as NavItem['Icon'] },
   { view: 'students', label: 'My Students', path: 'students', Icon: Users as NavItem['Icon'] },
   { view: 'assignments', label: 'Assignments', path: 'assignments', Icon: CheckCircle as NavItem['Icon'] },
+  { view: 'salary', label: 'My Salary', path: 'salary', Icon: Money as NavItem['Icon'] },
   { view: 'messages', label: 'Messages', path: 'messages', Icon: Chats as NavItem['Icon'] },
 ]
 
@@ -405,6 +407,7 @@ export default function InstructorDashboardPage() {
                   <Route path="/live" element={<InstructorLiveClasses />} />
                   <Route path="/students" element={<InstructorStudents />} />
                   <Route path="/assignments" element={<InstructorAssignments />} />
+                  <Route path="/salary" element={<InstructorSalary />} />
                   <Route path="/messages" element={<InstructorMessages />} />
                   <Route path="/settings" element={<InstructorSettings />} />
                   <Route path="/support" element={<InstructorSupport />} />
