@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { Money, CalendarBlank, SpinnerGap } from '@phosphor-icons/react'
 import { salaryService } from '@/services/salary.service'
 import type { SalaryPackage, SalaryPayment, SalaryType } from '@/types/api'
+import { getMethodById, getFaviconUrl } from '@/data/pakistanPaymentMethods'
 
 const TYPE_LABELS: Record<SalaryType, string> = {
   monthly: 'Monthly',
@@ -128,6 +129,7 @@ export default function InstructorSalary() {
                 <thead>
                   <tr className="border-b border-slate-100 dark:border-neutral-800">
                     <th className="text-left px-5 py-2.5 text-[10px] font-bold uppercase tracking-wide text-slate-400 dark:text-neutral-500">Period</th>
+                    <th className="text-left px-5 py-2.5 text-[10px] font-bold uppercase tracking-wide text-slate-400 dark:text-neutral-500">Payment Method</th>
                     <th className="text-left px-5 py-2.5 text-[10px] font-bold uppercase tracking-wide text-slate-400 dark:text-neutral-500">Amount</th>
                     <th className="text-left px-5 py-2.5 text-[10px] font-bold uppercase tracking-wide text-slate-400 dark:text-neutral-500">Status</th>
                     <th className="text-left px-5 py-2.5 text-[10px] font-bold uppercase tracking-wide text-slate-400 dark:text-neutral-500">Paid Date</th>
@@ -144,6 +146,27 @@ export default function InstructorSalary() {
                           <p className="text-[10px] text-slate-400 dark:text-neutral-500">
                             {new Date(p.periodStart).toLocaleDateString()} – {new Date(p.periodEnd).toLocaleDateString()}
                           </p>
+                        )}
+                      </td>
+                      <td className="px-5 py-3.5">
+                        {p.paymentMethod ? (
+                          <div className="flex items-center gap-1.5">
+                            {p.paymentMethod === 'cash' ? (
+                              <Money size={16} className="text-emerald-500 flex-shrink-0" />
+                            ) : getMethodById(p.paymentMethod)?.domain ? (
+                              <img
+                                src={getFaviconUrl(getMethodById(p.paymentMethod)!.domain)}
+                                alt=""
+                                className="w-4 h-4 rounded object-cover flex-shrink-0"
+                                onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+                              />
+                            ) : null}
+                            <span className="text-sm text-slate-700 dark:text-neutral-300">
+                              {getMethodById(p.paymentMethod)?.name ?? p.paymentMethod}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-sm text-slate-400 dark:text-neutral-500">—</span>
                         )}
                       </td>
                       <td className="px-5 py-3.5">
