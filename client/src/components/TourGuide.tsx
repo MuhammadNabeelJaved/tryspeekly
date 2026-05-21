@@ -59,15 +59,21 @@ export function getTooltipPos(
 }
 
 function getArrowStyle(placement: TooltipPlacement): React.CSSProperties {
-  const isDark = document.documentElement.classList.contains('dark')
-  const c = isDark ? '#404040' : '#e2e8f0'
   switch (placement) {
-    case 'below': return { top: -6, left: 20, borderTop: `1px solid ${c}`, borderLeft: `1px solid ${c}` }
-    case 'above': return { bottom: -6, left: 20, borderBottom: `1px solid ${c}`, borderRight: `1px solid ${c}` }
-    case 'right': return { left: -6, top: 20, borderBottom: `1px solid ${c}`, borderLeft: `1px solid ${c}` }
-    case 'left':  return { right: -6, top: 20, borderTop: `1px solid ${c}`, borderRight: `1px solid ${c}` }
+    case 'below': return { top: -6, left: 20 }
+    case 'above': return { bottom: -6, left: 20 }
+    case 'right': return { left: -6, top: 20 }
+    case 'left':  return { right: -6, top: 20 }
     default:      return {}
   }
+}
+
+const ARROW_ZERO_BORDERS: Record<TooltipPlacement, React.CSSProperties> = {
+  below:  { borderBottom: 0, borderRight: 0 },
+  above:  { borderTop: 0, borderLeft: 0 },
+  right:  { borderTop: 0, borderRight: 0 },
+  left:   { borderBottom: 0, borderLeft: 0 },
+  center: {},
 }
 
 export default function TourGuide({ steps, tourKey, onRestartRef, onFinish }: Props) {
@@ -171,6 +177,7 @@ export default function TourGuide({ steps, tourKey, onRestartRef, onFinish }: Pr
   }, [])
 
   if (!active && !showToast) return null
+  if (!steps.length) return null
 
   const current    = steps[step]
   const isCentered = !active || !current?.target || !rect
@@ -181,7 +188,7 @@ export default function TourGuide({ steps, tourKey, onRestartRef, onFinish }: Pr
   return (
     <>
       {active && (
-        <div className="fixed inset-0 z-[99998]" aria-modal="true">
+        <div className="fixed inset-0 z-[99998]" role="dialog" aria-modal="true" aria-label="Onboarding tour">
 
           {/* ── Spotlight overlay ── */}
           {spot ? (
@@ -217,8 +224,8 @@ export default function TourGuide({ steps, tourKey, onRestartRef, onFinish }: Pr
               {/* Arrow connector */}
               {placement !== 'center' && (
                 <div
-                  className="absolute w-3 h-3 rotate-45 bg-white dark:bg-neutral-900"
-                  style={getArrowStyle(placement)}
+                  className="absolute w-3 h-3 rotate-45 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-700"
+                  style={{ ...getArrowStyle(placement), ...ARROW_ZERO_BORDERS[placement] }}
                 />
               )}
 
@@ -289,9 +296,9 @@ export default function TourGuide({ steps, tourKey, onRestartRef, onFinish }: Pr
 
               {/* Step dots */}
               <div className="flex items-center justify-center gap-1.5 pb-3">
-                {steps.map((_, i) => (
+                {steps.map((s, i) => (
                   <button
-                    key={i}
+                    key={`${s.title}-${i}`}
                     onClick={() => setStep(i)}
                     aria-label={`Go to step ${i + 1}`}
                     className={`rounded-full transition-all duration-200 ${
