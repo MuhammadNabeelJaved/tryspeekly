@@ -103,7 +103,10 @@ export default function InstructorDashboardPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [darkMode, setDarkMode] = useState(() => document.documentElement.classList.contains('dark'))
   const restartTourRef = useRef<(() => void) | null>(null)
-  const [tourSeen, setTourSeen] = useState(() => !!localStorage.getItem(`tour_done_instructor_${user?.email || 'guest'}`))
+  const [tourSeen, setTourSeen] = useState(false)
+  useEffect(() => {
+    setTourSeen(!!localStorage.getItem(`tour_done_instructor_${user?.email || 'guest'}`))
+  }, [user?.email])
 
   // Notification State
   const [showNotifications, setShowNotifications] = useState(false)
@@ -263,7 +266,7 @@ export default function InstructorDashboardPage() {
             >
               <span className="relative inline-flex items-center justify-center">
                 {!tourSeen && (
-                  <span className="absolute -inset-1.5 rounded-full animate-ping bg-violet-400 opacity-60" />
+                  <span className="absolute -inset-1.5 rounded-full animate-ping bg-violet-400 opacity-60 pointer-events-none" />
                 )}
                 <Sparkle size={18} weight="fill" />
               </span>
