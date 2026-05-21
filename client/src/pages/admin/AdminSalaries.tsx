@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -16,6 +16,7 @@ import type {
   SalaryPackageStatus,
   SalaryPaymentStatus,
 } from '@/types/api'
+import { PAYMENT_METHODS, getMethodById, getFaviconUrl } from '@/data/pakistanPaymentMethods'
 
 // ─── Local types ──────────────────────────────────────────────────────────────
 
@@ -109,6 +110,21 @@ export default function AdminSalaries() {
     defaultValues: { amount: 0, periodLabel: '', periodStart: '', periodEnd: '', status: 'pending', paidDate: '', notes: '' },
   })
   const watchPayStatus = payForm.watch('status')
+
+  const [pmValue, setPmValue] = useState('')
+  const [pmSearch, setPmSearch] = useState('')
+  const [pmOpen, setPmOpen] = useState(false)
+  const pmRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleOutsideClick(e: MouseEvent) {
+      if (pmRef.current && !pmRef.current.contains(e.target as Node)) {
+        setPmOpen(false)
+      }
+    }
+    if (pmOpen) document.addEventListener('mousedown', handleOutsideClick)
+    return () => document.removeEventListener('mousedown', handleOutsideClick)
+  }, [pmOpen])
 
   // ─── Load data ──────────────────────────────────────────────────────────────
 
@@ -250,6 +266,7 @@ export default function AdminSalaries() {
         status: values.status,
         paidDate: values.status === 'paid' ? (values.paidDate || undefined) : undefined,
         notes: values.notes || undefined,
+        paymentMethod: pmValue || undefined,
       }
 
       if (editingPayment) {
@@ -265,6 +282,8 @@ export default function AdminSalaries() {
       setShowPaymentForm(false)
       setEditingPayment(null)
       payForm.reset()
+      setPmValue('')
+      setPmSearch('')
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { error?: { message?: string } } } }
       toast.error(axiosErr?.response?.data?.error?.message ?? 'Failed to save payment')
@@ -301,6 +320,8 @@ export default function AdminSalaries() {
       paidDate: p.paidDate ? p.paidDate.slice(0, 10) : '',
       notes: p.notes ?? '',
     })
+    setPmValue(p.paymentMethod ?? '')
+    setPmSearch('')
     setShowPaymentForm(true)
   }
 
@@ -500,7 +521,7 @@ export default function AdminSalaries() {
                     </div>
                     {!showPaymentForm && (
                       <button
-                        onClick={() => { setShowPaymentForm(true); setEditingPayment(null); payForm.reset() }}
+                        onClick={() => { setShowPaymentForm(true); setEditingPayment(null); payForm.reset(); setPmValue(''); setPmSearch('') }}
                         className="flex items-center gap-1.5 text-xs font-semibold text-violet-600 dark:text-violet-400 hover:underline"
                       >
                         <Plus size={13} weight="bold" /> Add Payment
@@ -556,6 +577,109 @@ export default function AdminSalaries() {
                           )}
 
                           <div className="col-span-2">
+                            <Field label="Payment Method (optional)">
+                              <div ref={pmRef} className="relative">
+                                {pmValue ? (
+                                  <div className="flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800">
+                                    {pmValue === 'cash' ? (
+                                      <Money size={20} className="text-emerald-500 flex-shrink-0" />
+                                    ) : (
+                                      <img
+                                        src={getFaviconUrl(getMethodById(pmValue)?.domain ?? '')}
+                                        alt=""
+                                        className="w-5 h-5 rounded object-cover flex-shrink-0"
+                                        onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+                                      />
+                                    )}
+                                    <span className="flex-1 text-sm text-slate-900 dark:text-white">
+                                      {getMethodById(pmValue)?.name ?? pmValue}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() => { setPmValue(''); setPmSearch('') }}
+                                      className="text-slate-400 hover:text-slate-600 dark:hover:text-neutral-300"
+                                    >
+                                      <X size={13} />
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <input
+                                    value={pmSearch}
+                                    onChange={e => { setPmSearch(e.target.value); setPmOpen(true) }}
+                                    onFocus={() => setPmOpen(true)}
+                                    placeholder="Search payment method…"
+                                    className={inputCls}
+                                  />
+                                )}
+                                {pmOpen && !pmValue && (
+                                  <div className="absolute z-20 w-full mt-1 bg-white dark:bg-neutral-800 rounded-xl border border-slate-200 dark:border-neutral-700 shadow-lg max-h-56 overflow-y-auto">
+                                    {(() => {
+                                      const q = pmSearch.toLowerCase()
+                                      const fintech = PAYMENT_METHODS.filter(m => m.category === 'fintech' && (!q || m.name.toLowerCase().includes(q)))
+                                      const banks = PAYMENT_METHODS.filter(m => m.category === 'bank' && (!q || m.name.toLowerCase().includes(q)))
+                                      if (fintech.length === 0 && banks.length === 0) {
+                                        return <div className="px-3 py-4 text-sm text-slate-400 dark:text-neutral-500 text-center">No results</div>
+                                      }
+                                      return (
+                                        <>
+                                          {fintech.length > 0 && (
+                                            <>
+                                              <div className="px-3 pt-2 pb-1 text-[10px] font-bold uppercase tracking-wide text-slate-400 dark:text-neutral-500">Fintech</div>
+                                              {fintech.map(m => (
+                                                <button
+                                                  key={m.id}
+                                                  type="button"
+                                                  onMouseDown={() => { setPmValue(m.id); setPmSearch(''); setPmOpen(false) }}
+                                                  className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-violet-50 dark:hover:bg-violet-950/20 transition-colors text-left"
+                                                >
+                                                  {m.id === 'cash' ? (
+                                                    <Money size={20} className="text-emerald-500 flex-shrink-0" />
+                                                  ) : (
+                                                    <img
+                                                      src={getFaviconUrl(m.domain)}
+                                                      alt=""
+                                                      className="w-5 h-5 rounded object-cover flex-shrink-0"
+                                                      onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+                                                    />
+                                                  )}
+                                                  <span className="flex-1 text-sm text-slate-800 dark:text-neutral-200">{m.name}</span>
+                                                  <span className="text-[10px] font-bold text-violet-500 bg-violet-50 dark:bg-violet-950/30 px-1.5 py-0.5 rounded-full">Fintech</span>
+                                                </button>
+                                              ))}
+                                            </>
+                                          )}
+                                          {banks.length > 0 && (
+                                            <>
+                                              <div className={`px-3 pt-2 pb-1 text-[10px] font-bold uppercase tracking-wide text-slate-400 dark:text-neutral-500 ${fintech.length > 0 ? 'border-t border-slate-100 dark:border-neutral-700 mt-1' : ''}`}>Banks</div>
+                                              {banks.map(m => (
+                                                <button
+                                                  key={m.id}
+                                                  type="button"
+                                                  onMouseDown={() => { setPmValue(m.id); setPmSearch(''); setPmOpen(false) }}
+                                                  className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-violet-50 dark:hover:bg-violet-950/20 transition-colors text-left"
+                                                >
+                                                  <img
+                                                    src={getFaviconUrl(m.domain)}
+                                                    alt=""
+                                                    className="w-5 h-5 rounded object-cover flex-shrink-0"
+                                                    onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+                                                  />
+                                                  <span className="flex-1 text-sm text-slate-800 dark:text-neutral-200">{m.name}</span>
+                                                  <span className="text-[10px] font-bold text-slate-500 bg-slate-100 dark:bg-neutral-700 px-1.5 py-0.5 rounded-full">Bank</span>
+                                                </button>
+                                              ))}
+                                            </>
+                                          )}
+                                        </>
+                                      )
+                                    })()}
+                                  </div>
+                                )}
+                              </div>
+                            </Field>
+                          </div>
+
+                          <div className="col-span-2">
                             <Field label="Notes (optional)">
                               <input {...payForm.register('notes')} placeholder="Optional note…" className={inputCls} />
                             </Field>
@@ -564,7 +688,7 @@ export default function AdminSalaries() {
                           <div className="col-span-2 flex gap-2 justify-end">
                             <button
                               type="button"
-                              onClick={() => { setShowPaymentForm(false); setEditingPayment(null) }}
+                              onClick={() => { setShowPaymentForm(false); setEditingPayment(null); setPmValue(''); setPmSearch('') }}
                               className="px-4 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 text-sm font-semibold text-slate-600 dark:text-neutral-400 hover:bg-slate-50 dark:hover:bg-neutral-800 transition-colors"
                             >
                               Cancel
@@ -611,6 +735,23 @@ export default function AdminSalaries() {
                                 {p.periodEnd && ` – ${new Date(p.periodEnd).toLocaleDateString()}`}
                               </span>
                             </div>
+                            {p.paymentMethod && (
+                              <div className="flex items-center gap-1 mt-0.5">
+                                {p.paymentMethod === 'cash' ? (
+                                  <Money size={11} className="text-emerald-500" />
+                                ) : (
+                                  <img
+                                    src={getFaviconUrl(getMethodById(p.paymentMethod)?.domain ?? '')}
+                                    alt=""
+                                    className="w-3 h-3 rounded object-cover"
+                                    onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+                                  />
+                                )}
+                                <span className="text-[10px] text-slate-400 dark:text-neutral-500">
+                                  {getMethodById(p.paymentMethod)?.name ?? p.paymentMethod}
+                                </span>
+                              </div>
+                            )}
                           </div>
                           <div className="flex items-center gap-1">
                             <button
