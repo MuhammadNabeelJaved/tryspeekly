@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   ChartBar, Users, Chalkboard, BookOpen, CreditCard, PencilSimple,
   List, X, SignOut, Bell, MagnifyingGlass, Sun, Moon, GearSix,
-  Lock, Eye, EyeSlash, Handshake, Certificate, ChatCircleDots, CheckCircle, Chats, Globe, Star, Sparkle
+  Lock, Eye, EyeSlash, Handshake, Certificate, ChatCircleDots, CheckCircle, Chats, Globe, Star, Sparkle, Money
 } from '@phosphor-icons/react'
 import TourGuide, { type TourStep } from '@/components/TourGuide'
 import type { Student, Instructor, Course, CMSPage } from './admin/adminData'
@@ -37,10 +37,11 @@ const AdminMessages = lazy(() => import('./admin/AdminMessages'))
 const AdminSEO = lazy(() => import('./admin/AdminSEO'))
 const AdminReviews = lazy(() => import('./admin/AdminReviews'))
 const AdminGeoAccess = lazy(() => import('./admin/AdminGeoAccess'))
+const AdminSalaries = lazy(() => import('./admin/AdminSalaries'))
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 
-export type AdminView = 'overview' | 'students' | 'instructors' | 'courses' | 'certificates' | 'payments' | 'payments-setup' | 'financial-aid' | 'cms' | 'blog' | 'settings' | 'support' | 'notifications' | 'messages' | 'seo' | 'reviews' | 'geo-access'
+export type AdminView = 'overview' | 'students' | 'instructors' | 'courses' | 'certificates' | 'payments' | 'payments-setup' | 'financial-aid' | 'salaries' | 'cms' | 'blog' | 'settings' | 'support' | 'notifications' | 'messages' | 'seo' | 'reviews' | 'geo-access'
 
 export interface AdminStore {
   students: Student[]
@@ -69,6 +70,7 @@ const NAV_CORE: NavItem[] = [
 const NAV_FINANCE: NavItem[] = [
   { view: 'payments',      label: 'Payments',      path: 'payments',      Icon: CreditCard as NavItem['Icon'] },
   { view: 'financial-aid', label: 'Financial Aid', path: 'financial-aid', Icon: Handshake as NavItem['Icon'] },
+  { view: 'salaries', label: 'Salaries', path: 'salaries', Icon: Money as NavItem['Icon'] },
   { view: 'certificates',  label: 'Certificates',  path: 'certificates',  Icon: Certificate as NavItem['Icon'] },
 ]
 
@@ -688,6 +690,7 @@ export default function AdminPage() {
                   <Route path="/seo" element={<AdminSEO />} />
                   <Route path="/reviews" element={<AdminReviews />} />
                   <Route path="/geo-access" element={<AdminGeoAccess />} />
+                  <Route path="/salaries" element={<AdminSalaries />} />
                   <Route path="*" element={<Navigate to="/admin" replace />} />
                 </Routes>
               </Suspense>
