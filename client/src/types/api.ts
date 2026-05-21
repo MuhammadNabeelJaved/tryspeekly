@@ -616,6 +616,7 @@ export interface SalaryPayment {
   status: SalaryPaymentStatus;
   paidDate?: string;
   notes?: string;
+  paymentMethod?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -649,6 +650,7 @@ export interface CreateSalaryPaymentDto {
   status?: SalaryPaymentStatus;
   paidDate?: string;
   notes?: string;
+  paymentMethod?: string;
 }
 
 export interface UpdateSalaryPaymentDto {
@@ -659,4 +661,5 @@ export interface UpdateSalaryPaymentDto {
   status?: SalaryPaymentStatus;
   paidDate?: string;
   notes?: string;
+  paymentMethod?: string;
 }

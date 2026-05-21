@@ -44,6 +44,11 @@ const salaryPaymentSchema = new Schema(
       trim: true,
       maxlength: [500, 'Notes cannot exceed 500 characters'],
     },
+    paymentMethod: {
+      type: String,
+      trim: true,
+      maxlength: [100, 'Payment method cannot exceed 100 characters'],
+    },
   },
   { timestamps: true, versionKey: false }
 )
