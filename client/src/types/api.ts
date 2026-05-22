@@ -315,6 +315,7 @@ export interface Blog {
   tags: string[];
   status: 'draft' | 'published' | 'archived';
   publishedAt?: string;
+  readTime?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -323,8 +324,11 @@ export interface CreateBlogDto {
   title: string;
   content: string;
   excerpt?: string;
+  coverImage?: string;
   tags?: string[];
   status?: 'draft' | 'published' | 'archived';
+  slug?: string;
+  readTime?: string;
 }
 
 export interface UpdateBlogDto extends Partial<CreateBlogDto> {}
@@ -471,6 +475,9 @@ export interface SiteSettings {
   contact: { phone?: string; email?: string; whatsapp?: string; address?: string; workingHours?: string };
   social: { facebook?: string; instagram?: string; twitter?: string; linkedin?: string; youtube?: string };
   seo: { metaTitle?: string; metaDescription?: string; keywords?: string };
+  homepage?: {
+    blogCount?: number;
+  };
   logoUrl?: string;
   bannerUrl?: string;
   paymentsSetup?: Record<string, unknown>;
