@@ -196,6 +196,7 @@ export default function AdminBlog() {
                 const raw = e.target.value
                 if (raw === '') return
                 const val = Math.min(12, Math.max(1, Number(raw)))
+                if (isNaN(val)) return
                 setHomeBlogCount(val)
                 saveHomeBlogCount(val)
               }}

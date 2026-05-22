@@ -57,6 +57,7 @@ export default function Blog() {
   const isInView = useInView(ref, { once: true, margin: '-80px' })
   const [posts, setPosts] = useState<Blog[]>([])
   const [loading, setLoading] = useState(true)
+  const [skeletonCount, setSkeletonCount] = useState(3)
 
   useEffect(() => {
     const load = async () => {
@@ -68,6 +69,7 @@ export default function Blog() {
         } catch {
           // settings fetch failed — use default 3
         }
+        setSkeletonCount(count)
 
         const response = await blogService.getAllBlogs({ limit: count })
         setPosts(response.data.length > 0 ? response.data : FALLBACK_POSTS)
@@ -107,7 +109,7 @@ export default function Blog() {
         {/* Blog cards */}
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-7">
-            {[1, 2, 3].map(i => (
+            {Array.from({ length: skeletonCount }, (_, i) => i).map(i => (
               <div key={i} className="h-80 rounded-2xl bg-white dark:bg-neutral-900 animate-pulse border border-gray-100 dark:border-neutral-800" />
             ))}
           </div>
