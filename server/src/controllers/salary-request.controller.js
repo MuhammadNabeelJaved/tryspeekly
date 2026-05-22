@@ -105,6 +105,11 @@ export const approveRequest = asyncHandler(async (req, res) => {
 
   const { adminReply } = req.body
 
+  request.status = 'approved'
+  request.resolvedAt = new Date()
+  if (adminReply !== undefined) request.adminReply = adminReply
+  await request.save()
+
   const paymentData = {
     package: request.package,
     teacher: request.teacher,
@@ -117,11 +122,6 @@ export const approveRequest = asyncHandler(async (req, res) => {
   if (request.periodEnd) paymentData.periodEnd = request.periodEnd
 
   await SalaryPayment.create(paymentData)
-
-  request.status = 'approved'
-  request.resolvedAt = new Date()
-  if (adminReply !== undefined) request.adminReply = adminReply
-  await request.save()
 
   await createAndEmitNotification({
     recipientId: request.teacher,
