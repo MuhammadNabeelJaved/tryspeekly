@@ -59,6 +59,11 @@ const INSTRUCTOR_TOUR_STEPS: TourStep[] = [
     content: 'Create assignments for your students and review their submissions all in one place.',
   },
   {
+    target: 'instructor-nav-salary',
+    title: 'My Salary',
+    content: 'View your salary history, track approved payments, and submit salary requests to the admin.',
+  },
+  {
     target: 'instructor-nav-messages',
     title: 'Messages',
     content: 'Communicate directly with your students. Answer questions and provide personalized guidance.',
@@ -72,6 +77,11 @@ const INSTRUCTOR_TOUR_STEPS: TourStep[] = [
     target: 'instructor-nav-settings',
     title: 'Settings',
     content: 'Update your profile, bio, and teaching preferences that are visible to students.',
+  },
+  {
+    target: 'instructor-nav-support',
+    title: 'Support & Help',
+    content: 'Having an issue or question? Submit a support ticket and the admin team will assist you.',
   },
   {
     target: 'instructor-take-tour',

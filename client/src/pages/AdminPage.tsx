@@ -129,6 +129,11 @@ const ADMIN_TOUR_STEPS: TourStep[] = [
     content: 'Review financial aid applications from students. Accept or reject and trigger free enrollments.',
   },
   {
+    target: 'admin-nav-salaries',
+    title: 'Salaries',
+    content: 'Manage instructor salary payments. Review salary requests, approve payouts, and track payment history.',
+  },
+  {
     target: 'admin-nav-certificates',
     title: 'Certificates',
     content: 'Issue certificates to students who have completed their courses.',
@@ -144,9 +149,19 @@ const ADMIN_TOUR_STEPS: TourStep[] = [
     content: 'View and respond to support tickets submitted by students and instructors.',
   },
   {
+    target: 'admin-nav-contacts',
+    title: 'Contacts',
+    content: 'View and manage all messages submitted through the public contact form. Reply, update status, and add internal notes.',
+  },
+  {
     target: 'admin-nav-reviews',
     title: 'Reviews',
     content: 'Moderate course reviews submitted by students before they go public.',
+  },
+  {
+    target: 'admin-nav-notifications',
+    title: 'Notifications',
+    content: 'View platform-wide notifications and manage alerts sent to users across the system.',
   },
   {
     target: 'admin-nav-blog',
@@ -157,6 +172,16 @@ const ADMIN_TOUR_STEPS: TourStep[] = [
     target: 'admin-nav-seo',
     title: 'SEO Manager',
     content: 'Manage meta titles, descriptions, and keywords to improve your site\'s search engine visibility.',
+  },
+  {
+    target: 'admin-nav-cms',
+    title: 'CMS Editor',
+    content: 'Edit static content pages on your site — hero text, about sections, and other public-facing copy — without touching code.',
+  },
+  {
+    target: 'admin-nav-geo-access',
+    title: 'Geo Access',
+    content: 'Control which countries can access the platform. Block or allow regions to manage your audience reach.',
   },
   {
     target: 'admin-nav-settings',
