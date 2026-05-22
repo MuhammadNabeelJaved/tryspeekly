@@ -99,7 +99,7 @@ export default function BlogPostPage() {
                 {new Date(blog.publishedAt || blog.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
               </div>
               <span className="hidden sm:inline w-1 h-1 rounded-full bg-slate-300 dark:bg-neutral-700" />
-              <div className="flex items-center gap-1.5"><Clock size={16} /> 5 min read</div>
+              <div className="flex items-center gap-1.5"><Clock size={16} /> {blog.readTime ?? '5 min read'}</div>
             </div>
           </motion.div>
         </div>
@@ -225,7 +225,7 @@ export default function BlogPostPage() {
                     <div className="flex items-center gap-4 text-xs font-bold text-slate-400 dark:text-neutral-500 mb-3">
                       <div className="flex items-center gap-1.5"><CalendarBlank size={14} /> {new Date(post.publishedAt || post.createdAt).toLocaleDateString('en-GB')}</div>
                       <div className="w-1 h-1 rounded-full bg-slate-300 dark:bg-neutral-700" />
-                      <div className="flex items-center gap-1.5"><Clock size={14} /> 5 min read</div>
+                      <div className="flex items-center gap-1.5"><Clock size={14} /> {post.readTime ?? '5 min read'}</div>
                     </div>
                     <Link to={`/blog/slug/${post.slug}`}>
                       <h3 className="text-xl font-bold text-slate-900 dark:text-white leading-snug group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">
