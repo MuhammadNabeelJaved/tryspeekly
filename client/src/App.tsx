@@ -9,6 +9,7 @@ import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import ScrollToTop from '@/components/ScrollToTop'
 import Loader from '@/components/Loader'
+import AIChatWidget from '@/components/AIChatWidget'
 
 const Home = lazy(() => import('@/pages/Home'))
 const CoursesPage = lazy(() => import('@/pages/CoursesPage'))
@@ -101,6 +102,7 @@ function PublicLayout() {
       </main>
       <Footer />
       <ScrollToTop />
+      <AIChatWidget />
     </div>
   )
 }

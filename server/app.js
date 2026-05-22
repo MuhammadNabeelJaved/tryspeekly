@@ -75,6 +75,7 @@ import reviewRoutes from './src/routes/review.route.js'
 import geoRoutes from './src/routes/geo.route.js'
 import salaryRoutes from './src/routes/salary.route.js'
 import salaryRequestRoutes from './src/routes/salary-request.route.js'
+import aiChatRoutes from './src/routes/ai-chat.route.js'
 
 app.use('/api/v1/users', userRoutes)
 app.use('/api/v1/live-classes', liveClassRoutes)
@@ -98,6 +99,7 @@ app.use('/api/v1/reviews', reviewRoutes)
 app.use('/api/v1/geo', geoRoutes)
 app.use('/api/v1/salaries', salaryRoutes)
 app.use('/api/v1/salary-requests', salaryRequestRoutes)
+app.use('/api/v1/ai-chat', aiChatRoutes)
 
 app.use((req, res) => {
     res.status(404).json({
