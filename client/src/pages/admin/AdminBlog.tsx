@@ -61,6 +61,12 @@ export default function AdminBlog() {
       .catch(() => {})
   }, [])
 
+  useEffect(() => {
+    return () => {
+      if (debounceTimer.current) clearTimeout(debounceTimer.current)
+    }
+  }, [])
+
   const saveHomeBlogCount = useCallback((value: number) => {
     if (debounceTimer.current) clearTimeout(debounceTimer.current)
     debounceTimer.current = setTimeout(async () => {
@@ -187,7 +193,9 @@ export default function AdminBlog() {
               max={12}
               value={homeBlogCount}
               onChange={e => {
-                const val = Math.min(12, Math.max(1, Number(e.target.value)))
+                const raw = e.target.value
+                if (raw === '') return
+                const val = Math.min(12, Math.max(1, Number(raw)))
                 setHomeBlogCount(val)
                 saveHomeBlogCount(val)
               }}
