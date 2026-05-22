@@ -8,6 +8,7 @@ import {
   Lock, Eye, EyeSlash, Handshake, Certificate, ChatCircleDots, CheckCircle, Chats, Globe, Star, Sparkle, Money, EnvelopeSimple
 } from '@phosphor-icons/react'
 import TourGuide, { type TourStep } from '@/components/TourGuide'
+import DashboardSearch, { type SearchItem } from '@/components/DashboardSearch'
 import type { Student, Instructor, Course, CMSPage } from './admin/adminData'
 import { INITIAL_STUDENTS, INITIAL_INSTRUCTORS, INITIAL_COURSES, INITIAL_CMS_PAGES } from './admin/adminData'
 import Loader from '@/components/Loader'
@@ -89,6 +90,29 @@ const NAV_CONTENT: NavItem[] = [
   { view: 'cms',        label: 'CMS Editor',    path: 'cms',        Icon: PencilSimple as NavItem['Icon'] },
   { view: 'geo-access', label: 'Geo Access',    path: 'geo-access', Icon: Globe as NavItem['Icon'] },
   { view: 'settings',   label: 'Settings',      path: 'settings',   Icon: GearSix as NavItem['Icon'] },
+]
+
+// ─── SEARCH ITEMS ─────────────────────────────────────────────────────────────
+
+const ADMIN_SEARCH_ITEMS: SearchItem[] = [
+  { label: 'Overview',       description: 'Platform stats, revenue, and pending tasks',          path: '/admin',              Icon: ChartBar as SearchItem['Icon'] },
+  { label: 'Students',       description: 'Manage registered students and enrollments',           path: '/admin/students',      Icon: Users as SearchItem['Icon'] },
+  { label: 'Courses',        description: 'Review, approve, and manage courses',                  path: '/admin/courses',       Icon: BookOpen as SearchItem['Icon'] },
+  { label: 'Instructors',    description: 'Manage instructor profiles and courses',               path: '/admin/instructors',   Icon: Chalkboard as SearchItem['Icon'] },
+  { label: 'Payments',       description: 'Review and approve student payment submissions',       path: '/admin/payments',      Icon: CreditCard as SearchItem['Icon'] },
+  { label: 'Financial Aid',  description: 'Review financial aid applications',                    path: '/admin/financial-aid', Icon: Handshake as SearchItem['Icon'] },
+  { label: 'Salaries',       description: 'Manage instructor salary requests and payouts',        path: '/admin/salaries',      Icon: Money as SearchItem['Icon'] },
+  { label: 'Certificates',   description: 'Issue certificates to students',                      path: '/admin/certificates',  Icon: Certificate as SearchItem['Icon'] },
+  { label: 'Messages',       description: 'Direct messages between users',                       path: '/admin/messages',      Icon: Chats as SearchItem['Icon'] },
+  { label: 'Support',        description: 'Support tickets from students and instructors',       path: '/admin/support',       Icon: ChatCircleDots as SearchItem['Icon'] },
+  { label: 'Contacts',       description: 'Messages submitted via the public contact form',      path: '/admin/contacts',      Icon: EnvelopeSimple as SearchItem['Icon'] },
+  { label: 'Reviews',        description: 'Moderate student course reviews',                     path: '/admin/reviews',       Icon: Star as SearchItem['Icon'] },
+  { label: 'Notifications',  description: 'Platform-wide notification management',               path: '/admin/notifications', Icon: Bell as SearchItem['Icon'] },
+  { label: 'Blog Manager',   description: 'Create and publish blog posts',                       path: '/admin/blog',          Icon: PencilSimple as SearchItem['Icon'] },
+  { label: 'SEO Manager',    description: 'Manage meta titles, descriptions and keywords',       path: '/admin/seo',           Icon: Globe as SearchItem['Icon'] },
+  { label: 'CMS Editor',     description: 'Edit public-facing static content pages',             path: '/admin/cms',           Icon: PencilSimple as SearchItem['Icon'] },
+  { label: 'Geo Access',     description: 'Control country-level platform access',               path: '/admin/geo-access',    Icon: Globe as SearchItem['Icon'] },
+  { label: 'Settings',       description: 'Platform settings and admin preferences',             path: '/admin/settings',      Icon: GearSix as SearchItem['Icon'] },
 ]
 
 // ─── TOUR STEPS ───────────────────────────────────────────────────────────────
@@ -597,11 +621,7 @@ export default function AdminPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Search hint */}
-            <button className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-slate-50 dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 rounded-lg text-xs text-slate-400 dark:text-neutral-500 hover:border-violet-300 dark:hover:border-violet-700 transition-colors w-48">
-              <MagnifyingGlass size={13} />
-              Quick search…
-            </button>
+            <DashboardSearch items={ADMIN_SEARCH_ITEMS} />
 
             {/* Dark mode */}
             <button

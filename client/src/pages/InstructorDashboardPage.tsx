@@ -7,6 +7,7 @@ import {
 } from '@phosphor-icons/react'
 import Loader from '@/components/Loader'
 import TourGuide, { type TourStep } from '@/components/TourGuide'
+import DashboardSearch, { type SearchItem } from '@/components/DashboardSearch'
 import UserAvatar from '@/components/UserAvatar'
 import { useAuth } from '@/context/AuthContext'
 import { usersService } from '@/services/users.service'
@@ -27,6 +28,21 @@ const InstructorAssignments = lazy(() => import('./instructor/InstructorAssignme
 const InstructorSalary = lazy(() => import('./instructor/InstructorSalary'))
 
 export type InstructorView = 'overview' | 'courses' | 'live' | 'students' | 'messages' | 'assignments' | 'salary' | 'settings' | 'support' | 'notifications'
+
+// ─── SEARCH ITEMS ─────────────────────────────────────────────────────────────
+
+const INSTRUCTOR_SEARCH_ITEMS: SearchItem[] = [
+  { label: 'Dashboard',     description: 'Your stats, active courses, and recent activity',     path: '/instructor',                Icon: House as SearchItem['Icon'] },
+  { label: 'My Courses',    description: 'Create and manage your courses',                       path: '/instructor/courses',        Icon: BookOpen as SearchItem['Icon'] },
+  { label: 'Live Classes',  description: 'Schedule and manage live teaching sessions',           path: '/instructor/live',           Icon: VideoCamera as SearchItem['Icon'] },
+  { label: 'My Students',   description: 'View enrolled students and track progress',            path: '/instructor/students',       Icon: Users as SearchItem['Icon'] },
+  { label: 'Assignments',   description: 'Create assignments and review submissions',            path: '/instructor/assignments',    Icon: CheckCircle as SearchItem['Icon'] },
+  { label: 'My Salary',     description: 'View salary history and submit requests',             path: '/instructor/salary',         Icon: Money as SearchItem['Icon'] },
+  { label: 'Messages',      description: 'Chat with your students in real-time',                path: '/instructor/messages',       Icon: Chats as SearchItem['Icon'] },
+  { label: 'Notifications', description: 'Enrollments, messages, and platform updates',         path: '/instructor/notifications',  Icon: Bell as SearchItem['Icon'] },
+  { label: 'Settings',      description: 'Update your profile and teaching preferences',        path: '/instructor/settings',       Icon: GearSix as SearchItem['Icon'] },
+  { label: 'Support & Help',description: 'Submit a support ticket to the admin team',           path: '/instructor/support',        Icon: Headset as SearchItem['Icon'] },
+]
 
 const INSTRUCTOR_TOUR_STEPS: TourStep[] = [
   {
@@ -317,6 +333,8 @@ export default function InstructorDashboardPage() {
           </div>
 
           <div className="flex items-center gap-2">
+            <DashboardSearch items={INSTRUCTOR_SEARCH_ITEMS} />
+
             {/* Dark mode */}
             <button
               onClick={toggleDark}

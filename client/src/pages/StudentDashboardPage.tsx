@@ -7,6 +7,7 @@ import {
 } from '@phosphor-icons/react'
 import Loader from '@/components/Loader'
 import TourGuide, { type TourStep } from '@/components/TourGuide'
+import DashboardSearch, { type SearchItem } from '@/components/DashboardSearch'
 import { useAuth } from '../context/AuthContext'
 import { usersService } from '../services/users.service'
 import { useSocket } from '../context/SocketContext'
@@ -26,6 +27,20 @@ const StudentNotifications = lazy(() => import('./student/StudentNotifications')
 const StudentMessages = lazy(() => import('./student/StudentMessages'))
 
 export type StudentView = 'overview' | 'courses' | 'certificates' | 'payments' | 'financial-aid' | 'settings' | 'support' | 'notifications' | 'messages'
+
+// ─── SEARCH ITEMS ─────────────────────────────────────────────────────────────
+
+const STUDENT_SEARCH_ITEMS: SearchItem[] = [
+  { label: 'Home',           description: 'Your progress, sessions, and dashboard summary',      path: '/dashboard',                  Icon: House as SearchItem['Icon'] },
+  { label: 'My Courses',     description: 'Browse enrolled courses and continue learning',       path: '/dashboard/courses',          Icon: BookOpen as SearchItem['Icon'] },
+  { label: 'Certificates',   description: 'View and download your earned certificates',          path: '/dashboard/certificates',     Icon: Certificate as SearchItem['Icon'] },
+  { label: 'Payments',       description: 'Payment history and upload payment proofs',           path: '/dashboard/payments',         Icon: CreditCard as SearchItem['Icon'] },
+  { label: 'Financial Aid',  description: 'Apply for financial aid and track your application',  path: '/dashboard/financial-aid',    Icon: Handshake as SearchItem['Icon'] },
+  { label: 'Messages',       description: 'Chat directly with your instructors',                 path: '/dashboard/messages',         Icon: Chats as SearchItem['Icon'] },
+  { label: 'Notifications',  description: 'Enrollment approvals, messages, and announcements',   path: '/dashboard/notifications',    Icon: Bell as SearchItem['Icon'] },
+  { label: 'Support',        description: 'Submit a support ticket and get help',                path: '/dashboard/support',          Icon: ChatCircleDots as SearchItem['Icon'] },
+  { label: 'Settings',       description: 'Update profile, password, and account preferences',  path: '/dashboard/settings',         Icon: GearSix as SearchItem['Icon'] },
+]
 
 const STUDENT_TOUR_STEPS: TourStep[] = [
   {
@@ -320,6 +335,8 @@ export default function StudentDashboardPage() {
           </div>
 
           <div className="flex items-center gap-2">
+            <DashboardSearch items={STUDENT_SEARCH_ITEMS} />
+
             {/* Dark mode */}
             <button
               onClick={toggleDark}
