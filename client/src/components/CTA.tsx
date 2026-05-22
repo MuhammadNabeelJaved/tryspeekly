@@ -1,6 +1,9 @@
 import { useRef } from 'react'
 import { motion, useInView } from 'framer-motion'
 import { ArrowRight, TrendUp } from '@phosphor-icons/react'
+import { Link } from 'react-router-dom'
+
+const MotionLink = motion.create(Link)
 
 const STATS = [
   { value: 95, label: 'Fluency Improvement', color: 'bg-violet-600' },
@@ -151,8 +154,8 @@ export default function CTA() {
               ))}
             </div>
 
-            <motion.a
-              href="#"
+            <MotionLink
+              to="/signup"
               whileHover={{
                 scale: 1.05,
                 x: 8,
@@ -184,7 +187,7 @@ export default function CTA() {
               >
                 <ArrowRight size={16} weight="bold" />
               </motion.div>
-            </motion.a>
+            </MotionLink>
           </motion.div>
         </div>
       </div>

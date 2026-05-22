@@ -1,6 +1,7 @@
 import { useRef, useEffect } from 'react'
 import { motion, useMotionValue, useAnimationFrame, type Variants } from 'framer-motion'
 import { ArrowRight, Play, Star } from '@phosphor-icons/react'
+import { useNavigate } from 'react-router-dom'
 
 // ─── Variants ──────────────────────────────────────────────────────────────────
 
@@ -145,6 +146,8 @@ function ScrollRow({ cards, direction }: { cards: Card[]; direction: 'left' | 'r
 // ─── Hero ───────────────────────────────────────────────────────────────────────
 
 export default function Hero() {
+  const navigate = useNavigate()
+
   return (
     <section className="relative bg-white dark:bg-neutral-950 min-h-[100dvh] overflow-x-hidden transition-colors duration-300">
 
@@ -196,6 +199,7 @@ export default function Hero() {
             >
               <motion.button
                 type="button"
+                onClick={() => navigate('/courses')}
                 whileHover={{ scale: 1.03, boxShadow: '0 16px 40px rgba(124,58,237,0.45)' }}
                 whileTap={{ scale: 0.97 }}
                 className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-violet-600 to-purple-600 text-white font-bold px-8 py-4 rounded-2xl shadow-[0_8px_28px_rgba(124,58,237,0.35)] transition-all"
@@ -206,6 +210,7 @@ export default function Hero() {
 
               <motion.button
                 type="button"
+                onClick={() => navigate('/about')}
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
                 className="inline-flex items-center justify-center gap-3 text-slate-700 dark:text-neutral-200 font-semibold px-8 py-4 rounded-2xl border border-slate-200 dark:border-neutral-700 hover:border-violet-300 dark:hover:border-violet-600 bg-white/70 dark:bg-white/5 backdrop-blur-sm transition-all"

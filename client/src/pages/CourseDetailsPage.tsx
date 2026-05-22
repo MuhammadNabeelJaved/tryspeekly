@@ -5,7 +5,7 @@ import toast from 'react-hot-toast'
 import {
   Star, Users, Clock, GraduationCap, CheckCircle,
   PlayCircle, Certificate, FileText, CaretDown,
-  ArrowLeft, ArrowRight,
+  ArrowLeft, ArrowRight, Sparkle,
   ChartBar, Tag, Chats, CaretLeft, CaretRight, ThumbsUp, PencilSimple,
   Calendar, VideoCamera, UsersThree, ChalkboardTeacher, Laptop,
 } from '@phosphor-icons/react'

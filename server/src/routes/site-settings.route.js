@@ -9,12 +9,16 @@ import {
   getBlockedCountries,
   blockCountry,
   unblockCountry,
+  getFeaturedCourses,
+  getFeaturedBlogs,
 } from '../controllers/site-settings.controller.js'
 
 const router = express.Router()
 
 // ─── Public routes ─────────────────────────────────────────────────────────────
 router.route('/').get(getSiteSettings)
+router.route('/featured-courses').get(getFeaturedCourses)
+router.route('/featured-blogs').get(getFeaturedBlogs)
 
 // ─── Admin routes ──────────────────────────────────────────────────────────────
 router.route('/').patch(authenticate, authorize('admin'), updateSiteSettings)

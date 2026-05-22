@@ -1,6 +1,9 @@
 import { useRef } from 'react'
 import { motion, useInView } from 'framer-motion'
 import { ArrowRight, TrendUp } from '@phosphor-icons/react'
+import { Link } from 'react-router-dom'
+
+const MotionLink = motion.create(Link)
 
 const BARS = [28, 38, 30, 50, 42, 58, 70, 88, 76]
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep']
@@ -170,15 +173,15 @@ export default function Features() {
             </div>
 
             {/* CTA */}
-            <motion.button
-              type="button"
+            <MotionLink
+              to="/signup"
               whileHover={{ scale: 1.04 }}
               whileTap={{ scale: 0.97 }}
               className="inline-flex items-center gap-2 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-bold text-base px-7 py-3.5 rounded-xl transition-all shadow-[0_8px_24px_rgba(124,58,237,0.35)] hover:shadow-[0_12px_32px_rgba(124,58,237,0.45)]"
             >
               Start Your Journey
               <ArrowRight size={18} weight="bold" />
-            </motion.button>
+            </MotionLink>
           </motion.div>
 
         </div>

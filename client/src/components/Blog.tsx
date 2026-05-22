@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { ArrowRight, Calendar, Clock } from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
-import { blogService } from '../services/blog.service'
 import { siteSettingsService } from '../services/site-settings.service'
 import type { Blog } from '../types/api'
 
@@ -60,17 +59,14 @@ export default function Blog() {
   useEffect(() => {
     const load = async () => {
       try {
-        let count = 3
         try {
           const settings = await siteSettingsService.get()
-          count = settings.homepage?.blogCount ?? 3
+          setSkeletonCount(settings.homepage?.blogCount ?? 3)
         } catch {
-          // settings fetch failed — use default 3
+          // keep default skeleton count
         }
-        setSkeletonCount(count)
-
-        const response = await blogService.getAllBlogs({ limit: count })
-        setPosts(response.data.length > 0 ? response.data : FALLBACK_POSTS)
+        const data = await siteSettingsService.getFeaturedBlogs()
+        setPosts(data.length > 0 ? data : FALLBACK_POSTS)
       } catch {
         setPosts(FALLBACK_POSTS)
       } finally {

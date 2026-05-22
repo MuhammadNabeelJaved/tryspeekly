@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Star, Globe, Play, TwitterLogo, LinkedinLogo, Certificate, ChalkboardTeacher, ChatCircle } from '@phosphor-icons/react'
+import { useNavigate } from 'react-router-dom'
 import { axiosClient } from '../lib/axiosClient'
 
 interface Instructor {
@@ -104,6 +105,7 @@ const FEATURES = [
 
 export default function InstructorsPage() {
   const [instructors, setInstructors] = useState<Instructor[]>(FALLBACK_INSTRUCTORS)
+  const navigate = useNavigate()
 
   useEffect(() => {
     axiosClient
@@ -269,7 +271,10 @@ export default function InstructorsPage() {
                     </div>
                   </div>
 
-                  <button className="w-full py-3 rounded-xl bg-slate-50 dark:bg-neutral-800 text-slate-900 dark:text-white font-bold text-sm hover:bg-violet-600 hover:text-white dark:hover:bg-violet-500 transition-colors flex items-center justify-center gap-2">
+                  <button
+                    onClick={() => navigate('/courses')}
+                    className="w-full py-3 rounded-xl bg-slate-50 dark:bg-neutral-800 text-slate-900 dark:text-white font-bold text-sm hover:bg-violet-600 hover:text-white dark:hover:bg-violet-500 transition-colors flex items-center justify-center gap-2"
+                  >
                     <Play size={16} weight="fill" /> Watch Intro
                   </button>
                 </div>
@@ -298,7 +303,8 @@ export default function InstructorsPage() {
               </p>
             </div>
             <div className="flex-shrink-0">
-              <motion.button 
+              <motion.button
+                onClick={() => navigate('/contact')}
                 whileHover={{ scale: 1.03, boxShadow: '0 16px 40px rgba(124,58,237,0.45)' }}
                 whileTap={{ scale: 0.97 }}
                 className="inline-flex items-center justify-center bg-gradient-to-r from-violet-600 to-purple-600 text-white font-bold px-8 py-4 rounded-2xl shadow-[0_8px_28px_rgba(124,58,237,0.35)] transition-all whitespace-nowrap"

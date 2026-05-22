@@ -1,6 +1,9 @@
 import { useRef } from 'react'
 import { motion, useInView } from 'framer-motion'
 import { MagnifyingGlass, Receipt, VideoCamera, Chats, CheckCircle, ArrowRight } from '@phosphor-icons/react'
+import { Link } from 'react-router-dom'
+
+const MotionLink = motion.create(Link)
 
 const STEPS = [
   {
@@ -97,15 +100,15 @@ export default function Process() {
               })}
             </div>
 
-            <motion.a
-              href="#"
+            <MotionLink
+              to="/courses"
               whileHover={{ scale: 1.04 }}
               whileTap={{ scale: 0.97 }}
               className="inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-700 dark:bg-violet-500 dark:hover:bg-violet-600 text-white font-semibold text-[15px] px-6 py-3 rounded-lg transition-colors shadow-[0_4px_16px_rgba(124,58,237,0.3)] dark:shadow-[0_4px_16px_rgba(124,58,237,0.2)] mt-8"
             >
               Discover More
               <ArrowRight size={16} weight="bold" />
-            </motion.a>
+            </MotionLink>
           </motion.div>
 
           {/* Right: image */}

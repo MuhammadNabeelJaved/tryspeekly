@@ -1,12 +1,13 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useForm } from 'react-hook-form'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, PencilSimple, Trash, X, Check, Users, Clock, CurrencyCircleDollar, CheckCircle, XCircle, Eye } from '@phosphor-icons/react'
+import { Plus, PencilSimple, Trash, X, Check, Users, Clock, CurrencyCircleDollar, CheckCircle, XCircle, Eye, Star } from '@phosphor-icons/react'
 import toast from 'react-hot-toast'
 import type { AdminStore } from '../AdminPage'
 import type { Course } from './adminData'
 import { coursesService } from '../../services/courses.service'
 import { usersService } from '../../services/users.service'
+import { siteSettingsService } from '../../services/site-settings.service'
 
 const EMPTY: Course = {
   id: '', title: '', level: 'Beginner', duration: '', price: 0, currency: 'PKR',
@@ -104,6 +105,44 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
   }, [])
 
   const displayCourses = apiCourses ?? courses
+
+  // ─── Featured courses state ────────────────────────────────────────────────
+  const [featuredIds, setFeaturedIds] = useState<string[]>([])
+  const [courseCount, setCourseCount] = useState(3)
+  const featuredDebounce = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    siteSettingsService.get()
+      .then(s => {
+        setFeaturedIds((s.homepage?.featuredCourseIds ?? []) as string[])
+        setCourseCount(s.homepage?.courseCount ?? 3)
+      })
+      .catch(() => {})
+  }, [])
+
+  const saveFeatured = useCallback((ids: string[], count: number) => {
+    if (featuredDebounce.current) clearTimeout(featuredDebounce.current)
+    featuredDebounce.current = setTimeout(async () => {
+      try {
+        await siteSettingsService.update({ homepage: { featuredCourseIds: ids, courseCount: count } as any })
+      } catch {
+        toast.error('Failed to save featured courses')
+      }
+    }, 500)
+  }, [])
+
+  function toggleFeatured(id: string) {
+    setFeaturedIds(prev => {
+      const next = prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+      saveFeatured(next, courseCount)
+      return next
+    })
+  }
+
+  function updateCourseCount(val: number) {
+    setCourseCount(val)
+    saveFeatured(featuredIds, val)
+  }
 
   const [modalType, setModalType] = useState<'add' | 'edit' | null>(null)
   const [reviewCourse, setReviewCourse] = useState<Course | null>(null)
@@ -322,9 +361,29 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
           <h2 className="text-lg font-black text-slate-900 dark:text-white">Courses <span className="text-slate-400 dark:text-neutral-500 font-medium text-base">({displayCourses.length})</span></h2>
           <p className="text-xs text-slate-400 dark:text-neutral-500 mt-0.5">Manage course catalog and enrollment</p>
         </div>
-        <button onClick={openAdd} className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-sm font-bold shadow-[0_4px_12px_rgba(124,58,237,0.3)] transition-colors self-start">
-          <Plus size={15} weight="bold" />New Course
-        </button>
+        <div className="flex items-center gap-3 self-start">
+          <label className="flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-neutral-400 whitespace-nowrap">
+            Show
+            <input
+              type="number"
+              min={1}
+              max={12}
+              value={courseCount}
+              onChange={e => {
+                const raw = e.target.value
+                if (raw === '') return
+                const val = Math.min(12, Math.max(1, Number(raw)))
+                if (isNaN(val)) return
+                updateCourseCount(val)
+              }}
+              className="w-14 px-2 py-1.5 rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-slate-900 dark:text-white text-center text-sm font-bold outline-none focus:border-violet-500 transition-all"
+            />
+            on home
+          </label>
+          <button onClick={openAdd} className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-sm font-bold shadow-[0_4px_12px_rgba(124,58,237,0.3)] transition-colors">
+            <Plus size={15} weight="bold" />New Course
+          </button>
+        </div>
       </div>
 
       {/* Summary stats */}
@@ -530,6 +589,22 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
                   </button>
                 ) : (
                   <>
+                    {course.status === 'published' && (
+                      <>
+                        <button
+                          onClick={() => toggleFeatured(course.id)}
+                          className={`flex-1 py-2.5 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors hover:bg-slate-50 dark:hover:bg-neutral-800/50 ${
+                            featuredIds.includes(course.id)
+                              ? 'text-amber-500 dark:text-amber-400'
+                              : 'text-slate-400 dark:text-neutral-500 hover:text-amber-500 dark:hover:text-amber-400'
+                          }`}
+                        >
+                          <Star size={13} weight={featuredIds.includes(course.id) ? 'fill' : 'regular'} />
+                          {featuredIds.includes(course.id) ? 'Featured' : 'Feature'}
+                        </button>
+                        <div className="w-px bg-slate-100 dark:bg-neutral-800" />
+                      </>
+                    )}
                     <button onClick={() => openEdit(course)} className="flex-1 py-2.5 text-xs font-semibold text-slate-500 dark:text-neutral-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-slate-50 dark:hover:bg-neutral-800/50 flex items-center justify-center gap-1.5 transition-colors">
                       <PencilSimple size={13} />Edit
                     </button>

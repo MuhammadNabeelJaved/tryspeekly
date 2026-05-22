@@ -1,6 +1,9 @@
 import { useRef } from 'react'
 import { motion, useInView } from 'framer-motion'
 import { ArrowRight } from '@phosphor-icons/react'
+import { Link } from 'react-router-dom'
+
+const MotionLink = motion.create(Link)
 
 export default function Testimonials() {
   const ref = useRef<HTMLDivElement>(null)
@@ -65,23 +68,23 @@ export default function Testimonials() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4">
-              <motion.a
-                href="#"
+              <MotionLink
+                to="/signup"
                 whileHover={{ scale: 1.04 }}
                 whileTap={{ scale: 0.97 }}
                 className="inline-flex items-center justify-center gap-2 bg-white dark:bg-neutral-900 dark:border dark:border-white/15 hover:bg-violet-50 dark:hover:bg-neutral-800 text-violet-700 dark:text-violet-200 font-bold text-[15px] px-7 py-3.5 rounded-lg transition-colors shadow-[0_4px_20px_rgba(0,0,0,0.15)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.4)]"
               >
                 Start Learning Today
                 <ArrowRight size={17} weight="bold" />
-              </motion.a>
-              <motion.a
-                href="#"
+              </MotionLink>
+              <MotionLink
+                to="/about"
                 whileHover={{ scale: 1.04 }}
                 whileTap={{ scale: 0.97 }}
                 className="inline-flex items-center justify-center gap-2 border border-white/30 dark:border-white/20 hover:border-white/50 dark:hover:border-white/40 text-white font-semibold text-[15px] px-7 py-3.5 rounded-lg transition-all"
               >
                 View Success Stories
-              </motion.a>
+              </MotionLink>
             </div>
           </motion.div>
         </div>

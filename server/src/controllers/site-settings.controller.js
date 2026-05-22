@@ -1,5 +1,7 @@
 import asyncHandler from '../utils/asyncHandler.js'
 import SiteSettings from '../models/site-settings.model.js'
+import Course from '../models/course.model.js'
+import Blog from '../models/blog.model.js'
 import { uploadSiteLogo, uploadSiteBanner, deleteFile, extractPublicId } from '../utils/cloudinary.js'
 import { invalidateGeoCache } from '../middlewares/geo.middleware.js'
 
@@ -28,6 +30,7 @@ export const updateSiteSettings = asyncHandler(async (req, res) => {
     allowed.forEach((section) => {
       if (req.body[section] && typeof req.body[section] === 'object') {
         Object.assign(settings[section], req.body[section])
+        settings.markModified(section)
       }
     })
 
@@ -108,6 +111,59 @@ export const unblockCountry = asyncHandler(async (req, res) => {
     res.json({ success: true, message: `${upper} unblocked`, data: settings.blockedCountries })
   } catch (error) {
     res.status(400).json({ success: false, error: { message: error.message } })
+  }
+})
+
+// GET /api/v1/site-settings/featured-courses — public
+export const getFeaturedCourses = asyncHandler(async (req, res) => {
+  try {
+    const settings = await getOrCreate()
+    const count = settings.homepage?.courseCount ?? 3
+    const ids = settings.homepage?.featuredCourseIds ?? []
+
+    let courses
+    if (ids.length > 0) {
+      const found = await Course.find({ _id: { $in: ids }, status: 'published', isDeleted: { $ne: true } })
+        .populate('teacher', 'name profileImage')
+        .lean()
+      const map = new Map(found.map(c => [c._id.toString(), c]))
+      courses = ids.map(id => map.get(id.toString())).filter(Boolean)
+    } else {
+      courses = await Course.find({ status: 'published', isDeleted: { $ne: true } })
+        .populate('teacher', 'name profileImage')
+        .sort({ createdAt: -1 })
+        .limit(count)
+        .lean()
+    }
+
+    res.json({ success: true, data: courses })
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message })
+  }
+})
+
+// GET /api/v1/site-settings/featured-blogs — public
+export const getFeaturedBlogs = asyncHandler(async (req, res) => {
+  try {
+    const settings = await getOrCreate()
+    const count = settings.homepage?.blogCount ?? 3
+    const ids = settings.homepage?.featuredBlogIds ?? []
+
+    let blogs
+    if (ids.length > 0) {
+      const found = await Blog.find({ _id: { $in: ids }, status: 'published' }).lean()
+      const map = new Map(found.map(b => [b._id.toString(), b]))
+      blogs = ids.map(id => map.get(id.toString())).filter(Boolean)
+    } else {
+      blogs = await Blog.find({ status: 'published' })
+        .sort({ publishedAt: -1, createdAt: -1 })
+        .limit(count)
+        .lean()
+    }
+
+    res.json({ success: true, data: blogs })
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message })
   }
 })
 

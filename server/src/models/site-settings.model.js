@@ -33,6 +33,9 @@ const siteSettingsSchema = new Schema(
     blockedCountries: { type: [String], default: ['IN'] },
     homepage: {
       blogCount: { type: Number, default: 3, min: 1, max: 12 },
+      courseCount: { type: Number, default: 3, min: 1, max: 12 },
+      featuredCourseIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Course' }],
+      featuredBlogIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Blog' }],
     },
   },
   { timestamps: true, versionKey: false }

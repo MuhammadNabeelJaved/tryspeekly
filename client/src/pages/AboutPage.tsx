@@ -1,7 +1,10 @@
 import { motion } from 'framer-motion'
 import { CheckCircle, Users, Trophy, Target, Heart, Globe, Play } from '@phosphor-icons/react'
+import { useNavigate } from 'react-router-dom'
 
 export default function AboutPage() {
+  const navigate = useNavigate()
+
   const pageVariants = {
     initial: { opacity: 0 },
     animate: {
@@ -69,7 +72,10 @@ export default function AboutPage() {
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-violet-900/10 mix-blend-multiply" />
-                <button className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center text-violet-600 hover:scale-110 hover:bg-white transition-all shadow-xl">
+                <button
+                  onClick={() => navigate('/courses')}
+                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center text-violet-600 hover:scale-110 hover:bg-white transition-all shadow-xl"
+                >
                   <Play size={32} weight="fill" />
                 </button>
               </div>
@@ -192,19 +198,12 @@ export default function AboutPage() {
             {/* Background elements */}
             <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
             <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-black/10 rounded-full blur-2xl translate-y-1/3 -translate-x-1/3" />
-            
+
             <div className="relative z-10">
               <h2 className="text-3xl md:text-5xl font-black mb-6 tracking-tight">Ready to join our community?</h2>
-              <p className="text-violet-100 text-lg md:text-xl mb-10 max-w-2xl mx-auto">
+              <p className="text-violet-100 text-lg md:text-xl max-w-2xl mx-auto">
                 Start your journey towards English fluency today with our expert instructors and proven methodology.
               </p>
-              <motion.button 
-                whileHover={{ scale: 1.03, boxShadow: '0 16px 40px rgba(0,0,0,0.2)' }}
-                whileTap={{ scale: 0.97 }}
-                className="inline-flex items-center justify-center bg-white text-violet-600 font-bold px-8 py-4 rounded-2xl shadow-xl transition-all"
-              >
-                Start Your Free Trial
-              </motion.button>
             </div>
           </motion.div>
         </div>

@@ -1,5 +1,5 @@
 import { motion, AnimatePresence, useInView, animate } from 'framer-motion'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import {
   Clock, Star, Users, GraduationCap, ArrowRight, MagnifyingGlass,
@@ -304,6 +304,11 @@ export default function Courses() {
   const [cardsHovered, setCardsHovered] = useState(false)
   const [apiCourses, setApiCourses] = useState<CourseCard[] | null>(null)
   const { currency } = useGeo()
+  const navigate = useNavigate()
+
+  const scrollToCourseGrid = () => {
+    document.getElementById('courses-grid')?.scrollIntoView({ behavior: 'smooth' })
+  }
 
   // Fetch courses from the API on mount
   useEffect(() => {
@@ -407,6 +412,7 @@ export default function Courses() {
               >
                 <motion.button
                   type="button"
+                  onClick={scrollToCourseGrid}
                   whileHover={{ scale: 1.03, boxShadow: '0 16px 40px rgba(124,58,237,0.45)' }}
                   whileTap={{ scale: 0.97 }}
                   className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-violet-600 to-purple-600 text-white font-bold px-8 py-4 rounded-2xl shadow-[0_8px_28px_rgba(124,58,237,0.35)] transition-all"
@@ -415,6 +421,7 @@ export default function Courses() {
                 </motion.button>
                 <motion.button
                   type="button"
+                  onClick={() => navigate('/contact')}
                   whileHover={{ scale: 1.04 }}
                   whileTap={{ scale: 0.97 }}
                   className="flex items-center justify-center gap-2 border border-slate-200 dark:border-neutral-700 hover:border-violet-300 dark:hover:border-violet-500 text-slate-700 dark:text-neutral-300 hover:text-violet-600 dark:hover:text-violet-400 font-semibold px-8 py-4 rounded-2xl transition-colors"
@@ -534,7 +541,7 @@ export default function Courses() {
       </section>
 
       {/* ─── FALLBACK_COURSES GRID ─────────────────────────────────────── */}
-      <section className="py-20 lg:py-28">
+      <section id="courses-grid" className="py-20 lg:py-28">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
           {/* Filter row */}
@@ -1024,6 +1031,7 @@ export default function Courses() {
               </div>
               <div className="flex flex-col sm:flex-row gap-4 flex-shrink-0">
                 <motion.button
+                  onClick={() => navigate('/contact')}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   className="bg-white text-violet-700 font-black px-10 py-4 rounded-2xl shadow-xl shadow-black/20 hover:bg-violet-50 transition-colors"
@@ -1031,6 +1039,7 @@ export default function Courses() {
                   Free Assessment
                 </motion.button>
                 <motion.button
+                  onClick={() => navigate('/contact')}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   className="border-2 border-white/30 text-white font-bold px-10 py-4 rounded-2xl hover:border-white/60 hover:bg-white/5 transition-colors"

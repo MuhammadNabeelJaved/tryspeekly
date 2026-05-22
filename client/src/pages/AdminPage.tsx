@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   ChartBar, Users, Chalkboard, BookOpen, CreditCard, PencilSimple,
   List, X, SignOut, Bell, MagnifyingGlass, Sun, Moon, GearSix,
-  Lock, Eye, EyeSlash, Handshake, Certificate, ChatCircleDots, CheckCircle, Chats, Globe, Star, Sparkle, Money
+  Lock, Eye, EyeSlash, Handshake, Certificate, ChatCircleDots, CheckCircle, Chats, Globe, Star, Sparkle, Money, EnvelopeSimple
 } from '@phosphor-icons/react'
 import TourGuide, { type TourStep } from '@/components/TourGuide'
 import type { Student, Instructor, Course, CMSPage } from './admin/adminData'
@@ -38,10 +38,11 @@ const AdminSEO = lazy(() => import('./admin/AdminSEO'))
 const AdminReviews = lazy(() => import('./admin/AdminReviews'))
 const AdminGeoAccess = lazy(() => import('./admin/AdminGeoAccess'))
 const AdminSalaries = lazy(() => import('./admin/AdminSalaries'))
+const AdminContacts = lazy(() => import('./admin/AdminContacts'))
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 
-export type AdminView = 'overview' | 'students' | 'instructors' | 'courses' | 'certificates' | 'payments' | 'payments-setup' | 'financial-aid' | 'salaries' | 'cms' | 'blog' | 'settings' | 'support' | 'notifications' | 'messages' | 'seo' | 'reviews' | 'geo-access'
+export type AdminView = 'overview' | 'students' | 'instructors' | 'courses' | 'certificates' | 'payments' | 'payments-setup' | 'financial-aid' | 'salaries' | 'cms' | 'blog' | 'settings' | 'support' | 'notifications' | 'messages' | 'seo' | 'reviews' | 'geo-access' | 'contacts'
 
 export interface AdminStore {
   students: Student[]
@@ -77,6 +78,7 @@ const NAV_FINANCE: NavItem[] = [
 const NAV_COMMUNICATION: NavItem[] = [
   { view: 'messages',      label: 'Messages',      path: 'messages',      Icon: Chats as NavItem['Icon'] },
   { view: 'support',       label: 'Support',       path: 'support',       Icon: ChatCircleDots as NavItem['Icon'] },
+  { view: 'contacts',      label: 'Contacts',      path: 'contacts',      Icon: EnvelopeSimple as NavItem['Icon'] },
   { view: 'reviews',       label: 'Reviews',       path: 'reviews',       Icon: Star as NavItem['Icon'] },
   { view: 'notifications', label: 'Notifications', path: 'notifications', Icon: Bell as NavItem['Icon'] },
 ]
@@ -691,6 +693,7 @@ export default function AdminPage() {
                   <Route path="/reviews" element={<AdminReviews />} />
                   <Route path="/geo-access" element={<AdminGeoAccess />} />
                   <Route path="/salaries" element={<AdminSalaries />} />
+                  <Route path="/contacts" element={<AdminContacts />} />
                   <Route path="*" element={<Navigate to="/admin" replace />} />
                 </Routes>
               </Suspense>

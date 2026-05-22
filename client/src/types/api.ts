@@ -463,8 +463,23 @@ export interface Announcement {
 export interface ContactDto {
   name: string;
   email: string;
+  phone?: string;
   subject: string;
   message: string;
+}
+
+export interface ContactMessage {
+  _id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  subject: string;
+  message: string;
+  isRead: boolean;
+  status: 'new' | 'in_progress' | 'resolved' | 'spam';
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // ─── Site Settings Types ──────────────────────────────────────────────────────
@@ -477,6 +492,9 @@ export interface SiteSettings {
   seo: { metaTitle?: string; metaDescription?: string; keywords?: string };
   homepage?: {
     blogCount?: number;
+    courseCount?: number;
+    featuredCourseIds?: string[];
+    featuredBlogIds?: string[];
   };
   logoUrl?: string;
   bannerUrl?: string;

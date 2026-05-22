@@ -11,6 +11,7 @@ const contactSchema = new Schema(
       trim: true,
       lowercase: true,
     },
+    phone: { type: String, trim: true, default: '' },
     subject: {
       type: String,
       required: [true, 'Subject is required'],
@@ -19,6 +20,12 @@ const contactSchema = new Schema(
     },
     message: { type: String, required: [true, 'Message is required'], trim: true },
     isRead: { type: Boolean, default: false },
+    status: {
+      type: String,
+      enum: ['new', 'in_progress', 'resolved', 'spam'],
+      default: 'new',
+    },
+    notes: { type: String, trim: true, default: '' },
   },
   { timestamps: true, versionKey: false }
 )

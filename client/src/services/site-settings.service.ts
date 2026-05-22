@@ -1,5 +1,5 @@
 import { axiosClient } from '../lib/axiosClient';
-import type { SiteSettings, ApiResponse } from '../types/api';
+import type { SiteSettings, ApiResponse, Course, Blog } from '../types/api';
 
 export const siteSettingsService = {
   async get(): Promise<SiteSettings> {
@@ -31,6 +31,16 @@ export const siteSettingsService = {
       form,
       { headers: { 'Content-Type': 'multipart/form-data' } }
     );
+    return response.data.data;
+  },
+
+  async getFeaturedCourses(): Promise<Course[]> {
+    const response = await axiosClient.get<{ success: boolean; data: Course[] }>('/site-settings/featured-courses');
+    return response.data.data;
+  },
+
+  async getFeaturedBlogs(): Promise<Blog[]> {
+    const response = await axiosClient.get<{ success: boolean; data: Blog[] }>('/site-settings/featured-blogs');
     return response.data.data;
   },
 

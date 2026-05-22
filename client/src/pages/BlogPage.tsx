@@ -364,7 +364,7 @@ export default function BlogPage() {
                   Subscribe
                 </motion.button>
               </form>
-              <p className="text-xs text-slate-400 dark:text-neutral-500 mt-4">We care about your data in our <a href="#" className="underline hover:text-violet-600">privacy policy</a>.</p>
+              <p className="text-xs text-slate-400 dark:text-neutral-500 mt-4">We care about your data in our <Link to="/privacy" className="underline hover:text-violet-600">privacy policy</Link>.</p>
             </div>
           </motion.div>
         </div>

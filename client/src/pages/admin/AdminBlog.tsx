@@ -5,7 +5,7 @@ import toast from 'react-hot-toast'
 import {
   Plus, PencilSimple, Trash, X, Check, Eye, MagnifyingGlass,
   Clock, Tag, Globe, FileText, CalendarBlank, ArrowLeft,
-  TwitterLogo, LinkedinLogo, FacebookLogo, BookmarkSimple
+  TwitterLogo, LinkedinLogo, FacebookLogo, BookmarkSimple, Star
 } from '@phosphor-icons/react'
 import { blogService } from '../../services/blog.service'
 import { siteSettingsService } from '../../services/site-settings.service'
@@ -49,7 +49,9 @@ export default function AdminBlog() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [activeTab, setActiveTab] = useState<'edit' | 'preview'>('edit')
   const [homeBlogCount, setHomeBlogCount] = useState(3)
+  const [featuredBlogIds, setFeaturedBlogIds] = useState<string[]>([])
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const featuredDebounce = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const { register, handleSubmit, reset, setValue, watch } = useForm<CreateBlogDto & { tagsInput: string }>({
     defaultValues: { ...EMPTY_BLOG, tagsInput: '' }
@@ -57,7 +59,10 @@ export default function AdminBlog() {
 
   useEffect(() => {
     siteSettingsService.get()
-      .then(s => setHomeBlogCount(s.homepage?.blogCount ?? 3))
+      .then(s => {
+        setHomeBlogCount(s.homepage?.blogCount ?? 3)
+        setFeaturedBlogIds((s.homepage?.featuredBlogIds ?? []) as string[])
+      })
       .catch(() => {})
   }, [])
 
@@ -71,12 +76,31 @@ export default function AdminBlog() {
     if (debounceTimer.current) clearTimeout(debounceTimer.current)
     debounceTimer.current = setTimeout(async () => {
       try {
-        await siteSettingsService.update({ homepage: { blogCount: value } })
+        await siteSettingsService.update({ homepage: { blogCount: value } } as any)
       } catch {
         toast.error('Failed to save home blog count')
       }
     }, 500)
   }, [])
+
+  const saveFeaturedBlogs = useCallback((ids: string[]) => {
+    if (featuredDebounce.current) clearTimeout(featuredDebounce.current)
+    featuredDebounce.current = setTimeout(async () => {
+      try {
+        await siteSettingsService.update({ homepage: { featuredBlogIds: ids } } as any)
+      } catch {
+        toast.error('Failed to save featured blogs')
+      }
+    }, 500)
+  }, [])
+
+  function toggleFeaturedBlog(id: string) {
+    setFeaturedBlogIds(prev => {
+      const next = prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+      saveFeaturedBlogs(next)
+      return next
+    })
+  }
 
   // Watch fields for live preview
   const watchedTitle = watch('title')
@@ -315,6 +339,19 @@ export default function AdminBlog() {
                     </div>
                     
                     <div className="flex gap-1">
+                      {blog.status === 'published' && (
+                        <button
+                          onClick={() => toggleFeaturedBlog(blog._id)}
+                          title={featuredBlogIds.includes(blog._id) ? 'Remove from homepage' : 'Feature on homepage'}
+                          className={`p-2 rounded-xl transition-all ${
+                            featuredBlogIds.includes(blog._id)
+                              ? 'text-amber-500 bg-amber-50 dark:bg-amber-950/20'
+                              : 'text-slate-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/20'
+                          }`}
+                        >
+                          <Star size={16} weight={featuredBlogIds.includes(blog._id) ? 'fill' : 'regular'} />
+                        </button>
+                      )}
                       <button onClick={() => openEdit(blog)} className="p-2 rounded-xl text-slate-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/20 transition-all">
                         <PencilSimple size={16} />
                       </button>
