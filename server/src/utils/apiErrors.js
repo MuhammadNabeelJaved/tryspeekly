@@ -18,7 +18,6 @@ class AppError extends Error {
         code: this.errorCode || this.statusCode,
         status: this.status,
         timestamp: this.timestamp,
-        ...(process.env.NODE_ENV === 'development' && { stack: this.stack })
       }
     }
   }

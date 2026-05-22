@@ -74,7 +74,7 @@ export const getMyRequests = asyncHandler(async (req, res) => {
 export const cancelRequest = asyncHandler(async (req, res) => {
   const request = await SalaryRequest.findById(req.params.id)
   if (!request) throw new NotFoundError('Salary request not found')
-  if (request.teacher.toString() !== req.user.id) throw new ForbiddenError('Not your request')
+  if (request.teacher.toString() !== req.user.id.toString()) throw new ForbiddenError('Not your request')
   if (request.status !== 'pending') throw new ForbiddenError('Only pending requests can be cancelled')
 
   await request.deleteOne()
