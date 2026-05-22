@@ -259,7 +259,7 @@ export default function BlogPage() {
                     <div className="flex items-center gap-4 text-xs font-bold text-slate-400 dark:text-neutral-500 mb-3">
                       <div className="flex items-center gap-1.5"><CalendarBlank size={14} /> {new Date(post.publishedAt || post.createdAt).toLocaleDateString('en-GB')}</div>
                       <div className="w-1 h-1 rounded-full bg-slate-300 dark:bg-neutral-700" />
-                      <div className="flex items-center gap-1.5"><Clock size={14} /> 5 min read</div>
+                      <div className="flex items-center gap-1.5"><Clock size={14} /> {post.readTime ?? '5 min read'}</div>
                     </div>
 
                     <Link to={`/blog/slug/${post.slug}`}>
