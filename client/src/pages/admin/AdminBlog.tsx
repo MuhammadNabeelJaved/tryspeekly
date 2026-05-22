@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useForm } from 'react-hook-form'
 import { motion, AnimatePresence } from 'framer-motion'
 import toast from 'react-hot-toast'
@@ -8,6 +8,7 @@ import {
   TwitterLogo, LinkedinLogo, FacebookLogo, BookmarkSimple
 } from '@phosphor-icons/react'
 import { blogService } from '../../services/blog.service'
+import { siteSettingsService } from '../../services/site-settings.service'
 import type { Blog, CreateBlogDto } from '../../types/api'
 import { extractApiError } from '../../utils/apiError'
 
@@ -18,7 +19,8 @@ const EMPTY_BLOG: CreateBlogDto = {
   coverImage: '',
   tags: [],
   status: 'draft',
-  slug: ''
+  slug: '',
+  readTime: '5 min read',
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -46,10 +48,29 @@ export default function AdminBlog() {
   const [statusFilter, setStatusFilter] = useState('All')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [activeTab, setActiveTab] = useState<'edit' | 'preview'>('edit')
+  const [homeBlogCount, setHomeBlogCount] = useState(3)
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const { register, handleSubmit, reset, setValue, watch } = useForm<CreateBlogDto & { tagsInput: string }>({
     defaultValues: { ...EMPTY_BLOG, tagsInput: '' }
   })
+
+  useEffect(() => {
+    siteSettingsService.get()
+      .then(s => setHomeBlogCount(s.homepage?.blogCount ?? 3))
+      .catch(() => {})
+  }, [])
+
+  const saveHomeBlogCount = useCallback((value: number) => {
+    if (debounceTimer.current) clearTimeout(debounceTimer.current)
+    debounceTimer.current = setTimeout(async () => {
+      try {
+        await siteSettingsService.update({ homepage: { blogCount: value } })
+      } catch {
+        toast.error('Failed to save home blog count')
+      }
+    }, 500)
+  }, [])
 
   // Watch fields for live preview
   const watchedTitle = watch('title')
@@ -59,6 +80,7 @@ export default function AdminBlog() {
   const watchedExcerpt = watch('excerpt')
   const watchedStatus = watch('status')
   const watchedSlug = watch('slug')
+  const watchedReadTime = watch('readTime')
 
   const fetchBlogs = async () => {
     setLoading(true)
@@ -96,6 +118,7 @@ export default function AdminBlog() {
       coverImage: blog.coverImage || '',
       status: blog.status,
       slug: blog.slug,
+      readTime: blog.readTime || '5 min read',
       tagsInput: blog.tags.join(', ')
     })
     setEditingId(blog._id)
@@ -148,19 +171,37 @@ export default function AdminBlog() {
       <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-8">
         <div className="flex-1">
           <h2 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2">
-            Blog Manager 
+            Blog Manager
             <span className="text-sm font-medium text-slate-400 dark:text-neutral-500 bg-slate-100 dark:bg-neutral-800 px-2 py-0.5 rounded-lg">
               {blogs.length}
             </span>
           </h2>
           <p className="text-xs text-slate-500 dark:text-neutral-500 mt-1">Manage articles according to platform design</p>
         </div>
-        <button 
-          onClick={openAdd}
-          className="flex items-center gap-2 px-5 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-2xl text-sm font-bold shadow-[0_8px_20px_rgba(124,58,237,0.25)] transition-all transform hover:-translate-y-0.5 active:translate-y-0 self-start"
-        >
-          <Plus size={16} weight="bold" /> New Article
-        </button>
+        <div className="flex items-center gap-3 self-start">
+          <label className="flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-neutral-400 whitespace-nowrap">
+            Show
+            <input
+              type="number"
+              min={1}
+              max={12}
+              value={homeBlogCount}
+              onChange={e => {
+                const val = Math.min(12, Math.max(1, Number(e.target.value)))
+                setHomeBlogCount(val)
+                saveHomeBlogCount(val)
+              }}
+              className="w-14 px-2 py-1.5 rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-slate-900 dark:text-white text-center text-sm font-bold outline-none focus:border-violet-500 transition-all"
+            />
+            blogs on home page
+          </label>
+          <button
+            onClick={openAdd}
+            className="flex items-center gap-2 px-5 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-2xl text-sm font-bold shadow-[0_8px_20px_rgba(124,58,237,0.25)] transition-all transform hover:-translate-y-0.5 active:translate-y-0"
+          >
+            <Plus size={16} weight="bold" /> New Article
+          </button>
+        </div>
       </div>
 
       {/* Filters & Search */}
@@ -353,6 +394,10 @@ export default function AdminBlog() {
                         </Field>
                       </div>
 
+                      <Field label="Read Time">
+                        <input {...register('readTime')} placeholder="5 min read" className="w-full sm:w-48 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-neutral-800 bg-slate-50 dark:bg-neutral-800/50 text-sm font-medium outline-none focus:border-violet-500 transition-all" />
+                      </Field>
+
                       <Field label="Article Body Content">
                         <textarea 
                           {...register('content', { required: true })} 
@@ -382,7 +427,7 @@ export default function AdminBlog() {
                           <span className="w-1 h-1 rounded-full bg-slate-300" />
                           <div className="flex items-center gap-1"><CalendarBlank size={14} /> Today</div>
                           <span className="w-1 h-1 rounded-full bg-slate-300" />
-                          <div className="flex items-center gap-1"><Clock size={14} /> 5 min read</div>
+                          <div className="flex items-center gap-1"><Clock size={14} /> {watchedReadTime || '5 min read'}</div>
                         </div>
                       </div>
                     </div>
