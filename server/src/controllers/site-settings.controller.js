@@ -23,7 +23,7 @@ export const getSiteSettings = asyncHandler(async (req, res) => {
 export const updateSiteSettings = asyncHandler(async (req, res) => {
   try {
     const settings = await getOrCreate()
-    const allowed = ['site', 'contact', 'social', 'seo']
+    const allowed = ['site', 'contact', 'social', 'seo', 'homepage']
 
     allowed.forEach((section) => {
       if (req.body[section] && typeof req.body[section] === 'object') {
