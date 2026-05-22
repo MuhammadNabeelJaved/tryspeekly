@@ -1,9 +1,7 @@
-import { useState, useEffect } from 'react'
-import { motion, AnimatePresence, type Variants } from 'framer-motion'
+import { motion, type Variants } from 'framer-motion'
 import { ArrowRight, Play, Star } from '@phosphor-icons/react'
-import type { CSSProperties } from 'react'
 
-// ─── Variants (left side — unchanged) ─────────────────────────────────────────
+// ─── Variants (left side) ──────────────────────────────────────────────────────
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
@@ -24,266 +22,115 @@ const AVATARS = [
   'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=40&q=80',
 ]
 
-const BG_IMAGES = [
-  'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&q=80',
-  'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=800&q=80',
-  'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=800&q=80',
-  'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80',
-  'https://images.unsplash.com/photo-1531482615713-2afd69097998?w=800&q=80',
+interface CardData {
+  img: string
+  label: string
+  sub: string
+}
+
+const CARDS_COL_A: CardData[] = [
+  {
+    img: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400&q=80',
+    label: 'Speaking',
+    sub: 'Fluency Training',
+  },
+  {
+    img: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=400&q=80',
+    label: 'IELTS Prep',
+    sub: 'Band 8+ Guarantee',
+  },
+  {
+    img: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=400&q=80',
+    label: 'Grammar',
+    sub: 'Zero to Hero',
+  },
+  {
+    img: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=400&q=80',
+    label: 'Business English',
+    sub: 'Professional Track',
+  },
+  {
+    img: 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=400&q=80',
+    label: 'Writing',
+    sub: 'Academic Level',
+  },
 ]
 
-const CARD_STYLE: CSSProperties = {
-  background: 'rgba(255,255,255,0.07)',
-  backdropFilter: 'blur(20px)',
-  WebkitBackdropFilter: 'blur(20px)',
-  border: '1px solid rgba(255,255,255,0.11)',
-}
+const CARDS_COL_B: CardData[] = [
+  {
+    img: 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=400&q=80',
+    label: 'Vocabulary',
+    sub: '5,000+ Words',
+  },
+  {
+    img: 'https://images.unsplash.com/photo-1516321497487-e288fb19713f?w=400&q=80',
+    label: 'Online Classes',
+    sub: 'Live Sessions',
+  },
+  {
+    img: 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=400&q=80',
+    label: 'Conversation',
+    sub: 'Real-world English',
+  },
+  {
+    img: 'https://images.unsplash.com/photo-1488190211105-8b0e65b80b4e?w=400&q=80',
+    label: 'Pronunciation',
+    sub: 'Native Accent',
+  },
+  {
+    img: 'https://images.unsplash.com/photo-1485546246426-74dc88dec4d9?w=400&q=80',
+    label: 'Reading',
+    sub: 'Speed Reading',
+  },
+]
 
-const pad = (n: number) => String(n).padStart(2, '0')
+// ─── ScrollColumn ───────────────────────────────────────────────────────────────
 
-// ─── Countdown utility ──────────────────────────────────────────────────────────
-
-export function getTimeUntilNextClass(): { h: number; m: number; s: number } {
-  const now = new Date()
-  const target = new Date()
-  target.setHours(18, 0, 0, 0)
-  if (now > target) target.setDate(target.getDate() + 1)
-  const diff = Math.max(0, Math.floor((target.getTime() - now.getTime()) / 1000))
-  return {
-    h: Math.floor(diff / 3600),
-    m: Math.floor((diff % 3600) / 60),
-    s: diff % 60,
-  }
-}
-
-// ─── BackgroundSlideshow ────────────────────────────────────────────────────────
-
-function BackgroundSlideshow() {
-  const [current, setCurrent] = useState(0)
-
-  useEffect(() => {
-    const id = setInterval(() => setCurrent(prev => (prev + 1) % BG_IMAGES.length), 5000)
-    return () => clearInterval(id)
-  }, [])
-
+function ScrollColumn({
+  cards,
+  direction = 'up',
+  duration = 20,
+}: {
+  cards: CardData[]
+  direction?: 'up' | 'down'
+  duration?: number
+}) {
+  const doubled = [...cards, ...cards]
   return (
-    <div className="absolute inset-0 overflow-hidden rounded-3xl">
-      <AnimatePresence mode="sync">
-        <motion.img
-          key={current}
-          src={BG_IMAGES[current]}
-          alt=""
-          className="absolute inset-0 w-full h-full object-cover"
-          initial={{ opacity: 0, scale: 1 }}
-          animate={{ opacity: 1, scale: 1.08 }}
-          exit={{ opacity: 0 }}
-          transition={{
-            opacity: { duration: 0.8 },
-            scale: { duration: 5, ease: 'linear' },
-          }}
-        />
-      </AnimatePresence>
-      <div
-        className="absolute inset-0"
-        style={{
-          background:
-            'linear-gradient(135deg, rgba(10,10,10,0.82) 0%, rgba(10,10,10,0.62) 50%, rgba(10,10,10,0.80) 100%)',
-        }}
-      />
-    </div>
-  )
-}
-
-// ─── NextClassCard ─────────────────────────────────────────────────────────────
-
-function NextClassCard() {
-  const [time, setTime] = useState(getTimeUntilNextClass())
-
-  useEffect(() => {
-    const id = setInterval(() => setTime(getTimeUntilNextClass()), 1000)
-    return () => clearInterval(id)
-  }, [])
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.2, duration: 0.5, ease: 'easeOut' }}
-      className="col-start-1 col-end-3 row-start-1 row-end-3 rounded-2xl p-5 flex flex-col justify-between overflow-hidden"
-      style={CARD_STYLE}
-    >
+    <div className="flex-1 overflow-hidden relative">
       <motion.div
-        animate={{ y: [0, -6, 0] }}
-        transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-        className="flex flex-col h-full gap-3"
+        animate={{ y: direction === 'up' ? ['0%', '-50%'] : ['-50%', '0%'] }}
+        transition={{ duration, ease: 'linear', repeat: Infinity, repeatType: 'loop' }}
+        className="flex flex-col gap-3"
       >
-        {/* LIVE badge */}
-        <div className="flex items-center gap-2">
-          <motion.div
-            className="w-2 h-2 rounded-full bg-red-500"
-            animate={{ opacity: [1, 0.3, 1] }}
-            transition={{ duration: 1, repeat: Infinity }}
-          />
-          <span className="text-[10px] font-bold text-red-400 uppercase tracking-widest">Live</span>
-        </div>
-
-        {/* Class info */}
-        <div className="flex-1 flex flex-col justify-end gap-2">
-          <p className="text-[10px] text-white/50 uppercase tracking-wider">📅 Next Class</p>
-          <p className="text-lg font-black text-white leading-tight">IELTS Speaking Practice</p>
-          <p className="text-[11px] text-white/60">Today · 6:00 PM</p>
-
-          {/* Countdown */}
-          <div
-            className="rounded-xl px-3 py-2.5 mt-1"
-            style={{ background: 'rgba(124,58,237,0.2)', border: '1px solid rgba(124,58,237,0.3)' }}
-          >
-            <p className="text-[9px] text-violet-300 uppercase tracking-wider mb-1">Starts in</p>
-            <div className="flex items-center gap-0.5 font-mono text-2xl font-black text-white">
-              <span>{pad(time.h)}</span>
-              <motion.span
-                animate={{ opacity: [1, 0.3, 1] }}
-                transition={{ duration: 1, repeat: Infinity }}
-                className="text-violet-400"
-              >:</motion.span>
-              <span>{pad(time.m)}</span>
-              <motion.span
-                animate={{ opacity: [1, 0.3, 1] }}
-                transition={{ duration: 1, repeat: Infinity }}
-                className="text-violet-400"
-              >:</motion.span>
-              <span>{pad(time.s)}</span>
+        {doubled.map((card, i) => (
+          <div key={i} className="relative rounded-2xl overflow-hidden flex-shrink-0 w-full">
+            <img
+              src={card.img}
+              alt={card.label}
+              className="w-full h-[170px] sm:h-[190px] object-cover"
+              loading="eager"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+            <div className="absolute bottom-3 left-3 right-3">
+              <span className="inline-block bg-violet-600/90 backdrop-blur-sm text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full mb-1">
+                {card.label}
+              </span>
+              <p className="text-white/90 text-xs font-semibold leading-tight">{card.sub}</p>
             </div>
           </div>
-        </div>
+        ))}
       </motion.div>
-    </motion.div>
-  )
-}
 
-// ─── Small bento cards ──────────────────────────────────────────────────────────
-
-function RatingCard() {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.35, duration: 0.5, ease: 'easeOut' }}
-      className="col-start-3 row-start-1 rounded-2xl p-4 flex flex-col justify-center gap-1"
-      style={CARD_STYLE}
-    >
-      <motion.div
-        animate={{ y: [0, -5, 0] }}
-        transition={{ duration: 3.5, delay: 0.8, repeat: Infinity, ease: 'easeInOut' }}
-      >
-        <div className="flex items-center gap-1 mb-1">
-          {[1, 2, 3, 4, 5].map(s => (
-            <Star key={s} size={10} weight="fill" className="text-yellow-400" />
-          ))}
-        </div>
-        <p className="text-xl font-black text-white">4.9</p>
-        <p className="text-[10px] text-white/50">1,200+ Reviews</p>
-      </motion.div>
-    </motion.div>
-  )
-}
-
-function StreakCard() {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.5, duration: 0.5, ease: 'easeOut' }}
-      className="col-start-3 row-start-2 rounded-2xl p-4 flex flex-col justify-center gap-1"
-      style={CARD_STYLE}
-    >
-      <span className="text-xl">🏆</span>
-      <p className="text-sm font-bold text-white leading-tight">7-Day Streak</p>
-      <p className="text-[10px] text-white/50">Speaking Master</p>
-    </motion.div>
-  )
-}
-
-function CertificateCard() {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.65, duration: 0.5, ease: 'easeOut' }}
-      className="col-start-3 row-start-3 rounded-2xl p-4 flex flex-col justify-center gap-1"
-      style={CARD_STYLE}
-    >
-      <span className="text-xl">✦</span>
-      <p className="text-sm font-bold text-white leading-tight">Certificate</p>
-      <p className="text-[10px] text-white/50">Awarded</p>
-    </motion.div>
-  )
-}
-
-function LearnersCard() {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.95, duration: 0.5, ease: 'easeOut' }}
-      className="col-start-2 row-start-3 rounded-2xl p-4 flex flex-col justify-center gap-1"
-      style={CARD_STYLE}
-    >
-      <span className="text-xl">🎓</span>
-      <p className="text-xl font-black text-white">50K+</p>
-      <p className="text-[10px] text-white/50">Learners</p>
-    </motion.div>
-  )
-}
-
-// ─── ProgressCard ───────────────────────────────────────────────────────────────
-
-function ProgressCard() {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.8, duration: 0.5, ease: 'easeOut' }}
-      className="col-start-1 row-start-3 rounded-2xl p-4 flex flex-col justify-center gap-2 overflow-hidden"
-      style={CARD_STYLE}
-    >
-      <p className="text-[10px] text-white/50 uppercase tracking-wider">Speaking Progress</p>
-      <div className="relative h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.1)' }}>
-        {/* Fill bar */}
-        <motion.div
-          className="absolute left-0 top-0 h-full rounded-full"
-          style={{ background: 'linear-gradient(90deg, #7c3aed, #a855f7)' }}
-          initial={{ width: '0%' }}
-          animate={{ width: '82%' }}
-          transition={{ delay: 1.0, duration: 1.4, ease: 'easeOut' }}
-        />
-        {/* Shimmer */}
-        <motion.div
-          className="absolute top-0 h-full w-[50px] rounded-full"
-          style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.45), transparent)' }}
-          animate={{ x: [-50, 220] }}
-          transition={{ delay: 2.5, duration: 1.8, repeat: Infinity, repeatDelay: 1.2, ease: 'easeInOut' }}
-        />
-      </div>
-      <p className="text-right text-sm font-black text-violet-300">82%</p>
-    </motion.div>
-  )
-}
-
-// ─── BentoGrid ──────────────────────────────────────────────────────────────────
-
-function BentoGrid() {
-  return (
-    <div className="grid grid-cols-3 grid-rows-3 gap-3 w-full h-full">
-      <NextClassCard />
-      <RatingCard />
-      <StreakCard />
-      <ProgressCard />
-      <LearnersCard />
-      <CertificateCard />
+      {/* Top fade */}
+      <div className="absolute top-0 left-0 right-0 h-20 bg-gradient-to-b from-white dark:from-neutral-950 to-transparent pointer-events-none z-10" />
+      {/* Bottom fade */}
+      <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-white dark:from-neutral-950 to-transparent pointer-events-none z-10" />
     </div>
   )
 }
+
+// ─── Hero ───────────────────────────────────────────────────────────────────────
 
 export default function Hero() {
   return (
@@ -371,7 +218,12 @@ export default function Hero() {
             >
               <div className="flex -space-x-2.5">
                 {AVATARS.map(src => (
-                  <img key={src} src={src} alt="" className="w-9 h-9 rounded-full border-2 border-white dark:border-neutral-950 object-cover" />
+                  <img
+                    key={src}
+                    src={src}
+                    alt=""
+                    className="w-9 h-9 rounded-full border-2 border-white dark:border-neutral-950 object-cover"
+                  />
                 ))}
               </div>
               <div className="text-left">
@@ -394,15 +246,14 @@ export default function Hero() {
             </motion.div>
           </motion.div>
 
-          {/* ── RIGHT: Bento Grid ── */}
-          <div className="relative flex items-center justify-center order-1 lg:order-2 min-h-[calc(100dvh-80px)] py-8 lg:py-0">
-            <div className="relative rounded-3xl overflow-hidden w-full max-w-[440px] h-[520px]">
-              <BackgroundSlideshow />
-              <div className="relative z-10 p-4 h-full">
-                <BentoGrid />
-              </div>
+          {/* ── RIGHT: Infinite Scroll Columns ── */}
+          <div className="relative order-1 lg:order-2 min-h-[calc(100dvh-80px)] flex items-center justify-center py-8 lg:py-0">
+            <div className="w-full max-w-[440px] h-[340px] sm:h-[460px] lg:h-[560px] flex gap-3">
+              <ScrollColumn cards={CARDS_COL_A} direction="up" duration={24} />
+              <ScrollColumn cards={CARDS_COL_B} direction="down" duration={19} />
             </div>
           </div>
+
         </div>
       </div>
 
