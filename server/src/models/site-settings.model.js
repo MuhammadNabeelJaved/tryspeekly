@@ -31,6 +31,9 @@ const siteSettingsSchema = new Schema(
     },
     paymentsSetup: { type: mongoose.Schema.Types.Mixed, default: null },
     blockedCountries: { type: [String], default: ['IN'] },
+    homepage: {
+      blogCount: { type: Number, default: 3, min: 1, max: 12 },
+    },
   },
   { timestamps: true, versionKey: false }
 )
