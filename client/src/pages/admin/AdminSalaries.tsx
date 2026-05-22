@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Plus, PencilSimple, Trash, X, Check, Money, SpinnerGap,
-  MagnifyingGlass, CaretRight, CalendarBlank, Warning,
+  MagnifyingGlass, CaretRight, CalendarBlank, Warning, PaperPlaneTilt,
 } from '@phosphor-icons/react'
 import toast from 'react-hot-toast'
 import { axiosClient } from '@/lib/axiosClient'
@@ -15,7 +15,10 @@ import type {
   SalaryType,
   SalaryPackageStatus,
   SalaryPaymentStatus,
+  SalaryRequest,
+  AdminResolveSalaryRequestDto,
 } from '@/types/api'
+import { useSocket } from '@/context/SocketContext'
 import { PAYMENT_METHODS, getMethodById, getFaviconUrl } from '@/data/pakistanPaymentMethods'
 
 // ─── Local types ──────────────────────────────────────────────────────────────
@@ -100,6 +103,12 @@ export default function AdminSalaries() {
   const [showPaymentForm, setShowPaymentForm] = useState(false)
   const [editingPayment, setEditingPayment] = useState<SalaryPayment | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<'package' | string | null>(null)
+  const [pendingTeacherIds, setPendingTeacherIds] = useState<Set<string>>(new Set())
+  const [teacherRequests, setTeacherRequests] = useState<SalaryRequest[]>([])
+  const [requestsLoading, setRequestsLoading] = useState(false)
+  const [resolving, setResolving] = useState<string | null>(null)
+  const [resolveForm, setResolveForm] = useState<{ id: string; action: 'approve' | 'reject'; reply: string } | null>(null)
+  const { socket } = useSocket()
 
   const pkgForm = useForm<PackageFormValues>({
     defaultValues: { amount: 0, type: 'monthly', customType: '', startDate: '', endDate: '', status: 'active', notes: '' },
@@ -131,15 +140,19 @@ export default function AdminSalaries() {
   const fetchData = useCallback(async () => {
     setLoading(true)
     try {
-      const [usersRes, pkgsRes] = await Promise.allSettled([
+      const [usersRes, pkgsRes, pendingRes] = await Promise.allSettled([
         axiosClient.get('/users', { params: { role: 'teacher', limit: 200 } }),
         salaryService.getAllPackages(),
+        salaryService.getAllRequests({ status: 'pending' }),
       ])
 
       const users: { _id?: string; id?: string; name?: string; email?: string; profileImage?: string }[] =
         usersRes.status === 'fulfilled' ? (usersRes.value.data?.data ?? []) : []
       const pkgs: SalaryPackage[] = pkgsRes.status === 'fulfilled' ? (pkgsRes.value.data ?? []) : []
       const pkgMap = new Map(pkgs.map(p => [p.teacher._id, p]))
+
+      const pendingRequests: SalaryRequest[] = pendingRes.status === 'fulfilled' ? (pendingRes.value.data ?? []) : []
+      setPendingTeacherIds(new Set(pendingRequests.map(r => r.teacher)))
 
       setTeachers(
         users.map(u => ({
@@ -157,12 +170,27 @@ export default function AdminSalaries() {
 
   useEffect(() => { fetchData() }, [fetchData])
 
+  useEffect(() => {
+    if (!socket) return
+    function handleNotification(notif: { relatedType?: string }) {
+      if (notif.relatedType === 'SalaryRequest') {
+        fetchData()
+        if (selected) loadTeacherRequests(selected._id)
+      }
+    }
+    socket.on('new_notification', handleNotification)
+    return () => { socket.off('new_notification', handleNotification) }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [socket, selected, fetchData])
+
   // ─── Select teacher ──────────────────────────────────────────────────────────
 
   function openTeacher(row: TeacherRow) {
     setSelected(row)
     setShowPaymentForm(false)
     setEditingPayment(null)
+    setTeacherRequests([])
+    setResolveForm(null)
     setPmValue('')
     setPmSearch('')
     setPmOpen(false)
@@ -177,6 +205,7 @@ export default function AdminSalaries() {
         notes: row.pkg.notes ?? '',
       })
       loadPayments(row.pkg._id)
+      loadTeacherRequests(row._id)
     } else {
       pkgForm.reset({ amount: 0, type: 'monthly', customType: '', startDate: '', endDate: '', status: 'active', notes: '' })
       setPayments([])
@@ -192,6 +221,18 @@ export default function AdminSalaries() {
       setPayments([])
     } finally {
       setPaymentsLoading(false)
+    }
+  }
+
+  async function loadTeacherRequests(teacherId: string) {
+    setRequestsLoading(true)
+    try {
+      const res = await salaryService.getAllRequests({ teacher: teacherId })
+      setTeacherRequests(res.data)
+    } catch {
+      setTeacherRequests([])
+    } finally {
+      setRequestsLoading(false)
     }
   }
 
@@ -312,6 +353,55 @@ export default function AdminSalaries() {
     }
   }
 
+  // ─── Approve / Reject requests ───────────────────────────────────────────────
+
+  async function handleApprove(requestId: string) {
+    setResolving(requestId)
+    try {
+      const data: AdminResolveSalaryRequestDto = {}
+      if (resolveForm?.reply) data.adminReply = resolveForm.reply
+      const res = await salaryService.approveRequest(requestId, data)
+      setTeacherRequests(prev => prev.map(r => r._id === requestId ? res.data : r))
+      setPendingTeacherIds(prev => {
+        const next = new Set(prev)
+        next.delete(res.data.teacher)
+        return next
+      })
+      if (selected?.pkg) loadPayments(selected.pkg._id)
+      setResolveForm(null)
+      toast.success('Request approved — payment created')
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { error?: { message?: string } } } }
+      toast.error(axiosErr?.response?.data?.error?.message ?? 'Failed to approve')
+    } finally {
+      setResolving(null)
+    }
+  }
+
+  async function handleReject(requestId: string) {
+    if (!resolveForm?.reply?.trim()) {
+      toast.error('Please provide a rejection reason')
+      return
+    }
+    setResolving(requestId)
+    try {
+      const res = await salaryService.rejectRequest(requestId, { adminReply: resolveForm.reply })
+      setTeacherRequests(prev => prev.map(r => r._id === requestId ? res.data : r))
+      setPendingTeacherIds(prev => {
+        const next = new Set(prev)
+        next.delete(res.data.teacher)
+        return next
+      })
+      setResolveForm(null)
+      toast.success('Request rejected')
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { error?: { message?: string } } } }
+      toast.error(axiosErr?.response?.data?.error?.message ?? 'Failed to reject')
+    } finally {
+      setResolving(null)
+    }
+  }
+
   function openEditPayment(p: SalaryPayment) {
     setEditingPayment(p)
     payForm.reset({
@@ -380,7 +470,12 @@ export default function AdminSalaries() {
             >
               <UserAvatar src={row.profileImage} name={row.name} size="md" className="flex-shrink-0" />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{row.name}</p>
+                <div className="flex items-center gap-1.5">
+                  <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{row.name}</p>
+                  {pendingTeacherIds.has(row._id) && (
+                    <span className="w-2 h-2 rounded-full bg-amber-400 flex-shrink-0" title="Pending salary request" />
+                  )}
+                </div>
                 <p className="text-[11px] text-slate-400 dark:text-neutral-500 truncate">{row.email}</p>
                 {row.pkg ? (
                   <p className="text-[11px] text-violet-600 dark:text-violet-400 font-semibold mt-0.5">
@@ -512,6 +607,112 @@ export default function AdminSalaries() {
                   </div>
                 </form>
               </div>
+
+              {/* ── Salary Requests ── */}
+              {selected.pkg && (
+                <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-100 dark:border-neutral-800 overflow-hidden">
+                  <div className="flex items-center gap-2 px-5 py-3.5 border-b border-slate-100 dark:border-neutral-800">
+                    <PaperPlaneTilt size={16} className="text-violet-500" />
+                    <h3 className="text-sm font-black text-slate-900 dark:text-white">Salary Requests</h3>
+                    <span className="text-xs text-slate-400 dark:text-neutral-500">({teacherRequests.length})</span>
+                  </div>
+
+                  {requestsLoading ? (
+                    <div className="p-8 flex justify-center">
+                      <SpinnerGap size={22} className="animate-spin text-violet-500" />
+                    </div>
+                  ) : teacherRequests.length === 0 ? (
+                    <div className="p-6 text-center text-slate-400 dark:text-neutral-500 text-sm">No salary requests yet.</div>
+                  ) : (
+                    <div className="divide-y divide-slate-50 dark:divide-neutral-800/50">
+                      {teacherRequests.map(r => (
+                        <div key={r._id} className="px-5 py-3.5">
+                          <div className="flex items-start gap-3">
+                            <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${r.status === 'pending' ? 'bg-amber-400' : r.status === 'approved' ? 'bg-emerald-400' : 'bg-red-400'}`} />
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="text-sm font-bold text-slate-900 dark:text-white">₨{r.amount.toLocaleString()}</span>
+                                {r.periodLabel && <span className="text-sm text-slate-400 dark:text-neutral-500">— {r.periodLabel}</span>}
+                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                  r.status === 'pending' ? 'bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400'
+                                  : r.status === 'approved' ? 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400'
+                                  : 'bg-red-100 dark:bg-red-950/40 text-red-600 dark:text-red-400'
+                                }`}>{r.status}</span>
+                                <span className="text-[10px] text-slate-400 dark:text-neutral-500">
+                                  {new Date(r.createdAt).toLocaleDateString()}
+                                </span>
+                              </div>
+                              <p className="text-[11px] text-slate-400 dark:text-neutral-500 mt-0.5">
+                                {new Date(r.periodStart).toLocaleDateString()}
+                                {r.periodEnd && ` – ${new Date(r.periodEnd).toLocaleDateString()}`}
+                              </p>
+                              {r.note && (
+                                <p className="text-xs text-slate-500 dark:text-neutral-400 mt-0.5 italic">Note: &quot;{r.note}&quot;</p>
+                              )}
+                              {r.adminReply && (
+                                <p className="text-xs text-slate-500 dark:text-neutral-400 mt-0.5">
+                                  <span className="font-semibold">Reply:</span> {r.adminReply}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Inline approve/reject — only for pending */}
+                          {r.status === 'pending' && (
+                            <div className="mt-2 ml-5">
+                              {resolveForm?.id === r._id ? (
+                                <div className="space-y-2">
+                                  <input
+                                    value={resolveForm.reply}
+                                    onChange={e => setResolveForm(f => f ? { ...f, reply: e.target.value } : f)}
+                                    placeholder={resolveForm.action === 'reject' ? 'Rejection reason (required)…' : 'Admin note (optional)…'}
+                                    className={inputCls}
+                                  />
+                                  <div className="flex gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => setResolveForm(null)}
+                                      className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-neutral-700 text-xs font-semibold text-slate-500 hover:bg-slate-50 dark:hover:bg-neutral-800 transition-colors"
+                                    >
+                                      Cancel
+                                    </button>
+                                    <button
+                                      type="button"
+                                      disabled={resolving === r._id}
+                                      onClick={() => resolveForm.action === 'approve' ? handleApprove(r._id) : handleReject(r._id)}
+                                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white transition-colors disabled:opacity-60 ${resolveForm.action === 'approve' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-red-500 hover:bg-red-600'}`}
+                                    >
+                                      {resolving === r._id ? <SpinnerGap size={11} className="animate-spin" /> : <Check size={11} weight="bold" />}
+                                      {resolveForm.action === 'approve' ? 'Confirm Approve' : 'Confirm Reject'}
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="flex gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => setResolveForm({ id: r._id, action: 'approve', reply: '' })}
+                                    className="px-3 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 text-xs font-semibold hover:bg-emerald-100 dark:hover:bg-emerald-950/50 transition-colors"
+                                  >
+                                    Approve
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setResolveForm({ id: r._id, action: 'reject', reply: '' })}
+                                    className="px-3 py-1.5 rounded-lg bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 text-xs font-semibold hover:bg-red-100 dark:hover:bg-red-950/50 transition-colors"
+                                  >
+                                    Reject
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* ── Payments ── */}
               {selected.pkg && (
