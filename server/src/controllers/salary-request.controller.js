@@ -4,6 +4,7 @@ import SalaryRequest from '../models/salary-request.model.js'
 import SalaryPackage from '../models/salary-package.model.js'
 import User from '../models/user.model.js'
 import { createAndEmitNotification } from '../utils/notify.js'
+import SalaryPayment from '../models/salary-payment.model.js'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -79,4 +80,84 @@ export const cancelRequest = asyncHandler(async (req, res) => {
   await request.deleteOne()
 
   res.json({ success: true, message: 'Salary request cancelled' })
+})
+
+// ─── Admin Handlers ───────────────────────────────────────────────────────────
+
+// GET /api/v1/salary-requests — admin: list all requests (optional ?status= filter)
+export const getAllRequests = asyncHandler(async (req, res) => {
+  const filter = {}
+  if (req.query.status) filter.status = req.query.status
+  if (req.query.teacher) filter.teacher = req.query.teacher
+
+  const requests = await SalaryRequest.find(filter)
+    .populate('teacher', 'name email profileImage')
+    .sort({ createdAt: -1 })
+
+  res.json({ success: true, data: requests })
+})
+
+// PATCH /api/v1/salary-requests/:id/approve — admin: approve, auto-create SalaryPayment
+export const approveRequest = asyncHandler(async (req, res) => {
+  const request = await SalaryRequest.findById(req.params.id)
+  if (!request) throw new NotFoundError('Salary request not found')
+  if (request.status !== 'pending') throw new BadRequestError('Request is no longer pending')
+
+  const { adminReply } = req.body
+
+  const paymentData = {
+    package: request.package,
+    teacher: request.teacher,
+    amount: request.amount,
+    periodStart: request.periodStart,
+    status: 'paid',
+    paidDate: new Date(),
+  }
+  if (request.periodLabel) paymentData.periodLabel = request.periodLabel
+  if (request.periodEnd) paymentData.periodEnd = request.periodEnd
+
+  await SalaryPayment.create(paymentData)
+
+  request.status = 'approved'
+  request.resolvedAt = new Date()
+  if (adminReply !== undefined) request.adminReply = adminReply
+  await request.save()
+
+  await createAndEmitNotification({
+    recipientId: request.teacher,
+    title: 'Salary Request Approved',
+    message: `Your salary request of ₨${request.amount} for ${request.periodLabel || formatPeriod(request.periodStart, request.periodEnd)} has been approved.`,
+    type: 'payment',
+    severity: 'low',
+    relatedId: request._id,
+    relatedType: 'SalaryRequest',
+  })
+
+  res.json({ success: true, message: 'Request approved and payment created', data: request })
+})
+
+// PATCH /api/v1/salary-requests/:id/reject — admin: reject with reason
+export const rejectRequest = asyncHandler(async (req, res) => {
+  const request = await SalaryRequest.findById(req.params.id)
+  if (!request) throw new NotFoundError('Salary request not found')
+  if (request.status !== 'pending') throw new BadRequestError('Request is no longer pending')
+
+  const { adminReply } = req.body
+
+  request.status = 'rejected'
+  request.resolvedAt = new Date()
+  if (adminReply !== undefined) request.adminReply = adminReply
+  await request.save()
+
+  await createAndEmitNotification({
+    recipientId: request.teacher,
+    title: 'Salary Request Update',
+    message: `Your salary request of ₨${request.amount} for ${request.periodLabel || formatPeriod(request.periodStart, request.periodEnd)} was not approved.${adminReply ? ' Reason: ' + adminReply : ''}`,
+    type: 'payment',
+    severity: 'low',
+    relatedId: request._id,
+    relatedType: 'SalaryRequest',
+  })
+
+  res.json({ success: true, message: 'Request rejected', data: request })
 })
