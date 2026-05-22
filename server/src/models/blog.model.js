@@ -23,6 +23,7 @@ const blogSchema = new Schema(
     status: { type: String, enum: ['draft', 'published', 'archived'], default: 'draft' },
     publishedAt: { type: Date },
     isDeleted: { type: Boolean, default: false },
+    readTime: { type: String, default: '5 min read', trim: true },
   },
   { timestamps: true, versionKey: false }
 )
