@@ -663,3 +663,35 @@ export interface UpdateSalaryPaymentDto {
   notes?: string;
   paymentMethod?: string;
 }
+
+// ─── Salary Requests ──────────────────────────────────────────────────────────
+
+export type SalaryRequestStatus = 'pending' | 'approved' | 'rejected';
+
+export interface SalaryRequest {
+  _id: string;
+  teacher: string;
+  package: string;
+  amount: number;
+  periodLabel?: string;
+  periodStart: string;
+  periodEnd?: string;
+  note?: string;
+  status: SalaryRequestStatus;
+  adminReply?: string;
+  resolvedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateSalaryRequestDto {
+  amount: number;
+  periodStart: string;
+  periodLabel?: string;
+  periodEnd?: string;
+  note?: string;
+}
+
+export interface AdminResolveSalaryRequestDto {
+  adminReply?: string;
+}
