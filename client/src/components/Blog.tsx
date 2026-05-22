@@ -69,7 +69,7 @@ export default function Blog() {
           // settings fetch failed — use default 3
         }
 
-        const response = await blogService.getAllBlogs({ status: 'published', limit: count })
+        const response = await blogService.getAllBlogs({ limit: count })
         setPosts(response.data.length > 0 ? response.data : FALLBACK_POSTS)
       } catch {
         setPosts(FALLBACK_POSTS)
