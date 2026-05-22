@@ -108,7 +108,7 @@ function ScrollColumn({
             <img
               src={card.img}
               alt={card.label}
-              className="w-full h-[170px] sm:h-[190px] object-cover"
+              className="w-full h-[200px] sm:h-[225px] object-cover"
               loading="eager"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
@@ -249,8 +249,8 @@ export default function Hero() {
           {/* ── RIGHT: Infinite Scroll Columns ── */}
           <div className="relative order-1 lg:order-2 min-h-[calc(100dvh-80px)] flex items-center justify-center py-8 lg:py-0">
             <div className="w-full max-w-[440px] h-[340px] sm:h-[460px] lg:h-[560px] flex gap-3">
-              <ScrollColumn cards={CARDS_COL_A} direction="up" duration={24} />
-              <ScrollColumn cards={CARDS_COL_B} direction="down" duration={19} />
+              <ScrollColumn cards={CARDS_COL_A} direction="up" duration={34} />
+              <ScrollColumn cards={CARDS_COL_B} direction="down" duration={27} />
             </div>
           </div>
 
