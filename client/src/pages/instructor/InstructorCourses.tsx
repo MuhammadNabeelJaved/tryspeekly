@@ -607,12 +607,6 @@ export default function InstructorCourses() {
                 )}
               </div>
               
-              {/* Bottom Right Price */}
-              {course.price && (
-                <div className="absolute bottom-4 right-4 px-3 py-1.5 rounded-xl bg-white/90 dark:bg-black/90 text-slate-900 dark:text-white font-black text-sm backdrop-blur-md shadow-sm border border-white/20 dark:border-white/10">
-                  {course.price}
-                </div>
-              )}
             </div>
 
             <div className="p-6 flex-1 flex flex-col">

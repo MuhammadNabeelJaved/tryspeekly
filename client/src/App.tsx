@@ -87,7 +87,7 @@ function PublicLayout() {
             <Route path="/about" element={<AboutPage />} />
             <Route path="/instructors" element={<InstructorsPage />} />
             <Route path="/blog" element={<BlogPage />} />
-            <Route path="/blog/:slug" element={<BlogPostPage />} />
+            <Route path="/blog/slug/:slug" element={<BlogPostPage />} />
             <Route path="/courses" element={<CoursesPage />} />
             <Route path="/courses/:id" element={<CourseDetailsPage />} />
             <Route path="/contact" element={<ContactPage />} />

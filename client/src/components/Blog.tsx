@@ -1,5 +1,5 @@
-import { useRef, useEffect, useState } from 'react'
-import { motion, useInView } from 'framer-motion'
+import { useEffect, useState } from 'react'
+import { motion } from 'framer-motion'
 import { ArrowRight, Calendar, Clock } from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
 import { blogService } from '../services/blog.service'
@@ -53,8 +53,6 @@ const cardVariants = {
 }
 
 export default function Blog() {
-  const ref = useRef<HTMLDivElement>(null)
-  const isInView = useInView(ref, { once: true, margin: '-80px' })
   const [posts, setPosts] = useState<Blog[]>([])
   const [loading, setLoading] = useState(true)
   const [skeletonCount, setSkeletonCount] = useState(3)
@@ -115,10 +113,10 @@ export default function Blog() {
           </div>
         ) : (
           <motion.div
-            ref={ref}
             variants={containerVariants}
             initial="hidden"
-            animate={isInView ? 'visible' : 'hidden'}
+            whileInView="visible"
+            viewport={{ once: true, margin: '-80px' }}
             className="grid grid-cols-1 md:grid-cols-3 gap-7"
           >
             {posts.map((post) => (
