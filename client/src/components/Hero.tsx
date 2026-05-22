@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { motion, AnimatePresence, type Variants } from 'framer-motion'
+import { useRef, useEffect } from 'react'
+import { motion, useMotionValue, useAnimationFrame, type Variants } from 'framer-motion'
 import { ArrowRight, Play, Star } from '@phosphor-icons/react'
 
 // ─── Variants ──────────────────────────────────────────────────────────────────
@@ -23,41 +23,121 @@ const AVATARS = [
   'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=40&q=80',
 ]
 
-const BG_IMAGES = [
-  'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1600&q=85',
-  'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=1600&q=85',
-  'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=1600&q=85',
-  'https://images.unsplash.com/photo-1531482615713-2afd69097998?w=1600&q=85',
-  'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=1600&q=85',
+// ─── Scroll card data ───────────────────────────────────────────────────────────
+
+type ImageCard = { type: 'image'; src: string; label: string; tag: string }
+type StatCard  = { type: 'stat';  icon: string; value: string; label: string }
+type BadgeCard = { type: 'badge'; text: string; sub: string }
+type Card = ImageCard | StatCard | BadgeCard
+
+const ROW_A: Card[] = [
+  { type: 'image', src: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=320&q=80', label: 'IELTS Prep', tag: 'Exam Ready' },
+  { type: 'stat',  icon: '🎓', value: '10,000+', label: 'Students Enrolled' },
+  { type: 'image', src: 'https://images.unsplash.com/photo-1531482615713-2afd69097998?w=320&q=80', label: 'Business English', tag: 'Professional' },
+  { type: 'badge', text: '4.9 ★', sub: 'Average Rating' },
+  { type: 'image', src: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=320&q=80', label: 'Speaking Practice', tag: 'Live Sessions' },
+  { type: 'stat',  icon: '🏆', value: '95%', label: 'Success Rate' },
+  { type: 'image', src: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=320&q=80', label: 'Expert Teachers', tag: 'Certified' },
+  { type: 'stat',  icon: '📚', value: '50+', label: 'Courses Available' },
 ]
 
-// ─── BackgroundSlideshow ────────────────────────────────────────────────────────
+const ROW_B: Card[] = [
+  { type: 'badge', text: '25+ yrs', sub: 'of Excellence' },
+  { type: 'image', src: 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=320&q=80', label: 'Grammar Mastery', tag: 'Foundation' },
+  { type: 'stat',  icon: '🌍', value: '100+', label: 'Countries Reached' },
+  { type: 'image', src: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=320&q=80', label: 'Vocabulary', tag: 'Word Power' },
+  { type: 'badge', text: 'Zoom ✓', sub: 'Google Meet ✓' },
+  { type: 'image', src: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=320&q=80', label: 'Online Classes', tag: 'Flexible Hours' },
+  { type: 'stat',  icon: '👨‍🏫', value: '25+', label: 'Expert Instructors' },
+  { type: 'image', src: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=320&q=80', label: 'Conversation', tag: 'Fluency Focus' },
+]
 
-function BackgroundSlideshow() {
-  const [current, setCurrent] = useState(0)
+// ─── ScrollCard ─────────────────────────────────────────────────────────────────
 
-  useEffect(() => {
-    const id = setInterval(() => setCurrent(c => (c + 1) % BG_IMAGES.length), 5500)
-    return () => clearInterval(id)
-  }, [])
+function ScrollCard({ card }: { card: Card }) {
+  if (card.type === 'image') {
+    return (
+      <div className="relative h-36 w-56 rounded-2xl overflow-hidden shadow-lg">
+        <img src={card.src} alt={card.label} className="w-full h-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent" />
+        <div className="absolute bottom-3 left-3.5 right-3.5">
+          <span className="block text-[10px] font-semibold text-white/70 uppercase tracking-wider mb-0.5">
+            {card.tag}
+          </span>
+          <span className="block text-[14px] font-bold text-white leading-tight">{card.label}</span>
+        </div>
+      </div>
+    )
+  }
+
+  if (card.type === 'stat') {
+    return (
+      <div className="h-36 w-44 rounded-2xl bg-white/90 dark:bg-neutral-800/90 backdrop-blur-sm shadow-lg border border-white/60 dark:border-neutral-700/50 flex flex-col items-center justify-center gap-1.5 px-3">
+        <span className="text-3xl leading-none">{card.icon}</span>
+        <p className="text-2xl font-black text-slate-900 dark:text-white mt-0.5">{card.value}</p>
+        <p className="text-[12px] text-slate-500 dark:text-neutral-400 text-center leading-tight">{card.label}</p>
+      </div>
+    )
+  }
 
   return (
-    <div className="absolute inset-0">
-      <AnimatePresence mode="sync">
-        <motion.img
-          key={current}
-          src={BG_IMAGES[current]}
-          alt=""
-          className="absolute inset-0 w-full h-full object-cover object-center"
-          initial={{ opacity: 0, scale: 1.04 }}
-          animate={{ opacity: 1, scale: 1.1 }}
-          exit={{ opacity: 0 }}
-          transition={{
-            opacity: { duration: 1.4, ease: 'easeInOut' },
-            scale: { duration: 7, ease: 'linear' },
-          }}
-        />
-      </AnimatePresence>
+    <div className="h-36 w-44 rounded-2xl bg-gradient-to-br from-violet-600 to-purple-600 shadow-lg flex flex-col items-center justify-center gap-2 px-3">
+      <p className="text-2xl font-black text-white leading-tight text-center">{card.text}</p>
+      <p className="text-[12px] text-violet-200 text-center leading-tight">{card.sub}</p>
+    </div>
+  )
+}
+
+// ─── ScrollRow ──────────────────────────────────────────────────────────────────
+
+function ScrollRow({ cards, direction }: { cards: Card[]; direction: 'left' | 'right' }) {
+  const doubled = [...cards, ...cards]
+  const xPx = useMotionValue(0)
+  const rowRef = useRef<HTMLDivElement>(null)
+  const isPaused = useRef(false)
+
+  // For 'right' direction start at -half so scrolling rightward toward 0 is seamless
+  useEffect(() => {
+    if (direction === 'right' && rowRef.current) {
+      xPx.set(-rowRef.current.scrollWidth / 2)
+    }
+  }, [direction, xPx])
+
+  useAnimationFrame((_, delta) => {
+    if (isPaused.current || !rowRef.current) return
+    const half = rowRef.current.scrollWidth / 2
+    if (!half) return
+    const pxPerMs = half / 45000 // 45 s per loop
+    if (direction === 'left') {
+      const next = xPx.get() - pxPerMs * delta
+      xPx.set(next <= -half ? next + half : next)
+    } else {
+      const next = xPx.get() + pxPerMs * delta
+      xPx.set(next >= 0 ? next - half : next)
+    }
+  })
+
+  return (
+    <div
+      className="overflow-hidden w-full"
+      style={{
+        maskImage: 'linear-gradient(to right, transparent 0%, black 7%, black 93%, transparent 100%)',
+        WebkitMaskImage: 'linear-gradient(to right, transparent 0%, black 7%, black 93%, transparent 100%)',
+      }}
+      onMouseEnter={() => { isPaused.current = true }}
+      onMouseLeave={() => { isPaused.current = false }}
+    >
+      <motion.div
+        ref={rowRef}
+        style={{ x: xPx }}
+        className="flex gap-4 w-max pt-4 pb-2"
+      >
+        {doubled.map((card, i) => (
+          <div key={i} className="flex-shrink-0">
+            <ScrollCard card={card} />
+          </div>
+        ))}
+      </motion.div>
     </div>
   )
 }
@@ -66,49 +146,27 @@ function BackgroundSlideshow() {
 
 export default function Hero() {
   return (
-    <section className="relative bg-white dark:bg-neutral-950 min-h-[100dvh] overflow-hidden transition-colors duration-300">
-
-      {/* ── Full-section background slideshow ── */}
-      <BackgroundSlideshow />
-
-      {/* ── Mobile overlay: semi-opaque for readability ── */}
-      <div className="absolute inset-0 z-[1] pointer-events-none lg:hidden bg-white/82 dark:bg-neutral-950/88" />
-
-      {/* ── Desktop light mode: white solid left → transparent right ── */}
-      <div
-        className="absolute inset-0 z-[1] pointer-events-none hidden lg:block dark:hidden"
-        style={{
-          background:
-            'linear-gradient(to right, white 0%, white 32%, rgba(255,255,255,0.72) 48%, rgba(255,255,255,0.18) 62%, transparent 75%)',
-        }}
-      />
-
-      {/* ── Desktop dark mode: neutral-950 solid left → transparent right ── */}
-      <div
-        className="absolute inset-0 z-[1] pointer-events-none hidden lg:dark:block"
-        style={{
-          background:
-            'linear-gradient(to right, #0a0a0a 0%, #0a0a0a 32%, rgba(10,10,10,0.72) 48%, rgba(10,10,10,0.18) 62%, transparent 75%)',
-        }}
-      />
+    <section className="relative bg-white dark:bg-neutral-950 min-h-[100dvh] overflow-x-hidden transition-colors duration-300">
 
       {/* ── Content ── */}
-      <div className="relative z-[2] max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-[72px] md:pt-[80px]">
-        <div className="grid lg:grid-cols-2 min-h-[calc(100dvh-80px)] items-center">
+      <div className="flex flex-col min-h-[100dvh] pt-[72px] md:pt-[80px]">
 
-          {/* ── LEFT: Text ── */}
+        {/* Centered text */}
+        <div className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-10">
           <motion.div
             variants={containerVariants}
             initial="hidden"
             animate="visible"
-            className="py-16 lg:py-24 pr-6 xl:pr-16 text-center lg:text-left space-y-8"
+            className="text-center space-y-7 max-w-3xl w-full"
           >
+
             {/* Label */}
-            <motion.div variants={itemVariants} className="flex items-center gap-3 justify-center lg:justify-start">
+            <motion.div variants={itemVariants} className="flex items-center gap-3 justify-center">
               <span className="w-6 h-[2px] bg-violet-600 dark:bg-violet-400 rounded-full" />
               <span className="text-violet-600 dark:text-violet-400 text-sm font-bold tracking-wide uppercase">
                 25+ Years of Excellence
               </span>
+              <span className="w-6 h-[2px] bg-violet-600 dark:bg-violet-400 rounded-full" />
             </motion.div>
 
             {/* Headline */}
@@ -126,7 +184,7 @@ export default function Hero() {
             {/* Subtitle */}
             <motion.p
               variants={itemVariants}
-              className="text-slate-600 dark:text-neutral-300 text-lg leading-relaxed max-w-[420px] mx-auto lg:mx-0"
+              className="text-slate-600 dark:text-neutral-300 text-lg leading-relaxed max-w-[480px] mx-auto"
             >
               Expert-led sessions via Zoom & Google Meet — designed to get you speaking confidently, faster.
             </motion.p>
@@ -134,7 +192,7 @@ export default function Hero() {
             {/* CTAs */}
             <motion.div
               variants={itemVariants}
-              className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start"
+              className="flex flex-col sm:flex-row gap-3 justify-center"
             >
               <motion.button
                 type="button"
@@ -162,7 +220,7 @@ export default function Hero() {
             {/* Social proof */}
             <motion.div
               variants={itemVariants}
-              className="flex flex-wrap items-center gap-5 justify-center lg:justify-start"
+              className="flex flex-wrap items-center gap-5 justify-center"
             >
               <div className="flex -space-x-2.5">
                 {AVATARS.map(src => (
@@ -193,32 +251,20 @@ export default function Hero() {
               </div>
             </motion.div>
           </motion.div>
-
-          {/* ── RIGHT: empty — image shows through gradient ── */}
-          <div />
-
         </div>
-      </div>
 
-      {/* ── Scroll cue ── */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 2.4, duration: 0.6 }}
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 hidden sm:flex flex-col items-center gap-1.5 z-[2]"
-      >
-        <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 dark:text-neutral-400">
-          Scroll
-        </span>
+        {/* ── Scroll card rows ── */}
         <motion.div
-          animate={{ y: [0, 5, 0] }}
-          transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
-          className="w-5 h-8 rounded-full border-2 border-slate-400 dark:border-neutral-600 flex items-start justify-center pt-1.5"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.0, duration: 0.7 }}
+          className="pb-8 pt-2 space-y-2 overflow-visible"
         >
-          <div className="w-1 h-2 rounded-full bg-violet-500 dark:bg-violet-400" />
+          <ScrollRow cards={ROW_A} direction="left" />
+          <ScrollRow cards={ROW_B} direction="right" />
         </motion.div>
-      </motion.div>
 
+      </div>
     </section>
   )
 }
