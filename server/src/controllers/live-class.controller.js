@@ -2,7 +2,8 @@ import asyncHandler from '../utils/asyncHandler.js'
 import LiveClass from '../models/live-class.model.js'
 import Course from '../models/course.model.js'
 import Enrollment from '../models/enrollment.model.js'
-import { getIO } from '../utils/socket.js'
+import Notification from '../models/notification.model.js'
+import { getIO, emitToUser } from '../utils/socket.js'
 
 // POST /api/v1/live-classes - Create/start a live class
 export const createLiveClass = asyncHandler(async (req, res) => {
@@ -38,6 +39,28 @@ export const createLiveClass = asyncHandler(async (req, res) => {
   await liveClass.populate('teacher', 'name profileImage')
 
   getIO()?.to(`course:${liveClass.course._id}`).emit('live-class:updated', liveClass)
+
+  // ─── Notify all enrolled students ─────────────────────────────────────────
+  try {
+    const enrollments = await Enrollment.find({ course: courseId }).select('student').lean()
+
+    if (enrollments.length > 0) {
+      const notifDocs = enrollments.map(e => ({
+        recipient: e.student,
+        title: 'Live Class Started!',
+        message: `${course.title} is now live. Join your class now!`,
+        type: 'course',
+        severity: 'high',
+        relatedId: liveClass._id,
+        relatedType: 'LiveClass',
+      }))
+
+      const saved = await Notification.insertMany(notifDocs)
+      saved.forEach(notif => emitToUser(notif.recipient, 'new_notification', notif))
+    }
+  } catch (err) {
+    console.warn('[LiveClass] failed to send student notifications:', err.message)
+  }
 
   res.status(201).json({
     success: true,
@@ -93,6 +116,11 @@ export const completeLiveClass = asyncHandler(async (req, res) => {
 
   getIO()?.to(`course:${liveClass.course._id}`).emit('live-class:updated', liveClass)
 
+  try {
+    const enrollments = await Enrollment.find({ course: liveClass.course._id }).select('student').lean()
+    enrollments.forEach(e => emitToUser(e.student, 'live-class:ended', { liveClassId: liveClass._id }))
+  } catch {}
+
   res.json({
     success: true,
     message: 'Live class marked as completed',
@@ -118,6 +146,11 @@ export const cancelLiveClass = asyncHandler(async (req, res) => {
   await liveClass.populate('teacher', 'name profileImage')
 
   getIO()?.to(`course:${liveClass.course._id}`).emit('live-class:updated', liveClass)
+
+  try {
+    const enrollments = await Enrollment.find({ course: liveClass.course._id }).select('student').lean()
+    enrollments.forEach(e => emitToUser(e.student, 'live-class:ended', { liveClassId: liveClass._id }))
+  } catch {}
 
   res.json({
     success: true,

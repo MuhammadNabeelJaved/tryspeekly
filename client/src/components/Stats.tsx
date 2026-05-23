@@ -181,8 +181,8 @@ export default function Stats() {
             className="relative rounded-3xl overflow-hidden h-[320px] cursor-pointer group"
           >
             <img
-              src="https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=600&q=80"
-              alt="Job interview preparation"
+              src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=600&q=80"
+              alt="Professional woman in job interview"
               className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-slate-900/95 via-slate-900/60 to-slate-900/20" />

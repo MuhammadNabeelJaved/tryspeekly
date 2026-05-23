@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, PaperPlaneRight, Sparkle, ArrowsCounterClockwise } from '@phosphor-icons/react'
+import { X, PaperPlaneRight, Sparkle, ArrowsCounterClockwise, CaretRight } from '@phosphor-icons/react'
 import { axiosClient } from '@/lib/axiosClient'
 
 interface Message {
@@ -160,31 +160,62 @@ export default function AIChatWidget() {
         )}
       </AnimatePresence>
 
-      {/* Floating button */}
-      <motion.button
-        onClick={() => setOpen(o => !o)}
-        whileHover={{ scale: 1.08 }}
-        whileTap={{ scale: 0.95 }}
-        className="fixed bottom-[4.5rem] md:bottom-20 right-4 sm:right-6 z-[9991] w-14 h-14 bg-gradient-to-br from-violet-600 to-purple-600 rounded-full shadow-[0_8px_30px_rgba(124,58,237,0.45)] flex items-center justify-center text-white"
-        aria-label="Open AI chat"
-      >
-        <AnimatePresence mode="wait">
-          {open ? (
-            <motion.span key="close" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }} transition={{ duration: 0.15 }}>
-              <X size={22} weight="bold" />
-            </motion.span>
-          ) : (
-            <motion.span key="open" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }} transition={{ duration: 0.15 }}>
-              <Sparkle size={22} weight="fill" />
-            </motion.span>
+      {/* Floating button wrapper */}
+      <div className="fixed bottom-[4.5rem] md:bottom-20 right-4 sm:right-6 z-[9991] flex items-center gap-2">
+
+        {/* Left arrow indicators */}
+        <AnimatePresence>
+          {!open && (
+            <motion.div
+              initial={{ opacity: 0, x: 8 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 8 }}
+              className="flex items-center gap-0.5"
+            >
+              {[0, 1].map(i => (
+                <motion.div
+                  key={i}
+                  animate={{ x: [0, 5, 0], opacity: [0.3, 1, 0.3] }}
+                  transition={{ duration: 1.4, repeat: Infinity, delay: i * 0.25, ease: 'easeInOut' }}
+                >
+                  <CaretRight size={14} weight="bold" className="text-violet-500 dark:text-violet-400" />
+                </motion.div>
+              ))}
+            </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Pulse ring */}
-        {!open && (
-          <span className="absolute inset-0 rounded-full animate-ping bg-violet-500 opacity-20" />
-        )}
-      </motion.button>
+        {/* Chat button */}
+        <motion.button
+          onClick={() => setOpen(o => !o)}
+          whileHover={{ scale: 1.08 }}
+          whileTap={{ scale: 0.95 }}
+          className="relative w-14 h-14 bg-gradient-to-br from-violet-600 to-purple-600 rounded-full shadow-[0_8px_30px_rgba(124,58,237,0.45)] flex items-center justify-center text-white"
+          aria-label="Open AI chat"
+        >
+          <AnimatePresence mode="wait">
+            {open ? (
+              <motion.span key="close" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }} transition={{ duration: 0.15 }}>
+                <X size={22} weight="bold" />
+              </motion.span>
+            ) : (
+              <motion.span key="open" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }} transition={{ duration: 0.15 }}>
+                <Sparkle size={22} weight="fill" />
+              </motion.span>
+            )}
+          </AnimatePresence>
+
+          {/* Pulse ring */}
+          {!open && (
+            <span className="absolute inset-0 rounded-full animate-ping bg-violet-500 opacity-20" />
+          )}
+
+          {/* Online badge — bottom-right corner */}
+          {!open && (
+            <span className="absolute bottom-0.5 right-0.5 w-3.5 h-3.5 bg-green-400 rounded-full border-2 border-white dark:border-neutral-900" />
+          )}
+        </motion.button>
+      </div>
     </>
   )
 }

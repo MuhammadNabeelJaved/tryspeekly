@@ -9,7 +9,7 @@ const notificationSchema = new Schema(
     message: { type: String, required: [true, 'Message is required'], trim: true },
     type: {
       type: String,
-      enum: ['system', 'user', 'payment', 'security', 'course', 'message'],
+      enum: ['system', 'user', 'payment', 'security', 'course', 'message', 'financial_aid'],
       default: 'system',
     },
     severity: { type: String, enum: ['low', 'medium', 'high'], default: 'low' },

@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { CalendarBlank, CheckCircle, CreditCard, Clock, VideoCamera, HandWaving, Megaphone, ClipboardText, ChartLineUp, Certificate, ArrowRight, Warning } from '@phosphor-icons/react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { CalendarBlank, CheckCircle, CreditCard, Clock, VideoCamera, HandWaving, Megaphone, ClipboardText, ChartLineUp, Certificate, ArrowRight, Warning, X } from '@phosphor-icons/react'
 import { useAuth } from '../../context/AuthContext'
 import { useSocket } from '@/context/SocketContext'
 import { enrollmentsService } from '../../services/enrollments.service'
@@ -33,6 +34,8 @@ export default function StudentOverview({ onNavigate }: { onNavigate: (view: Stu
   const [announcements, setAnnouncements] = useState<Announcement[]>([])
   const [payments, setPayments] = useState<Payment[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [liveClassToast, setLiveClassToast] = useState<UpcomingClass | null>(null)
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [submitModalOpen, setSubmitModalOpen] = useState(false)
   const [selectedTask, setSelectedTask] = useState<{ assignment: Assignment; enrollmentId: string } | null>(null)
   const [selectedPayEnrollment, setSelectedPayEnrollment] = useState<Enrollment | null>(null)
@@ -74,6 +77,13 @@ export default function StudentOverview({ onNavigate }: { onNavigate: (view: Stu
         }
         return filtered
       })
+
+      // Show real-time toast when teacher starts a live class
+      if (liveClass.status === 'active') {
+        setLiveClassToast(liveClass)
+        if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
+        toastTimerRef.current = setTimeout(() => setLiveClassToast(null), 8000)
+      }
     }
 
     const handleDeleted = ({ _id }: { _id: string }) => {
@@ -86,6 +96,7 @@ export default function StudentOverview({ onNavigate }: { onNavigate: (view: Stu
     return () => {
       socket.off('live-class:updated', handleUpdated)
       socket.off('live-class:deleted', handleDeleted)
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
     }
   }, [socket])
 
@@ -106,10 +117,9 @@ export default function StudentOverview({ onNavigate }: { onNavigate: (view: Stu
     !e.isActive && (!e.payment || e.payment.status === 'rejected')
   )
 
-  // Prefer active live class over scheduled for banner
+  // Banner only shows when a class is LIVE NOW — not for future-scheduled classes
   const activeLiveClass = upcomingClasses.find(c => c.status === 'active') ?? null
-  const nextScheduled = upcomingClasses.find(c => c.status === 'scheduled') ?? null
-  const bannerClass = activeLiveClass ?? nextScheduled
+  const bannerClass = activeLiveClass
 
   const scheduleLabel = (e: Enrollment) => {
     const rs = e.course.recurringSchedule
@@ -139,8 +149,62 @@ export default function StudentOverview({ onNavigate }: { onNavigate: (view: Stu
     )
   }
 
+  const dismissToast = () => {
+    setLiveClassToast(null)
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
+  }
+
   return (
     <div className="space-y-6">
+
+      {/* ── Real-time Live Class Toast ─────────────────────────────────────────── */}
+      <AnimatePresence>
+        {liveClassToast && (
+          <motion.div
+            key="live-toast"
+            initial={{ opacity: 0, x: 100, scale: 0.95 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            exit={{ opacity: 0, x: 100, scale: 0.95 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 28 }}
+            className="fixed top-4 right-4 z-[9999] w-[300px] bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl border border-slate-100 dark:border-neutral-700 overflow-hidden"
+          >
+            {/* Auto-dismiss progress bar */}
+            <motion.div
+              initial={{ scaleX: 1 }}
+              animate={{ scaleX: 0 }}
+              transition={{ duration: 8, ease: 'linear' }}
+              className="h-1 bg-red-500 origin-left"
+            />
+            <div className="p-4">
+              <div className="flex items-start justify-between gap-2 mb-2">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse flex-shrink-0" />
+                  <span className="text-[10px] font-black text-red-600 dark:text-red-400 uppercase tracking-widest">Live Now</span>
+                </div>
+                <button onClick={dismissToast} className="text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors p-0.5">
+                  <X size={13} weight="bold" />
+                </button>
+              </div>
+              <p className="text-sm font-black text-slate-900 dark:text-white mb-0.5">Class is starting!</p>
+              <p className="text-xs text-slate-500 dark:text-neutral-400 mb-3 truncate font-medium">{liveClassToast.course.title}</p>
+              {liveClassToast.meetingLink ? (
+                <a
+                  href={liveClassToast.meetingLink}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center justify-center gap-2 w-full py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition-colors"
+                >
+                  <VideoCamera size={14} weight="fill" />
+                  Join Now
+                </a>
+              ) : (
+                <p className="text-center text-xs text-slate-400 dark:text-neutral-500 py-1">Meeting link not set yet</p>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Welcome & Next Class Banner */}
       <div className="bg-gradient-to-r from-violet-600 to-purple-600 rounded-[24px] p-6 sm:p-8 text-white relative overflow-hidden shadow-xl shadow-violet-600/20">
         <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4 pointer-events-none" />
@@ -156,12 +220,11 @@ export default function StudentOverview({ onNavigate }: { onNavigate: (view: Stu
           {bannerClass ? (
             <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 min-w-[300px]">
               <div className="flex justify-between items-start mb-1">
-                <p className="text-xs font-bold text-violet-200 uppercase tracking-widest">Up Next</p>
-                {bannerClass.status === 'active' ? (
-                  <span className="text-[10px] font-bold bg-red-500/80 px-2 py-0.5 rounded-full text-white animate-pulse">LIVE NOW</span>
-                ) : (
-                  <span className="text-[10px] font-bold bg-white/20 px-2 py-0.5 rounded-full text-white">Scheduled</span>
-                )}
+                <p className="text-xs font-bold text-violet-200 uppercase tracking-widest">Live Class</p>
+                <span className="flex items-center gap-1 text-[10px] font-bold bg-red-500/80 px-2 py-0.5 rounded-full text-white">
+                  <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                  LIVE NOW
+                </span>
               </div>
               <h3 className="text-lg font-bold text-white leading-tight mb-3 truncate" title={bannerClass.course.title}>
                 {bannerClass.course.title}
@@ -170,11 +233,7 @@ export default function StudentOverview({ onNavigate }: { onNavigate: (view: Stu
               <div className="flex items-center gap-2 text-sm text-violet-100 mb-4">
                 <Clock size={16} weight="fill" />
                 <span>
-                  {bannerClass.status === 'active'
-                    ? new Date(bannerClass.createdAt).toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
-                    : bannerClass.scheduledAt
-                      ? new Date(bannerClass.scheduledAt).toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
-                      : '—'}
+                  Started {new Date(bannerClass.createdAt).toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                 </span>
               </div>
 
