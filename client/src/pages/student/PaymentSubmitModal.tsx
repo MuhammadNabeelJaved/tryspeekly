@@ -186,6 +186,8 @@ export default function PaymentSubmitModal({ courseId, teacherId, courseName, of
   useEffect(() => {
     if (isOpen && offerDiscountedPrice && offerDiscountedPrice > 0) {
       setAmount(String(offerDiscountedPrice))
+    } else if (!isOpen) {
+      setAmount('')
     }
   }, [isOpen, offerDiscountedPrice])
 
@@ -518,8 +520,9 @@ export default function PaymentSubmitModal({ courseId, teacherId, courseName, of
                           className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-sm text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors placeholder-slate-300 dark:placeholder-neutral-600"
                         />
                         {offerLabel && offerDiscountedPrice && (
-                          <p className="text-xs text-violet-600 dark:text-violet-400 mt-1 font-semibold">
-                            ✓ {offerLabel} applied — pay Rs.{offerDiscountedPrice.toLocaleString()}
+                          <p className="flex items-center gap-1 text-xs text-violet-600 dark:text-violet-400 mt-1 font-semibold">
+                            <CheckCircle size={12} weight="fill" />
+                            {offerLabel} applied — pay Rs.{offerDiscountedPrice.toLocaleString()}
                           </p>
                         )}
                       </div>
