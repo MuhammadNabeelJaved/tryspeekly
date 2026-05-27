@@ -95,7 +95,12 @@ export const updateCoupon = asyncHandler(async (req, res) => {
     if (req.body.expiresAt !== undefined) allowed.expiresAt = req.body.expiresAt || null
     if (req.body.discountValue !== undefined) allowed.discountValue = Number(req.body.discountValue)
     if (req.body.discountType !== undefined) allowed.discountType = req.body.discountType
-    if (req.body.code !== undefined) allowed.code = req.body.code.toUpperCase().trim()
+    if (req.body.code !== undefined) {
+      const normalizedCode = req.body.code.toUpperCase().trim()
+      const duplicate = await Coupon.findOne({ code: normalizedCode, _id: { $ne: req.params.id } })
+      if (duplicate) return res.status(409).json({ success: false, error: { message: 'Coupon code already exists' } })
+      allowed.code = normalizedCode
+    }
 
     const coupon = await Coupon.findByIdAndUpdate(req.params.id, allowed, { new: true, runValidators: true })
     if (!coupon) return res.status(404).json({ success: false, error: { message: 'Coupon not found' } })
@@ -137,7 +142,7 @@ export const validateCoupon = asyncHandler(async (req, res) => {
     if (coupon.expiresAt && coupon.expiresAt < new Date()) {
       return res.json({ success: true, data: { valid: false, reason: 'Coupon has expired' } })
     }
-    if (coupon.maxUses !== null && coupon.usedCount >= coupon.maxUses) {
+    if (coupon.maxUses != null && coupon.usedCount >= coupon.maxUses) {
       return res.json({ success: true, data: { valid: false, reason: 'Coupon usage limit reached' } })
     }
     if (coupon.scope === 'course' && coupon.course?.toString() !== courseId) {
@@ -162,6 +167,9 @@ export const validateCoupon = asyncHandler(async (req, res) => {
     }
 
     const coursePrice = course.currency === 'USD' ? course.priceUSD : course.price
+    if (!coursePrice || !Number.isFinite(coursePrice)) {
+      return res.status(400).json({ success: false, error: { message: 'Course price is unavailable' } })
+    }
     let discountAmount = 0
     if (coupon.discountType === 'percentage') {
       discountAmount = Math.round((coursePrice * coupon.discountValue) / 100)
