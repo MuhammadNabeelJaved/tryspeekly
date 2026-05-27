@@ -346,9 +346,11 @@ export default function Courses() {
   }, [])
 
   useEffect(() => {
+    let mounted = true
     offersService.getActiveOffers()
-      .then(r => { if (r.success) setActiveOffers(r.data) })
+      .then(r => { if (mounted && r.success) setActiveOffers(r.data) })
       .catch(() => {})
+    return () => { mounted = false }
   }, [])
 
   const courses = apiCourses || FALLBACK_COURSES
@@ -681,7 +683,7 @@ export default function Courses() {
                         }
                         return (
                           <span className="flex-shrink-0 text-xl font-black text-violet-600 dark:text-violet-400">
-                            {course.priceUSD !== undefined ? `$${course.priceUSD ?? 0}` : course.price}
+                            {course.priceUSD !== undefined ? `$${course.priceUSD}` : course.price}
                           </span>
                         )
                       })()}

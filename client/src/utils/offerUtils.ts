@@ -27,7 +27,7 @@ export function getDiscountedPrice(
     offer: null,
   }
 
-  if (!originalPrice || offers.length === 0) return empty
+  if (originalPrice == null || originalPrice <= 0 || offers.length === 0) return empty
 
   const now = new Date()
   const active = offers.filter(o => {
