@@ -84,7 +84,7 @@ export const getMyReferralCodes = asyncHandler(async (req, res) => {
         : `${clientUrl}/courses?coupon=${c.code}`,
     }))
 
-    res.json({ success: true, data, settings: settings?.referral || {} })
+    res.json({ success: true, data: { coupons: data, referralSettings: settings?.referral || {} } })
   } catch (error) {
     res.status(400).json({ success: false, error: { message: error.message } })
   }
@@ -217,15 +217,16 @@ export const getPayoutRequests = asyncHandler(async (req, res) => {
       PayoutRequest.countDocuments(filter),
     ])
 
+    const populatedStudentIds = requests.map(r => r.student?._id).filter(Boolean)
     const wallets = await ReferralWallet.find({
-      student: { $in: requests.map(r => r.student._id) },
+      student: { $in: populatedStudentIds },
     }).select('student balance')
     const walletMap = {}
     wallets.forEach(w => { walletMap[w.student.toString()] = w.balance })
 
     const data = requests.map(r => ({
       ...r.toObject(),
-      walletBalance: walletMap[r.student._id.toString()] ?? 0,
+      walletBalance: r.student ? (walletMap[r.student._id.toString()] ?? 0) : 0,
     }))
 
     res.json({
@@ -273,7 +274,8 @@ export const processPayoutRequest = asyncHandler(async (req, res) => {
     request.processedAt = new Date()
     await request.save()
 
-    res.json({ success: true, message: `Payout request ${action}d`, data: { request } })
+    const actionLabel = action === 'approve' ? 'approved' : 'rejected'
+    res.json({ success: true, message: `Payout request ${actionLabel}`, data: { request } })
   } catch (error) {
     res.status(400).json({ success: false, error: { message: error.message } })
   }
