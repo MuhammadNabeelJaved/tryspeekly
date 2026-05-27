@@ -794,9 +794,7 @@ export default function CourseDetailsPage() {
                       <span>{priceResult.offer.title} applied</span>
                     </div>
                   )}
-                  {(!priceResult?.hasDiscount || !priceResult.offer?.title) && (
-                    <div className="mb-6" />
-                  )}
+                  <div className="mb-6" />
 
                   {/* Primary CTA */}
                   <motion.button
@@ -1188,11 +1186,23 @@ export default function CourseDetailsPage() {
                     Rs.{priceResult.originalPrice.toLocaleString()}
                   </div>
                 )}
-                <div className="text-2xl font-black text-slate-900 dark:text-white">
-                  {priceResult?.hasDiscount
-                    ? `Rs.${priceResult.discountedPrice.toLocaleString()}`
-                    : activeCourse.price}
+                <div className="flex items-center gap-2">
+                  <div className="text-2xl font-black text-slate-900 dark:text-white">
+                    {priceResult?.hasDiscount
+                      ? `Rs.${priceResult.discountedPrice.toLocaleString()}`
+                      : activeCourse.price}
+                  </div>
+                  {priceResult?.hasDiscount && (
+                    <span className="text-xs font-bold bg-violet-100 dark:bg-violet-900/40 text-violet-600 dark:text-violet-300 px-1.5 py-0.5 rounded-md">
+                      {priceResult.discountLabel}
+                    </span>
+                  )}
                 </div>
+                {priceResult?.hasDiscount && priceResult.offer?.title && (
+                  <div className="text-xs text-violet-600 dark:text-violet-400 font-bold mt-0.5">
+                    {priceResult.offer.title} applied
+                  </div>
+                )}
               </div>
               <button
                 onClick={handleEnroll}
