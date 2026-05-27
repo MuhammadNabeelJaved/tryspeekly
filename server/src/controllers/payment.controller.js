@@ -3,11 +3,16 @@ import Payment from '../models/payment.model.js'
 import { uploadPaymentScreenshot, deleteFile, extractPublicId } from '../utils/cloudinary.js'
 import Enrollment from '../models/enrollment.model.js'
 import { createAndEmitNotification } from '../utils/notify.js'
+import Course from '../models/course.model.js'
+import Coupon from '../models/coupon.model.js'
+import ReferralReward from '../models/referral-reward.model.js'
+import ReferralWallet from '../models/referral-wallet.model.js'
+import SiteSettings from '../models/site-settings.model.js'
 
 // POST /api/v1/payments — student submits payment proof
 export const createPayment = asyncHandler(async (req, res) => {
   try {
-    const { courseId, teacherId, method, transactionId, amount, currency } = req.body
+    const { courseId, teacherId, method, transactionId, amount, currency, couponCode } = req.body
 
     if (!req.file) return res.status(400).json({ success: false, error: { message: 'Payment screenshot is required' } })
 
@@ -19,6 +24,26 @@ export const createPayment = asyncHandler(async (req, res) => {
 
     const result = await uploadPaymentScreenshot(req.file.buffer, Date.now())
 
+    let couponDoc = null
+    let discountApplied = 0
+
+    if (couponCode) {
+      couponDoc = await Coupon.findOne({ code: couponCode.toUpperCase().trim() })
+      if (couponDoc && couponDoc.isActive) {
+        const course = await Course.findById(courseId)
+        if (course) {
+          const coursePrice = course.currency === 'USD' ? course.priceUSD : course.price
+          if (coursePrice && Number.isFinite(coursePrice)) {
+            if (couponDoc.discountType === 'percentage') {
+              discountApplied = Math.round((coursePrice * couponDoc.discountValue) / 100)
+            } else {
+              discountApplied = Math.min(couponDoc.discountValue, coursePrice)
+            }
+          }
+        }
+      }
+    }
+
     const payment = await Payment.create({
       student: req.user.id,
       course: courseId,
@@ -28,6 +53,8 @@ export const createPayment = asyncHandler(async (req, res) => {
       screenshotUrl: result.secure_url,
       amount,
       currency: currency || 'PKR',
+      coupon: couponDoc ? couponDoc._id : null,
+      discountApplied,
     })
 
     await Enrollment.findByIdAndUpdate(enrollment._id, { payment: payment._id })
@@ -107,6 +134,64 @@ export const approvePayment = asyncHandler(async (req, res) => {
     payment.adminNote = req.body.adminNote || ''
     payment.rejectionReason = ''
     await payment.save()
+
+    // ─── Referral reward crediting ────────────────────────────────────────────
+    if (payment.coupon) {
+      const coupon = await Coupon.findById(payment.coupon)
+      if (coupon && coupon.source === 'referral' && coupon.referrer) {
+        const alreadyRewarded = await ReferralReward.findOne({ payment: payment._id })
+        if (!alreadyRewarded) {
+          const settings = await SiteSettings.findOne()
+          const referral = settings?.referral
+
+          if (referral?.enabled) {
+            const courseId = payment.course._id || payment.course
+            const course = await Course.findById(courseId)
+            const coursePrice = course?.currency === 'USD' ? course.priceUSD : course?.price || 0
+
+            let rewardAmount = 0
+            if (referral.referrerRewardType === 'percentage') {
+              rewardAmount = Math.round((coursePrice * referral.referrerRewardValue) / 100)
+            } else {
+              rewardAmount = referral.referrerRewardValue
+            }
+
+            const enrollment = await Enrollment.findOne({ student: payment.student, course: courseId })
+
+            await ReferralReward.create({
+              referrer: coupon.referrer,
+              referee: payment.student,
+              coupon: coupon._id,
+              course: courseId,
+              enrollment: enrollment?._id,
+              payment: payment._id,
+              discountGiven: payment.discountApplied || 0,
+              rewardAmount,
+              status: 'credited',
+              creditedAt: new Date(),
+            })
+
+            await ReferralWallet.findOneAndUpdate(
+              { student: coupon.referrer },
+              {
+                $inc: { balance: rewardAmount, totalEarned: rewardAmount },
+                $push: {
+                  transactions: {
+                    type: 'credit',
+                    amount: rewardAmount,
+                    description: `Referral reward for ${course?.title || 'a course'}`,
+                    date: new Date(),
+                  },
+                },
+              },
+              { upsert: true, new: true }
+            )
+
+            await Coupon.findByIdAndUpdate(coupon._id, { $inc: { usedCount: 1 } })
+          }
+        }
+      }
+    }
 
     await Enrollment.findOneAndUpdate(
       { student: payment.student, course: payment.course._id },
