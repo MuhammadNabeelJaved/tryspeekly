@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import {
   House, BookOpen, CreditCard, Handshake, GearSix, ChatCircleDots,
-  List, X, SignOut, Bell, Sun, Moon, Certificate, CheckCircle, Chats, Sparkle
+  List, X, SignOut, Bell, Sun, Moon, Certificate, CheckCircle, Chats, Sparkle, Gift
 } from '@phosphor-icons/react'
 import Loader from '@/components/Loader'
 import TourGuide, { type TourStep } from '@/components/TourGuide'
@@ -25,8 +25,9 @@ const StudentSettings = lazy(() => import('./student/StudentSettings'))
 const StudentSupport = lazy(() => import('./student/StudentSupport'))
 const StudentNotifications = lazy(() => import('./student/StudentNotifications'))
 const StudentMessages = lazy(() => import('./student/StudentMessages'))
+const StudentReferrals = lazy(() => import('./student/StudentReferrals'))
 
-export type StudentView = 'overview' | 'courses' | 'certificates' | 'payments' | 'financial-aid' | 'settings' | 'support' | 'notifications' | 'messages'
+export type StudentView = 'overview' | 'courses' | 'certificates' | 'payments' | 'financial-aid' | 'settings' | 'support' | 'notifications' | 'messages' | 'referrals'
 
 // ─── SEARCH ITEMS ─────────────────────────────────────────────────────────────
 
@@ -40,6 +41,7 @@ const STUDENT_SEARCH_ITEMS: SearchItem[] = [
   { label: 'Notifications',  description: 'Enrollment approvals, messages, and announcements',   path: '/dashboard/notifications',    Icon: Bell as SearchItem['Icon'] },
   { label: 'Support',        description: 'Submit a support ticket and get help',                path: '/dashboard/support',          Icon: ChatCircleDots as SearchItem['Icon'] },
   { label: 'Settings',       description: 'Update profile, password, and account preferences',  path: '/dashboard/settings',         Icon: GearSix as SearchItem['Icon'] },
+  { label: 'Referrals',     description: 'Share referral links, track rewards, and manage your wallet', path: '/dashboard/referrals',   Icon: Gift as SearchItem['Icon'] },
 ]
 
 const STUDENT_TOUR_STEPS: TourStep[] = [
@@ -108,6 +110,7 @@ const NAV_MAIN: NavItem[] = [
   { view: 'payments', label: 'Payments', path: 'payments', Icon: CreditCard as NavItem['Icon'] },
   { view: 'financial-aid', label: 'Financial Aid', path: 'financial-aid', Icon: Handshake as NavItem['Icon'] },
   { view: 'messages', label: 'Messages', path: 'messages', Icon: Chats as NavItem['Icon'] },
+  { view: 'referrals', label: 'Referrals', path: 'referrals', Icon: Gift as NavItem['Icon'] },
 ]
 
 const NAV_PREFS: NavItem[] = [
@@ -442,6 +445,7 @@ export default function StudentDashboardPage() {
                   <Route path="/support" element={<StudentSupport />} />
                   <Route path="/notifications" element={<StudentNotifications />} />
                   <Route path="/messages" element={<StudentMessages />} />
+                  <Route path="/referrals" element={<StudentReferrals />} />
                 </Routes>
               </Suspense>
             </motion.div>
