@@ -1,18 +1,21 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
-import { Tag, Gift, Users, Wallet, Plus, Trash, ToggleLeft, ToggleRight, Copy, Check, X } from '@phosphor-icons/react'
+import { Tag, Gift, Users, Wallet, Plus, Trash, ToggleLeft, ToggleRight, Copy, Check, X, Percent, PencilSimple } from '@phosphor-icons/react'
 import toast from 'react-hot-toast'
 import { couponsService } from '@/services/coupons.service'
 import { referralsService } from '@/services/referrals.service'
 import { coursesService } from '@/services/courses.service'
+import { offersService } from '@/services/offers.service'
+import type { Offer } from '@/services/offers.service'
 
-type Tab = 'coupons' | 'settings' | 'rewards' | 'payouts'
+type Tab = 'coupons' | 'settings' | 'rewards' | 'payouts' | 'offers'
 
 export default function AdminReferrals() {
   const [activeTab, setActiveTab] = useState<Tab>('coupons')
 
   const tabs: { key: Tab; label: string; Icon: React.FC<any> }[] = [
-    { key: 'coupons',  label: 'Coupon Codes',      Icon: Tag },
+    { key: 'offers',   label: 'Offers & Discounts', Icon: Percent },
+    { key: 'coupons',  label: 'Coupon Codes',       Icon: Tag },
     { key: 'settings', label: 'Referral Settings',  Icon: Gift },
     { key: 'rewards',  label: 'Referral Rewards',   Icon: Users },
     { key: 'payouts',  label: 'Payout Requests',    Icon: Wallet },
@@ -43,6 +46,7 @@ export default function AdminReferrals() {
         ))}
       </div>
 
+      {activeTab === 'offers'   && <OffersTab />}
       {activeTab === 'coupons'  && <CouponsTab />}
       {activeTab === 'settings' && <SettingsTab />}
       {activeTab === 'rewards'  && <RewardsTab />}
@@ -553,6 +557,272 @@ function PayoutsTab() {
           </table>
         </div>
       )}
+    </div>
+  )
+}
+
+// ─── Tab 0: Offers & Discounts ────────────────────────────────────────────────
+
+function OffersTab() {
+  const [offers, setOffers] = useState<Offer[]>([])
+  const [loading, setLoading] = useState(true)
+  const [showModal, setShowModal] = useState(false)
+  const [editOffer, setEditOffer] = useState<Offer | null>(null)
+  const [courses, setCourses] = useState<any[]>([])
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const res = await offersService.getAdminOffers()
+      if (res.success) setOffers(res.data)
+    } finally { setLoading(false) }
+  }, [])
+
+  useEffect(() => { load() }, [load])
+  useEffect(() => {
+    coursesService.getAdminCourses({ limit: 100 }).then(r => {
+      if (r.success) setCourses(r.data)
+    }).catch(() => {})
+  }, [])
+
+  async function handleToggle(id: string, current: boolean) {
+    try {
+      await offersService.updateOffer(id, { isActive: !current })
+      load()
+      toast.success(`Offer ${current ? 'deactivated' : 'activated'}`)
+    } catch { toast.error('Failed to update offer') }
+  }
+
+  async function handleDelete(id: string) {
+    if (!confirm('Delete this offer?')) return
+    try {
+      await offersService.deleteOffer(id)
+      load()
+      toast.success('Offer deleted')
+    } catch { toast.error('Failed to delete offer') }
+  }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-4">
+        <p className="text-sm text-slate-500 dark:text-neutral-400">
+          Auto-applied discounts shown on course pages. Course-specific offers take priority over platform-wide.
+        </p>
+        <button
+          onClick={() => { setEditOffer(null); setShowModal(true) }}
+          className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white text-sm font-bold rounded-xl transition-colors"
+        >
+          <Plus size={15} weight="bold" />
+          Create Offer
+        </button>
+      </div>
+
+      {loading ? (
+        <div className="text-center py-12 text-slate-400">Loading…</div>
+      ) : offers.length === 0 ? (
+        <div className="text-center py-12 text-slate-400">No offers yet</div>
+      ) : (
+        <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200 dark:border-neutral-800 overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="border-b border-slate-100 dark:border-neutral-800 bg-slate-50 dark:bg-neutral-800/50">
+              <tr>
+                {['Title', 'Discount', 'Scope', 'Duration', 'Status', ''].map(h => (
+                  <th key={h} className="px-4 py-3 text-left text-xs font-bold text-slate-500 dark:text-neutral-400 uppercase tracking-wider">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-50 dark:divide-neutral-800">
+              {offers.map(o => (
+                <tr key={o._id} className="hover:bg-slate-50 dark:hover:bg-neutral-800/30 transition-colors">
+                  <td className="px-4 py-3 font-semibold text-slate-900 dark:text-white">
+                    {o.title}
+                    {o.bannerText && (
+                      <p className="text-[11px] text-slate-400 dark:text-neutral-500 font-normal mt-0.5 truncate max-w-[200px]">{o.bannerText}</p>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 font-bold text-violet-600 dark:text-violet-400">
+                    {o.discountType === 'percentage' ? `${o.discountValue}%` : `PKR ${o.discountValue}`}
+                  </td>
+                  <td className="px-4 py-3 text-slate-500 dark:text-neutral-400">
+                    {o.scope === 'course' ? (o.course?.title || 'Course') : 'All Courses'}
+                  </td>
+                  <td className="px-4 py-3 text-slate-400 text-xs">
+                    {o.startsAt ? new Date(o.startsAt).toLocaleDateString() : '—'}
+                    {' → '}
+                    {o.endsAt ? new Date(o.endsAt).toLocaleDateString() : 'No end'}
+                  </td>
+                  <td className="px-4 py-3">
+                    <button onClick={() => handleToggle(o._id, o.isActive)} className="transition-colors">
+                      {o.isActive
+                        ? <ToggleRight size={22} weight="fill" className="text-violet-600" />
+                        : <ToggleLeft size={22} className="text-slate-400" />
+                      }
+                    </button>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => { setEditOffer(o); setShowModal(true) }}
+                        className="text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
+                      >
+                        <PencilSimple size={15} />
+                      </button>
+                      <button onClick={() => handleDelete(o._id)} className="text-red-400 hover:text-red-600 transition-colors">
+                        <Trash size={15} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {showModal && (
+        <OfferModal
+          courses={courses}
+          offer={editOffer}
+          onClose={() => setShowModal(false)}
+          onSuccess={() => { setShowModal(false); load() }}
+        />
+      )}
+    </div>
+  )
+}
+
+function OfferModal({
+  courses, offer, onClose, onSuccess,
+}: { courses: any[]; offer: Offer | null; onClose: () => void; onSuccess: () => void }) {
+  const isEdit = !!offer
+  const [form, setForm] = useState({
+    title: offer?.title ?? '',
+    bannerText: offer?.bannerText ?? '',
+    discountType: offer?.discountType ?? 'percentage',
+    discountValue: offer?.discountValue?.toString() ?? '',
+    scope: offer?.scope ?? 'platform',
+    courseId: offer?.course?._id ?? '',
+    isActive: offer?.isActive ?? true,
+    startsAt: offer?.startsAt ? offer.startsAt.slice(0, 10) : '',
+    endsAt: offer?.endsAt ? offer.endsAt.slice(0, 10) : '',
+  })
+  const [saving, setSaving] = useState(false)
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!form.title || !form.discountValue) return toast.error('Title and discount value are required')
+    if (form.scope === 'course' && !form.courseId) return toast.error('Select a course')
+    setSaving(true)
+    try {
+      const dto = {
+        title: form.title,
+        bannerText: form.bannerText,
+        discountType: form.discountType as 'percentage' | 'fixed',
+        discountValue: Number(form.discountValue),
+        scope: form.scope as 'platform' | 'course',
+        courseId: form.scope === 'course' ? form.courseId : undefined,
+        isActive: form.isActive,
+        startsAt: form.startsAt || null,
+        endsAt: form.endsAt || null,
+      }
+      if (isEdit && offer) {
+        await offersService.updateOffer(offer._id, dto)
+        toast.success('Offer updated')
+      } else {
+        await offersService.createOffer(dto)
+        toast.success('Offer created')
+      }
+      onSuccess()
+    } catch (err: any) {
+      toast.error(err?.response?.data?.error?.message || 'Failed to save offer')
+    } finally { setSaving(false) }
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200 dark:border-neutral-800 p-6 w-full max-w-md shadow-xl"
+      >
+        <div className="flex items-center justify-between mb-5">
+          <h3 className="font-black text-slate-900 dark:text-white">{isEdit ? 'Edit Offer' : 'Create Offer'}</h3>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-neutral-200"><X size={18} /></button>
+        </div>
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <div>
+            <label className="text-xs font-bold text-slate-500 dark:text-neutral-400 uppercase tracking-wide mb-1 block">Title</label>
+            <input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
+              placeholder="e.g. Eid Sale"
+              className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white" />
+          </div>
+          <div>
+            <label className="text-xs font-bold text-slate-500 dark:text-neutral-400 uppercase tracking-wide mb-1 block">Banner Text (shown in ticker)</label>
+            <input value={form.bannerText} onChange={e => setForm(f => ({ ...f, bannerText: e.target.value }))}
+              placeholder="🎉 Eid Sale — 30% off all courses!"
+              className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white" />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-bold text-slate-500 dark:text-neutral-400 uppercase tracking-wide mb-1 block">Type</label>
+              <select value={form.discountType} onChange={e => setForm(f => ({ ...f, discountType: e.target.value }))}
+                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white">
+                <option value="percentage">Percentage (%)</option>
+                <option value="fixed">Fixed (PKR)</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-bold text-slate-500 dark:text-neutral-400 uppercase tracking-wide mb-1 block">Value</label>
+              <input type="number" value={form.discountValue} onChange={e => setForm(f => ({ ...f, discountValue: e.target.value }))}
+                placeholder={form.discountType === 'percentage' ? '30' : '500'}
+                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white" />
+            </div>
+          </div>
+          <div>
+            <label className="text-xs font-bold text-slate-500 dark:text-neutral-400 uppercase tracking-wide mb-1 block">Scope</label>
+            <select value={form.scope} onChange={e => setForm(f => ({ ...f, scope: e.target.value }))}
+              className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white">
+              <option value="platform">All Courses (Platform-wide)</option>
+              <option value="course">Specific Course</option>
+            </select>
+          </div>
+          {form.scope === 'course' && (
+            <div>
+              <label className="text-xs font-bold text-slate-500 dark:text-neutral-400 uppercase tracking-wide mb-1 block">Course</label>
+              <select value={form.courseId} onChange={e => setForm(f => ({ ...f, courseId: e.target.value }))}
+                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white">
+                <option value="">Select course…</option>
+                {courses.map((c: any) => <option key={c._id} value={c._id}>{c.title}</option>)}
+              </select>
+            </div>
+          )}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-bold text-slate-500 dark:text-neutral-400 uppercase tracking-wide mb-1 block">Start Date (optional)</label>
+              <input type="date" value={form.startsAt} onChange={e => setForm(f => ({ ...f, startsAt: e.target.value }))}
+                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white" />
+            </div>
+            <div>
+              <label className="text-xs font-bold text-slate-500 dark:text-neutral-400 uppercase tracking-wide mb-1 block">End Date (optional)</label>
+              <input type="date" value={form.endsAt} onChange={e => setForm(f => ({ ...f, endsAt: e.target.value }))}
+                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white" />
+            </div>
+          </div>
+          <div className="flex items-center gap-3 pt-1">
+            <button type="button" onClick={() => setForm(f => ({ ...f, isActive: !f.isActive }))}>
+              {form.isActive
+                ? <ToggleRight size={24} weight="fill" className="text-violet-600" />
+                : <ToggleLeft size={24} className="text-slate-400" />
+              }
+            </button>
+            <span className="text-sm text-slate-600 dark:text-neutral-300">{form.isActive ? 'Active' : 'Inactive'}</span>
+          </div>
+          <button type="submit" disabled={saving}
+            className="w-full py-2.5 bg-violet-600 hover:bg-violet-700 disabled:opacity-60 text-white font-bold rounded-xl text-sm transition-colors mt-2">
+            {saving ? 'Saving…' : isEdit ? 'Save Changes' : 'Create Offer'}
+          </button>
+        </form>
+      </motion.div>
     </div>
   )
 }
