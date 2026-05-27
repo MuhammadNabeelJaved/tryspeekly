@@ -197,6 +197,9 @@ export interface Enrollment {
     type?: string;
     sessionDuration?: number;
     recurringSchedule?: Array<{ day: string; time: string }>;
+    price?: number;
+    priceUSD?: number;
+    currency?: 'PKR' | 'USD';
   };
   teacher: { _id: string; name: string; profileImage?: string };
   payment?: EnrolledPayment | null;

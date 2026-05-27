@@ -6,6 +6,9 @@ import {
 import { Link } from 'react-router-dom'
 import { enrollmentsService } from '@/services/enrollments.service'
 import { reviewsService } from '@/services/reviews.service'
+import { offersService } from '@/services/offers.service'
+import type { Offer } from '@/services/offers.service'
+import { getDiscountedPrice } from '@/utils/offerUtils'
 import type { Enrollment, EnrolledPayment, Review } from '@/types/api'
 import InstructorChatModal from '@/pages/student/InstructorChatModal'
 import PaymentSubmitModal from '@/pages/student/PaymentSubmitModal'
@@ -238,8 +241,9 @@ export default function StudentCourses() {
   const [enrollments, setEnrollments] = useState<Enrollment[]>([])
   const [loading, setLoading] = useState(true)
   const [myReviews, setMyReviews] = useState<Review[]>([])
+  const [activeOffers, setActiveOffers] = useState<Offer[]>([])
   const [chatModal, setChatModal] = useState<{ name: string; courseTitle: string; instructorId: string; profileImage?: string } | null>(null)
-  const [submitModal, setSubmitModal] = useState<{ courseId: string; teacherId: string } | null>(null)
+  const [submitModal, setSubmitModal] = useState<{ courseId: string; teacherId: string; offerDiscountedPrice?: number; offerLabel?: string } | null>(null)
   const [statusModal, setStatusModal] = useState<{ payment: EnrolledPayment; courseId: string; teacherId: string } | null>(null)
 
   const fetchEnrollments = useCallback(() => {
@@ -258,9 +262,32 @@ export default function StudentCourses() {
       .catch(() => {})
   }, [])
 
+  useEffect(() => {
+    let mounted = true
+    offersService.getActiveOffers()
+      .then(res => { if (mounted && res.success) setActiveOffers(res.data) })
+      .catch(() => {})
+    return () => { mounted = false }
+  }, [])
+
   const handlePaymentSuccess = () => {
     setSubmitModal(null)
     fetchEnrollments()
+  }
+
+  const openSubmitModal = (enrollment: Enrollment) => {
+    const originalPrice = enrollment.course.currency === 'USD'
+      ? (enrollment.course.priceUSD ?? 0)
+      : (enrollment.course.price ?? 0)
+    const result = originalPrice > 0
+      ? getDiscountedPrice(enrollment.course._id, originalPrice, activeOffers)
+      : null
+    setSubmitModal({
+      courseId: enrollment.course._id,
+      teacherId: enrollment.teacher._id,
+      offerDiscountedPrice: result?.hasDiscount ? result.discountedPrice : undefined,
+      offerLabel: result?.hasDiscount ? result.offer?.title : undefined,
+    })
   }
 
   if (loading) {
@@ -325,7 +352,7 @@ export default function StudentCourses() {
                   enrollment={enrollment}
                   courseReview={courseReview}
                   onChat={() => setChatModal({ name: enrollment.teacher?.name ?? '—', courseTitle: enrollment.course.title, instructorId: enrollment.teacher._id, profileImage: enrollment.teacher.profileImage })}
-                  onSubmitPayment={() => setSubmitModal({ courseId: enrollment.course._id, teacherId: enrollment.teacher._id })}
+                  onSubmitPayment={() => openSubmitModal(enrollment)}
                   onViewStatus={() => setStatusModal({ payment: enrollment.payment!, courseId: enrollment.course._id, teacherId: enrollment.teacher._id })}
                 />
               )
@@ -349,7 +376,7 @@ export default function StudentCourses() {
                 key={enrollment._id}
                 enrollment={enrollment}
                 onChat={() => setChatModal({ name: enrollment.teacher?.name ?? '—', courseTitle: enrollment.course.title, instructorId: enrollment.teacher._id, profileImage: enrollment.teacher.profileImage })}
-                onSubmitPayment={() => setSubmitModal({ courseId: enrollment.course._id, teacherId: enrollment.teacher._id })}
+                onSubmitPayment={() => openSubmitModal(enrollment)}
                 onViewStatus={() => setStatusModal({ payment: enrollment.payment!, courseId: enrollment.course._id, teacherId: enrollment.teacher._id })}
               />
             ))}
@@ -371,6 +398,8 @@ export default function StudentCourses() {
         <PaymentSubmitModal
           courseId={submitModal.courseId}
           teacherId={submitModal.teacherId}
+          offerDiscountedPrice={submitModal.offerDiscountedPrice}
+          offerLabel={submitModal.offerLabel}
           isOpen={!!submitModal}
           onClose={() => setSubmitModal(null)}
           onSuccess={handlePaymentSuccess}
@@ -383,8 +412,10 @@ export default function StudentCourses() {
           isOpen={!!statusModal}
           onClose={() => setStatusModal(null)}
           onResubmit={() => {
+            const enrollment = enrollments.find(e => e.course._id === statusModal.courseId)
             setStatusModal(null)
-            setSubmitModal({ courseId: statusModal.courseId, teacherId: statusModal.teacherId })
+            if (enrollment) openSubmitModal(enrollment)
+            else setSubmitModal({ courseId: statusModal.courseId, teacherId: statusModal.teacherId })
           }}
         />
       )}
