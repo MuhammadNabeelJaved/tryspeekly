@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   X, UploadSimple, CheckCircle, WarningCircle, Phone, Envelope,
@@ -159,12 +159,14 @@ interface Props {
   courseId: string
   teacherId: string
   courseName?: string
+  offerDiscountedPrice?: number | null
+  offerLabel?: string
   isOpen: boolean
   onClose: () => void
   onSuccess: () => void
 }
 
-export default function PaymentSubmitModal({ courseId, teacherId, courseName, isOpen, onClose, onSuccess }: Props) {
+export default function PaymentSubmitModal({ courseId, teacherId, courseName, offerDiscountedPrice, offerLabel, isOpen, onClose, onSuccess }: Props) {
   const [activeTab, setActiveTab] = useState<'local' | 'international'>('local')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [transactionId, setTransactionId] = useState('')
@@ -180,6 +182,12 @@ export default function PaymentSubmitModal({ courseId, teacherId, courseName, is
   const [couponValidating, setCouponValidating] = useState(false)
   const [couponResult, setCouponResult] = useState<{ valid: boolean; reason?: string; discountType?: string; discountValue?: number; discountAmount?: number } | null>(null)
   const couponDebounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    if (isOpen && offerDiscountedPrice && offerDiscountedPrice > 0) {
+      setAmount(String(offerDiscountedPrice))
+    }
+  }, [isOpen, offerDiscountedPrice])
 
   if (!isOpen) return null
 
@@ -509,6 +517,11 @@ export default function PaymentSubmitModal({ courseId, teacherId, courseName, is
                           placeholder="0"
                           className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-sm text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors placeholder-slate-300 dark:placeholder-neutral-600"
                         />
+                        {offerLabel && offerDiscountedPrice && (
+                          <p className="text-xs text-violet-600 dark:text-violet-400 mt-1 font-semibold">
+                            ✓ {offerLabel} applied — pay Rs.{offerDiscountedPrice.toLocaleString()}
+                          </p>
+                        )}
                       </div>
                       <div className="w-24">
                         <label className="block text-xs font-bold text-slate-500 dark:text-neutral-400 uppercase tracking-wide mb-1.5">Currency</label>
