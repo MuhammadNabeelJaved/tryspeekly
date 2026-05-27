@@ -37,6 +37,13 @@ const siteSettingsSchema = new Schema(
       featuredCourseIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Course' }],
       featuredBlogIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Blog' }],
     },
+    referral: {
+      enabled: { type: Boolean, default: false },
+      refereeDiscountType: { type: String, enum: ['percentage', 'fixed'], default: 'percentage' },
+      refereeDiscountValue: { type: Number, default: 0 },
+      referrerRewardType: { type: String, enum: ['percentage', 'fixed'], default: 'percentage' },
+      referrerRewardValue: { type: Number, default: 0 },
+    },
   },
   { timestamps: true, versionKey: false }
 )

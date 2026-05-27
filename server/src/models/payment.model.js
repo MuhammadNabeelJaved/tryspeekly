@@ -19,6 +19,8 @@ const paymentSchema = new Schema(
     status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
     adminNote: { type: String, trim: true },
     rejectionReason: { type: String, trim: true },
+    coupon: { type: mongoose.Schema.Types.ObjectId, ref: 'Coupon', default: null },
+    discountApplied: { type: Number, default: 0 },
   },
   { timestamps: true, versionKey: false }
 )
