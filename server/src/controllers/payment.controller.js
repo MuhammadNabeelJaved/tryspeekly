@@ -31,20 +31,19 @@ export const createPayment = asyncHandler(async (req, res) => {
     let offerDiscountApplied = 0
     let offerDoc = null
 
+    const course = await Course.findById(courseId)
+    const coursePrice = course ? (course.currency === 'USD' ? course.priceUSD : course.price) : 0
+
     if (couponCode) {
       couponDoc = await Coupon.findOne({ code: couponCode.toUpperCase().trim() })
       const isExpired = couponDoc?.expiresAt && couponDoc.expiresAt < new Date()
       const isExhausted = couponDoc?.maxUses != null && couponDoc.usedCount >= couponDoc.maxUses
       if (couponDoc && couponDoc.isActive && !isExpired && !isExhausted) {
-        const course = await Course.findById(courseId)
-        if (course) {
-          const coursePrice = course.currency === 'USD' ? course.priceUSD : course.price
-          if (coursePrice && Number.isFinite(coursePrice)) {
-            if (couponDoc.discountType === 'percentage') {
-              discountApplied = Math.round((coursePrice * couponDoc.discountValue) / 100)
-            } else {
-              discountApplied = Math.min(couponDoc.discountValue, coursePrice)
-            }
+        if (coursePrice && Number.isFinite(coursePrice)) {
+          if (couponDoc.discountType === 'percentage') {
+            discountApplied = Math.round((coursePrice * couponDoc.discountValue) / 100)
+          } else {
+            discountApplied = Math.min(couponDoc.discountValue, coursePrice)
           }
         }
       }
@@ -60,11 +59,10 @@ export const createPayment = asyncHandler(async (req, res) => {
       ],
     }).lean()
 
-    const course = await Course.findById(courseId)
-    if (course) {
-      const { discountedPrice, offer } = getEffectivePrice(courseId, course.price, activeOffers)
+    if (course && coursePrice) {
+      const { discountedPrice, offer } = getEffectivePrice(courseId, coursePrice, activeOffers)
       if (offer) {
-        offerDiscountApplied = course.price - discountedPrice
+        offerDiscountApplied = coursePrice - discountedPrice
         offerDoc = offer
       }
     }
