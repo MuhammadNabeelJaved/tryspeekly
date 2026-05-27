@@ -253,6 +253,7 @@ export interface CreatePaymentDto {
   amount: number;
   currency?: 'PKR' | 'USD';
   screenshot: File;
+  couponCode?: string;
 }
 
 export interface AdminCreatePaymentDto {

@@ -10,6 +10,7 @@ export const paymentsService = {
     form.append('amount', String(dto.amount));
     form.append('currency', dto.currency || 'PKR');
     if (dto.transactionId) form.append('transactionId', dto.transactionId);
+    if (dto.couponCode) form.append('couponCode', dto.couponCode);
     form.append('screenshot', dto.screenshot);
 
     const response = await axiosClient.post<{ success: boolean; data: Payment }>(

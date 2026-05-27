@@ -3,8 +3,10 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   X, UploadSimple, CheckCircle, WarningCircle, Phone, Envelope,
   ArrowRight, ShieldCheck, Clock, Sparkle, Bank, ArrowLeft, Globe,
+  Tag, Spinner,
 } from '@phosphor-icons/react'
 import { paymentsService } from '@/services/payments.service'
+import { couponsService } from '@/services/coupons.service'
 import type { PaymentMethod } from '@/types/api'
 
 // ─── Logos ─────────────────────────────────────────────────────────────────────
@@ -174,6 +176,11 @@ export default function PaymentSubmitModal({ courseId, teacherId, courseName, is
   const [success, setSuccess] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
+  const [couponCode, setCouponCode] = useState('')
+  const [couponValidating, setCouponValidating] = useState(false)
+  const [couponResult, setCouponResult] = useState<{ valid: boolean; reason?: string; discountType?: string; discountValue?: number; discountAmount?: number } | null>(null)
+  const couponDebounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   if (!isOpen) return null
 
   const selectedMethod = ALL_METHODS.find(m => m.id === selectedId) ?? null
@@ -188,6 +195,28 @@ export default function PaymentSubmitModal({ courseId, teacherId, courseName, is
     setFile(null)
     setError('')
     setSuccess(false)
+    setCouponCode('')
+    setCouponResult(null)
+    setCouponValidating(false)
+    if (couponDebounceTimer.current) clearTimeout(couponDebounceTimer.current)
+  }
+
+  const handleCouponChange = (value: string) => {
+    setCouponCode(value)
+    setCouponResult(null)
+    if (couponDebounceTimer.current) clearTimeout(couponDebounceTimer.current)
+    if (!value.trim()) { setCouponValidating(false); return }
+    setCouponValidating(true)
+    couponDebounceTimer.current = setTimeout(async () => {
+      try {
+        const res = await couponsService.validateCoupon(value.trim(), courseId)
+        setCouponResult(res.data)
+      } catch {
+        setCouponResult({ valid: false, reason: 'Unable to validate coupon' })
+      } finally {
+        setCouponValidating(false)
+      }
+    }, 500)
   }
 
   const handleClose = () => { reset(); onClose() }
@@ -207,6 +236,7 @@ export default function PaymentSubmitModal({ courseId, teacherId, courseName, is
         amount: Number(amount),
         currency,
         screenshot: file,
+        couponCode: couponResult?.valid ? couponCode.trim().toUpperCase() : undefined,
       })
       setSuccess(true)
       setTimeout(() => { reset(); onSuccess() }, 2000)
@@ -491,6 +521,46 @@ export default function PaymentSubmitModal({ courseId, teacherId, courseName, is
                           <option value="USD">USD</option>
                         </select>
                       </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 dark:text-neutral-400 uppercase tracking-wide mb-1.5">
+                        Coupon Code <span className="normal-case font-normal">(optional)</span>
+                      </label>
+                      <div className="relative">
+                        <Tag size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-neutral-500" />
+                        <input
+                          value={couponCode}
+                          onChange={e => handleCouponChange(e.target.value)}
+                          placeholder="Enter coupon code"
+                          className={`w-full pl-8 pr-9 py-2.5 rounded-xl border text-sm outline-none transition-colors bg-white dark:bg-neutral-800 text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-neutral-600 ${
+                            couponResult?.valid
+                              ? 'border-emerald-400 dark:border-emerald-600 focus:border-emerald-500'
+                              : couponResult && !couponResult.valid
+                                ? 'border-red-400 dark:border-red-600 focus:border-red-500'
+                                : 'border-slate-200 dark:border-neutral-700 focus:border-violet-500'
+                          }`}
+                        />
+                        {couponValidating && (
+                          <Spinner size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-violet-500 animate-spin" />
+                        )}
+                        {!couponValidating && couponResult?.valid && (
+                          <CheckCircle size={14} weight="fill" className="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-500" />
+                        )}
+                        {!couponValidating && couponResult && !couponResult.valid && (
+                          <WarningCircle size={14} weight="fill" className="absolute right-3 top-1/2 -translate-y-1/2 text-red-500" />
+                        )}
+                      </div>
+                      {couponResult?.valid && (
+                        <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1 font-medium">
+                          ✓ {couponResult.discountType === 'percentage'
+                            ? `${couponResult.discountValue}% discount applied`
+                            : `${currency} ${couponResult.discountAmount ?? couponResult.discountValue} discount applied`}
+                        </p>
+                      )}
+                      {couponResult && !couponResult.valid && (
+                        <p className="text-xs text-red-500 dark:text-red-400 mt-1">{couponResult.reason}</p>
+                      )}
                     </div>
 
                     <div>
