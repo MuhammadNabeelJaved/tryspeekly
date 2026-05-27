@@ -21,6 +21,8 @@ import { reviewsService } from '../services/reviews.service'
 import { axiosClient } from '../lib/axiosClient'
 import type { Notification } from '../types/api'
 import { getNotificationPath } from '../utils/notificationNav'
+import { offersService } from '../services/offers.service'
+import type { Offer } from '../services/offers.service'
 
 const AdminOverview = lazy(() => import('./admin/AdminOverview'))
 const AdminStudents = lazy(() => import('./admin/AdminStudents'))
@@ -337,6 +339,15 @@ export default function AdminPage() {
   const { unreadNotifications, setUnreadNotifications, unreadMessages } = useSocket()
   const [notifs, setNotifs] = useState<Notification[]>([])
   const [adminBadges, setAdminBadges] = useState({ students: 0, pendingPayments: 0, pendingCourses: 0, pendingFinancialAid: 0, pendingReviews: 0 })
+  const [activeOffers, setActiveOffers] = useState<Offer[]>([])
+
+  useEffect(() => {
+    offersService.getActiveOffers()
+      .then(r => {
+        if (r.success) setActiveOffers(r.data.filter(o => o.bannerText?.trim()))
+      })
+      .catch(() => {})
+  }, [])
 
   useEffect(() => {
     notificationsService.getMyNotifications({ limit: 5 })
@@ -440,6 +451,8 @@ export default function AdminPage() {
     logout()
     navigate('/')
   }
+
+
 
   function toggleDark() {
     document.documentElement.classList.toggle('dark')
@@ -612,6 +625,11 @@ export default function AdminPage() {
       {/* ── MAIN CONTENT ── */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
 
+        <OffersMarquee
+          offers={activeOffers}
+          onNavigate={() => navigate('/admin/referrals')}
+        />
+
         {/* Topbar */}
         <header className="h-[64px] bg-white dark:bg-neutral-900 border-b border-slate-100 dark:border-neutral-800 flex items-center px-4 sm:px-6 gap-4 flex-shrink-0">
           <button onClick={() => setSidebarOpen(true)} className="lg:hidden text-slate-500 hover:text-slate-700 dark:text-neutral-400 dark:hover:text-white transition-colors">
@@ -749,6 +767,46 @@ export default function AdminPage() {
             </motion.div>
           </AnimatePresence>
         </main>
+      </div>
+    </div>
+  )
+}
+
+// ─── Offers Marquee Ticker ────────────────────────────────────────────────────
+
+function OffersMarquee({ offers, onNavigate }: { offers: Offer[]; onNavigate: () => void }) {
+  if (offers.length === 0) return null
+
+  const items = [...offers, ...offers] // duplicate for seamless loop
+
+  return (
+    <div
+      className="h-8 bg-violet-600 flex items-center overflow-hidden flex-shrink-0 cursor-pointer"
+      onClick={onNavigate}
+      title="Click to manage offers"
+    >
+      <style>{`
+        @keyframes marquee {
+          0%   { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+        .offers-marquee-track {
+          display: flex;
+          width: max-content;
+          animation: marquee 30s linear infinite;
+        }
+        .offers-marquee-track:hover {
+          animation-play-state: paused;
+        }
+      `}</style>
+      <div className="offers-marquee-track">
+        {items.map((o, i) => (
+          <span key={i} className="flex items-center gap-2 px-6 text-xs font-bold text-white whitespace-nowrap">
+            <span className="text-violet-300">%</span>
+            {o.bannerText}
+            <span className="text-violet-300 mx-2">·</span>
+          </span>
+        ))}
       </div>
     </div>
   )
