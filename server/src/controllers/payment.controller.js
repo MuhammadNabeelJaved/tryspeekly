@@ -8,6 +8,8 @@ import Coupon from '../models/coupon.model.js'
 import ReferralReward from '../models/referral-reward.model.js'
 import ReferralWallet from '../models/referral-wallet.model.js'
 import SiteSettings from '../models/site-settings.model.js'
+import Offer from '../models/offer.model.js'
+import { getEffectivePrice } from '../utils/offerUtils.js'
 
 // POST /api/v1/payments — student submits payment proof
 export const createPayment = asyncHandler(async (req, res) => {
@@ -26,6 +28,8 @@ export const createPayment = asyncHandler(async (req, res) => {
 
     let couponDoc = null
     let discountApplied = 0
+    let offerDiscountApplied = 0
+    let offerDoc = null
 
     if (couponCode) {
       couponDoc = await Coupon.findOne({ code: couponCode.toUpperCase().trim() })
@@ -46,6 +50,25 @@ export const createPayment = asyncHandler(async (req, res) => {
       }
     }
 
+    // ─── Apply active offer discount ──────────────────────────────────────────
+    const now = new Date()
+    const activeOffers = await Offer.find({
+      isActive: true,
+      $and: [
+        { $or: [{ startsAt: null }, { startsAt: { $lte: now } }] },
+        { $or: [{ endsAt: null }, { endsAt: { $gte: now } }] },
+      ],
+    }).lean()
+
+    const course = await Course.findById(courseId)
+    if (course) {
+      const { discountedPrice, offer } = getEffectivePrice(courseId, course.price, activeOffers)
+      if (offer) {
+        offerDiscountApplied = course.price - discountedPrice
+        offerDoc = offer
+      }
+    }
+
     const payment = await Payment.create({
       student: req.user.id,
       course: courseId,
@@ -56,7 +79,9 @@ export const createPayment = asyncHandler(async (req, res) => {
       amount,
       currency: currency || 'PKR',
       coupon: couponDoc ? couponDoc._id : null,
-      discountApplied,
+      discountApplied: discountApplied + offerDiscountApplied,
+      offerDiscountApplied,
+      offer: offerDoc ? offerDoc._id : null,
     })
 
     await Enrollment.findByIdAndUpdate(enrollment._id, { payment: payment._id })

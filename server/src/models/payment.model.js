@@ -21,6 +21,8 @@ const paymentSchema = new Schema(
     rejectionReason: { type: String, trim: true },
     coupon: { type: mongoose.Schema.Types.ObjectId, ref: 'Coupon', default: null },
     discountApplied: { type: Number, default: 0 },
+    offerDiscountApplied: { type: Number, default: 0 },
+    offer: { type: mongoose.Schema.Types.ObjectId, ref: 'Offer', default: null },
   },
   { timestamps: true, versionKey: false }
 )
