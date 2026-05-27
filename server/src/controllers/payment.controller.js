@@ -29,7 +29,9 @@ export const createPayment = asyncHandler(async (req, res) => {
 
     if (couponCode) {
       couponDoc = await Coupon.findOne({ code: couponCode.toUpperCase().trim() })
-      if (couponDoc && couponDoc.isActive) {
+      const isExpired = couponDoc?.expiresAt && couponDoc.expiresAt < new Date()
+      const isExhausted = couponDoc?.maxUses != null && couponDoc.usedCount >= couponDoc.maxUses
+      if (couponDoc && couponDoc.isActive && !isExpired && !isExhausted) {
         const course = await Course.findById(courseId)
         if (course) {
           const coursePrice = course.currency === 'USD' ? course.priceUSD : course.price
@@ -126,7 +128,7 @@ export const getAllPayments = asyncHandler(async (req, res) => {
 // PATCH /api/v1/payments/:id/approve — admin (can approve from any status)
 export const approvePayment = asyncHandler(async (req, res) => {
   try {
-    const payment = await Payment.findById(req.params.id).populate('course', 'title')
+    const payment = await Payment.findById(req.params.id).populate('course', 'title price priceUSD currency')
     if (!payment) return res.status(404).json({ success: false, error: { message: 'Payment not found' } })
 
     const previousStatus = payment.status
@@ -145,9 +147,9 @@ export const approvePayment = asyncHandler(async (req, res) => {
           const referral = settings?.referral
 
           if (referral?.enabled) {
-            const courseId = payment.course._id || payment.course
-            const course = await Course.findById(courseId)
-            const coursePrice = course?.currency === 'USD' ? course.priceUSD : course?.price || 0
+            const course = payment.course
+            const courseId = course._id
+            const coursePrice = course.currency === 'USD' ? (course.priceUSD || 0) : (course.price || 0)
 
             let rewardAmount = 0
             if (referral.referrerRewardType === 'percentage') {
@@ -157,6 +159,7 @@ export const approvePayment = asyncHandler(async (req, res) => {
             }
 
             const enrollment = await Enrollment.findOne({ student: payment.student, course: courseId })
+            if (!enrollment) return
 
             await ReferralReward.create({
               referrer: coupon.referrer,
