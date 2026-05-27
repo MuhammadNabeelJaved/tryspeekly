@@ -64,7 +64,7 @@ export const getCoupons = asyncHandler(async (req, res) => {
 
     res.json({
       success: true,
-      data: coupons,
+      data: { coupons },
       pagination: { page: Number(page), limit: Number(limit), total, totalPages: Math.ceil(total / Number(limit)) },
     })
   } catch (error) {
@@ -94,6 +94,8 @@ export const updateCoupon = asyncHandler(async (req, res) => {
     if (req.body.maxUses !== undefined) allowed.maxUses = req.body.maxUses === null ? null : Number(req.body.maxUses)
     if (req.body.expiresAt !== undefined) allowed.expiresAt = req.body.expiresAt || null
     if (req.body.discountValue !== undefined) allowed.discountValue = Number(req.body.discountValue)
+    if (req.body.discountType !== undefined) allowed.discountType = req.body.discountType
+    if (req.body.code !== undefined) allowed.code = req.body.code.toUpperCase().trim()
 
     const coupon = await Coupon.findByIdAndUpdate(req.params.id, allowed, { new: true, runValidators: true })
     if (!coupon) return res.status(404).json({ success: false, error: { message: 'Coupon not found' } })
@@ -126,9 +128,11 @@ export const validateCoupon = asyncHandler(async (req, res) => {
     if (!course) return res.status(404).json({ success: false, error: { message: 'Course not found' } })
 
     const coupon = await Coupon.findOne({ code: code.toUpperCase().trim() })
-
-    if (!coupon || !coupon.isActive) {
-      return res.json({ success: true, data: { valid: false, reason: 'Invalid or inactive coupon' } })
+    if (!coupon) {
+      return res.json({ success: true, data: { valid: false, reason: 'Coupon code not found' } })
+    }
+    if (!coupon.isActive) {
+      return res.json({ success: true, data: { valid: false, reason: 'Coupon is inactive' } })
     }
     if (coupon.expiresAt && coupon.expiresAt < new Date()) {
       return res.json({ success: true, data: { valid: false, reason: 'Coupon has expired' } })
