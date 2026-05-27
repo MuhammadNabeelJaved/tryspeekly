@@ -70,6 +70,7 @@ export const updateOffer = asyncHandler(async (req, res) => {
   if (req.body.courseId !== undefined) {
     offer.course = req.body.courseId || null
   }
+  if (req.body.scope === 'platform') offer.course = null
 
   await offer.save()
   await offer.populate('course', 'title')

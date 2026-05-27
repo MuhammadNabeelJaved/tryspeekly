@@ -788,14 +788,14 @@ function OffersMarquee({ offers, onNavigate }: { offers: Offer[]; onNavigate: ()
       aria-label="Active offers — click to manage"
     >
       <style>{`
-        @keyframes marquee {
+        @keyframes offers-marquee {
           0%   { transform: translateX(0); }
           100% { transform: translateX(-50%); }
         }
         .offers-marquee-track {
           display: flex;
           width: max-content;
-          animation: marquee 30s linear infinite;
+          animation: offers-marquee 30s linear infinite;
         }
         .offers-marquee-track:hover {
           animation-play-state: paused;
@@ -803,7 +803,7 @@ function OffersMarquee({ offers, onNavigate }: { offers: Offer[]; onNavigate: ()
       `}</style>
       <div className="offers-marquee-track">
         {items.map((o, i) => (
-          <span key={i} className="flex items-center gap-2 px-6 text-xs font-bold text-white whitespace-nowrap">
+          <span key={`${o._id}-${i}`} className="flex items-center gap-2 px-6 text-xs font-bold text-white whitespace-nowrap">
             <span className="text-violet-300">%</span>
             {o.bannerText}
             <span className="text-violet-300 mx-2">·</span>
