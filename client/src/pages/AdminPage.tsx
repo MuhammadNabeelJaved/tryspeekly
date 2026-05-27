@@ -780,10 +780,12 @@ function OffersMarquee({ offers, onNavigate }: { offers: Offer[]; onNavigate: ()
   const items = [...offers, ...offers] // duplicate for seamless loop
 
   return (
-    <div
-      className="h-8 bg-violet-600 flex items-center overflow-hidden flex-shrink-0 cursor-pointer"
+    <button
+      type="button"
+      className="h-8 bg-violet-600 flex items-center overflow-hidden flex-shrink-0 cursor-pointer w-full text-left"
       onClick={onNavigate}
       title="Click to manage offers"
+      aria-label="Active offers — click to manage"
     >
       <style>{`
         @keyframes marquee {
@@ -808,6 +810,6 @@ function OffersMarquee({ offers, onNavigate }: { offers: Offer[]; onNavigate: ()
           </span>
         ))}
       </div>
-    </div>
+    </button>
   )
 }

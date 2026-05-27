@@ -575,6 +575,7 @@ function OffersTab() {
     try {
       const res = await offersService.getAdminOffers()
       if (res.success) setOffers(res.data)
+      else toast.error(res.message || 'Failed to load offers')
     } finally { setLoading(false) }
   }, [])
 
@@ -582,7 +583,7 @@ function OffersTab() {
   useEffect(() => {
     coursesService.getAdminCourses({ limit: 100 }).then(r => {
       if (r.success) setCourses(r.data)
-    }).catch(() => {})
+    }).catch(() => { toast.error('Failed to load courses') })
   }, [])
 
   async function handleToggle(id: string, current: boolean) {
@@ -733,8 +734,11 @@ function OfferModal({
         toast.success('Offer created')
       }
       onSuccess()
-    } catch (err: any) {
-      toast.error(err?.response?.data?.error?.message || 'Failed to save offer')
+    } catch (err) {
+      const message = err instanceof Error
+        ? ((err as { response?: { data?: { error?: { message?: string } } } }).response?.data?.error?.message ?? err.message)
+        : 'Failed to save offer'
+      toast.error(message)
     } finally { setSaving(false) }
   }
 
