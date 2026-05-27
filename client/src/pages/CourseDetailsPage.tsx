@@ -16,6 +16,9 @@ import { useAuth } from '../context/AuthContext'
 import { useGeo } from '../context/GeoContext'
 import ReviewModal from '../components/ReviewModal'
 import type { Review } from '../types/api'
+import { offersService } from '../services/offers.service'
+import type { Offer } from '../services/offers.service'
+import { getDiscountedPrice } from '../utils/offerUtils'
 
 // Dummy Data for the specific course
 const COURSE = {
@@ -130,6 +133,7 @@ export default function CourseDetailsPage() {
   const [myExistingCourseReview, setMyExistingCourseReview] = useState<Review | null>(null)
 
   const [isEnrolling, setIsEnrolling] = useState(false);
+  const [activeOffers, setActiveOffers] = useState<Offer[]>([])
 
   useEffect(() => {
     if (id) {
@@ -159,6 +163,14 @@ export default function CourseDetailsPage() {
         .finally(() => setIsLoadingReviews(false))
     }
   }, [id])
+
+  useEffect(() => {
+    let mounted = true
+    offersService.getActiveOffers()
+      .then(r => { if (mounted && r.success) setActiveOffers(r.data) })
+      .catch(() => {})
+    return () => { mounted = false }
+  }, [])
 
   // Merge API data into COURSE object for display
   const activeCourse = apiCourse
@@ -211,6 +223,10 @@ export default function CourseDetailsPage() {
         reviewsList: [],
       }
     : COURSE
+
+  const priceResult = apiCourse && currency === 'PKR'
+    ? getDiscountedPrice(apiCourse._id, apiCourse.price ?? 0, activeOffers)
+    : null
 
   const totalReviewPages = Math.ceil(activeCourse.reviewsList.length / REVIEWS_PER_PAGE)
   const currentReviews = activeCourse.reviewsList.slice(
@@ -754,18 +770,33 @@ export default function CourseDetailsPage() {
                   {/* Pricing Details */}
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-end gap-3">
-                      <span className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">{activeCourse.price}</span>
-                      <span className="text-lg text-slate-400 dark:text-neutral-500 line-through mb-1 font-semibold">{activeCourse.originalPrice}</span>
+                      <span className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">
+                        {priceResult?.hasDiscount
+                          ? `Rs.${priceResult.discountedPrice.toLocaleString()}`
+                          : activeCourse.price}
+                      </span>
+                      {priceResult?.hasDiscount && (
+                        <span className="text-lg text-slate-400 dark:text-neutral-500 line-through mb-1 font-semibold">
+                          Rs.{priceResult.originalPrice.toLocaleString()}
+                        </span>
+                      )}
                     </div>
-                    <div className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-xs font-bold px-2.5 py-1 rounded-md flex items-center gap-1">
-                      <Tag size={12} weight="fill" />
-                      33% OFF
+                    {priceResult?.hasDiscount && (
+                      <div className="bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400 text-xs font-bold px-2.5 py-1 rounded-md flex items-center gap-1">
+                        <Tag size={12} weight="fill" />
+                        {priceResult.discountLabel}
+                      </div>
+                    )}
+                  </div>
+                  {priceResult?.hasDiscount && priceResult.offer?.title && (
+                    <div className="flex items-center gap-2 text-violet-600 dark:text-violet-400 text-xs font-bold mb-6">
+                      <Tag size={14} weight="bold" />
+                      <span>{priceResult.offer.title} applied</span>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2 text-rose-500 text-xs font-bold mb-6">
-                    <Clock size={14} weight="bold" />
-                    <span>Limited time offer! Ends in 2 days</span>
-                  </div>
+                  )}
+                  {(!priceResult?.hasDiscount || !priceResult.offer?.title) && (
+                    <div className="mb-6" />
+                  )}
 
                   {/* Primary CTA */}
                   <motion.button
@@ -1152,8 +1183,16 @@ export default function CourseDetailsPage() {
           >
             <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
               <div>
-                <div className="text-xs text-slate-500 dark:text-neutral-400 font-bold mb-0.5 line-through">{activeCourse.originalPrice}</div>
-                <div className="text-2xl font-black text-slate-900 dark:text-white">{activeCourse.price}</div>
+                {priceResult?.hasDiscount && (
+                  <div className="text-xs text-slate-500 dark:text-neutral-400 font-bold mb-0.5 line-through">
+                    Rs.{priceResult.originalPrice.toLocaleString()}
+                  </div>
+                )}
+                <div className="text-2xl font-black text-slate-900 dark:text-white">
+                  {priceResult?.hasDiscount
+                    ? `Rs.${priceResult.discountedPrice.toLocaleString()}`
+                    : activeCourse.price}
+                </div>
               </div>
               <button
                 onClick={handleEnroll}
