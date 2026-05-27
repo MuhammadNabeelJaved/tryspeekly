@@ -78,6 +78,7 @@ import salaryRequestRoutes from './src/routes/salary-request.route.js'
 import aiChatRoutes from './src/routes/ai-chat.route.js'
 import couponRoutes from './src/routes/coupon.route.js'
 import referralRoutes from './src/routes/referral.route.js'
+import offerRoutes from './src/routes/offer.route.js'
 
 app.use('/api/v1/users', userRoutes)
 app.use('/api/v1/live-classes', liveClassRoutes)
@@ -104,6 +105,7 @@ app.use('/api/v1/salary-requests', salaryRequestRoutes)
 app.use('/api/v1/ai-chat', aiChatRoutes)
 app.use('/api/v1/coupons', couponRoutes)
 app.use('/api/v1/referrals', referralRoutes)
+app.use('/api/v1/offers', offerRoutes)
 
 app.use((req, res) => {
     res.status(404).json({
