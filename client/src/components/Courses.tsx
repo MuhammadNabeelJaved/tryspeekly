@@ -10,6 +10,9 @@ import { useState, useEffect, useRef } from 'react'
 import { coursesService } from '../services/courses.service'
 import type { Course } from '../types/api'
 import { useGeo } from '../context/GeoContext'
+import { offersService } from '../services/offers.service'
+import type { Offer } from '../services/offers.service'
+import { getDiscountedPrice } from '../utils/offerUtils'
 
 // Animated Counter Component
 function AnimatedCounter({ from, to, duration = 1.5, format }: { from: number, to: number, duration?: number, format?: (val: number) => string }) {
@@ -303,6 +306,7 @@ export default function Courses() {
   const [openFaq, setOpenFaq] = useState<number | null>(null)
   const [cardsHovered, setCardsHovered] = useState(false)
   const [apiCourses, setApiCourses] = useState<CourseCard[] | null>(null)
+  const [activeOffers, setActiveOffers] = useState<Offer[]>([])
   const { currency } = useGeo()
   const navigate = useNavigate()
 
@@ -339,6 +343,12 @@ export default function Courses() {
     }
     fetchCourses()
     return () => { mounted = false }
+  }, [])
+
+  useEffect(() => {
+    offersService.getActiveOffers()
+      .then(r => { if (r.success) setActiveOffers(r.data) })
+      .catch(() => {})
   }, [])
 
   const courses = apiCourses || FALLBACK_COURSES
@@ -643,13 +653,38 @@ export default function Courses() {
                       <h3 className="text-base font-bold text-slate-900 dark:text-white leading-snug group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">
                         {course.title}
                       </h3>
-                      <span className="flex-shrink-0 text-xl font-black text-violet-600 dark:text-violet-400">
-                        {course.pricePKR !== undefined || course.priceUSD !== undefined
-                          ? currency === 'PKR'
-                            ? `Rs.${(course.pricePKR ?? 0).toLocaleString()}`
-                            : `$${course.priceUSD ?? 0}`
-                          : course.price}
-                      </span>
+                      {(() => {
+                        if (currency === 'PKR' && course.pricePKR !== undefined) {
+                          const result = getDiscountedPrice(course.id, course.pricePKR, activeOffers)
+                          if (result.hasDiscount) {
+                            return (
+                              <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-xs font-bold bg-violet-100 dark:bg-violet-900/40 text-violet-600 dark:text-violet-300 px-1.5 py-0.5 rounded-md">
+                                    {result.discountLabel}
+                                  </span>
+                                  <span className="text-xl font-black text-violet-600 dark:text-violet-400">
+                                    Rs.{result.discountedPrice.toLocaleString()}
+                                  </span>
+                                </div>
+                                <span className="text-xs text-slate-400 line-through">
+                                  Rs.{result.originalPrice.toLocaleString()}
+                                </span>
+                              </div>
+                            )
+                          }
+                          return (
+                            <span className="flex-shrink-0 text-xl font-black text-violet-600 dark:text-violet-400">
+                              Rs.{(course.pricePKR ?? 0).toLocaleString()}
+                            </span>
+                          )
+                        }
+                        return (
+                          <span className="flex-shrink-0 text-xl font-black text-violet-600 dark:text-violet-400">
+                            {course.priceUSD !== undefined ? `$${course.priceUSD ?? 0}` : course.price}
+                          </span>
+                        )
+                      })()}
                     </div>
 
                     <p className="text-slate-500 dark:text-neutral-400 text-sm leading-relaxed mb-5">
