@@ -4,6 +4,7 @@ export interface Offer {
   _id: string
   title: string
   bannerText: string
+  marqueeSpeedSeconds?: number
   discountType: 'percentage' | 'fixed'
   discountValue: number
   scope: 'platform' | 'course'
@@ -28,6 +29,7 @@ export const offersService = {
   async createOffer(dto: {
     title: string
     bannerText: string
+    marqueeSpeedSeconds?: number
     discountType: 'percentage' | 'fixed'
     discountValue: number
     scope: 'platform' | 'course'
@@ -45,6 +47,7 @@ export const offersService = {
     dto: Partial<{
       title: string
       bannerText: string
+      marqueeSpeedSeconds: number
       discountType: 'percentage' | 'fixed'
       discountValue: number
       scope: 'platform' | 'course'

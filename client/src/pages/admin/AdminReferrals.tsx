@@ -627,7 +627,7 @@ function OffersTab() {
           <table className="w-full text-sm">
             <thead className="border-b border-slate-100 dark:border-neutral-800 bg-slate-50 dark:bg-neutral-800/50">
               <tr>
-                {['Title', 'Discount', 'Scope', 'Duration', 'Status', ''].map(h => (
+                {['Title', 'Discount', 'Scope', 'Speed', 'Duration', 'Status', ''].map(h => (
                   <th key={h} className="px-4 py-3 text-left text-xs font-bold text-slate-500 dark:text-neutral-400 uppercase tracking-wider">{h}</th>
                 ))}
               </tr>
@@ -646,6 +646,9 @@ function OffersTab() {
                   </td>
                   <td className="px-4 py-3 text-slate-500 dark:text-neutral-400">
                     {o.scope === 'course' ? (o.course?.title || 'Course') : 'All Courses'}
+                  </td>
+                  <td className="px-4 py-3 text-slate-500 dark:text-neutral-400">
+                    {o.marqueeSpeedSeconds ?? 60}s
                   </td>
                   <td className="px-4 py-3 text-slate-400 text-xs">
                     {o.startsAt ? new Date(o.startsAt).toLocaleDateString() : '—'}
@@ -699,6 +702,7 @@ function OfferModal({
   const [form, setForm] = useState({
     title: offer?.title ?? '',
     bannerText: offer?.bannerText ?? '',
+    marqueeSpeedSeconds: (offer?.marqueeSpeedSeconds ?? 60).toString(),
     discountType: offer?.discountType ?? 'percentage',
     discountValue: offer?.discountValue?.toString() ?? '',
     scope: offer?.scope ?? 'platform',
@@ -718,6 +722,7 @@ function OfferModal({
       const dto = {
         title: form.title,
         bannerText: form.bannerText,
+        marqueeSpeedSeconds: Number(form.marqueeSpeedSeconds),
         discountType: form.discountType as 'percentage' | 'fixed',
         discountValue: Number(form.discountValue),
         scope: form.scope as 'platform' | 'course',
@@ -765,6 +770,25 @@ function OfferModal({
             <input value={form.bannerText} onChange={e => setForm(f => ({ ...f, bannerText: e.target.value }))}
               placeholder="🎉 Eid Sale — 30% off all courses!"
               className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white" />
+          </div>
+          <div>
+            <div className="mb-1 flex items-center justify-between gap-3">
+              <label className="text-xs font-bold text-slate-500 dark:text-neutral-400 uppercase tracking-wide block">Marquee Speed</label>
+              <span className="text-xs font-black text-violet-600 dark:text-violet-400">{form.marqueeSpeedSeconds}s</span>
+            </div>
+            <input
+              type="range"
+              min="20"
+              max="120"
+              step="5"
+              value={form.marqueeSpeedSeconds}
+              onChange={e => setForm(f => ({ ...f, marqueeSpeedSeconds: e.target.value }))}
+              className="w-full accent-violet-600"
+            />
+            <div className="mt-1 flex justify-between text-[10px] font-semibold text-slate-400 dark:text-neutral-500">
+              <span>Fast</span>
+              <span>Slow</span>
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>

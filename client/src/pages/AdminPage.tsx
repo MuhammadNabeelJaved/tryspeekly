@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   ChartBar, Users, Chalkboard, BookOpen, CreditCard, PencilSimple,
-  List, X, SignOut, Bell, MagnifyingGlass, Sun, Moon, GearSix,
+  List, X, SignOut, Bell, Sun, Moon, GearSix,
   Lock, Eye, EyeSlash, Handshake, Certificate, ChatCircleDots, CheckCircle, Chats, Globe, Star, Sparkle, Money, EnvelopeSimple, Gift
 } from '@phosphor-icons/react'
 import TourGuide, { type TourStep } from '@/components/TourGuide'
@@ -12,6 +12,7 @@ import DashboardSearch, { type SearchItem } from '@/components/DashboardSearch'
 import type { Student, Instructor, Course, CMSPage } from './admin/adminData'
 import { INITIAL_STUDENTS, INITIAL_INSTRUCTORS, INITIAL_COURSES, INITIAL_CMS_PAGES } from './admin/adminData'
 import Loader from '@/components/Loader'
+import OffersMarquee from '@/components/OffersMarquee'
 import UserAvatar from '@/components/UserAvatar'
 import { useAuth } from '../context/AuthContext'
 import { usersService } from '../services/users.service'
@@ -772,44 +773,3 @@ export default function AdminPage() {
   )
 }
 
-// ─── Offers Marquee Ticker ────────────────────────────────────────────────────
-
-function OffersMarquee({ offers, onNavigate }: { offers: Offer[]; onNavigate: () => void }) {
-  if (offers.length === 0) return null
-
-  const items = [...offers, ...offers] // duplicate for seamless loop
-
-  return (
-    <button
-      type="button"
-      className="h-8 bg-violet-600 flex items-center overflow-hidden flex-shrink-0 cursor-pointer w-full text-left"
-      onClick={onNavigate}
-      title="Click to manage offers"
-      aria-label="Active offers — click to manage"
-    >
-      <style>{`
-        @keyframes offers-marquee {
-          0%   { transform: translateX(0); }
-          100% { transform: translateX(-50%); }
-        }
-        .offers-marquee-track {
-          display: flex;
-          width: max-content;
-          animation: offers-marquee 30s linear infinite;
-        }
-        .offers-marquee-track:hover {
-          animation-play-state: paused;
-        }
-      `}</style>
-      <div className="offers-marquee-track">
-        {items.map((o, i) => (
-          <span key={`${o._id}-${i}`} className="flex items-center gap-2 px-6 text-xs font-bold text-white whitespace-nowrap">
-            <span className="text-violet-300">%</span>
-            {o.bannerText}
-            <span className="text-violet-300 mx-2">·</span>
-          </span>
-        ))}
-      </div>
-    </button>
-  )
-}

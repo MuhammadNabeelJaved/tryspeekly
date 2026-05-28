@@ -16,6 +16,12 @@ const offerSchema = new Schema(
       maxlength: [200, 'Banner text cannot exceed 200 characters'],
       default: '',
     },
+    marqueeSpeedSeconds: {
+      type: Number,
+      min: [20, 'Marquee speed cannot be faster than 20 seconds'],
+      max: [120, 'Marquee speed cannot be slower than 120 seconds'],
+      default: 60,
+    },
     discountType: {
       type: String,
       enum: ['percentage', 'fixed'],

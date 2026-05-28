@@ -4,6 +4,8 @@ import { List, X, Phone } from '@phosphor-icons/react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { ThemeToggle } from './ThemeToggle'
 import { useAuth } from '../context/AuthContext'
+import OffersMarquee from './OffersMarquee'
+import type { Offer } from '@/services/offers.service'
 
 // Create a motion-enabled Link component
 const MotionLink = motion.create(Link)
@@ -17,7 +19,7 @@ const NAV_LINKS = [
   { name: 'Contact', href: '/contact' },
 ]
 
-export default function Navbar() {
+export default function Navbar({ offers = [] }: { offers?: Offer[] }) {
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const location = useLocation()
@@ -47,6 +49,7 @@ export default function Navbar() {
         scrolled ? 'shadow-[0_2px_24px_rgba(0,0,0,0.08)] dark:shadow-[0_2px_24px_rgba(0,0,0,0.4)] border-b border-slate-100 dark:border-neutral-800' : ''
       }`}
     >
+      <OffersMarquee offers={offers} />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-[72px] lg:h-[80px]">
 

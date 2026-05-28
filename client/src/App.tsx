@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
-import { useEffect, Suspense, lazy, Component, type ReactNode } from 'react'
+import { useEffect, useState, Suspense, lazy, Component, type ReactNode } from 'react'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider } from '@/context/AuthContext'
 import { SocketProvider } from '@/context/SocketContext'
@@ -10,6 +10,7 @@ import Footer from '@/components/Footer'
 import ScrollToTop from '@/components/ScrollToTop'
 import Loader from '@/components/Loader'
 import AIChatWidget from '@/components/AIChatWidget'
+import { offersService, type Offer } from '@/services/offers.service'
 
 const Home = lazy(() => import('@/pages/Home'))
 const CoursesPage = lazy(() => import('@/pages/CoursesPage'))
@@ -78,10 +79,26 @@ function ScrollHandler() {
 }
 
 function PublicLayout() {
+  const [activeOffers, setActiveOffers] = useState<Offer[]>([])
+
+  useEffect(() => {
+    let mounted = true
+    offersService.getActiveOffers()
+      .then(response => {
+        if (mounted && response.success) {
+          setActiveOffers(response.data.filter(offer => offer.bannerText?.trim()))
+        }
+      })
+      .catch(() => {})
+    return () => {
+      mounted = false
+    }
+  }, [])
+
   return (
     <div className="flex min-h-[100dvh] w-full flex-col overflow-x-hidden bg-white transition-colors duration-300 dark:bg-neutral-950">
-      <Navbar />
-      <main className="relative flex flex-1 flex-col">
+      <Navbar offers={activeOffers} />
+      <main className={`relative flex flex-1 flex-col ${activeOffers.length > 0 ? 'pt-8' : ''}`}>
         <Suspense fallback={<Loader page />}>
           <Routes>
             <Route path="/" element={<Home />} />

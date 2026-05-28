@@ -32,7 +32,7 @@ export const getAllOffers = asyncHandler(async (req, res) => {
 
 // ─── POST /api/v1/offers (admin) ──────────────────────────────────────────────
 export const createOffer = asyncHandler(async (req, res) => {
-  const { title, bannerText, discountType, discountValue, scope, courseId, isActive, startsAt, endsAt } = req.body
+  const { title, bannerText, marqueeSpeedSeconds, discountType, discountValue, scope, courseId, isActive, startsAt, endsAt } = req.body
 
   if (!title || !discountType || discountValue == null || !scope) {
     throw new BadRequestError('title, discountType, discountValue, and scope are required')
@@ -44,6 +44,7 @@ export const createOffer = asyncHandler(async (req, res) => {
   const offer = await Offer.create({
     title,
     bannerText: bannerText || '',
+    marqueeSpeedSeconds: marqueeSpeedSeconds ? Number(marqueeSpeedSeconds) : 60,
     discountType,
     discountValue: Number(discountValue),
     scope,
@@ -63,7 +64,7 @@ export const updateOffer = asyncHandler(async (req, res) => {
   const offer = await Offer.findById(req.params.id)
   if (!offer) throw new NotFoundError('Offer not found')
 
-  const allowed = ['title', 'bannerText', 'discountType', 'discountValue', 'scope', 'isActive', 'startsAt', 'endsAt']
+  const allowed = ['title', 'bannerText', 'marqueeSpeedSeconds', 'discountType', 'discountValue', 'scope', 'isActive', 'startsAt', 'endsAt']
   allowed.forEach(key => {
     if (req.body[key] !== undefined) offer[key] = req.body[key]
   })
