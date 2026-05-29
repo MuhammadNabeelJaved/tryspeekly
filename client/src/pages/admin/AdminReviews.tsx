@@ -138,7 +138,8 @@ function StatusBadge({ status }: { status: Review['status'] }) {
 function TypeBadge({ type }: { type: Review['type'] }) {
   const map: Record<Review['type'], string> = {
     platform: 'bg-violet-100 dark:bg-violet-950/40 text-violet-700 dark:text-violet-400',
-    course: 'bg-blue-100 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400',
+    course:   'bg-blue-100 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400',
+    team:     'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400',
   }
   return (
     <span
@@ -272,9 +273,10 @@ const STATUS_OPTIONS = [
 ] as const
 
 const TYPE_OPTIONS = [
-  { label: 'All', value: 'all' },
+  { label: 'All',      value: 'all' },
   { label: 'Platform', value: 'platform' },
-  { label: 'Course', value: 'course' },
+  { label: 'Course',   value: 'course' },
+  { label: 'Team',     value: 'team' },
 ] as const
 
 const TABLE_HEADERS = [

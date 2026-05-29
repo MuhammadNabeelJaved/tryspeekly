@@ -98,4 +98,9 @@ export const reviewsService = {
     const response = await axiosClient.post<ReviewSingleResponse>('/reviews/admin', data);
     return response.data;
   },
+
+  async getTeamReviews(params?: { page?: number; limit?: number }): Promise<ReviewListResponse> {
+    const response = await axiosClient.get<ReviewListResponse>('/reviews/team', { params });
+    return response.data;
+  },
 };

@@ -14,6 +14,7 @@ import {
   toggleFeatured,
   adminDeleteReview,
   adminCreateReview,
+  getTeamReviews,
 } from '../controllers/review.controller.js'
 
 const router = express.Router()
@@ -28,6 +29,9 @@ router.post('/admin', authenticate, authorizeTeamPage('reviews'), adminCreateRev
 router.patch('/admin/:id/status', authenticate, authorizeTeamPage('reviews'), updateReviewStatus)
 router.patch('/admin/:id/feature', authenticate, authorizeTeamPage('reviews'), toggleFeatured)
 router.delete('/admin/:id', authenticate, authorizeTeamPage('reviews'), adminDeleteReview)
+
+// ─── Team member: all approved team experience reviews ────────────────────────
+router.get('/team', authenticate, getTeamReviews)
 
 // ─── Authenticated user ───────────────────────────────────────────────────────
 router.get('/my', authenticate, getMyReviews)

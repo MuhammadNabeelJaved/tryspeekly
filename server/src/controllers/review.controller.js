@@ -17,11 +17,11 @@ import {
 // ─── Validation schemas ────────────────────────────────────────────────────────
 
 const submitSchema = Joi.object({
-  type: Joi.string().valid('platform', 'course').required(),
+  type: Joi.string().valid('platform', 'course', 'team').required(),
   courseId: Joi.when('type', {
     is: 'course',
     then: Joi.string().required().messages({ 'any.required': 'courseId is required for course reviews' }),
-    otherwise: Joi.forbidden().messages({ 'any.unknown': 'courseId is not allowed for platform reviews' }),
+    otherwise: Joi.forbidden().messages({ 'any.unknown': 'courseId is not allowed for this review type' }),
   }),
   rating: Joi.number().integer().min(1).max(5).required(),
   content: Joi.string().trim().min(10).max(1000).required(),
@@ -95,12 +95,24 @@ export const submitReview = asyncHandler(async (req, res) => {
     }
   }
 
+  if (type === 'team') {
+    if (req.user.role !== 'team_member') throw new ForbiddenError('Only team members can write team experience reviews')
+  }
+
+  // Snapshot job title for team reviews so it persists even if the user's title changes later
+  let jobTitle
+  if (type === 'team') {
+    const member = await User.findById(authorId, 'jobTitle').lean()
+    jobTitle = member?.jobTitle || 'Team Member'
+  }
+
   let review
   try {
     review = await Review.create({
       type,
       author: authorId,
       course: type === 'course' ? courseId : undefined,
+      jobTitle: type === 'team' ? jobTitle : undefined,
       rating,
       content,
     })
@@ -303,6 +315,29 @@ const adminCreateSchema = Joi.object({
   content: Joi.string().trim().min(10).max(1000).required(),
   status: Joi.string().valid('pending', 'approved').default('approved'),
   featuredOnHome: Joi.boolean().default(false),
+})
+
+// ─── Team member: get all approved team reviews ───────────────────────────────
+
+export const getTeamReviews = asyncHandler(async (req, res) => {
+  const { page = 1, limit = 20 } = req.query
+  const skip = (Number(page) - 1) * Number(limit)
+
+  const filter = { type: 'team', status: 'approved' }
+  const [reviews, total] = await Promise.all([
+    Review.find(filter)
+      .populate('author', 'name profileImage jobTitle')
+      .sort({ updatedAt: -1 })
+      .skip(skip)
+      .limit(Number(limit)),
+    Review.countDocuments(filter),
+  ])
+
+  res.json({
+    success: true,
+    data: reviews,
+    pagination: { page: Number(page), limit: Number(limit), total, totalPages: Math.ceil(total / Number(limit)) },
+  })
 })
 
 export const adminCreateReview = asyncHandler(async (req, res) => {

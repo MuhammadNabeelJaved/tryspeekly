@@ -566,18 +566,19 @@ export interface Assignment {
 
 export interface Review {
   _id: string;
-  type: 'platform' | 'course';
+  type: 'platform' | 'course' | 'team';
   author: {
     _id: string;
     name: string;
     profileImage?: string;
-    role: 'student' | 'teacher' | 'admin';
+    role: 'student' | 'teacher' | 'admin' | 'team_member';
     email?: string;
   };
   course?: {
     _id: string;
     title: string;
   };
+  jobTitle?: string;
   rating: number;
   content: string;
   status: 'pending' | 'approved' | 'rejected';
@@ -588,7 +589,7 @@ export interface Review {
 }
 
 export interface SubmitReviewDto {
-  type: 'platform' | 'course';
+  type: 'platform' | 'course' | 'team';
   courseId?: string;
   rating: number;
   content: string;

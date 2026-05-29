@@ -4,7 +4,7 @@ import {
   ChartBar, Users, BookOpen, Chalkboard, CreditCard, Handshake,
   Money, Certificate, Gift, Chats, ChatCircleDots, EnvelopeSimple,
   Star, Bell, PencilSimple, Globe, GearSix, SignOut, List, X, ChatTeardropText,
-  SquaresFour, UserCircle, MagnifyingGlass, Sparkle,
+  SquaresFour, UserCircle, MagnifyingGlass, Sparkle, ChatText,
 } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '@/context/AuthContext'
@@ -24,6 +24,7 @@ import {
 import type { AdminStore } from './AdminPage'
 import TeamOverview from './team/TeamOverview'
 import TeamProfile from './team/TeamProfile'
+import TeamReviews from './team/TeamReviews'
 import TourGuide, { type TourStep } from '@/components/TourGuide'
 import DashboardSearch, { type SearchItem } from '@/components/DashboardSearch'
 import toast from 'react-hot-toast'
@@ -54,8 +55,9 @@ const AdminEmail         = lazy(() => import('./admin/AdminEmail'))
 // ─── Permission → nav item mapping ───────────────────────────────────────────
 
 // These nav items are always visible — no permission required
-const DASHBOARD_NAV = { key: '__dashboard__', label: 'Dashboard', path: '',        Icon: SquaresFour }
-const PROFILE_NAV   = { key: '__profile__',   label: 'My Profile', path: 'profile', Icon: UserCircle }
+const DASHBOARD_NAV = { key: '__dashboard__', label: 'Dashboard',    path: '',         Icon: SquaresFour }
+const PROFILE_NAV   = { key: '__profile__',   label: 'My Profile',   path: 'profile',  Icon: UserCircle }
+const REVIEWS_NAV   = { key: '__reviews__',   label: 'Team Reviews', path: 'reviews',  Icon: ChatText }
 
 const ALL_NAV = [
   { key: 'students',      label: 'Students',      path: 'students',      Icon: Users },
@@ -228,7 +230,7 @@ export default function TeamPage() {
 
   // Sidebar nav = Dashboard (always) + permitted pages + Profile (always)
   const permNavItems = ALL_NAV.filter(n => permissions.includes(n.key))
-  const allNavItems  = [DASHBOARD_NAV, ...permNavItems, PROFILE_NAV]
+  const allNavItems  = [DASHBOARD_NAV, ...permNavItems, REVIEWS_NAV, PROFILE_NAV]
 
   const currentPath = location.pathname.replace('/team', '').replace(/^\//, '')
   const activeKey   = allNavItems.find(n => n.path === currentPath)?.key ?? '__dashboard__'
@@ -279,6 +281,11 @@ export default function TeamPage() {
     })
     steps.push(
       {
+        target: 'team-nav-__reviews__',
+        title: 'Team Reviews',
+        content: 'Read work experience reviews from all team members — great for new joiners to know what to expect. Write your own review here; the admin approves it and can feature it on the public homepage.',
+      },
+      {
         target: 'team-nav-__profile__',
         title: 'My Profile',
         content: 'Update your name, phone, bio, location, and profile photo. Change your password here too.',
@@ -315,8 +322,9 @@ export default function TeamPage() {
   // ─── Search items (permission-aware) ──────────────────────────────────────────
   const searchItems = useMemo<SearchItem[]>(() => {
     const items: SearchItem[] = [
-      { label: 'Dashboard',  description: 'Your overview, access stats, quick shortcuts, and permission history', path: '/team',         Icon: SquaresFour as SearchItem['Icon'] },
-      { label: 'My Profile', description: 'Update personal info, profile photo, and change password',              path: '/team/profile', Icon: UserCircle  as SearchItem['Icon'] },
+      { label: 'Dashboard',    description: 'Your overview, access stats, quick shortcuts, and permission history', path: '/team',          Icon: SquaresFour as SearchItem['Icon'] },
+      { label: 'Team Reviews', description: 'Read and write work experience reviews from team members',             path: '/team/reviews',  Icon: ChatText    as SearchItem['Icon'] },
+      { label: 'My Profile',   description: 'Update personal info, profile photo, and change password',             path: '/team/profile',  Icon: UserCircle  as SearchItem['Icon'] },
     ]
     permNavItems.forEach(n => {
       items.push({
@@ -604,6 +612,7 @@ export default function TeamPage() {
             <Routes>
               <Route path="/" element={<TeamOverview />} />
               <Route path="/profile" element={<TeamProfile />} />
+              <Route path="/reviews" element={<TeamReviews />} />
               {permissions.includes('students')      && <Route path="/students"      element={<AdminStudents store={store} />} />}
               {permissions.includes('instructors')   && <Route path="/instructors"   element={<AdminInstructors store={store} />} />}
               {permissions.includes('courses')       && <Route path="/courses"       element={<AdminCourses store={store} />} />}

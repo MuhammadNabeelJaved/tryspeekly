@@ -6,7 +6,7 @@ const reviewSchema = new Schema(
   {
     type: {
       type: String,
-      enum: ['platform', 'course'],
+      enum: ['platform', 'course', 'team'],
       required: [true, 'Review type is required'],
     },
     author: {
@@ -56,6 +56,10 @@ const reviewSchema = new Schema(
       trim: true,
       maxlength: [500, 'Admin note cannot exceed 500 characters'],
     },
+    jobTitle: {
+      type: String,
+      trim: true,
+    },
     isDeleted: {
       type: Boolean,
       default: false,
@@ -69,6 +73,11 @@ const reviewSchema = new Schema(
 reviewSchema.index(
   { author: 1, type: 1 },
   { unique: true, partialFilterExpression: { type: 'platform' } }
+)
+// One team experience review per team member
+reviewSchema.index(
+  { author: 1, type: 1 },
+  { unique: true, partialFilterExpression: { type: 'team' } }
 )
 // One course review per student per course
 reviewSchema.index(
