@@ -1,5 +1,5 @@
 import express from 'express'
-import { authenticate, authorizeTeamPage } from '../middlewares/auth.js'
+import { authenticate, authorize, authorizeTeamPage } from '../middlewares/auth.js'
 import { uploadProfileImage, handleMulterError } from '../middlewares/multer.js'
 import {
     createUser,
@@ -45,6 +45,6 @@ router.route('/change-password').post(authenticate, changePassword)
 router.route('/').get(authenticate, authorizeTeamPage('students', 'instructors'), getAllUsers)
 router.route('/:id')
     .get(authenticate, authorizeTeamPage('students', 'instructors'), getUserById)
-    .delete(authenticate, authorizeTeamPage('students', 'instructors'), deleteUser)
+    .delete(authenticate, authorize('admin'), deleteUser)
 
 export default router

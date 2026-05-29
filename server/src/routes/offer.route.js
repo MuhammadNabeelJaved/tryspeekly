@@ -8,6 +8,7 @@ const router = Router()
 router.get('/active', getActiveOffers)
 
 // Admin
+// admin-only: no team member page permission maps to this endpoint
 router.route('/')
   .get(authenticate, authorize('admin'), getAllOffers)
   .post(authenticate, authorize('admin'), createOffer)
