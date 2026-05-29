@@ -182,6 +182,9 @@ export const sendAdminMessage = asyncHandler(async (req, res) => {
 
 export const markAdminThreadRead = asyncHandler(async (req, res) => {
   const { memberId } = req.params
+  const member = await User.findOne({ _id: memberId, role: 'team_member', isDeleted: false })
+  if (!member) throw new NotFoundError('Team member not found.')
+
   await TeamChat.updateMany(
     { from: memberId, to: req.user.id, read: false },
     { read: true }
@@ -232,7 +235,7 @@ export const sendMemberMessage = asyncHandler(async (req, res) => {
 
 export const markMemberThreadRead = asyncHandler(async (req, res) => {
   const admin = await User.findOne({ role: 'admin', isDeleted: false }).select('_id').lean()
-  if (!admin) return res.json({ success: true })
+  if (!admin) throw new NotFoundError('No admin account found.')
 
   await TeamChat.updateMany(
     { from: admin._id, to: req.user.id, read: false },
