@@ -1,10 +1,10 @@
-import { useState, useEffect, useRef, Suspense, lazy, useCallback } from 'react'
+import { useState, useEffect, useRef, Suspense, lazy, useCallback, useMemo } from 'react'
 import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom'
 import {
   ChartBar, Users, BookOpen, Chalkboard, CreditCard, Handshake,
   Money, Certificate, Gift, Chats, ChatCircleDots, EnvelopeSimple,
   Star, Bell, PencilSimple, Globe, GearSix, SignOut, List, X, ChatTeardropText,
-  SquaresFour, UserCircle,
+  SquaresFour, UserCircle, MagnifyingGlass, Sparkle,
 } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '@/context/AuthContext'
@@ -24,6 +24,8 @@ import {
 import type { AdminStore } from './AdminPage'
 import TeamOverview from './team/TeamOverview'
 import TeamProfile from './team/TeamProfile'
+import TourGuide, { type TourStep } from '@/components/TourGuide'
+import DashboardSearch, { type SearchItem } from '@/components/DashboardSearch'
 import toast from 'react-hot-toast'
 
 // TeamNotification is imported from team.service
@@ -187,6 +189,7 @@ function TeamChatBubble() {
       </AnimatePresence>
 
       <button
+        data-tour="team-chat-bubble"
         onClick={() => setOpen(o => !o)}
         className="fixed bottom-6 right-6 z-50 w-12 h-12 bg-violet-600 hover:bg-violet-700 text-white rounded-2xl shadow-lg flex items-center justify-center transition-colors"
       >
@@ -230,6 +233,102 @@ export default function TeamPage() {
   const currentPath = location.pathname.replace('/team', '').replace(/^\//, '')
   const activeKey   = allNavItems.find(n => n.path === currentPath)?.key ?? '__dashboard__'
   const activeLabel = allNavItems.find(n => n.key === activeKey)?.label ?? 'Dashboard'
+
+  // ─── Tour ─────────────────────────────────────────────────────────────────────
+  const restartTourRef = useRef<(() => void) | null>(null)
+
+  const PAGE_DESCRIPTIONS: Record<string, string> = {
+    students:      'View and manage all registered students, their enrollments, and account status.',
+    courses:       'Review, approve, and manage courses on the platform.',
+    instructors:   'Manage instructor profiles, courses, and contact information.',
+    payments:      'Review and process student payment submissions.',
+    'financial-aid': 'Review and manage student financial aid applications.',
+    salaries:      'Manage instructor salary packages, requests, and payouts.',
+    certificates:  'Issue and manage student completion certificates.',
+    referrals:     'Manage referral coupon codes, rewards, and payout requests.',
+    messages:      'Handle direct messages between platform users.',
+    support:       'View and respond to support tickets from students and instructors.',
+    contacts:      'View messages submitted via the public contact form.',
+    email:         'Manage email templates, triggers, delivery logs, and test emails.',
+    reviews:       'Moderate course reviews submitted by students.',
+    notifications: 'View and manage platform-wide notifications.',
+    blog:          'Create, edit, and publish blog posts for the platform.',
+    seo:           'Manage SEO meta tags, titles, and keywords for the site.',
+    cms:           'Edit public-facing static content pages without touching code.',
+    'geo-access':  'Control which countries can access the platform.',
+  }
+
+  const tourSteps = useMemo<TourStep[]>(() => {
+    const steps: TourStep[] = [
+      {
+        title: 'Welcome to Your Team Dashboard!',
+        content: 'This tour walks you through everything available to you. Click Next or use arrow keys to navigate.',
+      },
+      {
+        target: 'team-nav-__dashboard__',
+        title: 'Dashboard',
+        content: 'Your personal overview — profile, access level, live platform stats, quick shortcuts to your pages, and a full history of every permission change.',
+      },
+    ]
+    permNavItems.forEach(n => {
+      steps.push({
+        target: `team-nav-${n.key}`,
+        title: n.label,
+        content: PAGE_DESCRIPTIONS[n.key] ?? `Manage the ${n.label} section of the platform.`,
+      })
+    })
+    steps.push(
+      {
+        target: 'team-nav-__profile__',
+        title: 'My Profile',
+        content: 'Update your name, phone, bio, location, and profile photo. Change your password here too.',
+      },
+      {
+        target: 'team-header-bell',
+        title: 'Access Notifications',
+        content: 'This bell lights up whenever your admin grants or removes page access. All history is saved — it persists across page refreshes.',
+      },
+      {
+        target: 'team-header-search',
+        title: 'Quick Search',
+        content: 'Press Ctrl+K or click here to instantly search and jump to any page in your dashboard.',
+      },
+      {
+        target: 'team-chat-bubble',
+        title: 'Chat with Admin',
+        content: 'Have a question? Click this button to open a direct chat with your admin. You\'ll see a badge when there are unread messages.',
+      },
+      {
+        target: 'team-take-tour',
+        title: 'Restart Tour',
+        content: 'Click "Take Tour" anytime to restart this walkthrough from the beginning.',
+      },
+      {
+        title: 'All Set!',
+        content: 'You know your way around. Your admin can grant you more pages at any time — you\'ll get a real-time notification when they do.',
+      },
+    )
+    return steps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [permNavItems.map(n => n.key).join(',')])
+
+  // ─── Search items (permission-aware) ──────────────────────────────────────────
+  const searchItems = useMemo<SearchItem[]>(() => {
+    const items: SearchItem[] = [
+      { label: 'Dashboard',  description: 'Your overview, access stats, quick shortcuts, and permission history', path: '/team',         Icon: SquaresFour as SearchItem['Icon'] },
+      { label: 'My Profile', description: 'Update personal info, profile photo, and change password',              path: '/team/profile', Icon: UserCircle  as SearchItem['Icon'] },
+    ]
+    permNavItems.forEach(n => {
+      items.push({
+        label:       n.label,
+        description: PAGE_DESCRIPTIONS[n.key] ?? `Manage ${n.label}`,
+        path:        `/team/${n.path}`,
+        Icon:        n.Icon as SearchItem['Icon'],
+      })
+    })
+    return items
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [permNavItems.map(n => n.key).join(',')])
 
   // ─── Socket: permission change notifications ────────────────────────────────
   useEffect(() => {
@@ -371,6 +470,7 @@ export default function TeamPage() {
             return (
               <button
                 key={key}
+                data-tour={`team-nav-${key}`}
                 onClick={() => { navigate(`/team${path ? `/${path}` : ''}`); setSidebarOpen(false) }}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm font-semibold transition-all duration-150 mb-1 ${
                   active
@@ -394,6 +494,14 @@ export default function TeamPage() {
             </div>
           </div>
           <button
+            data-tour="team-take-tour"
+            onClick={() => restartTourRef.current?.()}
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-950/30 transition-colors mb-1"
+          >
+            <Sparkle size={16} weight="fill" />
+            Take Tour
+          </button>
+          <button
             onClick={handleLogout}
             className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold text-slate-500 dark:text-neutral-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
           >
@@ -412,9 +520,15 @@ export default function TeamPage() {
           <h1 className="text-base font-black text-slate-900 dark:text-white truncate">{activeLabel}</h1>
 
           <div className="ml-auto flex items-center gap-2">
+            {/* Search button */}
+            <div data-tour="team-header-search">
+              <DashboardSearch items={searchItems} />
+            </div>
+
             {/* Bell icon — permission notifications */}
             <div className="relative" ref={notifsRef}>
               <button
+                data-tour="team-header-bell"
                 onClick={() => { setShowNotifs(v => !v); if (!showNotifs) markAllNotifsRead() }}
                 className={`relative w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
                   showNotifs
@@ -516,6 +630,12 @@ export default function TeamPage() {
 
       {/* Floating chat bubble */}
       <TeamChatBubble />
+      <TourGuide
+        steps={tourSteps}
+        tourKey="team-dashboard-tour"
+        autoStart={false}
+        onRestartRef={fn => { restartTourRef.current = fn }}
+      />
     </div>
   )
 }
