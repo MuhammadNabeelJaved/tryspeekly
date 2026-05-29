@@ -24,7 +24,7 @@ router.route('/featured-blogs').get(getFeaturedBlogs)
 router.route('/').patch(authenticate, authorizeTeamPage('cms'), updateSiteSettings)
 router.route('/logo').patch(authenticate, authorizeTeamPage('cms'), uploadProfileImage, handleMulterError, updateSiteLogo)
 router.route('/banner').patch(authenticate, authorizeTeamPage('cms'), uploadProfileImage, handleMulterError, updateSiteBanner)
-router.route('/blocked-countries').get(authenticate, authorizeTeamPage('cms'), getBlockedCountries).post(authenticate, authorizeTeamPage('cms'), blockCountry)
-router.route('/blocked-countries/:code').delete(authenticate, authorizeTeamPage('cms'), unblockCountry)
+router.route('/blocked-countries').get(authenticate, authorizeTeamPage('cms', 'geo-access'), getBlockedCountries).post(authenticate, authorizeTeamPage('cms', 'geo-access'), blockCountry)
+router.route('/blocked-countries/:code').delete(authenticate, authorizeTeamPage('cms', 'geo-access'), unblockCountry)
 
 export default router

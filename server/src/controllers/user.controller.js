@@ -245,7 +245,9 @@ export const getAllUsers = asyncHandler(async (req, res) => {
       filter.role = { $in: ['student', 'teacher'] }
     }
 
-    if (role) filter.role = role
+    if (req.user.role === 'admin' && role) {
+      filter.role = role
+    }
     if (search) filter.$or = [{ name: { $regex: search, $options: 'i' } }, { email: { $regex: search, $options: 'i' } }]
     const skip = (Number(page) - 1) * Number(limit)
 
