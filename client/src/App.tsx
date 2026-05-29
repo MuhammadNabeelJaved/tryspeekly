@@ -1,8 +1,9 @@
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, useLocation, useNavigate, Link } from 'react-router-dom'
 import { useEffect, useState, Suspense, lazy, Component, type ReactNode } from 'react'
 import { Toaster } from 'react-hot-toast'
-import { AuthProvider } from '@/context/AuthContext'
-import { SocketProvider } from '@/context/SocketContext'
+import toast from 'react-hot-toast'
+import { AuthProvider, useAuth } from '@/context/AuthContext'
+import { SocketProvider, useSocket } from '@/context/SocketContext'
 import { GeoProvider, useGeo } from '@/context/GeoContext'
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
 import Navbar from '@/components/Navbar'
@@ -144,6 +145,81 @@ function GeoWall({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
 
+const ROLE_DASHBOARD: Record<string, string> = {
+  admin:       '/admin',
+  teacher:     '/instructor',
+  student:     '/dashboard',
+  team_member: '/team',
+}
+
+function RoleChangeHandler() {
+  const { socket } = useSocket()
+  const { user, setUser, logout } = useAuth()
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    if (!socket || !user) return
+
+    const onRoleChanged = (data: { role: string; oldRole: string }) => {
+      setUser({ ...user, role: data.role as typeof user.role })
+      localStorage.setItem('user', JSON.stringify({ ...user, role: data.role }))
+      const destination = ROLE_DASHBOARD[data.role] ?? '/'
+      toast(`Your role has been changed to ${data.role.replace('_', ' ')}. Redirecting…`, { icon: '🔄', duration: 3000 })
+      setTimeout(() => navigate(destination, { replace: true }), 1500)
+    }
+
+    const onBlocked = () => {
+      toast.custom(
+        (t) => (
+          <div className={`flex items-start gap-3 bg-white dark:bg-neutral-900 border border-red-200 dark:border-red-800 rounded-2xl shadow-xl p-4 max-w-sm transition-all ${t.visible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'}`}>
+            <span className="text-xl flex-shrink-0 mt-0.5">🚫</span>
+            <div className="min-w-0">
+              <p className="text-sm font-black text-slate-900 dark:text-white">Account Blocked</p>
+              <p className="text-xs text-slate-500 dark:text-neutral-400 mt-0.5 leading-relaxed">
+                Your account has been blocked by an administrator.
+              </p>
+              <Link
+                to="/contact"
+                onClick={() => toast.dismiss(t.id)}
+                className="inline-flex items-center gap-1 text-xs font-bold text-violet-600 dark:text-violet-400 hover:underline mt-1.5"
+              >
+                Contact support →
+              </Link>
+            </div>
+            <button onClick={() => toast.dismiss(t.id)} className="text-slate-300 dark:text-neutral-600 hover:text-slate-500 dark:hover:text-neutral-400 ml-1 flex-shrink-0">
+              ✕
+            </button>
+          </div>
+        ),
+        { duration: 8000 }
+      )
+      setTimeout(async () => {
+        await logout()
+        navigate('/login', { replace: true })
+      }, 2000)
+    }
+
+    const onDeleted = () => {
+      toast.error('Your account has been deleted.', { duration: 6000 })
+      setTimeout(async () => {
+        await logout()
+        navigate('/login', { replace: true })
+      }, 1500)
+    }
+
+    socket.on('user:role:changed', onRoleChanged)
+    socket.on('user:blocked',      onBlocked)
+    socket.on('user:deleted',      onDeleted)
+    return () => {
+      socket.off('user:role:changed', onRoleChanged)
+      socket.off('user:blocked',      onBlocked)
+      socket.off('user:deleted',      onDeleted)
+    }
+  }, [socket, user, setUser, logout, navigate])
+
+  return null
+}
+
 function App() {
   return (
     <AppErrorBoundary>
@@ -162,6 +238,7 @@ function App() {
             }}
           />
           <ScrollHandler />
+          <RoleChangeHandler />
           <Suspense fallback={<Loader fullScreen />}>
             <Routes>
               <Route

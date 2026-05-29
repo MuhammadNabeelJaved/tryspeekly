@@ -12,7 +12,7 @@ export const getAllBlogs = asyncHandler(async (req, res) => {
 
     const skip = (Number(page) - 1) * Number(limit)
     const [blogs, total] = await Promise.all([
-      Blog.find(filter).populate('author', 'name profileImage').select('-content').skip(skip).limit(Number(limit)).sort({ publishedAt: -1 }),
+      Blog.find(filter).populate('author', 'name profileImage role jobTitle').select('-content').skip(skip).limit(Number(limit)).sort({ publishedAt: -1 }),
       Blog.countDocuments(filter),
     ])
 
@@ -29,7 +29,7 @@ export const getAllBlogs = asyncHandler(async (req, res) => {
 // GET /api/v1/blogs/:slug — public
 export const getBlog = asyncHandler(async (req, res) => {
   try {
-    const blog = await Blog.findOne({ slug: req.params.slug }).populate('author', 'name profileImage bio')
+    const blog = await Blog.findOne({ slug: req.params.slug }).populate('author', 'name profileImage bio role jobTitle')
     if (!blog) return res.status(404).json({ success: false, error: { message: 'Blog not found' } })
     res.json({ success: true, data: blog })
   } catch (error) {
@@ -47,7 +47,7 @@ export const getAdminBlogs = asyncHandler(async (req, res) => {
 
     const skip = (Number(page) - 1) * Number(limit)
     const [blogs, total] = await Promise.all([
-      Blog.find(filter).populate('author', 'name profileImage').select('-content').skip(skip).limit(Number(limit)).sort({ createdAt: -1 }),
+      Blog.find(filter).populate('author', 'name profileImage role jobTitle').select('-content').skip(skip).limit(Number(limit)).sort({ createdAt: -1 }),
       Blog.countDocuments(filter),
     ])
 

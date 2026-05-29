@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken'
 import User from '../models/user.model.js'
 import { uploadUserAvatar, deleteFile, extractPublicId } from '../utils/cloudinary.js'
 import { sendForgotPasswordOtp, sendVerificationOtp, sendEmail } from '../utils/email.js'
+import { emitToUser } from '../utils/socket.js'
 
 // ─── Cookie helpers ────────────────────────────────────────────────────────────
 const COOKIE_BASE = {
@@ -41,6 +42,7 @@ const safeUser = (user) => ({
   timezone: user.timezone,
   isVerified: user.isVerified,
   isOnboardingDone: user.isOnboardingDone,
+  isBlocked: user.isBlocked,
   permissions: user.permissions,
   jobTitle: user.jobTitle,
   createdAt: user.createdAt,
@@ -160,6 +162,10 @@ export const loginUser = asyncHandler(async (req, res) => {
       return res.status(403).json({ success: false, error: { message: 'Account has been deactivated.' } })
     }
 
+    if (user.isBlocked) {
+      return res.status(403).json({ success: false, error: { message: 'Your account has been blocked. Please contact support.' } })
+    }
+
     const isMatch = await user.comparePassword(password)
     if (!isMatch) {
       return res.status(401).json({ success: false, error: { message: 'Invalid credentials' } })
@@ -237,7 +243,7 @@ export const getUserProfile = asyncHandler(async (req, res) => {
 // GET /api/v1/users — admin
 export const getAllUsers = asyncHandler(async (req, res) => {
   try {
-    const { page = 1, limit = 20, role, search } = req.query
+    const { page = 1, limit = 20, role, search, blocked } = req.query
     const filter = {}
 
     // Non-admins can only see students and teachers
@@ -247,6 +253,9 @@ export const getAllUsers = asyncHandler(async (req, res) => {
 
     if (req.user.role === 'admin' && role) {
       filter.role = role
+    }
+    if (req.user.role === 'admin' && blocked === 'true') {
+      filter.isBlocked = true
     }
     if (search) filter.$or = [{ name: { $regex: search, $options: 'i' } }, { email: { $regex: search, $options: 'i' } }]
     const skip = (Number(page) - 1) * Number(limit)
@@ -420,6 +429,66 @@ export const markOnboardingDone = asyncHandler(async (req, res) => {
   }
 })
 
+// PATCH /api/v1/users/:id/block — admin only
+export const blockUser = asyncHandler(async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id)
+    if (!user) return res.status(404).json({ success: false, error: { message: 'User not found' } })
+    if (user._id.toString() === req.user.id) {
+      return res.status(403).json({ success: false, error: { message: 'You cannot block your own account' } })
+    }
+
+    user.isBlocked = !user.isBlocked
+    user.blockedAt = user.isBlocked ? new Date() : undefined
+    await user.save()
+
+    // If blocking, kick the user out immediately if they are online
+    if (user.isBlocked) {
+      emitToUser(user._id, 'user:blocked', { message: 'Your account has been blocked by an administrator.' })
+    }
+
+    res.json({
+      success: true,
+      message: user.isBlocked ? 'User blocked.' : 'User unblocked.',
+      data: safeUser(user),
+    })
+  } catch (error) {
+    res.status(400).json({ success: false, error: { message: error.message } })
+  }
+})
+
+// PATCH /api/v1/users/:id/role — admin only
+export const changeUserRole = asyncHandler(async (req, res) => {
+  try {
+    const { role } = req.body
+    const VALID_ROLES = ['student', 'teacher', 'admin', 'team_member']
+    if (!role || !VALID_ROLES.includes(role)) {
+      return res.status(400).json({ success: false, error: { message: 'Valid role is required' } })
+    }
+
+    const user = await User.findById(req.params.id)
+    if (!user) return res.status(404).json({ success: false, error: { message: 'User not found' } })
+    if (user._id.toString() === req.user.id) {
+      return res.status(403).json({ success: false, error: { message: 'You cannot change your own role' } })
+    }
+
+    const oldRole = user.role
+    user.role = role
+    // Clear team_member permissions when moving away from that role
+    if (oldRole === 'team_member' && role !== 'team_member') {
+      user.permissions = []
+    }
+    await user.save()
+
+    // Notify the user in real time if they are logged in
+    emitToUser(user._id, 'user:role:changed', { role, oldRole })
+
+    res.json({ success: true, message: `Role changed to ${role}`, data: safeUser(user) })
+  } catch (error) {
+    res.status(400).json({ success: false, error: { message: error.message } })
+  }
+})
+
 // DELETE /api/v1/users/:id
 export const deleteUser = asyncHandler(async (req, res) => {
   try {
@@ -431,9 +500,13 @@ export const deleteUser = asyncHandler(async (req, res) => {
       if (publicId) await deleteFile(publicId, 'image')
     }
 
+    const userId = user._id
     user.isDeleted = true
     user.profileImage = undefined
     await user.save()
+
+    // Kick the user out immediately if they are online
+    emitToUser(userId, 'user:deleted', { message: 'Your account has been deleted.' })
 
     res.json({ success: true, message: 'User deleted successfully' })
   } catch (error) {

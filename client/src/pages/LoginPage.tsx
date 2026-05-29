@@ -20,7 +20,7 @@ export default function LoginPage() {
   const { login } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [remember, setRemember] = useState(false)
+  const [remember, setRemember] = useState(true)
   const [errors, setErrors] = useState({ email: '', password: '', general: '' })
   const [isLoading, setIsLoading] = useState(false)
 
@@ -142,9 +142,17 @@ export default function LoginPage() {
             </LoadingButton>
 
             {errors.general && (
-              <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-center text-sm font-medium text-red-600 dark:border-red-800 dark:bg-red-950/30 dark:text-red-400">
+              <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-center text-sm font-medium text-red-600 dark:border-red-800 dark:bg-red-950/30 dark:text-red-400">
                 {errors.general}
-              </p>
+                {errors.general.toLowerCase().includes('blocked') && (
+                  <Link
+                    to="/contact"
+                    className="block mt-1.5 text-sm font-bold text-violet-600 hover:text-violet-700 dark:text-violet-400 dark:hover:text-violet-300 hover:underline"
+                  >
+                    Contact support →
+                  </Link>
+                )}
+              </div>
             )}
           </form>
 

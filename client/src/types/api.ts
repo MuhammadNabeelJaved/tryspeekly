@@ -317,7 +317,7 @@ export interface Blog {
   content: string;
   excerpt?: string;
   coverImage?: string;
-  author: { _id: string; name: string; profileImage?: string; bio?: string };
+  author: { _id: string; name: string; profileImage?: string; bio?: string; role?: string; jobTitle?: string };
   tags: string[];
   status: 'draft' | 'published' | 'archived';
   publishedAt?: string;

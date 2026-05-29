@@ -1,14 +1,16 @@
-import { useState, useEffect, useRef, Suspense, lazy } from 'react'
+import { useState, useEffect, useRef, Suspense, lazy, useCallback } from 'react'
 import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom'
 import {
   ChartBar, Users, BookOpen, Chalkboard, CreditCard, Handshake,
   Money, Certificate, Gift, Chats, ChatCircleDots, EnvelopeSimple,
   Star, Bell, PencilSimple, Globe, GearSix, SignOut, List, X, ChatTeardropText,
+  SquaresFour, UserCircle,
 } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '@/context/AuthContext'
 import { useSocket } from '@/context/SocketContext'
 import { teamService } from '@/services/team.service'
+import type { TeamNotification } from '@/services/team.service'
 import Loader from '@/components/Loader'
 import UserAvatar from '@/components/UserAvatar'
 import type { TeamChatMessage } from '@/types/api'
@@ -20,7 +22,11 @@ import {
   INITIAL_CMS_PAGES,
 } from './admin/adminData'
 import type { AdminStore } from './AdminPage'
+import TeamOverview from './team/TeamOverview'
+import TeamProfile from './team/TeamProfile'
 import toast from 'react-hot-toast'
+
+// TeamNotification is imported from team.service
 
 // ─── Lazy-load the same admin page components ─────────────────────────────────
 const AdminOverview      = lazy(() => import('./admin/AdminOverview'))
@@ -45,8 +51,11 @@ const AdminEmail         = lazy(() => import('./admin/AdminEmail'))
 
 // ─── Permission → nav item mapping ───────────────────────────────────────────
 
+// These nav items are always visible — no permission required
+const DASHBOARD_NAV = { key: '__dashboard__', label: 'Dashboard', path: '',        Icon: SquaresFour }
+const PROFILE_NAV   = { key: '__profile__',   label: 'My Profile', path: 'profile', Icon: UserCircle }
+
 const ALL_NAV = [
-  { key: 'overview',      label: 'Overview',     path: '',              Icon: ChartBar },
   { key: 'students',      label: 'Students',      path: 'students',      Icon: Users },
   { key: 'courses',       label: 'Courses',       path: 'courses',       Icon: BookOpen },
   { key: 'instructors',   label: 'Instructors',   path: 'instructors',   Icon: Chalkboard },
@@ -197,15 +206,92 @@ function TeamChatBubble() {
 export default function TeamPage() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { user, logout } = useAuth()
+  const { user, logout, setUser } = useAuth()
+  const { socket } = useSocket()
 
   const permissions: string[] = user?.permissions ?? []
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [notifs, setNotifs] = useState<TeamNotification[]>([])
+  const [showNotifs, setShowNotifs] = useState(false)
+  const notifsRef = useRef<HTMLDivElement>(null)
+  const unreadNotifCount = notifs.filter(n => !n.read).length
 
-  const navItems = ALL_NAV.filter(n => permissions.includes(n.key))
+  // Load persisted notifications from DB on mount
+  useEffect(() => {
+    teamService.getNotifications()
+      .then(res => setNotifs(res.data))
+      .catch(() => {})
+  }, [])
+
+  // Sidebar nav = Dashboard (always) + permitted pages + Profile (always)
+  const permNavItems = ALL_NAV.filter(n => permissions.includes(n.key))
+  const allNavItems  = [DASHBOARD_NAV, ...permNavItems, PROFILE_NAV]
+
   const currentPath = location.pathname.replace('/team', '').replace(/^\//, '')
-  const activeKey = navItems.find(n => n.path === currentPath)?.key ?? navItems[0]?.key ?? ''
-  const activeLabel = navItems.find(n => n.key === activeKey)?.label ?? 'Dashboard'
+  const activeKey   = allNavItems.find(n => n.path === currentPath)?.key ?? '__dashboard__'
+  const activeLabel = allNavItems.find(n => n.key === activeKey)?.label ?? 'Dashboard'
+
+  // ─── Socket: permission change notifications ────────────────────────────────
+  useEffect(() => {
+    if (!socket) return
+
+    const handler = (data: {
+      permissions: string[]
+      added: string[]
+      removed: string[]
+      notifId: string
+      createdAt: string
+    }) => {
+      // Update user context so sidebar/routes update instantly
+      if (user) setUser({ ...user, permissions: data.permissions })
+
+      // Prepend the DB-persisted notification into local state
+      const newNotif: TeamNotification = {
+        _id: data.notifId,
+        recipient: user?._id ?? '',
+        added: data.added,
+        removed: data.removed,
+        read: false,
+        createdAt: data.createdAt,
+      }
+      setNotifs(prev => [newNotif, ...prev].slice(0, 30))
+
+      // Toast summary
+      const labelMap: Record<string, string> = {
+        students: 'Students', courses: 'Courses', instructors: 'Instructors',
+        payments: 'Payments', 'financial-aid': 'Financial Aid', salaries: 'Salaries',
+        certificates: 'Certificates', referrals: 'Referrals', messages: 'Messages',
+        support: 'Support', contacts: 'Contacts', email: 'Email System',
+        reviews: 'Reviews', notifications: 'Notifications', blog: 'Blog Manager',
+        seo: 'SEO Manager', cms: 'CMS Editor', 'geo-access': 'Geo Access',
+      }
+      const lines: string[] = []
+      if (data.added.length > 0)
+        lines.push(`✅ Granted: ${data.added.map(k => labelMap[k] ?? k).join(', ')}`)
+      if (data.removed.length > 0)
+        lines.push(`🔒 Removed: ${data.removed.map(k => labelMap[k] ?? k).join(', ')}`)
+      toast(lines.join(' · '), { duration: 5000, icon: '🔔' })
+
+      // If current page permission was removed, go back to dashboard
+      if (data.removed.length > 0 && data.removed.includes(currentPath)) {
+        navigate('/team')
+      }
+    }
+
+    socket.on('team:permissions:updated', handler)
+    return () => { socket.off('team:permissions:updated', handler) }
+  }, [socket, user, setUser, currentPath, navigate])
+
+  // Close notif dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (notifsRef.current && !notifsRef.current.contains(e.target as Node)) {
+        setShowNotifs(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
 
   // Store (needed by AdminStudents, AdminInstructors, AdminCourses, AdminCMS)
   const [students, setStudents] = useState<Student[]>(() => {
@@ -230,29 +316,16 @@ export default function TeamPage() {
     setStudents, setInstructors, setCourses, setCmsPages,
   }
 
-  function handleLogout() {
-    logout()
-    navigate('/')
+  function handleLogout() { logout(); navigate('/') }
+
+  function markAllNotifsRead() {
+    setNotifs(prev => prev.map(n => ({ ...n, read: true })))
+    teamService.markNotificationsRead().catch(() => {})
   }
 
-  if (permissions.length === 0) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-neutral-950 px-4">
-        <div className="text-center">
-          <GearSix size={48} className="mx-auto mb-4 text-slate-300 dark:text-neutral-700" />
-          <h2 className="text-xl font-black text-slate-900 dark:text-white mb-2">No Pages Assigned</h2>
-          <p className="text-sm text-slate-500 dark:text-neutral-400 mb-6">
-            You don&apos;t have access to any pages yet. Contact your admin.
-          </p>
-          <button
-            onClick={handleLogout}
-            className="px-6 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-bold transition-colors"
-          >
-            Sign Out
-          </button>
-        </div>
-      </div>
-    )
+  function clearAllNotifs() {
+    setNotifs([])
+    teamService.clearNotifications().catch(() => {})
   }
 
   return (
@@ -293,7 +366,7 @@ export default function TeamPage() {
         </div>
 
         <nav className="flex-1 px-3 py-4 overflow-y-auto">
-          {navItems.map(({ key, label, path, Icon }) => {
+          {allNavItems.map(({ key, label, path, Icon }) => {
             const active = activeKey === key
             return (
               <button
@@ -337,7 +410,75 @@ export default function TeamPage() {
             <List size={22} />
           </button>
           <h1 className="text-base font-black text-slate-900 dark:text-white truncate">{activeLabel}</h1>
-          <div className="ml-auto">
+
+          <div className="ml-auto flex items-center gap-2">
+            {/* Bell icon — permission notifications */}
+            <div className="relative" ref={notifsRef}>
+              <button
+                onClick={() => { setShowNotifs(v => !v); if (!showNotifs) markAllNotifsRead() }}
+                className={`relative w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
+                  showNotifs
+                    ? 'bg-violet-100 dark:bg-violet-900/40 text-violet-600 dark:text-violet-400'
+                    : 'bg-slate-50 dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 text-slate-500 dark:text-neutral-400 hover:text-violet-600 dark:hover:text-violet-400'
+                }`}
+              >
+                <Bell size={15} weight={showNotifs ? 'fill' : 'regular'} />
+                {unreadNotifCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                    {unreadNotifCount > 9 ? '9+' : unreadNotifCount}
+                  </span>
+                )}
+              </button>
+
+              <AnimatePresence>
+                {showNotifs && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute right-0 top-11 w-80 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl shadow-xl z-50 overflow-hidden"
+                  >
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-neutral-800">
+                      <h3 className="text-sm font-black text-slate-900 dark:text-white">Access Updates</h3>
+                      {notifs.length > 0 && (
+                        <button onClick={clearAllNotifs} className="text-[10px] font-bold text-slate-400 hover:text-slate-600 dark:hover:text-neutral-200">
+                          Clear all
+                        </button>
+                      )}
+                    </div>
+                    <div className="max-h-72 overflow-y-auto">
+                      {notifs.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-8 text-slate-400 dark:text-neutral-600">
+                          <Bell size={24} className="mb-2" />
+                          <p className="text-xs font-medium">No notifications yet</p>
+                          <p className="text-[11px] mt-0.5">Access changes will appear here</p>
+                        </div>
+                      ) : (
+                        notifs.map(n => (
+                          <div key={n._id} className={`px-4 py-3 border-b border-slate-50 dark:border-neutral-800 last:border-0 ${!n.read ? 'bg-violet-50/40 dark:bg-violet-950/10' : ''}`}>
+                            {n.added.length > 0 && (
+                              <p className="text-xs text-emerald-700 dark:text-emerald-400 leading-relaxed">
+                                ✅ Granted: {n.added.join(', ')}
+                              </p>
+                            )}
+                            {n.removed.length > 0 && (
+                              <p className="text-xs text-red-600 dark:text-red-400 leading-relaxed mt-0.5">
+                                🔒 Removed: {n.removed.join(', ')}
+                              </p>
+                            )}
+                            <p className="text-[10px] text-slate-400 dark:text-neutral-600 mt-1">
+                              {new Date(n.createdAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
             <span className="text-[10px] font-bold text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-950/40 px-2 py-1 rounded-lg">
               Team Member
             </span>
@@ -347,19 +488,8 @@ export default function TeamPage() {
         <main className="flex-1 overflow-auto p-4 sm:p-6">
           <Suspense fallback={<Loader />}>
             <Routes>
-              <Route
-                path="/"
-                element={
-                  permissions.includes('overview')
-                    ? <AdminOverview onNavigate={(view: string) => {
-                        const navItem = ALL_NAV.find(n => n.key === view)
-                        if (navItem && permissions.includes(navItem.key)) {
-                          navigate(`/team${navItem.path ? `/${navItem.path}` : ''}`)
-                        }
-                      }} />
-                    : <Navigate to={`/team${navItems[0]?.path ? `/${navItems[0].path}` : ''}`} replace />
-                }
-              />
+              <Route path="/" element={<TeamOverview />} />
+              <Route path="/profile" element={<TeamProfile />} />
               {permissions.includes('students')      && <Route path="/students"      element={<AdminStudents store={store} />} />}
               {permissions.includes('instructors')   && <Route path="/instructors"   element={<AdminInstructors store={store} />} />}
               {permissions.includes('courses')       && <Route path="/courses"       element={<AdminCourses store={store} />} />}

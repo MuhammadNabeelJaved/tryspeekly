@@ -1,5 +1,23 @@
 import { useState, useEffect, useRef } from 'react'
 import { Users, Plus, PencilSimple, Trash, ChatCircleDots, X, Check } from '@phosphor-icons/react'
+
+const TEAM_JOB_TITLES = [
+  'Content Manager',
+  'Marketing Manager',
+  'Sales Executive',
+  'Support Agent',
+  'Curriculum Developer',
+  'Video Editor',
+  'Social Media Manager',
+  'Finance Manager',
+  'HR Manager',
+  'Operations Manager',
+  'Community Manager',
+  'UI/UX Designer',
+  'Technical Support',
+  'Business Development',
+  'Data Analyst',
+]
 import { motion, AnimatePresence } from 'framer-motion'
 import toast from 'react-hot-toast'
 import { teamService } from '@/services/team.service'
@@ -144,12 +162,16 @@ function MemberModal({ member, onClose, onSave }: MemberModalProps) {
             </div>
             <div>
               <label className="text-xs font-semibold text-slate-500 dark:text-neutral-400 uppercase tracking-wide block mb-1">Job Title</label>
-              <input
+              <select
                 value={jobTitle}
                 onChange={e => setJobTitle(e.target.value)}
                 className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white outline-none focus:border-violet-500"
-                placeholder="e.g. Content Manager"
-              />
+              >
+                <option value="">— Select title —</option>
+                {TEAM_JOB_TITLES.map(t => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
             </div>
           </div>
 

@@ -1,6 +1,15 @@
 import { axiosClient } from '@/lib/axiosClient'
 import type { TeamMember, TeamChatMessage, CreateTeamMemberDto, UpdateTeamMemberDto } from '@/types/api'
 
+export interface TeamNotification {
+  _id: string
+  recipient: string
+  added: string[]
+  removed: string[]
+  read: boolean
+  createdAt: string
+}
+
 export const teamService = {
   listMembers: async (): Promise<{ success: boolean; data: TeamMember[] }> => {
     const res = await axiosClient.get('/team')
@@ -63,5 +72,19 @@ export const teamService = {
 
   markMemberThreadRead: async (): Promise<void> => {
     await axiosClient.patch('/team/chat/me/read')
+  },
+
+  // Team member: permission notifications
+  getNotifications: async (): Promise<{ success: boolean; data: TeamNotification[] }> => {
+    const res = await axiosClient.get('/team/notifications/me')
+    return res.data
+  },
+
+  markNotificationsRead: async (): Promise<void> => {
+    await axiosClient.patch('/team/notifications/me')
+  },
+
+  clearNotifications: async (): Promise<void> => {
+    await axiosClient.delete('/team/notifications/me')
   },
 }

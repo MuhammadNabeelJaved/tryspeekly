@@ -102,6 +102,14 @@ const userSchema = new Schema(
       type: Boolean,
       default: false,
     },
+    isBlocked: {
+      type: Boolean,
+      default: false,
+    },
+    blockedAt: {
+      type: Date,
+      select: false,
+    },
     verificationToken: {
       type: String,
       select: false,

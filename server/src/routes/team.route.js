@@ -12,6 +12,9 @@ import {
   getMemberThread,
   sendMemberMessage,
   markMemberThreadRead,
+  getMemberNotifications,
+  markMemberNotificationsRead,
+  clearMemberNotifications,
 } from '../controllers/team.controller.js'
 
 const router = express.Router()
@@ -21,6 +24,13 @@ router
   .route('/')
   .get(authenticate, authorize('admin'), listTeamMembers)
   .post(authenticate, authorize('admin'), createTeamMember)
+
+// ─── Team member: permission notifications (must be before /:id) ─────────────
+router
+  .route('/notifications/me')
+  .get(authenticate, authorize('team_member'), getMemberNotifications)
+  .patch(authenticate, authorize('team_member'), markMemberNotificationsRead)
+  .delete(authenticate, authorize('team_member'), clearMemberNotifications)
 
 router
   .route('/:id')

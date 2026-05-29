@@ -1,7 +1,28 @@
 import Joi from 'joi'
 import asyncHandler from '../utils/asyncHandler.js'
+
+// ─── Predefined job titles for team members ───────────────────────────────────
+
+export const TEAM_JOB_TITLES = [
+  'Content Manager',
+  'Marketing Manager',
+  'Sales Executive',
+  'Support Agent',
+  'Curriculum Developer',
+  'Video Editor',
+  'Social Media Manager',
+  'Finance Manager',
+  'HR Manager',
+  'Operations Manager',
+  'Community Manager',
+  'UI/UX Designer',
+  'Technical Support',
+  'Business Development',
+  'Data Analyst',
+]
 import User from '../models/user.model.js'
 import TeamChat from '../models/team-chat.model.js'
+import TeamNotification from '../models/team-notification.model.js'
 import { emitToUser } from '../utils/socket.js'
 import { BadRequestError, NotFoundError, ConflictError } from '../utils/apiErrors.js'
 import { sendEmail } from '../utils/email.js'
@@ -37,7 +58,7 @@ export const createTeamMember = asyncHandler(async (req, res) => {
     name: Joi.string().min(2).max(100).required(),
     email: Joi.string().email().required(),
     password: Joi.string().min(8).required(),
-    jobTitle: Joi.string().max(100).allow('', null),
+    jobTitle: Joi.string().valid(...TEAM_JOB_TITLES).allow('', null),
     permissions: Joi.array().items(Joi.string()).default([]),
   })
   const { error, value } = schema.validate(req.body, { abortEarly: false })
@@ -84,7 +105,7 @@ export const updateTeamMember = asyncHandler(async (req, res) => {
   const schema = Joi.object({
     name: Joi.string().min(2).max(100),
     email: Joi.string().email(),
-    jobTitle: Joi.string().max(100).allow('', null),
+    jobTitle: Joi.string().valid(...TEAM_JOB_TITLES).allow('', null),
     permissions: Joi.array().items(Joi.string()),
   })
   const { error, value } = schema.validate(req.body, { abortEarly: false })
@@ -105,6 +126,8 @@ export const updateTeamMember = asyncHandler(async (req, res) => {
     member.email = email
   }
 
+  const oldPermissions = [...(member.permissions || [])]
+
   if (name !== undefined) member.name = name
   if (jobTitle !== undefined) member.jobTitle = jobTitle
   if (permissions !== undefined) member.permissions = permissions
@@ -114,6 +137,27 @@ export const updateTeamMember = asyncHandler(async (req, res) => {
   const safe = await User.findById(member._id)
     .select('name email jobTitle permissions profileImage createdAt')
     .lean()
+
+  // Notify team member in real time if permissions changed
+  if (permissions !== undefined) {
+    const newPerms = member.permissions || []
+    const added   = newPerms.filter(p => !oldPermissions.includes(p))
+    const removed = oldPermissions.filter(p => !newPerms.includes(p))
+    if (added.length > 0 || removed.length > 0) {
+      const notif = await TeamNotification.create({
+        recipient: member._id,
+        added,
+        removed,
+      })
+      emitToUser(member._id, 'team:permissions:updated', {
+        permissions: newPerms,
+        added,
+        removed,
+        notifId: notif._id,
+        createdAt: notif.createdAt,
+      })
+    }
+  }
 
   res.json({ success: true, message: 'Team member updated.', data: safe })
 })
@@ -247,4 +291,29 @@ export const markMemberThreadRead = asyncHandler(async (req, res) => {
     { read: true }
   )
   res.json({ success: true, message: 'Thread marked as read.' })
+})
+
+// ─── Team member: get permission notifications ────────────────────────────────
+
+export const getMemberNotifications = asyncHandler(async (req, res) => {
+  const notifs = await TeamNotification.find({ recipient: req.user.id })
+    .sort({ createdAt: -1 })
+    .limit(30)
+    .lean()
+
+  res.json({ success: true, data: notifs })
+})
+
+// ─── Team member: mark all notifications read ────────────────────────────────
+
+export const markMemberNotificationsRead = asyncHandler(async (req, res) => {
+  await TeamNotification.updateMany({ recipient: req.user.id, read: false }, { read: true })
+  res.json({ success: true, message: 'Notifications marked as read.' })
+})
+
+// ─── Team member: clear all notifications ────────────────────────────────────
+
+export const clearMemberNotifications = asyncHandler(async (req, res) => {
+  await TeamNotification.deleteMany({ recipient: req.user.id })
+  res.json({ success: true, message: 'Notifications cleared.' })
 })

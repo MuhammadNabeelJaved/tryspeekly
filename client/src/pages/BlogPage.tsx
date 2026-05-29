@@ -13,6 +13,16 @@ import { extractApiError } from '../utils/apiError'
 
 const CATEGORIES = ['All', 'Study Tips', 'Grammar', 'IELTS Prep', 'Vocabulary', 'Career']
 
+function authorLabel(author: { name: string; role?: string }) {
+  return author.role === 'admin' ? 'Admin' : author.name
+}
+
+function authorSubtitle(author: { role?: string; jobTitle?: string }) {
+  if (author.role === 'admin') return 'Administrator'
+  if (author.role === 'team_member') return author.jobTitle || 'Team Member'
+  return null
+}
+
 export default function BlogPage() {
   const [activeCategory, setActiveCategory] = useState('All')
   const [searchQuery, setSearchQuery] = useState('')
@@ -156,12 +166,19 @@ export default function BlogPage() {
 
                 <div className="flex items-center justify-between pt-6 border-t border-slate-100 dark:border-neutral-800">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center text-sm font-black text-violet-600 dark:text-violet-400">
-                      {featuredPost.author.name.charAt(0)}
+                    <div className="w-10 h-10 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center text-sm font-black text-violet-600 dark:text-violet-400 overflow-hidden flex-shrink-0">
+                      {featuredPost.author.profileImage
+                        ? <img src={featuredPost.author.profileImage} alt="" className="w-full h-full object-cover" />
+                        : authorLabel(featuredPost.author).charAt(0)}
                     </div>
                     <div>
-                      <div className="text-sm font-bold text-slate-900 dark:text-white">{featuredPost.author.name}</div>
+                      <div className="text-sm font-bold text-slate-900 dark:text-white">
+                        {authorLabel(featuredPost.author)}
+                      </div>
                       <div className="text-xs text-slate-500 dark:text-neutral-400">
+                        {authorSubtitle(featuredPost.author)
+                          ? <span className="text-violet-600 dark:text-violet-400 font-semibold mr-1">{authorSubtitle(featuredPost.author)} ·</span>
+                          : null}
                         {new Date(featuredPost.publishedAt || featuredPost.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
                       </div>
                     </div>
@@ -273,10 +290,21 @@ export default function BlogPage() {
                     </p>
 
                     <div className="flex items-center gap-3 pt-5 border-t border-slate-50 dark:border-neutral-800/50 mt-auto">
-                      <div className="w-8 h-8 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center text-xs font-black text-violet-600 dark:text-violet-400">
-                        {post.author.name.charAt(0)}
+                      <div className="w-8 h-8 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center text-xs font-black text-violet-600 dark:text-violet-400 overflow-hidden flex-shrink-0">
+                        {post.author.profileImage
+                          ? <img src={post.author.profileImage} alt="" className="w-full h-full object-cover" />
+                          : authorLabel(post.author).charAt(0)}
                       </div>
-                      <span className="text-sm font-bold text-slate-700 dark:text-neutral-300">{post.author.name}</span>
+                      <div className="min-w-0">
+                        <span className="text-sm font-bold text-slate-700 dark:text-neutral-300 block truncate">
+                          {authorLabel(post.author)}
+                        </span>
+                        {authorSubtitle(post.author) && (
+                          <span className="text-[11px] font-semibold text-violet-600 dark:text-violet-400">
+                            {authorSubtitle(post.author)}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </motion.article>

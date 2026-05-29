@@ -18,6 +18,8 @@ import {
     resetPassword,
     deleteUser,
     markOnboardingDone,
+    changeUserRole,
+    blockUser,
 } from '../controllers/user.controller.js'
 
 const router = express.Router()
@@ -43,6 +45,8 @@ router.route('/change-password').post(authenticate, changePassword)
 
 // ─── Admin only routes ─────────────────────────────────────────────────────────
 router.route('/').get(authenticate, authorizeTeamPage('students', 'instructors'), getAllUsers)
+router.route('/:id/role').patch(authenticate, authorize('admin'), changeUserRole)
+router.route('/:id/block').patch(authenticate, authorize('admin'), blockUser)
 router.route('/:id')
     .get(authenticate, authorizeTeamPage('students', 'instructors'), getUserById)
     .delete(authenticate, authorize('admin'), deleteUser)

@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   ChartBar, Users, Chalkboard, BookOpen, CreditCard, PencilSimple,
   List, X, SignOut, Bell, Sun, Moon, GearSix,
-  Lock, Eye, EyeSlash, Handshake, Certificate, ChatCircleDots, CheckCircle, Chats, Globe, Star, Sparkle, Money, EnvelopeSimple, Gift, UsersThree
+  Lock, Eye, EyeSlash, Handshake, Certificate, ChatCircleDots, CheckCircle, Chats, Globe, Star, Sparkle, Money, EnvelopeSimple, Gift, UsersThree, UserSwitch
 } from '@phosphor-icons/react'
 import TourGuide, { type TourStep } from '@/components/TourGuide'
 import DashboardSearch, { type SearchItem } from '@/components/DashboardSearch'
@@ -46,10 +46,11 @@ const AdminContacts = lazy(() => import('./admin/AdminContacts'))
 const AdminReferrals = lazy(() => import('./admin/AdminReferrals'))
 const AdminEmail = lazy(() => import('./admin/AdminEmail'))
 const AdminTeam = lazy(() => import('./admin/AdminTeam'))
+const AdminUsers = lazy(() => import('./admin/AdminUsers'))
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 
-export type AdminView = 'overview' | 'students' | 'instructors' | 'courses' | 'certificates' | 'payments' | 'payments-setup' | 'financial-aid' | 'salaries' | 'cms' | 'blog' | 'settings' | 'support' | 'notifications' | 'messages' | 'seo' | 'reviews' | 'geo-access' | 'contacts' | 'referrals' | 'email' | 'team'
+export type AdminView = 'overview' | 'students' | 'instructors' | 'courses' | 'certificates' | 'payments' | 'payments-setup' | 'financial-aid' | 'salaries' | 'cms' | 'blog' | 'settings' | 'support' | 'notifications' | 'messages' | 'seo' | 'reviews' | 'geo-access' | 'contacts' | 'referrals' | 'email' | 'team' | 'users'
 
 export interface AdminStore {
   students: Student[]
@@ -70,6 +71,7 @@ type NavItem = { view: AdminView; label: string; path: string; Icon: React.FC<{ 
 
 const NAV_CORE: NavItem[] = [
   { view: 'overview',    label: 'Overview',    path: '',            Icon: ChartBar as NavItem['Icon'] },
+  { view: 'users',       label: 'All Users',   path: 'users',       Icon: UserSwitch as NavItem['Icon'] },
   { view: 'students',    label: 'Students',    path: 'students',    Icon: Users as NavItem['Icon'] },
   { view: 'courses',     label: 'Courses',     path: 'courses',     Icon: BookOpen as NavItem['Icon'] },
   { view: 'instructors', label: 'Instructors', path: 'instructors', Icon: Chalkboard as NavItem['Icon'] },
@@ -105,6 +107,7 @@ const NAV_CONTENT: NavItem[] = [
 
 const ADMIN_SEARCH_ITEMS: SearchItem[] = [
   { label: 'Overview',       description: 'Platform stats, revenue, and pending tasks',          path: '/admin',              Icon: ChartBar as SearchItem['Icon'] },
+  { label: 'All Users',      description: 'View all users and change their roles',                path: '/admin/users',         Icon: UserSwitch as SearchItem['Icon'] },
   { label: 'Students',       description: 'Manage registered students and enrollments',           path: '/admin/students',      Icon: Users as SearchItem['Icon'] },
   { label: 'Courses',        description: 'Review, approve, and manage courses',                  path: '/admin/courses',       Icon: BookOpen as SearchItem['Icon'] },
   { label: 'Instructors',    description: 'Manage instructor profiles and courses',               path: '/admin/instructors',   Icon: Chalkboard as SearchItem['Icon'] },
@@ -778,6 +781,7 @@ export default function AdminPage() {
                   <Route path="/referrals" element={<AdminReferrals />} />
                   <Route path="/email" element={<AdminEmail />} />
                   <Route path="/team" element={<AdminTeam />} />
+                  <Route path="/users" element={<AdminUsers />} />
                   <Route path="*" element={<Navigate to="/admin" replace />} />
                 </Routes>
               </Suspense>
