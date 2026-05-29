@@ -9,7 +9,7 @@ router.get('/active', getActiveOffers)
 
 // Admin / team members with referrals permission
 router.route('/')
-  .get(authenticate, authorizeTeamPage('referrals'))
+  .get(authenticate, authorizeTeamPage('referrals'), getAllOffers)
   .post(authenticate, authorizeTeamPage('referrals'), createOffer)
 
 router.route('/:id')
