@@ -7,13 +7,13 @@ const router = Router()
 // Public
 router.get('/active', getActiveOffers)
 
-// Admin / team members with referrals permission (AdminReferrals page manages offers)
+// Admin / team members with referrals permission
 router.route('/')
   .get(authenticate, authorizeTeamPage('referrals'))
-  .post(authenticate, authorize('admin'), createOffer)
+  .post(authenticate, authorizeTeamPage('referrals'), createOffer)
 
 router.route('/:id')
-  .patch(authenticate, authorize('admin'), updateOffer)
-  .delete(authenticate, authorize('admin'), deleteOffer)
+  .patch(authenticate, authorizeTeamPage('referrals'), updateOffer)
+  .delete(authenticate, authorizeTeamPage('referrals'), deleteOffer)
 
 export default router
