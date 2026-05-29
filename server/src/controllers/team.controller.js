@@ -1,3 +1,4 @@
+import Joi from 'joi'
 import asyncHandler from '../utils/asyncHandler.js'
 import User from '../models/user.model.js'
 import TeamChat from '../models/team-chat.model.js'
@@ -13,7 +14,7 @@ export const listTeamMembers = asyncHandler(async (req, res) => {
     .sort({ createdAt: -1 })
     .lean()
 
-  res.json({ success: true, data: members })
+  res.json({ success: true, message: 'Team members retrieved.', data: members })
 })
 
 // ─── Get single team member ───────────────────────────────────────────────────
@@ -23,20 +24,26 @@ export const getTeamMember = asyncHandler(async (req, res) => {
     _id: req.params.id,
     role: 'team_member',
     isDeleted: false,
-  }).select('name email jobTitle permissions profileImage createdAt')
+  }).select('name email jobTitle permissions profileImage createdAt').lean()
 
   if (!member) throw new NotFoundError('Team member not found.')
-  res.json({ success: true, data: member })
+  res.json({ success: true, message: 'Team member retrieved.', data: member })
 })
 
 // ─── Create team member ───────────────────────────────────────────────────────
 
 export const createTeamMember = asyncHandler(async (req, res) => {
-  const { name, email, password, jobTitle, permissions = [] } = req.body
+  const schema = Joi.object({
+    name: Joi.string().min(2).max(100).required(),
+    email: Joi.string().email().required(),
+    password: Joi.string().min(8).required(),
+    jobTitle: Joi.string().max(100).allow('', null),
+    permissions: Joi.array().items(Joi.string()).default([]),
+  })
+  const { error, value } = schema.validate(req.body, { abortEarly: false })
+  if (error) throw new BadRequestError(error.details.map(d => d.message).join('; '))
 
-  if (!name || !email || !password) {
-    throw new BadRequestError('Name, email, and password are required.')
-  }
+  const { name, email, password, jobTitle, permissions } = value
 
   const existing = await User.findOne({ email: email.toLowerCase().trim() })
   if (existing) throw new ConflictError('A user with this email already exists.')
@@ -55,7 +62,7 @@ export const createTeamMember = asyncHandler(async (req, res) => {
     type: 'team_member_welcome',
     to: email,
     toName: name,
-    variables: { name, email, password, jobTitle: jobTitle || 'Team Member' },
+    variables: { name, email, jobTitle: jobTitle || 'Team Member' },
     metadata: { memberId: member._id },
   }).catch(() => {})
 
@@ -69,7 +76,16 @@ export const createTeamMember = asyncHandler(async (req, res) => {
 // ─── Update team member ───────────────────────────────────────────────────────
 
 export const updateTeamMember = asyncHandler(async (req, res) => {
-  const { name, email, jobTitle, permissions } = req.body
+  const schema = Joi.object({
+    name: Joi.string().min(2).max(100),
+    email: Joi.string().email(),
+    jobTitle: Joi.string().max(100).allow('', null),
+    permissions: Joi.array().items(Joi.string()),
+  })
+  const { error, value } = schema.validate(req.body, { abortEarly: false })
+  if (error) throw new BadRequestError(error.details.map(d => d.message).join('; '))
+
+  const { name, email, jobTitle, permissions } = value
 
   const member = await User.findOne({
     _id: req.params.id,
