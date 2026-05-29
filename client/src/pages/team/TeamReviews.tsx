@@ -7,6 +7,7 @@ import {
 import toast from 'react-hot-toast'
 import { useAuth } from '@/context/AuthContext'
 import { reviewsService } from '@/services/reviews.service'
+import MyReviewsSection from '@/components/MyReviewsSection'
 import UserAvatar from '@/components/UserAvatar'
 import type { Review } from '@/types/api'
 
@@ -207,30 +208,41 @@ function ReviewCard({ review }: { review: Review }) {
 
 export default function TeamReviews() {
   const { user } = useAuth()
-  const [reviews, setReviews]     = useState<Review[]>([])
-  const [myReview, setMyReview]   = useState<Review | null>(null)
-  const [loading, setLoading]     = useState(true)
-  const [showModal, setShowModal] = useState(false)
-  const [page, setPage]           = useState(1)
+  const [reviews, setReviews]       = useState<Review[]>([])
+  const [myReviews, setMyReviews]   = useState<Review[]>([])
+  const [myReview, setMyReview]     = useState<Review | null>(null)
+  const [loading, setLoading]       = useState(true)
+  const [myLoading, setMyLoading]   = useState(true)
+  const [showModal, setShowModal]   = useState(false)
+  const [page, setPage]             = useState(1)
   const [totalPages, setTotalPages] = useState(1)
 
   useEffect(() => {
     setLoading(true)
-    Promise.all([
-      reviewsService.getTeamReviews({ page, limit: 12 }),
-      reviewsService.getMyReviews(),
-    ]).then(([teamRes, myRes]) => {
-      setReviews(teamRes.data)
-      setTotalPages(teamRes.pagination?.totalPages ?? 1)
-      const mine = myRes.data.find((r: Review) => r.type === 'team') ?? null
-      setMyReview(mine)
-    }).catch(() => toast.error('Failed to load reviews'))
+    reviewsService.getTeamReviews({ page, limit: 12 })
+      .then(res => { setReviews(res.data); setTotalPages(res.pagination?.totalPages ?? 1) })
+      .catch(() => toast.error('Failed to load reviews'))
       .finally(() => setLoading(false))
   }, [page])
 
+  useEffect(() => {
+    setMyLoading(true)
+    reviewsService.getMyReviews()
+      .then(res => {
+        setMyReviews(res.data)
+        const mine = res.data.find((r: Review) => r.type === 'team') ?? null
+        setMyReview(mine)
+      })
+      .catch(() => {})
+      .finally(() => setMyLoading(false))
+  }, [])
+
   const handleSaved = (r: Review) => {
     setMyReview(r)
-    // If approved immediately (unlikely but possible), refresh the list
+    setMyReviews(prev => {
+      const exists = prev.some(x => x._id === r._id)
+      return exists ? prev.map(x => x._id === r._id ? r : x) : [r, ...prev]
+    })
     if (r.status === 'approved') {
       setReviews(prev => {
         const exists = prev.some(x => x._id === r._id)
@@ -264,48 +276,25 @@ export default function TeamReviews() {
         )}
       </div>
 
-      {/* My review status card */}
-      {myReview && (
-        <div className={`rounded-2xl border p-5 ${
-          myReview.status === 'approved' ? 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800' :
-          myReview.status === 'pending'  ? 'bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800' :
-                                           'bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800'
-        }`}>
-          <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
-            <div className="flex items-center gap-2">
-              <ChatText size={16} weight="fill" className="text-slate-600 dark:text-neutral-400" />
-              <span className="text-sm font-black text-slate-900 dark:text-white">My Review</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <StatusBadge status={myReview.status} />
-              {myReview.featuredOnHome && (
-                <span className="text-[10px] font-bold text-amber-600 bg-amber-100 dark:bg-amber-950/40 px-2 py-0.5 rounded-full flex items-center gap-1">
-                  <Sparkle size={9} weight="fill" />Featured on homepage
-                </span>
-              )}
-            </div>
-          </div>
-          <Stars rating={myReview.rating} />
-          <p className="text-sm text-slate-700 dark:text-neutral-300 leading-relaxed mt-2 italic">
-            "{myReview.content}"
-          </p>
-          {myReview.adminNote && (
-            <p className="mt-2 text-xs text-slate-500 dark:text-neutral-400 bg-white/60 dark:bg-neutral-800/60 rounded-xl px-3 py-2">
-              <span className="font-bold">Admin note:</span> {myReview.adminNote}
-            </p>
-          )}
-          {myReview.status === 'pending' && (
-            <p className="mt-2 text-xs text-amber-700 dark:text-amber-400">
-              Your review is awaiting admin approval. You can edit it while it's pending.
-            </p>
-          )}
-          {myReview.status === 'rejected' && (
-            <p className="mt-2 text-xs text-red-600 dark:text-red-400">
-              Your review was not approved. You can write a new one.
-            </p>
-          )}
-        </div>
-      )}
+      {/* My reviews section with stats */}
+      <div>
+        <p className="text-[10px] font-bold text-slate-400 dark:text-neutral-600 uppercase tracking-widest mb-3">My Review</p>
+        <MyReviewsSection
+          reviews={myReviews.filter(r => r.type === 'team')}
+          loading={myLoading}
+          onReviewUpdated={r => {
+            setMyReview(r)
+            setMyReviews(prev => prev.map(x => x._id === r._id ? r : x))
+          }}
+          onReviewDeleted={id => {
+            setMyReview(null)
+            setMyReviews(prev => prev.filter(x => x._id !== id))
+          }}
+        />
+      </div>
+
+      {/* Divider */}
+      <div className="border-t border-slate-100 dark:border-neutral-800" />
 
       {/* All team reviews */}
       {loading ? (

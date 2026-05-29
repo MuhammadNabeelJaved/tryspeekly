@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import {
   House, BookOpen, CreditCard, Handshake, GearSix, ChatCircleDots,
-  List, X, SignOut, Bell, Sun, Moon, Certificate, CheckCircle, Chats, Sparkle, Gift
+  List, X, SignOut, Bell, Sun, Moon, Certificate, CheckCircle, Chats, Sparkle, Gift, Star
 } from '@phosphor-icons/react'
 import Loader from '@/components/Loader'
 import TourGuide, { type TourStep } from '@/components/TourGuide'
@@ -26,8 +26,9 @@ const StudentSupport = lazy(() => import('./student/StudentSupport'))
 const StudentNotifications = lazy(() => import('./student/StudentNotifications'))
 const StudentMessages = lazy(() => import('./student/StudentMessages'))
 const StudentReferrals = lazy(() => import('./student/StudentReferrals'))
+const StudentReviews   = lazy(() => import('./student/StudentReviews'))
 
-export type StudentView = 'overview' | 'courses' | 'certificates' | 'payments' | 'financial-aid' | 'settings' | 'support' | 'notifications' | 'messages' | 'referrals'
+export type StudentView = 'overview' | 'courses' | 'certificates' | 'payments' | 'financial-aid' | 'settings' | 'support' | 'notifications' | 'messages' | 'referrals' | 'reviews'
 
 // ─── SEARCH ITEMS ─────────────────────────────────────────────────────────────
 
@@ -42,6 +43,7 @@ const STUDENT_SEARCH_ITEMS: SearchItem[] = [
   { label: 'Support',        description: 'Submit a support ticket and get help',                path: '/dashboard/support',          Icon: ChatCircleDots as SearchItem['Icon'] },
   { label: 'Settings',       description: 'Update profile, password, and account preferences',  path: '/dashboard/settings',         Icon: GearSix as SearchItem['Icon'] },
   { label: 'Referrals',     description: 'Share referral links, track rewards, and manage your wallet', path: '/dashboard/referrals',   Icon: Gift as SearchItem['Icon'] },
+  { label: 'My Reviews',    description: 'View all your submitted reviews with approval status',        path: '/dashboard/reviews',     Icon: Star as SearchItem['Icon'] },
 ]
 
 const STUDENT_TOUR_STEPS: TourStep[] = [
@@ -90,6 +92,11 @@ const STUDENT_TOUR_STEPS: TourStep[] = [
     content: 'Stay up to date with enrollment approvals, instructor messages, and important announcements.',
   },
   {
+    target: 'student-nav-reviews',
+    title: 'My Reviews',
+    content: 'See all reviews you have submitted — for courses and the platform. Check approval status, view rejection reasons, edit pending reviews, or delete any review.',
+  },
+  {
     target: 'student-nav-support',
     title: 'Support',
     content: 'Need help? Submit a support ticket and our team will assist you as soon as possible.',
@@ -116,6 +123,7 @@ const NAV_MAIN: NavItem[] = [
   { view: 'financial-aid', label: 'Financial Aid', path: 'financial-aid', Icon: Handshake as NavItem['Icon'] },
   { view: 'messages', label: 'Messages', path: 'messages', Icon: Chats as NavItem['Icon'] },
   { view: 'referrals', label: 'Referrals', path: 'referrals', Icon: Gift as NavItem['Icon'] },
+  { view: 'reviews', label: 'My Reviews', path: 'reviews', Icon: Star as NavItem['Icon'] },
 ]
 
 const NAV_PREFS: NavItem[] = [
@@ -451,6 +459,7 @@ export default function StudentDashboardPage() {
                   <Route path="/notifications" element={<StudentNotifications />} />
                   <Route path="/messages" element={<StudentMessages />} />
                   <Route path="/referrals" element={<StudentReferrals />} />
+                  <Route path="/reviews" element={<StudentReviews />} />
                 </Routes>
               </Suspense>
             </motion.div>

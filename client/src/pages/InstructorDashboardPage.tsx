@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import {
   House, BookOpen, Users, GearSix, VideoCamera,
-  List, X, SignOut, Bell, Sun, Moon, Headset, Chats, CheckCircle, Sparkle, Money
+  List, X, SignOut, Bell, Sun, Moon, Headset, Chats, CheckCircle, Sparkle, Money, Star
 } from '@phosphor-icons/react'
 import Loader from '@/components/Loader'
 import TourGuide, { type TourStep } from '@/components/TourGuide'
@@ -25,9 +25,10 @@ const InstructorSettings = lazy(() => import('./instructor/InstructorSettings'))
 const InstructorSupport = lazy(() => import('./instructor/InstructorSupport'))
 const InstructorNotifications = lazy(() => import('./instructor/InstructorNotifications'))
 const InstructorAssignments = lazy(() => import('./instructor/InstructorAssignments'))
-const InstructorSalary = lazy(() => import('./instructor/InstructorSalary'))
+const InstructorSalary  = lazy(() => import('./instructor/InstructorSalary'))
+const InstructorReviews = lazy(() => import('./instructor/InstructorReviews'))
 
-export type InstructorView = 'overview' | 'courses' | 'live' | 'students' | 'messages' | 'assignments' | 'salary' | 'settings' | 'support' | 'notifications'
+export type InstructorView = 'overview' | 'courses' | 'live' | 'students' | 'messages' | 'assignments' | 'salary' | 'settings' | 'support' | 'notifications' | 'reviews'
 
 // ─── SEARCH ITEMS ─────────────────────────────────────────────────────────────
 
@@ -42,6 +43,7 @@ const INSTRUCTOR_SEARCH_ITEMS: SearchItem[] = [
   { label: 'Notifications', description: 'Enrollments, messages, and platform updates',         path: '/instructor/notifications',  Icon: Bell as SearchItem['Icon'] },
   { label: 'Settings',      description: 'Update your profile and teaching preferences',        path: '/instructor/settings',       Icon: GearSix as SearchItem['Icon'] },
   { label: 'Support & Help',description: 'Submit a support ticket to the admin team',           path: '/instructor/support',        Icon: Headset as SearchItem['Icon'] },
+  { label: 'My Reviews',    description: 'View all your submitted reviews with approval status',  path: '/instructor/reviews',        Icon: Star as SearchItem['Icon'] },
 ]
 
 const INSTRUCTOR_TOUR_STEPS: TourStep[] = [
@@ -100,6 +102,11 @@ const INSTRUCTOR_TOUR_STEPS: TourStep[] = [
     content: 'Having an issue or question? Submit a support ticket and the admin team will assist you.',
   },
   {
+    target: 'instructor-nav-reviews',
+    title: 'My Reviews',
+    content: 'See all reviews you have submitted about the platform. Track their approval status, view rejection reasons if any, and edit or delete your reviews.',
+  },
+  {
     target: 'instructor-take-tour',
     title: "You're ready to teach!",
     content: "That's the full tour. Click \"Take Tour\" here anytime to revisit these tips. Good luck with your students!",
@@ -120,6 +127,7 @@ const NAV_MAIN: NavItem[] = [
 
 const NAV_PREFS: NavItem[] = [
   { view: 'notifications', label: 'Notifications', path: 'notifications', Icon: Bell as NavItem['Icon'] },
+  { view: 'reviews', label: 'My Reviews', path: 'reviews', Icon: Star as NavItem['Icon'] },
   { view: 'settings', label: 'Settings', path: 'settings', Icon: GearSix as NavItem['Icon'] },
   { view: 'support', label: 'Support & Help', path: 'support', Icon: Headset as NavItem['Icon'] },
 ]
@@ -440,6 +448,7 @@ export default function InstructorDashboardPage() {
                   <Route path="/settings" element={<InstructorSettings />} />
                   <Route path="/support" element={<InstructorSupport />} />
                   <Route path="/notifications" element={<InstructorNotifications />} />
+                  <Route path="/reviews" element={<InstructorReviews />} />
                 </Routes>
               </Suspense>
             </motion.div>
