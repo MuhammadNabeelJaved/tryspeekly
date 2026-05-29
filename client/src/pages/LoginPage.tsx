@@ -20,7 +20,7 @@ export default function LoginPage() {
   const { login } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [remember, setRemember] = useState(true)
+  const [remember, setRemember] = useState(false)
   const [errors, setErrors] = useState({ email: '', password: '', general: '' })
   const [isLoading, setIsLoading] = useState(false)
 
