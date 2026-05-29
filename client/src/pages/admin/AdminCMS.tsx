@@ -221,7 +221,12 @@ function SectionEditor({
 
 // ─── MAIN CMS COMPONENT ───────────────────────────────────────────────────────
 
-export default function AdminCMS({ store }: { store: AdminStore }) {
+interface AdminCMSProps {
+  store: AdminStore
+  basePath?: string  // defaults to '/admin/cms'
+}
+
+export default function AdminCMS({ store, basePath = '/admin/cms' }: AdminCMSProps) {
   const { cmsPages, setCmsPages } = store
 
   const location = useLocation()
@@ -277,7 +282,7 @@ export default function AdminCMS({ store }: { store: AdminStore }) {
   }
 
   function pickPage(pageId: string) {
-    navigate('/admin/cms')
+    navigate(basePath)
     const page = cmsPages.find(p => p.id === pageId)
     setActivePageId(pageId)
     setActiveSectionId(page?.sections[0]?.id ?? '')
@@ -311,7 +316,7 @@ export default function AdminCMS({ store }: { store: AdminStore }) {
         
         <div className="border-b border-slate-100 dark:border-neutral-800 pb-2">
           <button
-            onClick={() => { navigate('/admin/cms/payments-setup'); setSidebarOpen(false) }}
+            onClick={() => { navigate(`${basePath}/payments-setup`); setSidebarOpen(false) }}
             className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-bold transition-colors ${
               isPaymentsSetup
                 ? 'bg-violet-50 dark:bg-violet-950/30 text-violet-700 dark:text-violet-400'

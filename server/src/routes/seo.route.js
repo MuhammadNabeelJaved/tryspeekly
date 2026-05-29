@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { authenticate, authorize } from '../middlewares/auth.js'
+import { authenticate, authorizeTeamPage } from '../middlewares/auth.js'
 import {
   getAllPages, getPage, upsertPage, createPage, deletePage, getPublicSeo,
 } from '../controllers/seo.controller.js'
@@ -10,7 +10,7 @@ const router = Router()
 router.get('/public/:slug', getPublicSeo)
 
 // Admin only
-router.use(authenticate, authorize('admin'))
+router.use(authenticate, authorizeTeamPage('seo'))
 
 router.route('/')
   .get(getAllPages)

@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { authenticate, authorize } from '../middlewares/auth.js'
+import { authenticate, authorize, authorizeTeamPage } from '../middlewares/auth.js'
 import { getActiveOffers, getAllOffers, createOffer, updateOffer, deleteOffer } from '../controllers/offer.controller.js'
 
 const router = Router()
@@ -7,13 +7,13 @@ const router = Router()
 // Public
 router.get('/active', getActiveOffers)
 
-// Admin
+// Admin / team members with referrals permission
 router.route('/')
-  .get(authenticate, authorize('admin'), getAllOffers)
-  .post(authenticate, authorize('admin'), createOffer)
+  .get(authenticate, authorizeTeamPage('referrals'), getAllOffers)
+  .post(authenticate, authorizeTeamPage('referrals'), createOffer)
 
 router.route('/:id')
-  .patch(authenticate, authorize('admin'), updateOffer)
-  .delete(authenticate, authorize('admin'), deleteOffer)
+  .patch(authenticate, authorizeTeamPage('referrals'), updateOffer)
+  .delete(authenticate, authorizeTeamPage('referrals'), deleteOffer)
 
 export default router

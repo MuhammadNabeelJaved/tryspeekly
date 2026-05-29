@@ -1,5 +1,5 @@
 import express from 'express'
-import { authenticate, authorize } from '../middlewares/auth.js'
+import { authenticate, authorizeTeamPage } from '../middlewares/auth.js'
 import {
   submitContact,
   getAllContacts,
@@ -16,11 +16,11 @@ const router = express.Router()
 router.route('/').post(submitContact)
 
 // ─── Admin routes ──────────────────────────────────────────────────────────────
-router.route('/').get(authenticate, authorize('admin'), getAllContacts)
-router.route('/admin').post(authenticate, authorize('admin'), createContact)
-router.route('/:id').get(authenticate, authorize('admin'), getContact)
-router.route('/:id').patch(authenticate, authorize('admin'), updateContact)
-router.route('/:id/read').patch(authenticate, authorize('admin'), markContactRead)
-router.route('/:id').delete(authenticate, authorize('admin'), deleteContact)
+router.route('/').get(authenticate, authorizeTeamPage('contacts'), getAllContacts)
+router.route('/admin').post(authenticate, authorizeTeamPage('contacts'), createContact)
+router.route('/:id').get(authenticate, authorizeTeamPage('contacts'), getContact)
+router.route('/:id').patch(authenticate, authorizeTeamPage('contacts'), updateContact)
+router.route('/:id/read').patch(authenticate, authorizeTeamPage('contacts'), markContactRead)
+router.route('/:id').delete(authenticate, authorizeTeamPage('contacts'), deleteContact)
 
 export default router

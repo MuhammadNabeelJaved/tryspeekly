@@ -31,7 +31,7 @@ export interface User {
   id?: string;
   name: string;
   email: string;
-  role: 'student' | 'teacher' | 'admin';
+  role: 'student' | 'teacher' | 'admin' | 'team_member';
   phone?: string;
   country?: string;
   city?: string;
@@ -42,6 +42,8 @@ export interface User {
   bio?: string;
   isVerified?: boolean;
   isOnboardingDone?: boolean;
+  jobTitle?: string;
+  permissions?: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -315,7 +317,7 @@ export interface Blog {
   content: string;
   excerpt?: string;
   coverImage?: string;
-  author: { _id: string; name: string; profileImage?: string; bio?: string };
+  author: { _id: string; name: string; profileImage?: string; bio?: string; role?: string; jobTitle?: string };
   tags: string[];
   status: 'draft' | 'published' | 'archived';
   publishedAt?: string;
@@ -723,4 +725,41 @@ export interface CreateSalaryRequestDto {
 
 export interface AdminResolveSalaryRequestDto {
   adminReply?: string;
+}
+
+// ─── Team Management Types ────────────────────────────────────────────────────
+
+export interface TeamMember {
+  _id: string;
+  name: string;
+  email: string;
+  jobTitle?: string;
+  permissions: string[];
+  profileImage?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TeamChatMessage {
+  _id: string;
+  from: { _id: string; name: string; profileImage?: string; role: string };
+  to: string;
+  message: string;
+  read: boolean;
+  createdAt: string;
+}
+
+export interface CreateTeamMemberDto {
+  name: string;
+  email: string;
+  password: string;
+  jobTitle?: string;
+  permissions: string[];
+}
+
+export interface UpdateTeamMemberDto {
+  name?: string;
+  email?: string;
+  jobTitle?: string;
+  permissions?: string[];
 }

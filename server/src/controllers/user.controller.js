@@ -2,7 +2,8 @@ import asyncHandler from '../utils/asyncHandler.js'
 import jwt from 'jsonwebtoken'
 import User from '../models/user.model.js'
 import { uploadUserAvatar, deleteFile, extractPublicId } from '../utils/cloudinary.js'
-import { sendForgotPasswordOtp, sendVerificationOtp } from '../utils/email.js'
+import { sendForgotPasswordOtp, sendVerificationOtp, sendEmail } from '../utils/email.js'
+import { emitToUser } from '../utils/socket.js'
 
 // ─── Cookie helpers ────────────────────────────────────────────────────────────
 const COOKIE_BASE = {
@@ -41,6 +42,9 @@ const safeUser = (user) => ({
   timezone: user.timezone,
   isVerified: user.isVerified,
   isOnboardingDone: user.isOnboardingDone,
+  isBlocked: user.isBlocked,
+  permissions: user.permissions,
+  jobTitle: user.jobTitle,
   createdAt: user.createdAt,
   updatedAt: user.updatedAt,
 })
@@ -53,25 +57,24 @@ export const createUser = asyncHandler(async (req, res) => {
       return res.status(400).json({ success: false, error: { message: 'All fields are required' } })
     }
 
-    const existingUser = await User.findOne({ email })
+    // Bypass the pre-find middleware (which filters isDeleted:false) to catch soft-deleted accounts too
+    const existingUser = await User.collection.findOne({ email })
     if (existingUser) {
-      return res.status(409).json({ success: false, error: { message: 'Email already in use' } })
+      if (existingUser.isDeleted) {
+        await User.collection.deleteOne({ _id: existingUser._id })
+      } else {
+        return res.status(409).json({ success: false, error: { message: 'Email already in use' } })
+      }
     }
 
     const user = new User({ name, email, password, phone, role, isOnboardingDone: false })
     const otp = user.generateVerificationToken()
-    if (process.env.NODE_ENV === 'development') user.isVerified = true
 
     await user.save()
 
-    if (process.env.NODE_ENV !== 'development') {
-      await sendVerificationOtp({ to: email, otp })
-    }
+    await sendVerificationOtp({ to: email, otp, name })
 
-    const msg = process.env.NODE_ENV === 'development'
-      ? 'Registration successful. Auto-verified in dev mode.'
-      : 'Registration successful. Check your email for the OTP.'
-    res.status(201).json({ success: true, message: msg })
+    res.status(201).json({ success: true, message: 'Registration successful. Check your email for the OTP.' })
   } catch (error) {
     res.status(400).json({ success: false, error: { message: error.message } })
   }
@@ -87,10 +90,10 @@ export const resendVerification = asyncHandler(async (req, res) => {
     if (!user) return res.status(404).json({ success: false, error: { message: 'User not found' } })
     if (user.isVerified) return res.status(400).json({ success: false, error: { message: 'Email is already verified' } })
 
-    user.generateVerificationToken()
+    const otp = user.generateVerificationToken()
     await user.save()
 
-    // TODO: send new OTP via email service
+    await sendVerificationOtp({ to: user.email, otp, name: user.name })
     res.json({ success: true, message: 'Verification code resent to your email' })
   } catch (error) {
     res.status(400).json({ success: false, error: { message: error.message } })
@@ -121,6 +124,19 @@ export const verifyEmail = asyncHandler(async (req, res) => {
 
     setTokenCookies(res, accessToken, refreshToken)
 
+    // Welcome email after verification
+    sendEmail({
+      type: 'account_verified_welcome',
+      to: user.email,
+      toName: user.name,
+      variables: {
+        name: user.name,
+        role: user.role,
+        dashboardUrl: `${process.env.CLIENT_URL || 'http://localhost:5173'}/${user.role === 'admin' ? 'admin' : user.role === 'teacher' ? 'instructor' : 'dashboard'}`,
+      },
+      metadata: { userId: user._id },
+    }).catch(() => {})
+
     res.json({
       success: true,
       message: 'Email verified successfully',
@@ -142,12 +158,12 @@ export const loginUser = asyncHandler(async (req, res) => {
     const user = await User.findOne({ email }).select('+password')
     if (!user) return res.status(404).json({ success: false, error: { message: 'User not found' } })
 
-    if (!user.isVerified) {
-      return res.status(403).json({ success: false, error: { message: 'Email not verified. Please verify your email first.' } })
-    }
-
     if (user.isDeleted) {
       return res.status(403).json({ success: false, error: { message: 'Account has been deactivated.' } })
+    }
+
+    if (user.isBlocked) {
+      return res.status(403).json({ success: false, error: { message: 'Your account has been blocked. Please contact support.' } })
     }
 
     const isMatch = await user.comparePassword(password)
@@ -227,9 +243,20 @@ export const getUserProfile = asyncHandler(async (req, res) => {
 // GET /api/v1/users — admin
 export const getAllUsers = asyncHandler(async (req, res) => {
   try {
-    const { page = 1, limit = 20, role, search } = req.query
+    const { page = 1, limit = 20, role, search, blocked } = req.query
     const filter = {}
-    if (role) filter.role = role
+
+    // Non-admins can only see students and teachers
+    if (req.user.role !== 'admin') {
+      filter.role = { $in: ['student', 'teacher'] }
+    }
+
+    if (req.user.role === 'admin' && role) {
+      filter.role = role
+    }
+    if (req.user.role === 'admin' && blocked === 'true') {
+      filter.isBlocked = true
+    }
     if (search) filter.$or = [{ name: { $regex: search, $options: 'i' } }, { email: { $regex: search, $options: 'i' } }]
     const skip = (Number(page) - 1) * Number(limit)
 
@@ -323,7 +350,7 @@ export const requestPasswordReset = asyncHandler(async (req, res) => {
     const otp = user.generateResetPasswordToken()
     await user.save()
 
-    await sendForgotPasswordOtp({ to: email, otp })
+    await sendForgotPasswordOtp({ to: email, otp, name: user.name })
     res.json({ success: true, message: 'Password reset OTP sent to your email' })
   } catch (error) {
     res.status(400).json({ success: false, error: { message: error.message } })
@@ -402,6 +429,66 @@ export const markOnboardingDone = asyncHandler(async (req, res) => {
   }
 })
 
+// PATCH /api/v1/users/:id/block — admin only
+export const blockUser = asyncHandler(async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id)
+    if (!user) return res.status(404).json({ success: false, error: { message: 'User not found' } })
+    if (user._id.toString() === req.user.id) {
+      return res.status(403).json({ success: false, error: { message: 'You cannot block your own account' } })
+    }
+
+    user.isBlocked = !user.isBlocked
+    user.blockedAt = user.isBlocked ? new Date() : undefined
+    await user.save()
+
+    // If blocking, kick the user out immediately if they are online
+    if (user.isBlocked) {
+      emitToUser(user._id, 'user:blocked', { message: 'Your account has been blocked by an administrator.' })
+    }
+
+    res.json({
+      success: true,
+      message: user.isBlocked ? 'User blocked.' : 'User unblocked.',
+      data: safeUser(user),
+    })
+  } catch (error) {
+    res.status(400).json({ success: false, error: { message: error.message } })
+  }
+})
+
+// PATCH /api/v1/users/:id/role — admin only
+export const changeUserRole = asyncHandler(async (req, res) => {
+  try {
+    const { role } = req.body
+    const VALID_ROLES = ['student', 'teacher', 'admin', 'team_member']
+    if (!role || !VALID_ROLES.includes(role)) {
+      return res.status(400).json({ success: false, error: { message: 'Valid role is required' } })
+    }
+
+    const user = await User.findById(req.params.id)
+    if (!user) return res.status(404).json({ success: false, error: { message: 'User not found' } })
+    if (user._id.toString() === req.user.id) {
+      return res.status(403).json({ success: false, error: { message: 'You cannot change your own role' } })
+    }
+
+    const oldRole = user.role
+    user.role = role
+    // Clear team_member permissions when moving away from that role
+    if (oldRole === 'team_member' && role !== 'team_member') {
+      user.permissions = []
+    }
+    await user.save()
+
+    // Notify the user in real time if they are logged in
+    emitToUser(user._id, 'user:role:changed', { role, oldRole })
+
+    res.json({ success: true, message: `Role changed to ${role}`, data: safeUser(user) })
+  } catch (error) {
+    res.status(400).json({ success: false, error: { message: error.message } })
+  }
+})
+
 // DELETE /api/v1/users/:id
 export const deleteUser = asyncHandler(async (req, res) => {
   try {
@@ -413,9 +500,13 @@ export const deleteUser = asyncHandler(async (req, res) => {
       if (publicId) await deleteFile(publicId, 'image')
     }
 
+    const userId = user._id
     user.isDeleted = true
     user.profileImage = undefined
     await user.save()
+
+    // Kick the user out immediately if they are online
+    emitToUser(userId, 'user:deleted', { message: 'Your account has been deleted.' })
 
     res.json({ success: true, message: 'User deleted successfully' })
   } catch (error) {

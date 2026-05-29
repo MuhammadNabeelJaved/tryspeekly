@@ -14,6 +14,7 @@ const router = express.Router()
 router.route('/').get(authenticate, getAnnouncements)
 
 // ─── Admin routes ──────────────────────────────────────────────────────────────
+// admin-only: no team member page permission maps to this endpoint
 router.route('/all').get(authenticate, authorize('admin'), getAllAnnouncements)
 router.route('/').post(authenticate, authorize('admin'), createAnnouncement)
 router.route('/:id').patch(authenticate, authorize('admin'), updateAnnouncement)

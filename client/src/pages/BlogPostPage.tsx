@@ -12,6 +12,16 @@ import type { Blog } from '../types/api'
 import { extractApiError } from '../utils/apiError'
 import Loader from '@/components/Loader'
 
+function authorLabel(author: { name: string; role?: string }) {
+  return author.role === 'admin' ? 'Admin' : author.name
+}
+
+function authorSubtitle(author: { role?: string; jobTitle?: string }) {
+  if (author.role === 'admin') return 'Administrator'
+  if (author.role === 'team_member') return author.jobTitle || 'Team Member'
+  return 'Content Author'
+}
+
 export default function BlogPostPage() {
   const { slug } = useParams()
   const [blog, setBlog] = useState<Blog | null>(null)
@@ -88,10 +98,15 @@ export default function BlogPostPage() {
 
             <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-slate-500 dark:text-neutral-400 font-medium">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center text-sm font-black text-violet-600 dark:text-violet-400 border-2 border-white dark:border-neutral-800 shadow-sm">
-                  {blog.author.name.charAt(0)}
+                <div className="w-10 h-10 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center text-sm font-black text-violet-600 dark:text-violet-400 border-2 border-white dark:border-neutral-800 shadow-sm overflow-hidden flex-shrink-0">
+                  {blog.author.profileImage
+                    ? <img src={blog.author.profileImage} alt="" className="w-full h-full object-cover" />
+                    : authorLabel(blog.author).charAt(0)}
                 </div>
-                <span className="text-slate-900 dark:text-white font-bold">{blog.author.name}</span>
+                <div>
+                  <span className="text-slate-900 dark:text-white font-bold block">{authorLabel(blog.author)}</span>
+                  <span className="text-xs font-semibold text-violet-600 dark:text-violet-400">{authorSubtitle(blog.author)}</span>
+                </div>
               </div>
               <span className="hidden sm:inline w-1 h-1 rounded-full bg-slate-300 dark:bg-neutral-700" />
               <div className="flex items-center gap-1.5">
@@ -175,14 +190,20 @@ export default function BlogPostPage() {
             {/* Author Box */}
             <div className="mt-12 bg-slate-50 dark:bg-neutral-900/50 rounded-3xl p-8 sm:p-10 border border-slate-100 dark:border-neutral-800">
               <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 text-center sm:text-left">
-                <div className="w-24 h-24 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center text-2xl font-black text-violet-600 dark:text-violet-400 shadow-lg border-4 border-white dark:border-neutral-800">
-                  {blog.author.name.charAt(0)}
+                <div className="w-24 h-24 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center text-2xl font-black text-violet-600 dark:text-violet-400 shadow-lg border-4 border-white dark:border-neutral-800 overflow-hidden flex-shrink-0">
+                  {blog.author.profileImage
+                    ? <img src={blog.author.profileImage} alt={authorLabel(blog.author)} className="w-full h-full object-cover" />
+                    : authorLabel(blog.author).charAt(0)}
                 </div>
                 <div>
-                  <h3 className="text-xl font-black text-slate-900 dark:text-white mb-1">Written by {blog.author.name}</h3>
-                  <p className="text-violet-600 dark:text-violet-400 font-bold text-sm uppercase tracking-wider mb-4">Content Author</p>
+                  <h3 className="text-xl font-black text-slate-900 dark:text-white mb-1">
+                    Written by {authorLabel(blog.author)}
+                  </h3>
+                  <p className="text-violet-600 dark:text-violet-400 font-bold text-sm uppercase tracking-wider mb-4">
+                    {authorSubtitle(blog.author)}
+                  </p>
                   <p className="text-slate-500 dark:text-neutral-400 leading-relaxed mb-4">
-                    Expert contributor at EnglishPro Academy. Passionate about helping students achieve their language goals through high-quality educational content.
+                    {blog.author.bio || 'Expert contributor at EnglishPro Academy. Passionate about helping students achieve their language goals through high-quality educational content.'}
                   </p>
                 </div>
               </div>

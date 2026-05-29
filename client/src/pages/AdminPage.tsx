@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   ChartBar, Users, Chalkboard, BookOpen, CreditCard, PencilSimple,
   List, X, SignOut, Bell, Sun, Moon, GearSix,
-  Lock, Eye, EyeSlash, Handshake, Certificate, ChatCircleDots, CheckCircle, Chats, Globe, Star, Sparkle, Money, EnvelopeSimple, Gift
+  Lock, Eye, EyeSlash, Handshake, Certificate, ChatCircleDots, CheckCircle, Chats, Globe, Star, Sparkle, Money, EnvelopeSimple, Gift, UsersThree, UserSwitch
 } from '@phosphor-icons/react'
 import TourGuide, { type TourStep } from '@/components/TourGuide'
 import DashboardSearch, { type SearchItem } from '@/components/DashboardSearch'
@@ -44,10 +44,13 @@ const AdminGeoAccess = lazy(() => import('./admin/AdminGeoAccess'))
 const AdminSalaries = lazy(() => import('./admin/AdminSalaries'))
 const AdminContacts = lazy(() => import('./admin/AdminContacts'))
 const AdminReferrals = lazy(() => import('./admin/AdminReferrals'))
+const AdminEmail = lazy(() => import('./admin/AdminEmail'))
+const AdminTeam = lazy(() => import('./admin/AdminTeam'))
+const AdminUsers = lazy(() => import('./admin/AdminUsers'))
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 
-export type AdminView = 'overview' | 'students' | 'instructors' | 'courses' | 'certificates' | 'payments' | 'payments-setup' | 'financial-aid' | 'salaries' | 'cms' | 'blog' | 'settings' | 'support' | 'notifications' | 'messages' | 'seo' | 'reviews' | 'geo-access' | 'contacts' | 'referrals'
+export type AdminView = 'overview' | 'students' | 'instructors' | 'courses' | 'certificates' | 'payments' | 'payments-setup' | 'financial-aid' | 'salaries' | 'cms' | 'blog' | 'settings' | 'support' | 'notifications' | 'messages' | 'seo' | 'reviews' | 'geo-access' | 'contacts' | 'referrals' | 'email' | 'team' | 'users'
 
 export interface AdminStore {
   students: Student[]
@@ -68,9 +71,11 @@ type NavItem = { view: AdminView; label: string; path: string; Icon: React.FC<{ 
 
 const NAV_CORE: NavItem[] = [
   { view: 'overview',    label: 'Overview',    path: '',            Icon: ChartBar as NavItem['Icon'] },
+  { view: 'users',       label: 'All Users',   path: 'users',       Icon: UserSwitch as NavItem['Icon'] },
   { view: 'students',    label: 'Students',    path: 'students',    Icon: Users as NavItem['Icon'] },
   { view: 'courses',     label: 'Courses',     path: 'courses',     Icon: BookOpen as NavItem['Icon'] },
   { view: 'instructors', label: 'Instructors', path: 'instructors', Icon: Chalkboard as NavItem['Icon'] },
+  { view: 'team', label: 'Team', path: 'team', Icon: UsersThree as NavItem['Icon'] },
 ]
 
 const NAV_FINANCE: NavItem[] = [
@@ -85,6 +90,7 @@ const NAV_COMMUNICATION: NavItem[] = [
   { view: 'messages',      label: 'Messages',      path: 'messages',      Icon: Chats as NavItem['Icon'] },
   { view: 'support',       label: 'Support',       path: 'support',       Icon: ChatCircleDots as NavItem['Icon'] },
   { view: 'contacts',      label: 'Contacts',      path: 'contacts',      Icon: EnvelopeSimple as NavItem['Icon'] },
+  { view: 'email',         label: 'Email System',  path: 'email',         Icon: EnvelopeSimple as NavItem['Icon'] },
   { view: 'reviews',       label: 'Reviews',       path: 'reviews',       Icon: Star as NavItem['Icon'] },
   { view: 'notifications', label: 'Notifications', path: 'notifications', Icon: Bell as NavItem['Icon'] },
 ]
@@ -101,9 +107,11 @@ const NAV_CONTENT: NavItem[] = [
 
 const ADMIN_SEARCH_ITEMS: SearchItem[] = [
   { label: 'Overview',       description: 'Platform stats, revenue, and pending tasks',          path: '/admin',              Icon: ChartBar as SearchItem['Icon'] },
+  { label: 'All Users',      description: 'View all users, change roles, block or delete accounts', path: '/admin/users',         Icon: UserSwitch as SearchItem['Icon'] },
   { label: 'Students',       description: 'Manage registered students and enrollments',           path: '/admin/students',      Icon: Users as SearchItem['Icon'] },
   { label: 'Courses',        description: 'Review, approve, and manage courses',                  path: '/admin/courses',       Icon: BookOpen as SearchItem['Icon'] },
   { label: 'Instructors',    description: 'Manage instructor profiles and courses',               path: '/admin/instructors',   Icon: Chalkboard as SearchItem['Icon'] },
+  { label: 'Team',           description: 'Add team members, assign page permissions and job titles', path: '/admin/team',      Icon: UsersThree as SearchItem['Icon'] },
   { label: 'Payments',       description: 'Review and approve student payment submissions',       path: '/admin/payments',      Icon: CreditCard as SearchItem['Icon'] },
   { label: 'Financial Aid',  description: 'Review financial aid applications',                    path: '/admin/financial-aid', Icon: Handshake as SearchItem['Icon'] },
   { label: 'Salaries',       description: 'Manage instructor salary requests and payouts',        path: '/admin/salaries',      Icon: Money as SearchItem['Icon'] },
@@ -114,6 +122,7 @@ const ADMIN_SEARCH_ITEMS: SearchItem[] = [
   { label: 'Referrals',      description: 'Manage coupon codes, referral rewards, and payout requests', path: '/admin/referrals',  Icon: Gift as SearchItem['Icon'] },
   { label: 'Reviews',        description: 'Moderate student course reviews',                     path: '/admin/reviews',       Icon: Star as SearchItem['Icon'] },
   { label: 'Notifications',  description: 'Platform-wide notification management',               path: '/admin/notifications', Icon: Bell as SearchItem['Icon'] },
+  { label: 'Email System',   description: 'Manage email templates, triggers, logs and test delivery', path: '/admin/email',      Icon: EnvelopeSimple as SearchItem['Icon'] },
   { label: 'Blog Manager',   description: 'Create and publish blog posts',                       path: '/admin/blog',          Icon: PencilSimple as SearchItem['Icon'] },
   { label: 'SEO Manager',    description: 'Manage meta titles, descriptions and keywords',       path: '/admin/seo',           Icon: Globe as SearchItem['Icon'] },
   { label: 'CMS Editor',     description: 'Edit public-facing static content pages',             path: '/admin/cms',           Icon: PencilSimple as SearchItem['Icon'] },
@@ -134,6 +143,11 @@ const ADMIN_TOUR_STEPS: TourStep[] = [
     content: 'Your command center — see platform-wide stats: total students, revenue, active courses, and pending tasks at a glance.',
   },
   {
+    target: 'admin-nav-users',
+    title: 'All Users',
+    content: 'See every registered user in one place. Change any user\'s role (student, teacher, team member, admin), block accounts to prevent login and re-registration, or permanently delete them.',
+  },
+  {
     target: 'admin-nav-students',
     title: 'Students',
     content: 'View and manage all registered students, check their enrolled courses, payment totals, and account status.',
@@ -147,6 +161,11 @@ const ADMIN_TOUR_STEPS: TourStep[] = [
     target: 'admin-nav-instructors',
     title: 'Instructors',
     content: 'Manage all instructors on the platform. View their courses count, profile details, and contact info.',
+  },
+  {
+    target: 'admin-nav-team',
+    title: 'Team',
+    content: 'Manage your internal team members. Add new members, assign a job title, grant or revoke access to specific admin pages, and chat directly with each member. Permission changes notify members in real time.',
   },
   {
     target: 'admin-nav-payments',
@@ -167,6 +186,16 @@ const ADMIN_TOUR_STEPS: TourStep[] = [
     target: 'admin-nav-certificates',
     title: 'Certificates',
     content: 'Issue certificates to students who have completed their courses.',
+  },
+  {
+    target: 'admin-nav-referrals',
+    title: 'Referrals',
+    content: 'Manage referral coupon codes and reward programs. Review payout requests from students who earned referral rewards and track the full referral activity log.',
+  },
+  {
+    target: 'admin-nav-email',
+    title: 'Email System',
+    content: 'Full email automation control center. Enable or disable specific email triggers, customize HTML email templates, send test emails, view delivery logs, and track stats.',
   },
   {
     target: 'admin-nav-messages',
@@ -762,6 +791,9 @@ export default function AdminPage() {
                   <Route path="/salaries" element={<AdminSalaries />} />
                   <Route path="/contacts" element={<AdminContacts />} />
                   <Route path="/referrals" element={<AdminReferrals />} />
+                  <Route path="/email" element={<AdminEmail />} />
+                  <Route path="/team" element={<AdminTeam />} />
+                  <Route path="/users" element={<AdminUsers />} />
                   <Route path="*" element={<Navigate to="/admin" replace />} />
                 </Routes>
               </Suspense>

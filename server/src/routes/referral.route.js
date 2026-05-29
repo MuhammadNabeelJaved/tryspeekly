@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { authenticate, authorize } from '../middlewares/auth.js'
+import { authenticate, authorize, authorizeTeamPage } from '../middlewares/auth.js'
 import {
   generateReferralCode,
   getMyReferralCodes,
@@ -27,10 +27,10 @@ router.get('/my-wallet', authenticate, authorize('student'), getMyWallet)
 router.post('/payout-request', authenticate, authorize('student'), createPayoutRequest)
 
 // Admin
-router.get('/', authenticate, authorize('admin'), getAllRewards)
-router.get('/payout-requests', authenticate, authorize('admin'), getPayoutRequests)
-router.patch('/payout-requests/:requestId', authenticate, authorize('admin'), processPayoutRequest)
-router.get('/settings', authenticate, authorize('admin'), getReferralSettings)
-router.patch('/settings', authenticate, authorize('admin'), updateReferralSettings)
+router.get('/', authenticate, authorizeTeamPage('referrals'), getAllRewards)
+router.get('/payout-requests', authenticate, authorizeTeamPage('referrals'), getPayoutRequests)
+router.patch('/payout-requests/:requestId', authenticate, authorizeTeamPage('referrals'), processPayoutRequest)
+router.get('/settings', authenticate, authorizeTeamPage('referrals'), getReferralSettings)
+router.patch('/settings', authenticate, authorizeTeamPage('referrals'), updateReferralSettings)
 
 export default router

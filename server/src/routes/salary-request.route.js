@@ -1,5 +1,5 @@
 import express from 'express'
-import { authenticate, authorize } from '../middlewares/auth.js'
+import { authenticate, authorize, authorizeTeamPage } from '../middlewares/auth.js'
 import {
   createRequest,
   getMyRequests,
@@ -17,8 +17,8 @@ router.post('/', authenticate, authorize('teacher'), createRequest)
 router.delete('/:id', authenticate, authorize('teacher'), cancelRequest)
 
 // ─── Admin routes ──────────────────────────────────────────────────────────────
-router.get('/', authenticate, authorize('admin'), getAllRequests)
-router.patch('/:id/approve', authenticate, authorize('admin'), approveRequest)
-router.patch('/:id/reject', authenticate, authorize('admin'), rejectRequest)
+router.get('/', authenticate, authorizeTeamPage('salaries'), getAllRequests)
+router.patch('/:id/approve', authenticate, authorizeTeamPage('salaries'), approveRequest)
+router.patch('/:id/reject', authenticate, authorizeTeamPage('salaries'), rejectRequest)
 
 export default router

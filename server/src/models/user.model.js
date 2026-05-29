@@ -39,7 +39,7 @@ const userSchema = new Schema(
     role: {
       type: String,
       enum: {
-        values: ['student', 'teacher', 'admin'],
+        values: ['student', 'teacher', 'admin', 'team_member'],
         message: 'Invalid user role',
       },
       default: 'student',
@@ -52,6 +52,25 @@ const userSchema = new Schema(
       type: String,
       trim: true,
       maxlength: [500, 'Bio cannot exceed 500 characters'],
+    },
+    jobTitle: {
+      type: String,
+      trim: true,
+      maxlength: [100, 'Job title cannot exceed 100 characters'],
+    },
+    permissions: {
+      type: [
+        {
+          type: String,
+          enum: [
+            'overview', 'students', 'courses', 'instructors',
+            'payments', 'financial-aid', 'salaries', 'certificates', 'referrals',
+            'messages', 'support', 'contacts', 'email', 'reviews', 'notifications',
+            'blog', 'seo', 'cms', 'geo-access',
+          ],
+        },
+      ],
+      default: [],
     },
     country: {
       type: String,
@@ -82,6 +101,14 @@ const userSchema = new Schema(
     isDeleted: {
       type: Boolean,
       default: false,
+    },
+    isBlocked: {
+      type: Boolean,
+      default: false,
+    },
+    blockedAt: {
+      type: Date,
+      select: false,
     },
     verificationToken: {
       type: String,
