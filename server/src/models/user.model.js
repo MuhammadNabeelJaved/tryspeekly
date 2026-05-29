@@ -59,12 +59,16 @@ const userSchema = new Schema(
       maxlength: [100, 'Job title cannot exceed 100 characters'],
     },
     permissions: {
-      type: [String],
-      enum: [
-        'overview', 'students', 'courses', 'instructors',
-        'payments', 'financial-aid', 'salaries', 'certificates', 'referrals',
-        'messages', 'support', 'contacts', 'email', 'reviews', 'notifications',
-        'blog', 'seo', 'cms', 'geo-access',
+      type: [
+        {
+          type: String,
+          enum: [
+            'overview', 'students', 'courses', 'instructors',
+            'payments', 'financial-aid', 'salaries', 'certificates', 'referrals',
+            'messages', 'support', 'contacts', 'email', 'reviews', 'notifications',
+            'blog', 'seo', 'cms', 'geo-access',
+          ],
+        },
       ],
       default: [],
     },
