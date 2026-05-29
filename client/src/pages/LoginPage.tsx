@@ -20,7 +20,7 @@ export default function LoginPage() {
   const { login } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [remember, setRemember] = useState(false)
+  const [remember, setRemember] = useState(true)
   const [errors, setErrors] = useState({ email: '', password: '', general: '' })
   const [isLoading, setIsLoading] = useState(false)
 
@@ -50,7 +50,7 @@ export default function LoginPage() {
       if (from && from !== '/login' && from !== '/signup') {
         navigate(from, { replace: true })
       } else {
-        const map: Record<string, string> = { student: '/dashboard', teacher: '/instructor', admin: '/admin' }
+        const map: Record<string, string> = { student: '/dashboard', teacher: '/instructor', admin: '/admin', team_member: '/team' }
         navigate(map[result.user.role] || '/', { replace: true })
       }
     } catch (error: unknown) {

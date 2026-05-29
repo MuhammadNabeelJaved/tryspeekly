@@ -33,6 +33,7 @@ const StudentDashboardPage = lazy(() => import('@/pages/StudentDashboardPage'))
 const InstructorDashboardPage = lazy(() => import('@/pages/InstructorDashboardPage'))
 const CertificateViewPage = lazy(() => import('@/pages/CertificateViewPage'))
 const AdminPage = lazy(() => import('@/pages/AdminPage'))
+const TeamPage = lazy(() => import('@/pages/TeamPage'))
 
 import './App.css'
 
@@ -168,6 +169,14 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={['admin']}>
                     <AdminPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/team/*"
+                element={
+                  <ProtectedRoute allowedRoles={['team_member']}>
+                    <TeamPage />
                   </ProtectedRoute>
                 }
               />
