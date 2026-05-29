@@ -576,6 +576,8 @@ function OffersTab() {
       const res = await offersService.getAdminOffers()
       if (res.success) setOffers(res.data)
       else toast.error(res.message || 'Failed to load offers')
+    } catch {
+      toast.error('Failed to load offers')
     } finally { setLoading(false) }
   }, [])
 
@@ -609,13 +611,21 @@ function OffersTab() {
         <p className="text-sm text-slate-500 dark:text-neutral-400">
           Auto-applied discounts shown on course pages. Course-specific offers take priority over platform-wide.
         </p>
-        <button
-          onClick={() => { setEditOffer(null); setShowModal(true) }}
-          className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white text-sm font-bold rounded-xl transition-colors"
-        >
-          <Plus size={15} weight="bold" />
-          Create Offer
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => load()}
+            className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-slate-500 dark:text-neutral-400 hover:text-slate-700 dark:hover:text-white border border-slate-200 dark:border-neutral-700 rounded-xl transition-colors"
+          >
+            Refresh
+          </button>
+          <button
+            onClick={() => { setEditOffer(null); setShowModal(true) }}
+            className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white text-sm font-bold rounded-xl transition-colors"
+          >
+            <Plus size={15} weight="bold" />
+            Create Offer
+          </button>
+        </div>
       </div>
 
       {loading ? (
