@@ -8,6 +8,7 @@ import connectDB from './src/database/db.js'
 import { setIO, emitToUser } from './src/utils/socket.js'
 import Enrollment from './src/models/enrollment.model.js'
 import Message from './src/models/message.model.js'
+import TeamChat from './src/models/team-chat.model.js'
 
 // Override DNS to use Google Public DNS for MongoDB Atlas SRV record lookup
 dns.setServers(['8.8.8.8', '8.8.4.4'])
@@ -72,6 +73,39 @@ io.on('connection', async (socket) => {
       emitToUser(senderId, 'messages_read', { by: userId })
     } catch (err) {
       console.warn('[Socket] mark_read error:', err.message)
+    }
+  })
+
+  // ─── Team chat ───────────────────────────────────────────────────────────────
+  socket.on('team:message:send', async ({ toId, message }) => {
+    if (!userId || !toId || !message?.trim()) return
+    try {
+      const msg = await TeamChat.create({
+        from: userId,
+        to: toId,
+        message: message.trim(),
+      })
+      const populated = await TeamChat.findById(msg._id)
+        .populate('from', 'name profileImage role')
+        .lean()
+
+      emitToUser(toId, 'team:message:received', populated)
+      emitToUser(userId, 'team:message:received', populated)
+    } catch (err) {
+      console.warn('[Socket] team:message:send error:', err.message)
+    }
+  })
+
+  socket.on('team:message:read', async ({ threadPartnerId }) => {
+    if (!userId || !threadPartnerId) return
+    try {
+      await TeamChat.updateMany(
+        { from: threadPartnerId, to: userId, read: false },
+        { read: true }
+      )
+      emitToUser(threadPartnerId, 'team:messages:read', { by: userId })
+    } catch (err) {
+      console.warn('[Socket] team:message:read error:', err.message)
     }
   })
 
