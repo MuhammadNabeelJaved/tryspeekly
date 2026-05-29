@@ -2,7 +2,7 @@ import asyncHandler from '../utils/asyncHandler.js'
 import jwt from 'jsonwebtoken'
 import User from '../models/user.model.js'
 import { uploadUserAvatar, deleteFile, extractPublicId } from '../utils/cloudinary.js'
-import { sendForgotPasswordOtp, sendVerificationOtp } from '../utils/email.js'
+import { sendForgotPasswordOtp, sendVerificationOtp, sendEmail } from '../utils/email.js'
 
 // ─── Cookie helpers ────────────────────────────────────────────────────────────
 const COOKIE_BASE = {
@@ -41,6 +41,8 @@ const safeUser = (user) => ({
   timezone: user.timezone,
   isVerified: user.isVerified,
   isOnboardingDone: user.isOnboardingDone,
+  permissions: user.permissions,
+  jobTitle: user.jobTitle,
   createdAt: user.createdAt,
   updatedAt: user.updatedAt,
 })
@@ -53,25 +55,24 @@ export const createUser = asyncHandler(async (req, res) => {
       return res.status(400).json({ success: false, error: { message: 'All fields are required' } })
     }
 
-    const existingUser = await User.findOne({ email })
+    // Bypass the pre-find middleware (which filters isDeleted:false) to catch soft-deleted accounts too
+    const existingUser = await User.collection.findOne({ email })
     if (existingUser) {
-      return res.status(409).json({ success: false, error: { message: 'Email already in use' } })
+      if (existingUser.isDeleted) {
+        await User.collection.deleteOne({ _id: existingUser._id })
+      } else {
+        return res.status(409).json({ success: false, error: { message: 'Email already in use' } })
+      }
     }
 
     const user = new User({ name, email, password, phone, role, isOnboardingDone: false })
     const otp = user.generateVerificationToken()
-    if (process.env.NODE_ENV === 'development') user.isVerified = true
 
     await user.save()
 
-    if (process.env.NODE_ENV !== 'development') {
-      await sendVerificationOtp({ to: email, otp })
-    }
+    await sendVerificationOtp({ to: email, otp, name })
 
-    const msg = process.env.NODE_ENV === 'development'
-      ? 'Registration successful. Auto-verified in dev mode.'
-      : 'Registration successful. Check your email for the OTP.'
-    res.status(201).json({ success: true, message: msg })
+    res.status(201).json({ success: true, message: 'Registration successful. Check your email for the OTP.' })
   } catch (error) {
     res.status(400).json({ success: false, error: { message: error.message } })
   }
@@ -87,10 +88,10 @@ export const resendVerification = asyncHandler(async (req, res) => {
     if (!user) return res.status(404).json({ success: false, error: { message: 'User not found' } })
     if (user.isVerified) return res.status(400).json({ success: false, error: { message: 'Email is already verified' } })
 
-    user.generateVerificationToken()
+    const otp = user.generateVerificationToken()
     await user.save()
 
-    // TODO: send new OTP via email service
+    await sendVerificationOtp({ to: user.email, otp, name: user.name })
     res.json({ success: true, message: 'Verification code resent to your email' })
   } catch (error) {
     res.status(400).json({ success: false, error: { message: error.message } })
@@ -121,6 +122,19 @@ export const verifyEmail = asyncHandler(async (req, res) => {
 
     setTokenCookies(res, accessToken, refreshToken)
 
+    // Welcome email after verification
+    sendEmail({
+      type: 'account_verified_welcome',
+      to: user.email,
+      toName: user.name,
+      variables: {
+        name: user.name,
+        role: user.role,
+        dashboardUrl: `${process.env.CLIENT_URL || 'http://localhost:5173'}/${user.role === 'admin' ? 'admin' : user.role === 'teacher' ? 'instructor' : 'dashboard'}`,
+      },
+      metadata: { userId: user._id },
+    }).catch(() => {})
+
     res.json({
       success: true,
       message: 'Email verified successfully',
@@ -141,10 +155,6 @@ export const loginUser = asyncHandler(async (req, res) => {
 
     const user = await User.findOne({ email }).select('+password')
     if (!user) return res.status(404).json({ success: false, error: { message: 'User not found' } })
-
-    if (!user.isVerified) {
-      return res.status(403).json({ success: false, error: { message: 'Email not verified. Please verify your email first.' } })
-    }
 
     if (user.isDeleted) {
       return res.status(403).json({ success: false, error: { message: 'Account has been deactivated.' } })
@@ -229,6 +239,12 @@ export const getAllUsers = asyncHandler(async (req, res) => {
   try {
     const { page = 1, limit = 20, role, search } = req.query
     const filter = {}
+
+    // Non-admins can only see students and teachers
+    if (req.user.role !== 'admin') {
+      filter.role = { $in: ['student', 'teacher'] }
+    }
+
     if (role) filter.role = role
     if (search) filter.$or = [{ name: { $regex: search, $options: 'i' } }, { email: { $regex: search, $options: 'i' } }]
     const skip = (Number(page) - 1) * Number(limit)
@@ -323,7 +339,7 @@ export const requestPasswordReset = asyncHandler(async (req, res) => {
     const otp = user.generateResetPasswordToken()
     await user.save()
 
-    await sendForgotPasswordOtp({ to: email, otp })
+    await sendForgotPasswordOtp({ to: email, otp, name: user.name })
     res.json({ success: true, message: 'Password reset OTP sent to your email' })
   } catch (error) {
     res.status(400).json({ success: false, error: { message: error.message } })
