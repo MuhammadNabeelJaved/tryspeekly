@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   ChartBar, Users, Chalkboard, BookOpen, CreditCard, PencilSimple,
   List, X, SignOut, Bell, Sun, Moon, GearSix,
-  Lock, Eye, EyeSlash, Handshake, Certificate, ChatCircleDots, CheckCircle, Chats, Globe, Star, Sparkle, Money, EnvelopeSimple, Gift
+  Lock, Eye, EyeSlash, Handshake, Certificate, ChatCircleDots, CheckCircle, Chats, Globe, Star, Sparkle, Money, EnvelopeSimple, Gift, UsersThree
 } from '@phosphor-icons/react'
 import TourGuide, { type TourStep } from '@/components/TourGuide'
 import DashboardSearch, { type SearchItem } from '@/components/DashboardSearch'
@@ -44,10 +44,12 @@ const AdminGeoAccess = lazy(() => import('./admin/AdminGeoAccess'))
 const AdminSalaries = lazy(() => import('./admin/AdminSalaries'))
 const AdminContacts = lazy(() => import('./admin/AdminContacts'))
 const AdminReferrals = lazy(() => import('./admin/AdminReferrals'))
+const AdminEmail = lazy(() => import('./admin/AdminEmail'))
+const AdminTeam = lazy(() => import('./admin/AdminTeam'))
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 
-export type AdminView = 'overview' | 'students' | 'instructors' | 'courses' | 'certificates' | 'payments' | 'payments-setup' | 'financial-aid' | 'salaries' | 'cms' | 'blog' | 'settings' | 'support' | 'notifications' | 'messages' | 'seo' | 'reviews' | 'geo-access' | 'contacts' | 'referrals'
+export type AdminView = 'overview' | 'students' | 'instructors' | 'courses' | 'certificates' | 'payments' | 'payments-setup' | 'financial-aid' | 'salaries' | 'cms' | 'blog' | 'settings' | 'support' | 'notifications' | 'messages' | 'seo' | 'reviews' | 'geo-access' | 'contacts' | 'referrals' | 'email' | 'team'
 
 export interface AdminStore {
   students: Student[]
@@ -71,6 +73,7 @@ const NAV_CORE: NavItem[] = [
   { view: 'students',    label: 'Students',    path: 'students',    Icon: Users as NavItem['Icon'] },
   { view: 'courses',     label: 'Courses',     path: 'courses',     Icon: BookOpen as NavItem['Icon'] },
   { view: 'instructors', label: 'Instructors', path: 'instructors', Icon: Chalkboard as NavItem['Icon'] },
+  { view: 'team', label: 'Team', path: 'team', Icon: UsersThree as NavItem['Icon'] },
 ]
 
 const NAV_FINANCE: NavItem[] = [
@@ -85,6 +88,7 @@ const NAV_COMMUNICATION: NavItem[] = [
   { view: 'messages',      label: 'Messages',      path: 'messages',      Icon: Chats as NavItem['Icon'] },
   { view: 'support',       label: 'Support',       path: 'support',       Icon: ChatCircleDots as NavItem['Icon'] },
   { view: 'contacts',      label: 'Contacts',      path: 'contacts',      Icon: EnvelopeSimple as NavItem['Icon'] },
+  { view: 'email',         label: 'Email System',  path: 'email',         Icon: EnvelopeSimple as NavItem['Icon'] },
   { view: 'reviews',       label: 'Reviews',       path: 'reviews',       Icon: Star as NavItem['Icon'] },
   { view: 'notifications', label: 'Notifications', path: 'notifications', Icon: Bell as NavItem['Icon'] },
 ]
@@ -167,6 +171,16 @@ const ADMIN_TOUR_STEPS: TourStep[] = [
     target: 'admin-nav-certificates',
     title: 'Certificates',
     content: 'Issue certificates to students who have completed their courses.',
+  },
+  {
+    target: 'admin-nav-referrals',
+    title: 'Referrals',
+    content: 'Manage referral coupon codes and reward programs. Review payout requests from students who earned referral rewards and track the full referral activity log.',
+  },
+  {
+    target: 'admin-nav-email',
+    title: 'Email System',
+    content: 'Full email automation control center. Enable or disable specific email triggers, customize HTML email templates, send test emails, view delivery logs, and track stats.',
   },
   {
     target: 'admin-nav-messages',
@@ -762,6 +776,8 @@ export default function AdminPage() {
                   <Route path="/salaries" element={<AdminSalaries />} />
                   <Route path="/contacts" element={<AdminContacts />} />
                   <Route path="/referrals" element={<AdminReferrals />} />
+                  <Route path="/email" element={<AdminEmail />} />
+                  <Route path="/team" element={<AdminTeam />} />
                   <Route path="*" element={<Navigate to="/admin" replace />} />
                 </Routes>
               </Suspense>
