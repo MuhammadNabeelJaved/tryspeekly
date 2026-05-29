@@ -12,12 +12,17 @@ export const teamService = {
     return res.data
   },
 
-  createMember: async (dto: CreateTeamMemberDto): Promise<{ success: boolean; data: TeamMember }> => {
+  createMember: async (
+    dto: CreateTeamMemberDto,
+  ): Promise<{ success: boolean; data: TeamMember }> => {
     const res = await axiosClient.post('/team', dto)
     return res.data
   },
 
-  updateMember: async (id: string, dto: UpdateTeamMemberDto): Promise<{ success: boolean; data: TeamMember }> => {
+  updateMember: async (
+    id: string,
+    dto: UpdateTeamMemberDto,
+  ): Promise<{ success: boolean; data: TeamMember }> => {
     const res = await axiosClient.put(`/team/${id}`, dto)
     return res.data
   },
@@ -33,7 +38,10 @@ export const teamService = {
     return res.data
   },
 
-  sendAdminMessage: async (memberId: string, message: string): Promise<{ success: boolean; data: TeamChatMessage }> => {
+  sendAdminMessage: async (
+    memberId: string,
+    message: string,
+  ): Promise<{ success: boolean; data: TeamChatMessage }> => {
     const res = await axiosClient.post(`/team/chat/${memberId}`, { message })
     return res.data
   },

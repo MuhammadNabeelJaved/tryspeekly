@@ -737,6 +737,7 @@ export interface TeamMember {
   permissions: string[];
   profileImage?: string;
   createdAt: string;
+  updatedAt: string;
 }
 
 export interface TeamChatMessage {
