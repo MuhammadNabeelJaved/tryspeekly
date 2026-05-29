@@ -128,3 +128,115 @@ export const deleteTeamMember = asyncHandler(async (req, res) => {
 
   res.json({ success: true, message: 'Team member removed.' })
 })
+
+// ─── Shared: build thread query ───────────────────────────────────────────────
+
+const threadQuery = (userA, userB) => ({
+  $or: [
+    { from: userA, to: userB },
+    { from: userB, to: userA },
+  ],
+})
+
+// ─── Admin: fetch chat thread with a specific team member ─────────────────────
+
+export const getAdminThread = asyncHandler(async (req, res) => {
+  const adminId = req.user.id
+  const { memberId } = req.params
+
+  const member = await User.findOne({ _id: memberId, role: 'team_member', isDeleted: false })
+  if (!member) throw new NotFoundError('Team member not found.')
+
+  const messages = await TeamChat.find(threadQuery(adminId, memberId))
+    .sort({ createdAt: 1 })
+    .populate('from', 'name profileImage role')
+    .lean()
+
+  res.json({ success: true, data: messages })
+})
+
+// ─── Admin: send message to team member ──────────────────────────────────────
+
+export const sendAdminMessage = asyncHandler(async (req, res) => {
+  const { message } = req.body
+  const { memberId } = req.params
+
+  if (!message?.trim()) throw new BadRequestError('Message is required.')
+
+  const member = await User.findOne({ _id: memberId, role: 'team_member', isDeleted: false })
+  if (!member) throw new NotFoundError('Team member not found.')
+
+  const msg = await TeamChat.create({ from: req.user.id, to: memberId, message: message.trim() })
+  const populated = await TeamChat.findById(msg._id)
+    .populate('from', 'name profileImage role')
+    .lean()
+
+  // Notify both parties via socket so both see it in real time
+  emitToUser(memberId, 'team:message:received', populated)
+  emitToUser(req.user.id, 'team:message:received', populated)
+
+  res.status(201).json({ success: true, data: populated })
+})
+
+// ─── Admin: mark thread as read ───────────────────────────────────────────────
+
+export const markAdminThreadRead = asyncHandler(async (req, res) => {
+  const { memberId } = req.params
+  await TeamChat.updateMany(
+    { from: memberId, to: req.user.id, read: false },
+    { read: true }
+  )
+  res.json({ success: true, message: 'Thread marked as read.' })
+})
+
+// ─── Team member: fetch their thread with admin ───────────────────────────────
+
+export const getMemberThread = asyncHandler(async (req, res) => {
+  const admin = await User.findOne({ role: 'admin', isDeleted: false }).select('_id').lean()
+  if (!admin) throw new NotFoundError('No admin account found.')
+
+  const messages = await TeamChat.find(threadQuery(req.user.id, admin._id))
+    .sort({ createdAt: 1 })
+    .populate('from', 'name profileImage role')
+    .lean()
+
+  res.json({ success: true, data: messages })
+})
+
+// ─── Team member: send message to admin ──────────────────────────────────────
+
+export const sendMemberMessage = asyncHandler(async (req, res) => {
+  const { message } = req.body
+  if (!message?.trim()) throw new BadRequestError('Message is required.')
+
+  const admin = await User.findOne({ role: 'admin', isDeleted: false }).select('_id').lean()
+  if (!admin) throw new NotFoundError('No admin account found.')
+
+  const msg = await TeamChat.create({
+    from: req.user.id,
+    to: admin._id,
+    message: message.trim(),
+  })
+  const populated = await TeamChat.findById(msg._id)
+    .populate('from', 'name profileImage role')
+    .lean()
+
+  // Notify admin and echo back to team member via socket
+  emitToUser(admin._id, 'team:message:received', populated)
+  emitToUser(req.user.id, 'team:message:received', populated)
+
+  res.status(201).json({ success: true, data: populated })
+})
+
+// ─── Team member: mark admin messages as read ────────────────────────────────
+
+export const markMemberThreadRead = asyncHandler(async (req, res) => {
+  const admin = await User.findOne({ role: 'admin', isDeleted: false }).select('_id').lean()
+  if (!admin) return res.json({ success: true })
+
+  await TeamChat.updateMany(
+    { from: admin._id, to: req.user.id, read: false },
+    { read: true }
+  )
+  res.json({ success: true, message: 'Thread marked as read.' })
+})
