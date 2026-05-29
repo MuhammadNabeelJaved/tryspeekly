@@ -14,7 +14,7 @@ const extractToken = (req) => {
 }
 
 // ─── authenticate ──────────────────────────────────────────────────────────────
-// Verifies the JWT access token and attaches req.user = { id, role }
+// Verifies the JWT access token and attaches req.user = { id, role, permissions }
 // Use on all protected routes.
 
 export const authenticate = asyncHandler(async (req, res, next) => {
@@ -48,7 +48,7 @@ export const authenticate = asyncHandler(async (req, res, next) => {
     throw new UnauthorizedError('This account has been deactivated.')
   }
 
-  req.user = { id: user._id, role: user.role }
+  req.user = { id: user._id, role: user.role, permissions: user.permissions || [] }
   next()
 })
 
@@ -95,4 +95,25 @@ export const authorize = (...roles) =>
     }
 
     next()
+  }
+
+// ─── authorizeTeamPage ────────────────────────────────────────────────────────
+// Passes if user is admin OR is a team_member with at least one of the given pages.
+// Usage: router.get('/', authenticate, authorizeTeamPage('students', 'instructors'), handler)
+
+export const authorizeTeamPage = (...pages) =>
+  (req, res, next) => {
+    if (!req.user) {
+      throw new UnauthorizedError('Access denied. Not authenticated.')
+    }
+    if (req.user.role === 'admin') return next()
+    if (
+      req.user.role === 'team_member' &&
+      pages.some((p) => req.user.permissions.includes(p))
+    ) {
+      return next()
+    }
+    throw new ForbiddenError(
+      `Access denied. You do not have permission to access this section.`
+    )
   }
