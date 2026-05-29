@@ -1,5 +1,5 @@
 import express from 'express'
-import { authenticate, authorize } from '../middlewares/auth.js'
+import { authenticate, authorizeTeamPage } from '../middlewares/auth.js'
 import { uploadProfileImage, handleMulterError } from '../middlewares/multer.js'
 import {
     createUser,
@@ -42,9 +42,9 @@ router.route('/profile/image')
 router.route('/change-password').post(authenticate, changePassword)
 
 // ─── Admin only routes ─────────────────────────────────────────────────────────
-router.route('/').get(authenticate, authorize('admin'), getAllUsers)
+router.route('/').get(authenticate, authorizeTeamPage('students', 'instructors'), getAllUsers)
 router.route('/:id')
-    .get(authenticate, authorize('admin'), getUserById)
-    .delete(authenticate, authorize('admin'), deleteUser)
+    .get(authenticate, authorizeTeamPage('students', 'instructors'), getUserById)
+    .delete(authenticate, authorizeTeamPage('students', 'instructors'), deleteUser)
 
 export default router

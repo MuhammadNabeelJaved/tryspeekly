@@ -1,5 +1,5 @@
 import express from 'express'
-import { authenticate, authorize } from '../middlewares/auth.js'
+import { authenticate, authorize, authorizeTeamPage } from '../middlewares/auth.js'
 import {
   applyForFinancialAid,
   getMyApplications,
@@ -14,7 +14,7 @@ router.route('/').post(authenticate, authorize('student'), applyForFinancialAid)
 router.route('/my').get(authenticate, authorize('student'), getMyApplications)
 
 // ─── Admin routes ──────────────────────────────────────────────────────────────
-router.route('/').get(authenticate, authorize('admin'), getAllApplications)
-router.route('/:id/status').patch(authenticate, authorize('admin'), updateApplicationStatus)
+router.route('/').get(authenticate, authorizeTeamPage('financial-aid'), getAllApplications)
+router.route('/:id/status').patch(authenticate, authorizeTeamPage('financial-aid'), updateApplicationStatus)
 
 export default router

@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { authenticate, authorize } from '../middlewares/auth.js'
+import { authenticate, authorizeTeamPage } from '../middlewares/auth.js'
 import {
   createCoupon, getCoupons, getCoupon, updateCoupon, deleteCoupon, validateCoupon,
 } from '../controllers/coupon.controller.js'
@@ -9,12 +9,12 @@ const router = Router()
 router.route('/validate').post(authenticate, validateCoupon)
 
 router.route('/')
-  .get(authenticate, authorize('admin'), getCoupons)
-  .post(authenticate, authorize('admin'), createCoupon)
+  .get(authenticate, authorizeTeamPage('referrals'), getCoupons)
+  .post(authenticate, authorizeTeamPage('referrals'), createCoupon)
 
 router.route('/:id')
-  .get(authenticate, authorize('admin'), getCoupon)
-  .patch(authenticate, authorize('admin'), updateCoupon)
-  .delete(authenticate, authorize('admin'), deleteCoupon)
+  .get(authenticate, authorizeTeamPage('referrals'), getCoupon)
+  .patch(authenticate, authorizeTeamPage('referrals'), updateCoupon)
+  .delete(authenticate, authorizeTeamPage('referrals'), deleteCoupon)
 
 export default router

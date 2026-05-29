@@ -1,5 +1,5 @@
 import express from 'express'
-import { authenticate, authorize } from '../middlewares/auth.js'
+import { authenticate, authorize, authorizeTeamPage } from '../middlewares/auth.js'
 import { uploadPaymentScreenshot, handleMulterError } from '../middlewares/multer.js'
 import {
   createPayment,
@@ -17,9 +17,9 @@ router.route('/').post(authenticate, authorize('student'), uploadPaymentScreensh
 router.route('/my').get(authenticate, authorize('student'), getMyPayments)
 
 // ─── Admin only routes ─────────────────────────────────────────────────────────
-router.route('/').get(authenticate, authorize('admin'), getAllPayments)
-router.route('/admin').post(authenticate, authorize('admin'), adminCreatePayment)
-router.route('/:id/approve').patch(authenticate, authorize('admin'), approvePayment)
-router.route('/:id/reject').patch(authenticate, authorize('admin'), rejectPayment)
+router.route('/').get(authenticate, authorizeTeamPage('payments'), getAllPayments)
+router.route('/admin').post(authenticate, authorizeTeamPage('payments'), adminCreatePayment)
+router.route('/:id/approve').patch(authenticate, authorizeTeamPage('payments'), approvePayment)
+router.route('/:id/reject').patch(authenticate, authorizeTeamPage('payments'), rejectPayment)
 
 export default router

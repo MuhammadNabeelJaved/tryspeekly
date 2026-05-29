@@ -1,5 +1,5 @@
 import express from 'express'
-import { authenticate, authorize } from '../middlewares/auth.js'
+import { authenticate, authorizeTeamPage } from '../middlewares/auth.js'
 import {
   createTicket,
   getMyTickets,
@@ -20,7 +20,7 @@ router.route('/:id').get(authenticate, getTicket)
 router.route('/:id/reply').post(authenticate, replyToTicket)
 
 // ─── Admin routes ──────────────────────────────────────────────────────────────
-router.route('/').get(authenticate, authorize('admin'), getAllTickets)
-router.route('/:id/status').patch(authenticate, authorize('admin'), updateTicketStatus)
+router.route('/').get(authenticate, authorizeTeamPage('support'), getAllTickets)
+router.route('/:id/status').patch(authenticate, authorizeTeamPage('support'), updateTicketStatus)
 
 export default router

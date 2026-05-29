@@ -1,6 +1,6 @@
 import express from 'express'
 
-import { authenticate, authorize } from '../middlewares/auth.js'
+import { authenticate, authorizeTeamPage } from '../middlewares/auth.js'
 import {
   getPublicReviews,
   getCourseReviews,
@@ -23,11 +23,11 @@ router.get('/public', getPublicReviews)
 router.get('/course/:courseId', getCourseReviews)
 
 // ─── Admin (before /:id to avoid shadowing) ──────────────────────────────────
-router.get('/admin', authenticate, authorize('admin'), getAdminReviews)
-router.post('/admin', authenticate, authorize('admin'), adminCreateReview)
-router.patch('/admin/:id/status', authenticate, authorize('admin'), updateReviewStatus)
-router.patch('/admin/:id/feature', authenticate, authorize('admin'), toggleFeatured)
-router.delete('/admin/:id', authenticate, authorize('admin'), adminDeleteReview)
+router.get('/admin', authenticate, authorizeTeamPage('reviews'), getAdminReviews)
+router.post('/admin', authenticate, authorizeTeamPage('reviews'), adminCreateReview)
+router.patch('/admin/:id/status', authenticate, authorizeTeamPage('reviews'), updateReviewStatus)
+router.patch('/admin/:id/feature', authenticate, authorizeTeamPage('reviews'), toggleFeatured)
+router.delete('/admin/:id', authenticate, authorizeTeamPage('reviews'), adminDeleteReview)
 
 // ─── Authenticated user ───────────────────────────────────────────────────────
 router.get('/my', authenticate, getMyReviews)

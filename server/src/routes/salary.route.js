@@ -1,5 +1,5 @@
 import express from 'express'
-import { authenticate, authorize } from '../middlewares/auth.js'
+import { authenticate, authorize, authorizeTeamPage } from '../middlewares/auth.js'
 import {
   getAllPackages,
   createPackage,
@@ -19,19 +19,19 @@ router.get('/my', authenticate, authorize('teacher'), getMyPackage)
 
 // ─── Admin routes ──────────────────────────────────────────────────────────────
 router.route('/')
-  .get(authenticate, authorize('admin'), getAllPackages)
-  .post(authenticate, authorize('admin'), createPackage)
+  .get(authenticate, authorizeTeamPage('salaries'), getAllPackages)
+  .post(authenticate, authorizeTeamPage('salaries'), createPackage)
 
 router.route('/:id')
-  .patch(authenticate, authorize('admin'), updatePackage)
-  .delete(authenticate, authorize('admin'), deletePackage)
+  .patch(authenticate, authorizeTeamPage('salaries'), updatePackage)
+  .delete(authenticate, authorizeTeamPage('salaries'), deletePackage)
 
 router.route('/:id/payments')
-  .get(authenticate, authorize('admin'), getPackagePayments)
-  .post(authenticate, authorize('admin'), addPayment)
+  .get(authenticate, authorizeTeamPage('salaries'), getPackagePayments)
+  .post(authenticate, authorizeTeamPage('salaries'), addPayment)
 
 router.route('/:id/payments/:paymentId')
-  .patch(authenticate, authorize('admin'), updatePayment)
-  .delete(authenticate, authorize('admin'), deletePayment)
+  .patch(authenticate, authorizeTeamPage('salaries'), updatePayment)
+  .delete(authenticate, authorizeTeamPage('salaries'), deletePayment)
 
 export default router

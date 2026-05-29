@@ -1,9 +1,9 @@
 import express from 'express'
-import { authenticate, authorize } from '../middlewares/auth.js'
+import { authenticate, authorizeTeamPage } from '../middlewares/auth.js'
 import { getAdminStats } from '../controllers/stats.controller.js'
 
 const router = express.Router()
 
-router.route('/admin').get(authenticate, authorize('admin'), getAdminStats)
+router.route('/admin').get(authenticate, authorizeTeamPage('overview'), getAdminStats)
 
 export default router
