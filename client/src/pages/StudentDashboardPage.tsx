@@ -75,6 +75,11 @@ const STUDENT_TOUR_STEPS: TourStep[] = [
     content: 'Apply for financial aid if you need help covering course costs. Track your application status here.',
   },
   {
+    target: 'student-nav-referrals',
+    title: 'Referrals',
+    content: 'Refer friends to EnglishPro using your unique link. Earn wallet credits when they enroll, and request a payout once your balance is ready.',
+  },
+  {
     target: 'student-nav-messages',
     title: 'Messages',
     content: 'Chat directly with your instructors in real-time. Ask questions and get personalized guidance.',

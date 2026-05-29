@@ -3,7 +3,11 @@ import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { ArrowRight, Star, Users, Clock, GraduationCap } from '@phosphor-icons/react'
 import { siteSettingsService } from '@/services/site-settings.service'
+import { offersService } from '@/services/offers.service'
+import type { Offer } from '@/services/offers.service'
 import type { Course } from '@/types/api'
+import { useGeo } from '@/context/GeoContext'
+import { getDiscountedPrice } from '@/utils/offerUtils'
 
 const FOCUS_LABEL: Record<string, string> = {
   speaking: 'Speaking',
@@ -62,6 +66,8 @@ export default function HomeCourses() {
   const [courses, setCourses] = useState<Course[]>([])
   const [loading, setLoading] = useState(true)
   const [skeletonCount, setSkeletonCount] = useState(3)
+  const [activeOffers, setActiveOffers] = useState<Offer[]>([])
+  const { currency } = useGeo()
 
   useEffect(() => {
     const load = async () => {
@@ -81,6 +87,14 @@ export default function HomeCourses() {
       }
     }
     load()
+  }, [])
+
+  useEffect(() => {
+    let mounted = true
+    offersService.getActiveOffers()
+      .then(r => { if (mounted && r.success) setActiveOffers(r.data) })
+      .catch(() => {})
+    return () => { mounted = false }
   }, [])
 
   return (
@@ -190,9 +204,38 @@ export default function HomeCourses() {
                       <h3 className="text-base font-bold text-slate-900 dark:text-white leading-snug group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors line-clamp-2">
                         {course.title}
                       </h3>
-                      <span className="flex-shrink-0 text-xl font-black text-violet-600 dark:text-violet-400">
-                        {formatPrice(course)}
-                      </span>
+                      {(() => {
+                        if (currency === 'PKR' && course.price) {
+                          const result = getDiscountedPrice(course._id, course.price, activeOffers)
+                          if (result.hasDiscount) {
+                            return (
+                              <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-xs font-bold bg-violet-100 dark:bg-violet-900/40 text-violet-600 dark:text-violet-300 px-1.5 py-0.5 rounded-md">
+                                    {result.discountLabel}
+                                  </span>
+                                  <span className="text-xl font-black text-violet-600 dark:text-violet-400">
+                                    Rs.{result.discountedPrice.toLocaleString()}
+                                  </span>
+                                </div>
+                                <span className="text-xs text-slate-400 line-through">
+                                  Rs.{result.originalPrice.toLocaleString()}
+                                </span>
+                              </div>
+                            )
+                          }
+                          return (
+                            <span className="flex-shrink-0 text-xl font-black text-violet-600 dark:text-violet-400">
+                              Rs.{course.price.toLocaleString()}
+                            </span>
+                          )
+                        }
+                        return (
+                          <span className="flex-shrink-0 text-xl font-black text-violet-600 dark:text-violet-400">
+                            {course.priceUSD !== undefined ? `$${course.priceUSD}` : formatPrice(course)}
+                          </span>
+                        )
+                      })()}
                     </div>
 
                     <p className="text-slate-500 dark:text-neutral-400 text-sm leading-relaxed mb-5 line-clamp-2">

@@ -1,6 +1,9 @@
 import asyncHandler from '../utils/asyncHandler.js'
 import FinancialAid from '../models/financial-aid.model.js'
 import { createAndEmitNotification } from '../utils/notify.js'
+import Course from '../models/course.model.js'
+import User from '../models/user.model.js'
+import { sendEmail } from '../utils/email.js'
 
 // POST /api/v1/financial-aid — student: apply (authenticated)
 export const applyForFinancialAid = asyncHandler(async (req, res) => {
@@ -18,6 +21,19 @@ export const applyForFinancialAid = asyncHandler(async (req, res) => {
       phone,
       reason,
     })
+
+    // Email: financial aid application confirmation
+    const course = courseId ? await Course.findById(courseId, 'title').lean() : null
+    sendEmail({
+      type: 'financial_aid_applied',
+      to: email,
+      toName: name,
+      variables: {
+        studentName: name,
+        courseName: course?.title ?? 'the requested course',
+      },
+      metadata: { applicationId: application._id },
+    }).catch(() => {})
 
     res.status(201).json({ success: true, message: 'Application submitted successfully', data: application })
   } catch (error) {
@@ -98,6 +114,28 @@ export const updateApplicationStatus = asyncHandler(async (req, res) => {
         relatedId: application._id,
         relatedType: 'FinancialAid',
       })
+
+      // Email for accepted/rejected only
+      if (status === 'accepted' || status === 'rejected') {
+        const [student, course] = await Promise.all([
+          User.findById(application.student, 'name email').lean(),
+          application.course ? Course.findById(application.course, 'title').lean() : null,
+        ])
+        if (student) {
+          sendEmail({
+            type: status === 'accepted' ? 'financial_aid_approved' : 'financial_aid_rejected',
+            to: student.email,
+            toName: student.name,
+            variables: {
+              studentName: student.name,
+              courseName: course?.title ?? 'the requested course',
+              notes: notes || 'None',
+              dashboardUrl: `${process.env.CLIENT_URL || 'http://localhost:5173'}/dashboard`,
+            },
+            metadata: { applicationId: application._id },
+          }).catch(() => {})
+        }
+      }
     }
 
     res.json({ success: true, message: 'Application status updated', data: application })

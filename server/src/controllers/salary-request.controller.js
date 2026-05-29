@@ -5,6 +5,7 @@ import SalaryPackage from '../models/salary-package.model.js'
 import User from '../models/user.model.js'
 import { createAndEmitNotification } from '../utils/notify.js'
 import SalaryPayment from '../models/salary-payment.model.js'
+import { sendEmail } from '../utils/email.js'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -56,6 +57,22 @@ export const createRequest = asyncHandler(async (req, res) => {
       relatedId: request._id,
       relatedType: 'SalaryRequest',
     })
+  }
+
+  // Email confirmation to teacher
+  const teacherFull = await User.findById(teacherId, 'name email').lean()
+  if (teacherFull) {
+    sendEmail({
+      type: 'salary_requested',
+      to: teacherFull.email,
+      toName: teacherFull.name,
+      variables: {
+        teacherName: teacherFull.name,
+        amount: `₨${amount}`,
+        period: periodLabel || formatPeriod(periodStart, periodEnd),
+      },
+      metadata: { requestId: request._id },
+    }).catch(() => {})
   }
 
   res.status(201).json({ success: true, message: 'Salary request submitted', data: request })

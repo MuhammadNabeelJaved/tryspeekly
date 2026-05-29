@@ -24,8 +24,8 @@
   }
 
   .dark body {
-    background-color: #0a0a0a; /* neutral-950 */
-    color: #f5f5f5; /* neutral-50 */
+    background-color: #0a0a0a;
+    color: #f5f5f5;
   }
 
   #root {
@@ -34,23 +34,50 @@
     overflow-x: hidden;
   }
 
-  ::-webkit-scrollbar {
-    width: 6px;
+  /* ─── Scrollbar — Firefox ───────────────────────────────────────────── */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
   }
-  ::-webkit-scrollbar-track {
-    background: #f9fafb;
+  *:hover {
+    scrollbar-color: rgba(196, 181, 253, 0.5) transparent;
   }
-  .dark ::-webkit-scrollbar-track {
-    background: #171717;
-  }
-  ::-webkit-scrollbar-thumb {
-    background: #c4b5fd;
-    border-radius: 3px;
-  }
-  ::-webkit-scrollbar-thumb:hover {
-    background: #7c3aed;
+  .dark *:hover {
+    scrollbar-color: rgba(124, 58, 237, 0.45) transparent;
   }
 
+  /* ─── Scrollbar — Webkit (Chrome, Safari, Edge) ─────────────────────── */
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: transparent;
+    border-radius: 99px;
+    transition: background 0.2s ease;
+  }
+  :hover::-webkit-scrollbar-thumb,
+  :focus-within::-webkit-scrollbar-thumb {
+    background: rgba(196, 181, 253, 0.55);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #7c3aed !important;
+  }
+  ::-webkit-scrollbar-thumb:active {
+    background: #6d28d9 !important;
+  }
+  .dark :hover::-webkit-scrollbar-thumb,
+  .dark :focus-within::-webkit-scrollbar-thumb {
+    background: rgba(124, 58, 237, 0.45);
+  }
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  /* ─── Interactive elements ──────────────────────────────────────────── */
   button,
   [role="button"],
   a,
@@ -65,5 +92,43 @@
     outline: 2px solid #7c3aed;
     outline-offset: 2px;
     border-radius: 4px;
+  }
+}
+
+/* ─── Scrollbar utilities ───────────────────────────────────────────────── */
+@layer utilities {
+  /* Completely hide scrollbar but keep scroll functionality */
+  .scrollbar-hide {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Thin always-visible scrollbar (for content editors like AdminBlog) */
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(196, 181, 253, 0.6) transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(196, 181, 253, 0.6);
+    border-radius: 99px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #7c3aed;
+  }
+  .dark .custom-scrollbar {
+    scrollbar-color: rgba(124, 58, 237, 0.5) transparent;
+  }
+  .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(124, 58, 237, 0.5);
   }
 }

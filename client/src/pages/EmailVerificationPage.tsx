@@ -22,9 +22,10 @@ const itemVariants = {
 export default function EmailVerificationPage() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { verifyEmail } = useAuth()
-  const email = location.state?.email || ''
-  const rememberMe: boolean = location.state?.rememberMe ?? true
+  const { verifyEmail, user } = useAuth()
+  const email = location.state?.email || user?.email || ''
+  const fromLogin: boolean = location.state?.fromLogin ?? false
+  const rememberMe: boolean = location.state?.rememberMe ?? (!!localStorage.getItem('accessToken'))
 
   const [code, setCode] = useState(['', '', '', '', '', ''])
   const [isLoading, setIsLoading] = useState(false)
@@ -37,7 +38,7 @@ export default function EmailVerificationPage() {
 
   useEffect(() => {
     if (!email) {
-      navigate('/signup', { replace: true })
+      navigate(fromLogin ? '/login' : '/signup', { replace: true })
       return
     }
 
@@ -225,12 +226,14 @@ export default function EmailVerificationPage() {
               className="relative rounded-[32px] border border-slate-200 bg-white px-8 py-10 shadow-[0_30px_80px_rgba(16,185,129,0.12)] dark:border-neutral-800 dark:bg-neutral-950/95"
             >
               <div className="mb-8">
-                <Link
-                  to="/signup"
-                  className="mb-4 inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-emerald-600 dark:text-neutral-400 dark:hover:text-emerald-400"
-                >
-                  <ArrowLeft size={16} /> Back to signup
-                </Link>
+                {!fromLogin && (
+                  <Link
+                    to="/signup"
+                    className="mb-4 inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-emerald-600 dark:text-neutral-400 dark:hover:text-emerald-400"
+                  >
+                    <ArrowLeft size={16} /> Back to signup
+                  </Link>
+                )}
                 <p className="text-sm font-bold uppercase tracking-[0.32em] text-emerald-600 dark:text-emerald-400">Email verification</p>
                 <h2 className="mt-4 text-3xl font-black text-slate-900 dark:text-white">Enter 6-digit code</h2>
                 <p className="mt-3 text-sm text-slate-500 dark:text-neutral-400">

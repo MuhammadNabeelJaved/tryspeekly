@@ -4,6 +4,7 @@ import SalaryPackage from '../models/salary-package.model.js'
 import SalaryPayment from '../models/salary-payment.model.js'
 import User from '../models/user.model.js'
 import { createAndEmitNotification } from '../utils/notify.js'
+import { sendEmail } from '../utils/email.js'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -158,6 +159,25 @@ export const addPayment = asyncHandler(async (req, res) => {
       relatedId: payment._id,
       relatedType: 'SalaryPayment',
     })
+
+    // Email: salary processed
+    const teacher = await User.findById(pkg.teacher, 'name email').lean()
+    if (teacher) {
+      sendEmail({
+        type: 'salary_processed',
+        to: teacher.email,
+        toName: teacher.name,
+        variables: {
+          teacherName: teacher.name,
+          amount,
+          currency: 'PKR',
+          period: periodLabel || formatPeriod(periodStart, periodEnd),
+          paymentMethod: paymentMethod || 'bank transfer',
+          notes: notes || 'None',
+        },
+        metadata: { paymentId: payment._id, packageId: pkg._id },
+      }).catch(() => {})
+    }
   }
 
   res.status(201).json({ success: true, message: 'Payment record added', data: payment })
@@ -204,6 +224,25 @@ export const updatePayment = asyncHandler(async (req, res) => {
         relatedId: payment._id,
         relatedType: 'SalaryPayment',
       })
+
+      // Email: salary processed
+      const teacher = await User.findById(pkg.teacher, 'name email').lean()
+      if (teacher) {
+        sendEmail({
+          type: 'salary_processed',
+          to: teacher.email,
+          toName: teacher.name,
+          variables: {
+            teacherName: teacher.name,
+            amount: payment.amount,
+            currency: 'PKR',
+            period: payment.periodLabel || formatPeriod(payment.periodStart, payment.periodEnd),
+            paymentMethod: payment.paymentMethod || 'bank transfer',
+            notes: payment.notes || 'None',
+          },
+          metadata: { paymentId: payment._id, packageId: pkg._id },
+        }).catch(() => {})
+      }
     }
   }
 

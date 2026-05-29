@@ -3,7 +3,9 @@ import LiveClass from '../models/live-class.model.js'
 import Course from '../models/course.model.js'
 import Enrollment from '../models/enrollment.model.js'
 import Notification from '../models/notification.model.js'
+import User from '../models/user.model.js'
 import { getIO, emitToUser } from '../utils/socket.js'
+import { sendEmail } from '../utils/email.js'
 
 // POST /api/v1/live-classes - Create/start a live class
 export const createLiveClass = asyncHandler(async (req, res) => {
@@ -61,6 +63,49 @@ export const createLiveClass = asyncHandler(async (req, res) => {
   } catch (err) {
     console.warn('[LiveClass] failed to send student notifications:', err.message)
   }
+
+  // Emails: teacher confirmation + all enrolled students
+  const teacher = await User.findById(req.user.id, 'name email').lean()
+  if (teacher) {
+    sendEmail({
+      type: 'live_class_started_teacher',
+      to: teacher.email,
+      toName: teacher.name,
+      variables: {
+        teacherName: teacher.name,
+        courseName: liveClass.course.title,
+        meetingLink,
+        classNumber: classNumber ?? 'N/A',
+      },
+      metadata: { liveClassId: liveClass._id },
+    }).catch(() => {})
+  }
+
+  // Email enrolled students (fire-and-forget in background)
+  ;(async () => {
+    try {
+      const enrollments = await Enrollment.find({ course: courseId }).select('student').lean()
+      const studentIds = enrollments.map(e => e.student)
+      const students = await User.find({ _id: { $in: studentIds } }, 'name email').lean()
+      for (const student of students) {
+        await sendEmail({
+          type: 'live_class_started_student',
+          to: student.email,
+          toName: student.name,
+          variables: {
+            studentName: student.name,
+            courseName: liveClass.course.title,
+            teacherName: teacher?.name ?? 'Your instructor',
+            meetingLink,
+            classNumber: classNumber ?? 'N/A',
+          },
+          metadata: { liveClassId: liveClass._id, courseId },
+        })
+      }
+    } catch (err) {
+      console.warn('[LiveClass] email send error:', err.message)
+    }
+  })()
 
   res.status(201).json({
     success: true,

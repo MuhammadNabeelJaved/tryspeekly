@@ -1,5 +1,6 @@
 import asyncHandler from '../utils/asyncHandler.js'
 import Contact from '../models/contact.model.js'
+import { sendEmail } from '../utils/email.js'
 
 // POST /api/v1/contact — public: submit contact form
 export const submitContact = asyncHandler(async (req, res) => {
@@ -8,6 +9,15 @@ export const submitContact = asyncHandler(async (req, res) => {
     return res.status(400).json({ success: false, message: 'Name, email, subject, and message are required' })
   }
   const contact = await Contact.create({ name, email, phone, subject, message })
+
+  sendEmail({
+    type: 'contact_form_submitted',
+    to: email,
+    toName: name,
+    variables: { name, subject, message },
+    metadata: { contactId: contact._id },
+  }).catch(() => {})
+
   res.status(201).json({ success: true, message: 'Message sent successfully', data: contact })
 })
 

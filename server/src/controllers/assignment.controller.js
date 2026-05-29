@@ -2,7 +2,9 @@ import asyncHandler from '../utils/asyncHandler.js'
 import Assignment from '../models/assignment.model.js'
 import Course from '../models/course.model.js'
 import Enrollment from '../models/enrollment.model.js'
+import User from '../models/user.model.js'
 import { uploadCourseMaterial, deleteFile, extractPublicId } from '../utils/cloudinary.js'
+import { sendEmail } from '../utils/email.js'
 
 // POST /api/v1/assignments — teacher/admin: create assignment
 export const createAssignment = asyncHandler(async (req, res) => {
@@ -12,6 +14,37 @@ export const createAssignment = asyncHandler(async (req, res) => {
   }
 
   const assignment = await Assignment.create({ course: courseId, title, description, dueDate })
+
+  // Email all enrolled students about the new assignment (fire-and-forget)
+  ;(async () => {
+    try {
+      const course = await Course.findById(courseId, 'title').lean()
+      const enrollments = await Enrollment.find({ course: courseId, isActive: true }).select('student').lean()
+      const studentIds = enrollments.map(e => e.student)
+      const students = await User.find({ _id: { $in: studentIds } }, 'name email').lean()
+      const dueDateFormatted = new Date(dueDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+
+      for (const student of students) {
+        await sendEmail({
+          type: 'assignment_created',
+          to: student.email,
+          toName: student.name,
+          variables: {
+            studentName: student.name,
+            courseName: course?.title ?? 'your course',
+            assignmentTitle: title,
+            dueDate: dueDateFormatted,
+            description,
+            dashboardUrl: `${process.env.CLIENT_URL || 'http://localhost:5173'}/dashboard`,
+          },
+          metadata: { assignmentId: assignment._id, courseId },
+        })
+      }
+    } catch (err) {
+      console.warn('[Assignment] email send error:', err.message)
+    }
+  })()
+
   res.status(201).json({ success: true, message: 'Assignment created', data: assignment })
 })
 

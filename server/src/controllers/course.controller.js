@@ -2,6 +2,7 @@ import asyncHandler from '../utils/asyncHandler.js'
 import Course from '../models/course.model.js'
 import User from '../models/user.model.js'
 import { uploadCourseThumbnail, uploadCourseVideoPreview, deleteFile, extractPublicId } from '../utils/cloudinary.js'
+import { sendEmail } from '../utils/email.js'
 
 // GET /api/v1/courses — public, with filters & pagination
 export const getAllCourses = asyncHandler(async (req, res) => {
@@ -60,6 +61,21 @@ export const createCourse = asyncHandler(async (req, res) => {
       delete req.body.currency
     }
     const course = await Course.create({ ...req.body, teacher: req.user.id, status })
+
+    // Email to teacher when course is submitted for review (not when admin creates)
+    if (req.user.role !== 'admin' && status === 'pending') {
+      const teacher = await User.findById(req.user.id, 'name email').lean()
+      if (teacher) {
+        sendEmail({
+          type: 'course_created_pending',
+          to: teacher.email,
+          toName: teacher.name,
+          variables: { teacherName: teacher.name, courseName: course.title },
+          metadata: { courseId: course._id },
+        }).catch(() => {})
+      }
+    }
+
     res.status(201).json({ success: true, message: 'Course submitted for review', data: course })
   } catch (error) {
     res.status(400).json({ success: false, error: { message: error.message } })
@@ -260,6 +276,23 @@ export const reviewCourse = asyncHandler(async (req, res) => {
         },
       },
     }).catch(err => console.error('[reviewCourse] notification push failed:', err))
+
+    // Email: course approved / rejected
+    User.findById(course.teacher, 'name email').lean().then(teacher => {
+      if (!teacher) return
+      sendEmail({
+        type: action === 'approve' ? 'course_approved' : 'course_rejected',
+        to: teacher.email,
+        toName: teacher.name,
+        variables: {
+          teacherName: teacher.name,
+          courseName: course.title,
+          reason: reason || 'Not specified',
+          dashboardUrl: `${process.env.CLIENT_URL || 'http://localhost:5173'}/instructor`,
+        },
+        metadata: { courseId: course._id },
+      }).catch(() => {})
+    }).catch(() => {})
 
     res.json({
       success: true,

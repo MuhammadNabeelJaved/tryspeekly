@@ -5,6 +5,8 @@ import Review from '../models/review.model.js'
 import Enrollment from '../models/enrollment.model.js'
 import User from '../models/user.model.js'
 import { createAndEmitNotification } from '../utils/notify.js'
+import { sendEmail } from '../utils/email.js'
+import Course from '../models/course.model.js'
 import {
   BadRequestError,
   ConflictError,
@@ -132,6 +134,24 @@ export const submitReview = asyncHandler(async (req, res) => {
     // Notification failure must not break the response
   }
 
+  // Email confirmation to reviewer
+  const reviewer = await User.findById(authorId, 'name email').lean()
+  const reviewedCourse = type === 'course' && courseId ? await Course.findById(courseId, 'title').lean() : null
+  if (reviewer) {
+    sendEmail({
+      type: 'review_submitted',
+      to: reviewer.email,
+      toName: reviewer.name,
+      variables: {
+        reviewerName: reviewer.name,
+        reviewType: type === 'course' ? 'Course Review' : 'Platform Review',
+        courseName: reviewedCourse?.title ?? 'N/A',
+        rating: String(rating),
+      },
+      metadata: { reviewId: review._id },
+    }).catch(() => {})
+  }
+
   res.status(201).json({
     success: true,
     message: 'Review submitted. It will appear after admin approval.',
@@ -220,10 +240,32 @@ export const updateReviewStatus = asyncHandler(async (req, res) => {
   const review = await Review.findById(req.params.id)
   if (!review) throw new NotFoundError('Review not found')
 
+  const prevStatus = review.status
   review.status = value.status
   if (value.adminNote) review.adminNote = value.adminNote
   if (value.status === 'rejected') review.featuredOnHome = false
   await review.save()
+
+  // Email reviewer when approved
+  if (value.status === 'approved' && prevStatus !== 'approved') {
+    const [author, course] = await Promise.all([
+      User.findById(review.author, 'name email').lean(),
+      review.course ? Course.findById(review.course, 'title').lean() : null,
+    ])
+    if (author) {
+      sendEmail({
+        type: 'review_approved',
+        to: author.email,
+        toName: author.name,
+        variables: {
+          reviewerName: author.name,
+          reviewType: review.type === 'course' ? 'Course Review' : 'Platform Review',
+          courseName: course?.title ?? 'N/A',
+        },
+        metadata: { reviewId: review._id },
+      }).catch(() => {})
+    }
+  }
 
   res.json({ success: true, message: `Review ${value.status}`, data: review })
 })

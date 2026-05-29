@@ -10,6 +10,13 @@ import ReferralWallet from '../models/referral-wallet.model.js'
 import SiteSettings from '../models/site-settings.model.js'
 import Offer from '../models/offer.model.js'
 import { getEffectivePrice } from '../utils/offerUtils.js'
+import User from '../models/user.model.js'
+import { sendEmail } from '../utils/email.js'
+
+const METHOD_LABELS = {
+  jazzcash: 'JazzCash', easypaisa: 'EasyPaisa', nayapay: 'NayaPay',
+  sadapay: 'SadaPay', zindigi: 'Zindigi', bank_local: 'Bank (Local)', bank_international: 'Bank (Intl)',
+}
 
 // POST /api/v1/payments — student submits payment proof
 export const createPayment = asyncHandler(async (req, res) => {
@@ -23,6 +30,7 @@ export const createPayment = asyncHandler(async (req, res) => {
     if (enrollment.payment && enrollment.payment.status === 'pending') {
       return res.status(409).json({ success: false, error: { message: 'A payment is already under review for this course' } })
     }
+    const isResubmission = enrollment.payment && enrollment.payment.status === 'rejected'
 
     const result = await uploadPaymentScreenshot(req.file.buffer, Date.now())
 
@@ -83,6 +91,25 @@ export const createPayment = asyncHandler(async (req, res) => {
     })
 
     await Enrollment.findByIdAndUpdate(enrollment._id, { payment: payment._id })
+
+    // Email: payment submitted / resubmitted
+    const student = await User.findById(req.user.id, 'name email').lean()
+    if (student) {
+      const emailType = isResubmission ? 'payment_resubmitted' : 'payment_submitted'
+      sendEmail({
+        type: emailType,
+        to: student.email,
+        toName: student.name,
+        variables: {
+          studentName: student.name,
+          courseName: course?.title ?? 'your course',
+          amount: amount,
+          currency: currency || 'PKR',
+          method: METHOD_LABELS[method] ?? method,
+        },
+        metadata: { paymentId: payment._id, isResubmission },
+      }).catch(() => {})
+    }
 
     res.status(201).json({ success: true, message: 'Payment submitted. Awaiting admin approval.', data: payment })
   } catch (error) {
@@ -234,6 +261,25 @@ export const approvePayment = asyncHandler(async (req, res) => {
         relatedId: payment._id,
         relatedType: 'Payment',
       })
+
+      // Email: payment approved
+      const student = await User.findById(payment.student, 'name email').lean()
+      if (student) {
+        sendEmail({
+          type: 'payment_approved',
+          to: student.email,
+          toName: student.name,
+          variables: {
+            studentName: student.name,
+            courseName: payment.course.title,
+            amount: payment.amount,
+            currency: payment.currency,
+            adminNote: payment.adminNote || 'None',
+            dashboardUrl: `${process.env.CLIENT_URL || 'http://localhost:5173'}/dashboard`,
+          },
+          metadata: { paymentId: payment._id },
+        }).catch(() => {})
+      }
     }
 
     res.json({ success: true, message: 'Payment approved', data: payment })
@@ -275,6 +321,24 @@ export const rejectPayment = asyncHandler(async (req, res) => {
         relatedId: payment._id,
         relatedType: 'Payment',
       })
+
+      // Email: payment rejected
+      const student = await User.findById(payment.student, 'name email').lean()
+      if (student) {
+        sendEmail({
+          type: 'payment_rejected',
+          to: student.email,
+          toName: student.name,
+          variables: {
+            studentName: student.name,
+            courseName: payment.course.title,
+            rejectionReason,
+            adminNote: payment.adminNote || 'None',
+            dashboardUrl: `${process.env.CLIENT_URL || 'http://localhost:5173'}/dashboard`,
+          },
+          metadata: { paymentId: payment._id },
+        }).catch(() => {})
+      }
     }
 
     res.json({ success: true, message: 'Payment rejected', data: payment })

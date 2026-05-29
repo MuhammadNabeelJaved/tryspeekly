@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   X, UploadSimple, CheckCircle, WarningCircle, Phone, Envelope,
   ArrowRight, ShieldCheck, Clock, Sparkle, Bank, ArrowLeft, Globe,
-  Tag, Spinner,
+  Tag, Spinner, BookOpen,
 } from '@phosphor-icons/react'
 import { paymentsService } from '@/services/payments.service'
 import { couponsService } from '@/services/coupons.service'
@@ -159,6 +159,8 @@ interface Props {
   courseId: string
   teacherId: string
   courseName?: string
+  coursePrice?: number
+  courseCurrency?: 'PKR' | 'USD'
   offerDiscountedPrice?: number | null
   offerLabel?: string
   isOpen: boolean
@@ -166,7 +168,7 @@ interface Props {
   onSuccess: () => void
 }
 
-export default function PaymentSubmitModal({ courseId, teacherId, courseName, offerDiscountedPrice, offerLabel, isOpen, onClose, onSuccess }: Props) {
+export default function PaymentSubmitModal({ courseId, teacherId, courseName, coursePrice, courseCurrency, offerDiscountedPrice, offerLabel, isOpen, onClose, onSuccess }: Props) {
   const [activeTab, setActiveTab] = useState<'local' | 'international'>('local')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [transactionId, setTransactionId] = useState('')
@@ -340,6 +342,36 @@ export default function PaymentSubmitModal({ courseId, teacherId, courseName, of
                     </div>
                   </div>
 
+                  {/* Course info banner */}
+                  {(courseName || coursePrice !== undefined) && (
+                    <div className="flex items-center justify-between gap-3 bg-violet-50 dark:bg-violet-950/30 border border-violet-100 dark:border-violet-900 rounded-2xl px-4 py-3 mb-5">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <BookOpen size={16} weight="fill" className="text-violet-600 dark:text-violet-400 flex-shrink-0" />
+                        {courseName && (
+                          <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{courseName}</p>
+                        )}
+                      </div>
+                      {coursePrice !== undefined && coursePrice > 0 && (
+                        <div className="flex-shrink-0 text-right">
+                          {offerDiscountedPrice ? (
+                            <div className="flex flex-col items-end gap-0.5">
+                              <span className="text-xs text-slate-400 dark:text-neutral-500 line-through">
+                                {courseCurrency === 'USD' ? `$${coursePrice}` : `Rs.${coursePrice.toLocaleString()}`}
+                              </span>
+                              <span className="text-sm font-black text-violet-600 dark:text-violet-400">
+                                {courseCurrency === 'USD' ? `$${offerDiscountedPrice}` : `Rs.${offerDiscountedPrice.toLocaleString()}`}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-sm font-black text-violet-600 dark:text-violet-400">
+                              {courseCurrency === 'USD' ? `$${coursePrice}` : `Rs.${coursePrice.toLocaleString()}`}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {/* Section label */}
                   <div className="flex items-center gap-3 mb-5">
                     <span className="w-5 h-[2px] bg-violet-600 rounded-full" />
@@ -432,6 +464,36 @@ export default function PaymentSubmitModal({ courseId, teacherId, courseName, of
                   </div>
 
                   <div className="h-0.5 rounded-full mb-5" style={{ background: `linear-gradient(to right, ${selectedMethod.accentColor}, transparent)` }} />
+
+                  {/* Course info */}
+                  {(courseName || coursePrice !== undefined) && (
+                    <div className="flex items-center justify-between gap-3 bg-violet-50 dark:bg-violet-950/30 border border-violet-100 dark:border-violet-900 rounded-2xl px-4 py-3 mb-5">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <BookOpen size={16} weight="fill" className="text-violet-600 dark:text-violet-400 flex-shrink-0" />
+                        {courseName && (
+                          <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{courseName}</p>
+                        )}
+                      </div>
+                      {coursePrice !== undefined && coursePrice > 0 && (
+                        <div className="flex-shrink-0 text-right">
+                          {offerDiscountedPrice ? (
+                            <div className="flex flex-col items-end gap-0.5">
+                              <span className="text-xs text-slate-400 dark:text-neutral-500 line-through">
+                                {courseCurrency === 'USD' ? `$${coursePrice}` : `Rs.${coursePrice.toLocaleString()}`}
+                              </span>
+                              <span className="text-sm font-black text-violet-600 dark:text-violet-400">
+                                {courseCurrency === 'USD' ? `$${offerDiscountedPrice}` : `Rs.${offerDiscountedPrice.toLocaleString()}`}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-sm font-black text-violet-600 dark:text-violet-400">
+                              {courseCurrency === 'USD' ? `$${coursePrice}` : `Rs.${coursePrice.toLocaleString()}`}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {/* Account details */}
                   <p className="text-sm text-slate-600 dark:text-neutral-400 mb-4">{selectedMethod.description}</p>

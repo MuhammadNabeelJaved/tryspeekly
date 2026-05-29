@@ -44,12 +44,19 @@ const processQueue = (error: unknown, token: string | null = null) => {
   failedQueue = [];
 };
 
+const SKIP_REFRESH = ['/users/login', '/users/register', '/users/refresh-token'];
+
 axiosClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     const original = error.config;
+    const url: string = original?.url ?? '';
 
-    if (error.response?.status === 401 && !original._retry) {
+    if (
+      error.response?.status === 401 &&
+      !original._retry &&
+      !SKIP_REFRESH.some((path) => url.includes(path))
+    ) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
@@ -80,7 +87,7 @@ axiosClient.interceptors.response.use(
           localStorage.removeItem(k);
           sessionStorage.removeItem(k);
         });
-        window.location.href = '/login';
+        window.dispatchEvent(new CustomEvent('auth:session-expired'));
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;

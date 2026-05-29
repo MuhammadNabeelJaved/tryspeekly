@@ -2,6 +2,8 @@ import asyncHandler from '../utils/asyncHandler.js'
 import Enrollment from '../models/enrollment.model.js'
 import Course from '../models/course.model.js'
 import FinancialAid from '../models/financial-aid.model.js'
+import User from '../models/user.model.js'
+import { sendEmail } from '../utils/email.js'
 
 // POST /api/v1/enrollments — student enrolls in a course
 export const createEnrollment = asyncHandler(async (req, res) => {
@@ -25,6 +27,43 @@ export const createEnrollment = asyncHandler(async (req, res) => {
 
     course.enrolledStudents.push(req.user.id)
     await course.save()
+
+    // Emails: student confirmation + teacher notification
+    const [student, teacher] = await Promise.all([
+      User.findById(req.user.id, 'name email').lean(),
+      User.findById(course.teacher, 'name email').lean(),
+    ])
+
+    if (student) {
+      sendEmail({
+        type: 'enrollment_confirmed',
+        to: student.email,
+        toName: student.name,
+        variables: {
+          studentName: student.name,
+          courseName: course.title,
+          teacherName: teacher?.name ?? 'your instructor',
+          courseLevel: course.level ?? 'N/A',
+          courseType: course.type ?? 'N/A',
+        },
+        metadata: { enrollmentId: enrollment._id, courseId: course._id },
+      }).catch(() => {})
+    }
+
+    if (teacher) {
+      sendEmail({
+        type: 'enrollment_teacher_notification',
+        to: teacher.email,
+        toName: teacher.name,
+        variables: {
+          teacherName: teacher.name,
+          studentName: student?.name ?? 'A student',
+          studentEmail: student?.email ?? '',
+          courseName: course.title,
+        },
+        metadata: { enrollmentId: enrollment._id, courseId: course._id },
+      }).catch(() => {})
+    }
 
     res.status(201).json({ success: true, message: 'Enrolled successfully', data: enrollment })
   } catch (error) {

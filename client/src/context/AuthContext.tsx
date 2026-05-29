@@ -84,6 +84,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => clearTimeout(safetyTimer);
   }, []);
 
+  // When the axios interceptor fails to refresh the token mid-session,
+  // it dispatches this event instead of doing a hard page reload.
+  useEffect(() => {
+    const handleSessionExpired = () => {
+      clearAuth();
+      setUser(null);
+    };
+    window.addEventListener('auth:session-expired', handleSessionExpired);
+    return () => window.removeEventListener('auth:session-expired', handleSessionExpired);
+  }, []);
+
   const login = useCallback(async (dto: LoginDto, remember = true): Promise<AuthResponse> => {
     const data = await authService.login(dto);
     persistAuth(data, remember);
