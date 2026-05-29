@@ -62,7 +62,12 @@ export const createTeamMember = asyncHandler(async (req, res) => {
     type: 'team_member_welcome',
     to: email,
     toName: name,
-    variables: { name, email, jobTitle: jobTitle || 'Team Member' },
+    variables: {
+      name,
+      email,
+      jobTitle: jobTitle || 'Team Member',
+      loginUrl: `${process.env.CLIENT_URL}/login`,
+    },
     metadata: { memberId: member._id },
   }).catch(() => {})
 
