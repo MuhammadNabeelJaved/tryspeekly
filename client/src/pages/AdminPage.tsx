@@ -107,10 +107,11 @@ const NAV_CONTENT: NavItem[] = [
 
 const ADMIN_SEARCH_ITEMS: SearchItem[] = [
   { label: 'Overview',       description: 'Platform stats, revenue, and pending tasks',          path: '/admin',              Icon: ChartBar as SearchItem['Icon'] },
-  { label: 'All Users',      description: 'View all users and change their roles',                path: '/admin/users',         Icon: UserSwitch as SearchItem['Icon'] },
+  { label: 'All Users',      description: 'View all users, change roles, block or delete accounts', path: '/admin/users',         Icon: UserSwitch as SearchItem['Icon'] },
   { label: 'Students',       description: 'Manage registered students and enrollments',           path: '/admin/students',      Icon: Users as SearchItem['Icon'] },
   { label: 'Courses',        description: 'Review, approve, and manage courses',                  path: '/admin/courses',       Icon: BookOpen as SearchItem['Icon'] },
   { label: 'Instructors',    description: 'Manage instructor profiles and courses',               path: '/admin/instructors',   Icon: Chalkboard as SearchItem['Icon'] },
+  { label: 'Team',           description: 'Add team members, assign page permissions and job titles', path: '/admin/team',      Icon: UsersThree as SearchItem['Icon'] },
   { label: 'Payments',       description: 'Review and approve student payment submissions',       path: '/admin/payments',      Icon: CreditCard as SearchItem['Icon'] },
   { label: 'Financial Aid',  description: 'Review financial aid applications',                    path: '/admin/financial-aid', Icon: Handshake as SearchItem['Icon'] },
   { label: 'Salaries',       description: 'Manage instructor salary requests and payouts',        path: '/admin/salaries',      Icon: Money as SearchItem['Icon'] },
@@ -121,6 +122,7 @@ const ADMIN_SEARCH_ITEMS: SearchItem[] = [
   { label: 'Referrals',      description: 'Manage coupon codes, referral rewards, and payout requests', path: '/admin/referrals',  Icon: Gift as SearchItem['Icon'] },
   { label: 'Reviews',        description: 'Moderate student course reviews',                     path: '/admin/reviews',       Icon: Star as SearchItem['Icon'] },
   { label: 'Notifications',  description: 'Platform-wide notification management',               path: '/admin/notifications', Icon: Bell as SearchItem['Icon'] },
+  { label: 'Email System',   description: 'Manage email templates, triggers, logs and test delivery', path: '/admin/email',      Icon: EnvelopeSimple as SearchItem['Icon'] },
   { label: 'Blog Manager',   description: 'Create and publish blog posts',                       path: '/admin/blog',          Icon: PencilSimple as SearchItem['Icon'] },
   { label: 'SEO Manager',    description: 'Manage meta titles, descriptions and keywords',       path: '/admin/seo',           Icon: Globe as SearchItem['Icon'] },
   { label: 'CMS Editor',     description: 'Edit public-facing static content pages',             path: '/admin/cms',           Icon: PencilSimple as SearchItem['Icon'] },
@@ -141,6 +143,11 @@ const ADMIN_TOUR_STEPS: TourStep[] = [
     content: 'Your command center — see platform-wide stats: total students, revenue, active courses, and pending tasks at a glance.',
   },
   {
+    target: 'admin-nav-users',
+    title: 'All Users',
+    content: 'See every registered user in one place. Change any user\'s role (student, teacher, team member, admin), block accounts to prevent login and re-registration, or permanently delete them.',
+  },
+  {
     target: 'admin-nav-students',
     title: 'Students',
     content: 'View and manage all registered students, check their enrolled courses, payment totals, and account status.',
@@ -154,6 +161,11 @@ const ADMIN_TOUR_STEPS: TourStep[] = [
     target: 'admin-nav-instructors',
     title: 'Instructors',
     content: 'Manage all instructors on the platform. View their courses count, profile details, and contact info.',
+  },
+  {
+    target: 'admin-nav-team',
+    title: 'Team',
+    content: 'Manage your internal team members. Add new members, assign a job title, grant or revoke access to specific admin pages, and chat directly with each member. Permission changes notify members in real time.',
   },
   {
     target: 'admin-nav-payments',
