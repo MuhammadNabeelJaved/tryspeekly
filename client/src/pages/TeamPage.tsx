@@ -351,7 +351,12 @@ export default function TeamPage() {
                 path="/"
                 element={
                   permissions.includes('overview')
-                    ? <AdminOverview onNavigate={() => {}} />
+                    ? <AdminOverview onNavigate={(view: string) => {
+                        const navItem = ALL_NAV.find(n => n.key === view)
+                        if (navItem && permissions.includes(navItem.key)) {
+                          navigate(`/team${navItem.path ? `/${navItem.path}` : ''}`)
+                        }
+                      }} />
                     : <Navigate to={`/team${navItems[0]?.path ? `/${navItems[0].path}` : ''}`} replace />
                 }
               />
@@ -361,7 +366,7 @@ export default function TeamPage() {
               {permissions.includes('certificates')  && <Route path="/certificates"  element={<AdminCertificates />} />}
               {permissions.includes('payments')      && <Route path="/payments"      element={<AdminPaymentsView />} />}
               {permissions.includes('financial-aid') && <Route path="/financial-aid" element={<AdminFinancialAid />} />}
-              {permissions.includes('cms')           && <Route path="/cms/*"         element={<AdminCMS store={store} />} />}
+              {permissions.includes('cms')           && <Route path="/cms/*"         element={<AdminCMS store={store} basePath="/team/cms" />} />}
               {permissions.includes('blog')          && <Route path="/blog"          element={<AdminBlog />} />}
               {permissions.includes('support')       && <Route path="/support"       element={<AdminSupport />} />}
               {permissions.includes('notifications') && <Route path="/notifications" element={<AdminNotifications />} />}
