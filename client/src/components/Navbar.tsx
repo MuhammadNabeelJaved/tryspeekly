@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { List, X, Phone } from '@phosphor-icons/react'
+import { List, X, Phone, SquaresFour, SignOut } from '@phosphor-icons/react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { ThemeToggle } from './ThemeToggle'
 import { useAuth } from '../context/AuthContext'
 import OffersMarquee from './OffersMarquee'
+import UserAvatar from './UserAvatar'
 import type { Offer } from '@/services/offers.service'
 
 // Create a motion-enabled Link component
@@ -22,11 +23,17 @@ const NAV_LINKS = [
 export default function Navbar({ offers = [] }: { offers?: Offer[] }) {
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [profileOpen, setProfileOpen] = useState(false)
+  const [mobileProfileOpen, setMobileProfileOpen] = useState(false)
+  const profileRef = useRef<HTMLDivElement>(null)
+  const mobileProfileRef = useRef<HTMLDivElement>(null)
   const location = useLocation()
   const navigate = useNavigate()
   const { isAuthenticated, user, logout } = useAuth()
 
   const handleLogout = async () => {
+    setProfileOpen(false)
+    setMobileProfileOpen(false)
     await logout()
     navigate('/')
   }
@@ -34,6 +41,7 @@ export default function Navbar({ offers = [] }: { offers?: Offer[] }) {
   const dashboardLink = user
     ? user.role === 'admin' ? '/admin'
     : user.role === 'teacher' ? '/instructor'
+    : user.role === 'team_member' ? '/team'
     : '/dashboard'
     : null
 
@@ -41,6 +49,19 @@ export default function Navbar({ offers = [] }: { offers?: Offer[] }) {
     const onScroll = () => setScrolled(window.scrollY > 40)
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
+  useEffect(() => {
+    const onClickOutside = (e: MouseEvent) => {
+      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
+        setProfileOpen(false)
+      }
+      if (mobileProfileRef.current && !mobileProfileRef.current.contains(e.target as Node)) {
+        setMobileProfileOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', onClickOutside)
+    return () => document.removeEventListener('mousedown', onClickOutside)
   }, [])
 
   return (
@@ -145,19 +166,64 @@ export default function Navbar({ offers = [] }: { offers?: Offer[] }) {
             <div className="w-px h-6 bg-slate-200 dark:bg-neutral-800 hidden xl:block"></div>
 
             {isAuthenticated ? (
-              <>
-                {dashboardLink && (
-                  <Link to={dashboardLink} className="text-sm font-bold text-slate-600 dark:text-neutral-300 hover:text-violet-600 dark:hover:text-violet-300 transition-colors">
-                    Dashboard
-                  </Link>
-                )}
+              <div ref={profileRef} className="relative">
                 <button
-                  onClick={handleLogout}
-                  className="hidden xl:inline-flex items-center justify-center rounded-xl bg-slate-100 dark:bg-neutral-800 px-5 py-2.5 text-sm font-bold text-slate-600 dark:text-neutral-300 hover:text-red-500 transition-colors"
+                  onClick={() => setProfileOpen(p => !p)}
+                  className="flex items-center gap-2 rounded-xl p-1 pr-2.5 hover:bg-slate-100 dark:hover:bg-neutral-800 transition-colors"
+                  aria-label="Profile menu"
                 >
-                  Logout
+                  <UserAvatar
+                    src={user?.profileImage}
+                    name={user?.name}
+                    size="sm"
+                  />
+                  <span className="text-sm font-bold text-slate-700 dark:text-neutral-200 max-w-[100px] truncate">
+                    {user?.name?.split(' ')[0]}
+                  </span>
                 </button>
-              </>
+
+                <AnimatePresence>
+                  {profileOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-neutral-900 border border-slate-100 dark:border-neutral-800 rounded-2xl shadow-xl shadow-slate-200/60 dark:shadow-black/40 overflow-hidden z-50"
+                    >
+                      {/* User info */}
+                      <div className="px-4 py-3 border-b border-slate-100 dark:border-neutral-800 flex items-center gap-3">
+                        <UserAvatar src={user?.profileImage} name={user?.name} size="md" />
+                        <div className="min-w-0">
+                          <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{user?.name}</p>
+                          <p className="text-xs text-slate-400 dark:text-neutral-500 truncate capitalize">{user?.role}</p>
+                        </div>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="p-2">
+                        {dashboardLink && (
+                          <Link
+                            to={dashboardLink}
+                            onClick={() => setProfileOpen(false)}
+                            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-neutral-200 hover:bg-violet-50 dark:hover:bg-violet-900/20 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
+                          >
+                            <SquaresFour size={16} weight="bold" />
+                            Dashboard
+                          </Link>
+                        )}
+                        <button
+                          onClick={handleLogout}
+                          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-neutral-200 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                        >
+                          <SignOut size={16} weight="bold" />
+                          Logout
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             ) : (
               <>
                 <Link to="/login" className="text-sm font-bold text-slate-600 dark:text-neutral-300 hover:text-violet-600 dark:hover:text-violet-300 transition-colors">
@@ -179,10 +245,66 @@ export default function Navbar({ offers = [] }: { offers?: Offer[] }) {
           </div>
 
           {/* Mobile Actions */}
-          <div className="lg:hidden flex items-center gap-4">
+          <div className="lg:hidden flex items-center gap-2">
             <ThemeToggle />
+
+            {/* Mobile profile avatar + dropdown */}
+            {isAuthenticated && (
+              <div ref={mobileProfileRef} className="relative">
+                <button
+                  onClick={() => { setMobileProfileOpen(p => !p); setMenuOpen(false) }}
+                  className="flex items-center justify-center rounded-xl p-1 hover:bg-slate-100 dark:hover:bg-neutral-800 transition-colors"
+                  aria-label="Profile menu"
+                >
+                  <UserAvatar src={user?.profileImage} name={user?.name} size="sm" />
+                </button>
+
+                <AnimatePresence>
+                  {mobileProfileOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-neutral-900 border border-slate-100 dark:border-neutral-800 rounded-2xl shadow-xl shadow-slate-200/60 dark:shadow-black/40 overflow-hidden z-50"
+                    >
+                      {/* User info */}
+                      <div className="px-4 py-3 border-b border-slate-100 dark:border-neutral-800 flex items-center gap-3">
+                        <UserAvatar src={user?.profileImage} name={user?.name} size="md" />
+                        <div className="min-w-0">
+                          <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{user?.name}</p>
+                          <p className="text-xs text-slate-400 dark:text-neutral-500 truncate capitalize">{user?.role}</p>
+                        </div>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="p-2">
+                        {dashboardLink && (
+                          <Link
+                            to={dashboardLink}
+                            onClick={() => setMobileProfileOpen(false)}
+                            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-neutral-200 hover:bg-violet-50 dark:hover:bg-violet-900/20 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
+                          >
+                            <SquaresFour size={16} weight="bold" />
+                            Dashboard
+                          </Link>
+                        )}
+                        <button
+                          onClick={handleLogout}
+                          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-neutral-200 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                        >
+                          <SignOut size={16} weight="bold" />
+                          Logout
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
+
             <button
-              onClick={() => setMenuOpen(!menuOpen)}
+              onClick={() => { setMenuOpen(p => !p); setMobileProfileOpen(false) }}
               className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 dark:bg-neutral-800 text-slate-600 dark:text-neutral-300 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-900/30 transition-all"
               aria-label={menuOpen ? 'Close menu' : 'Open menu'}
             >
@@ -228,31 +350,16 @@ export default function Navbar({ offers = [] }: { offers?: Offer[] }) {
                     <span className="text-sm font-bold tracking-tight">+801 555 645 45</span>
                   </a>
                   
-                  {isAuthenticated ? (
-                  <div className="grid grid-cols-2 gap-3 mt-1">
-                    {dashboardLink && (
-                      <Link to={dashboardLink} onClick={() => setMenuOpen(false)} className="bg-violet-50 dark:bg-violet-900/20 hover:bg-violet-100 dark:hover:bg-violet-900/40 text-violet-700 dark:text-violet-300 text-sm font-bold py-3 rounded-xl text-center transition-colors">
-                        Dashboard
-                      </Link>
-                    )}
-                    <button onClick={() => { handleLogout(); setMenuOpen(false); }} className="bg-slate-100 dark:bg-neutral-800 hover:bg-slate-200 dark:hover:bg-neutral-700 text-slate-700 dark:text-white text-sm font-bold py-3 rounded-xl text-center transition-colors">
-                      Logout
-                    </button>
-                  </div>
-                ) : (
+                  {!isAuthenticated && (
                   <>
                     <div className="grid grid-cols-2 gap-3 mt-1">
                       <Link to="/login" onClick={() => setMenuOpen(false)} className="bg-slate-100 dark:bg-neutral-800 hover:bg-slate-200 dark:hover:bg-neutral-700 text-slate-700 dark:text-white text-sm font-bold py-3 rounded-xl text-center transition-colors">
                         Login
                       </Link>
-                      <Link to="/dashboard" onClick={() => setMenuOpen(false)} className="bg-violet-50 dark:bg-violet-900/20 hover:bg-violet-100 dark:hover:bg-violet-900/40 text-violet-700 dark:text-violet-300 text-sm font-bold py-3 rounded-xl text-center transition-colors">
-                        Dashboard
+                      <Link to="/signup" onClick={() => setMenuOpen(false)} className="bg-violet-50 dark:bg-violet-900/20 hover:bg-violet-100 dark:hover:bg-violet-900/40 text-violet-700 dark:text-violet-300 text-sm font-bold py-3 rounded-xl text-center transition-colors">
+                        Sign Up
                       </Link>
                     </div>
-
-                    <Link to="/signup" onClick={() => setMenuOpen(false)} className="bg-violet-600 hover:bg-violet-700 text-white text-sm font-bold py-3.5 rounded-xl text-center shadow-[0_4px_12px_rgba(124,58,237,0.3)] transition-colors mt-1">
-                      Create Account
-                    </Link>
                   </>
                 )}
                 </div>

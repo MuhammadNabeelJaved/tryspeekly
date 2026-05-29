@@ -270,8 +270,8 @@ export default function TeamPage() {
       </AnimatePresence>
 
       {/* ── SIDEBAR ── */}
-      <motion.aside
-        className={`fixed lg:static inset-y-0 left-0 z-40 w-64 bg-gradient-to-b from-violet-50 to-white dark:from-violet-950/20 dark:to-neutral-900 border-r border-slate-100 dark:border-neutral-800 flex flex-col transition-transform duration-300 ${
+      <aside
+        className={`fixed lg:static inset-y-0 left-0 z-40 w-64 flex-shrink-0 bg-gradient-to-b from-violet-50 to-white dark:from-violet-950/20 dark:to-neutral-900 border-r border-slate-100 dark:border-neutral-800 flex flex-col transition-transform duration-300 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
       >
@@ -328,11 +328,11 @@ export default function TeamPage() {
             Sign Out
           </button>
         </div>
-      </motion.aside>
+      </aside>
 
       {/* ── MAIN CONTENT ── */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <header className="h-[64px] bg-white dark:bg-neutral-900 border-b border-slate-100 dark:border-neutral-800 flex items-center px-4 sm:px-6 gap-4 flex-shrink-0">
+        <header className="sticky top-0 z-20 h-[64px] bg-white dark:bg-neutral-900 border-b border-slate-100 dark:border-neutral-800 flex items-center px-4 sm:px-6 gap-4 flex-shrink-0">
           <button onClick={() => setSidebarOpen(true)} className="lg:hidden text-slate-500 hover:text-slate-700 dark:text-neutral-400 dark:hover:text-white">
             <List size={22} />
           </button>
