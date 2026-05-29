@@ -7,6 +7,11 @@ import { useSocket } from '@/context/SocketContext'
 import { useAuth } from '@/context/AuthContext'
 import type { TeamMember, TeamChatMessage } from '@/types/api'
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+const getInitials = (name: string) =>
+  name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+
 // ─── Permission Groups ────────────────────────────────────────────────────────
 
 const PERMISSION_GROUPS = [
@@ -259,7 +264,7 @@ export default function AdminTeam() {
     setMessages([])
     teamService.getAdminThread(selected._id)
       .then(res => setMessages(res.data))
-      .catch(() => {})
+      .catch(() => toast.error('Failed to load messages.'))
     teamService.markAdminThreadRead(selected._id).catch(() => {})
   }, [selected?._id])
 
@@ -269,7 +274,10 @@ export default function AdminTeam() {
     const handler = (msg: TeamChatMessage) => {
       if (
         selected &&
-        (msg.from._id === selected._id || msg.from._id === user?._id)
+        (
+          (msg.from._id === selected._id && msg.to === user?._id) ||
+          (msg.from._id === user?._id && msg.to === selected._id)
+        )
       ) {
         setMessages(prev => {
           if (prev.some(m => m._id === msg._id)) return prev
@@ -281,6 +289,11 @@ export default function AdminTeam() {
     socket.on('team:message:received', handler)
     return () => { socket.off('team:message:received', handler) }
   }, [socket, selected, user])
+
+  // Cleanup permSaveTimer on unmount
+  useEffect(() => {
+    return () => { if (permSaveTimer.current) clearTimeout(permSaveTimer.current) }
+  }, [])
 
   // Scroll to bottom when messages load
   useEffect(() => {
@@ -330,9 +343,10 @@ export default function AdminTeam() {
 
   const handleSendMessage = async () => {
     if (!selected || !chatInput.trim() || sendingMessage) return
+    if (!socket) { toast.error('Not connected. Please refresh.'); return }
     setSendingMessage(true)
     try {
-      socket?.emit('team:message:send', { toId: selected._id, message: chatInput.trim() })
+      socket.emit('team:message:send', { toId: selected._id, message: chatInput.trim() })
       setChatInput('')
     } finally {
       setSendingMessage(false)
@@ -380,7 +394,7 @@ export default function AdminTeam() {
               }`}
             >
               <div className="w-9 h-9 rounded-xl bg-violet-100 dark:bg-violet-900/40 flex items-center justify-center text-violet-600 dark:text-violet-400 text-sm font-black flex-shrink-0">
-                {member.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                {getInitials(member.name)}
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{member.name}</p>
@@ -417,7 +431,7 @@ export default function AdminTeam() {
           <div className="flex-shrink-0 border-b border-slate-100 dark:border-neutral-800 p-5 overflow-y-auto max-h-[55%]">
             <div className="flex items-center gap-4 mb-5">
               <div className="w-12 h-12 rounded-2xl bg-violet-100 dark:bg-violet-900/40 flex items-center justify-center text-violet-600 dark:text-violet-400 text-lg font-black">
-                {selected.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                {getInitials(selected.name)}
               </div>
               <div>
                 <h3 className="text-base font-black text-slate-900 dark:text-white">{selected.name}</h3>
