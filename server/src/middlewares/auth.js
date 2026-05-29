@@ -69,7 +69,7 @@ export const optionalAuthenticate = asyncHandler(async (req, res, next) => {
     const user = await User.findById(decoded.id)
 
     req.user = user && user.isVerified && !user.isDeleted
-      ? { id: user._id, role: user.role }
+      ? { id: user._id, role: user.role, permissions: user.permissions || [] }
       : null
   } catch {
     req.user = null
