@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { authenticate, authorize } from '../middlewares/auth.js'
+import { authenticate, authorize, authorizeTeamPage } from '../middlewares/auth.js'
 import { getActiveOffers, getAllOffers, createOffer, updateOffer, deleteOffer } from '../controllers/offer.controller.js'
 
 const router = Router()
@@ -7,10 +7,9 @@ const router = Router()
 // Public
 router.get('/active', getActiveOffers)
 
-// Admin
-// admin-only: no team member page permission maps to this endpoint
+// Admin / team members with referrals permission (AdminReferrals page manages offers)
 router.route('/')
-  .get(authenticate, authorize('admin'), getAllOffers)
+  .get(authenticate, authorizeTeamPage('referrals'))
   .post(authenticate, authorize('admin'), createOffer)
 
 router.route('/:id')

@@ -33,7 +33,7 @@ router.route('/teacher/my').get(authenticate, authorize('teacher', 'admin'), get
 router.route('/').post(authenticate, authorize('teacher', 'admin'), createCourse)
 
 // ─── Admin only routes ─────────────────────────────────────────────────────────
-router.route('/admin/all').get(authenticate, authorizeTeamPage('courses'), getAdminCourses)
+router.route('/admin/all').get(authenticate, authorizeTeamPage('courses', 'referrals'), getAdminCourses)
 
 // ─── Parameterised routes (must come AFTER all specific paths) ─────────────────
 router.route('/:id').get(getCourse)
