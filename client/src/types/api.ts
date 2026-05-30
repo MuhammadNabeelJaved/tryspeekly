@@ -204,6 +204,7 @@ export interface Enrollment {
     price?: number;
     priceUSD?: number;
     currency?: 'PKR' | 'USD';
+    pricingType?: 'monthly' | 'full_course' | 'per_session';
   };
   teacher: { _id: string; name: string; profileImage?: string };
   payment?: EnrolledPayment | null;
