@@ -21,7 +21,11 @@ const updateSchema = Joi.object({
   subject: Joi.string().min(1).max(300),
   htmlBody: Joi.string().min(1),
   status: Joi.string().valid('draft', 'scheduled'),
-  scheduledAt: Joi.date().allow(null),
+  scheduledAt: Joi.when('status', {
+    is: 'scheduled',
+    then: Joi.date().greater('now').required(),
+    otherwise: Joi.date().allow(null).optional(),
+  }),
 })
 
 // ─── GET /api/v1/newsletter/campaigns ─────────────────────────────────────────

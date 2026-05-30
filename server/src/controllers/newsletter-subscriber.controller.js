@@ -4,7 +4,7 @@ import asyncHandler from '../utils/asyncHandler.js'
 import NewsletterSubscriber from '../models/newsletter-subscriber.model.js'
 import { BadRequestError, NotFoundError, ConflictError } from '../utils/apiErrors.js'
 
-const emailSchema = Joi.object({ email: Joi.string().email().required() })
+const emailSchema = Joi.object({ email: Joi.string().email().lowercase().trim().required() })
 
 // ─── POST /api/v1/newsletter/subscribers (public) ─────────────────────────────
 export const subscribe = asyncHandler(async (req, res) => {
@@ -34,7 +34,8 @@ export const getSubscribers = asyncHandler(async (req, res) => {
   const limit = Math.min(100, parseInt(req.query.limit) || 20)
   const search = req.query.search?.trim()
 
-  const filter = search ? { email: { $regex: search, $options: 'i' } } : {}
+  const escaped = search ? search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') : null
+  const filter = escaped ? { email: { $regex: escaped, $options: 'i' } } : {}
   const total = await NewsletterSubscriber.countDocuments(filter)
   const subscribers = await NewsletterSubscriber.find(filter)
     .sort({ subscribedAt: -1 })
