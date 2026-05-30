@@ -123,6 +123,7 @@ export interface Course {
   price: number;
   priceUSD?: number;
   currency: 'PKR' | 'USD';
+  pricingType?: 'monthly' | 'full_course' | 'per_session';
   type: 'group' | 'one-to-one' | 'hybrid';
   level: 'beginner' | 'intermediate' | 'advanced';
   focus: 'speaking' | 'grammar' | 'ielts' | 'business' | 'general';
@@ -147,6 +148,7 @@ export interface CreateCourseDto {
   price?: number;
   priceUSD?: number;
   currency?: 'PKR' | 'USD';
+  pricingType?: 'monthly' | 'full_course' | 'per_session';
   type: 'group' | 'one-to-one' | 'hybrid';
   level: 'beginner' | 'intermediate' | 'advanced';
   focus: 'speaking' | 'grammar' | 'ielts' | 'business' | 'general';

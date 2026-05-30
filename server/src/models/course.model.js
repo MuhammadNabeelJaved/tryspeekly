@@ -61,6 +61,11 @@ const courseSchema = new Schema(
       min: [0, 'USD price cannot be negative'],
     },
     currency: { type: String, enum: ['PKR', 'USD'], default: 'PKR' },
+    pricingType: {
+      type: String,
+      enum: ['monthly', 'full_course', 'per_session'],
+      default: 'full_course',
+    },
     type: {
       type: String,
       required: [true, 'Course type is required'],

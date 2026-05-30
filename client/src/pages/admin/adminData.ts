@@ -88,6 +88,7 @@ export interface Course {
   price: number
   priceUSD?: number
   currency: string
+  pricingType?: 'monthly' | 'full_course' | 'per_session'
   instructorId: string
   instructorName: string
   totalStudents: number
