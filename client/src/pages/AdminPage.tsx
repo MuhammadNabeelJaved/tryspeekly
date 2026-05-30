@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   ChartBar, Users, Chalkboard, BookOpen, CreditCard, PencilSimple,
   List, X, SignOut, Bell, Sun, Moon, GearSix,
-  Lock, Eye, EyeSlash, Handshake, Certificate, ChatCircleDots, CheckCircle, Chats, Globe, Star, Sparkle, Money, EnvelopeSimple, Gift, UsersThree, UserSwitch
+  Lock, Eye, EyeSlash, Handshake, Certificate, ChatCircleDots, CheckCircle, Chats, Globe, Star, Sparkle, Money, EnvelopeSimple, Gift, UsersThree, UserSwitch, Newspaper
 } from '@phosphor-icons/react'
 import TourGuide, { type TourStep } from '@/components/TourGuide'
 import DashboardSearch, { type SearchItem } from '@/components/DashboardSearch'
@@ -45,12 +45,13 @@ const AdminSalaries = lazy(() => import('./admin/AdminSalaries'))
 const AdminContacts = lazy(() => import('./admin/AdminContacts'))
 const AdminReferrals = lazy(() => import('./admin/AdminReferrals'))
 const AdminEmail = lazy(() => import('./admin/AdminEmail'))
+const AdminNewsletter = lazy(() => import('./admin/AdminNewsletter'))
 const AdminTeam = lazy(() => import('./admin/AdminTeam'))
 const AdminUsers = lazy(() => import('./admin/AdminUsers'))
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 
-export type AdminView = 'overview' | 'students' | 'instructors' | 'courses' | 'certificates' | 'payments' | 'payments-setup' | 'financial-aid' | 'salaries' | 'cms' | 'blog' | 'settings' | 'support' | 'notifications' | 'messages' | 'seo' | 'reviews' | 'geo-access' | 'contacts' | 'referrals' | 'email' | 'team' | 'users'
+export type AdminView = 'overview' | 'students' | 'instructors' | 'courses' | 'certificates' | 'payments' | 'payments-setup' | 'financial-aid' | 'salaries' | 'cms' | 'blog' | 'settings' | 'support' | 'notifications' | 'messages' | 'seo' | 'reviews' | 'geo-access' | 'contacts' | 'referrals' | 'email' | 'team' | 'users' | 'newsletter'
 
 export interface AdminStore {
   students: Student[]
@@ -91,6 +92,7 @@ const NAV_COMMUNICATION: NavItem[] = [
   { view: 'support',       label: 'Support',       path: 'support',       Icon: ChatCircleDots as NavItem['Icon'] },
   { view: 'contacts',      label: 'Contacts',      path: 'contacts',      Icon: EnvelopeSimple as NavItem['Icon'] },
   { view: 'email',         label: 'Email System',  path: 'email',         Icon: EnvelopeSimple as NavItem['Icon'] },
+  { view: 'newsletter',    label: 'Newsletter',    path: 'newsletter',    Icon: Newspaper as NavItem['Icon'] },
   { view: 'reviews',       label: 'Reviews',       path: 'reviews',       Icon: Star as NavItem['Icon'] },
   { view: 'notifications', label: 'Notifications', path: 'notifications', Icon: Bell as NavItem['Icon'] },
 ]
@@ -123,6 +125,7 @@ const ADMIN_SEARCH_ITEMS: SearchItem[] = [
   { label: 'Reviews',        description: 'Moderate student course reviews',                     path: '/admin/reviews',       Icon: Star as SearchItem['Icon'] },
   { label: 'Notifications',  description: 'Platform-wide notification management',               path: '/admin/notifications', Icon: Bell as SearchItem['Icon'] },
   { label: 'Email System',   description: 'Manage email templates, triggers, logs and test delivery', path: '/admin/email',      Icon: EnvelopeSimple as SearchItem['Icon'] },
+  { label: 'Newsletter',     description: 'Manage newsletter subscribers and send email campaigns',  path: '/admin/newsletter',    Icon: Newspaper as SearchItem['Icon'] },
   { label: 'Blog Manager',   description: 'Create and publish blog posts',                       path: '/admin/blog',          Icon: PencilSimple as SearchItem['Icon'] },
   { label: 'SEO Manager',    description: 'Manage meta titles, descriptions and keywords',       path: '/admin/seo',           Icon: Globe as SearchItem['Icon'] },
   { label: 'CMS Editor',     description: 'Edit public-facing static content pages',             path: '/admin/cms',           Icon: PencilSimple as SearchItem['Icon'] },
@@ -792,6 +795,7 @@ export default function AdminPage() {
                   <Route path="/contacts" element={<AdminContacts />} />
                   <Route path="/referrals" element={<AdminReferrals />} />
                   <Route path="/email" element={<AdminEmail />} />
+                  <Route path="/newsletter" element={<AdminNewsletter />} />
                   <Route path="/team" element={<AdminTeam />} />
                   <Route path="/users" element={<AdminUsers />} />
                   <Route path="*" element={<Navigate to="/admin" replace />} />
