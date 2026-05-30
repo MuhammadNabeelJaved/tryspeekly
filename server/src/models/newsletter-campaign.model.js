@@ -6,7 +6,7 @@ const campaignSchema = new mongoose.Schema(
       type: String,
       required: [true, 'Subject is required'],
       trim: true,
-      maxlength: 300,
+      maxlength: [300, 'Subject cannot exceed 300 characters'],
     },
     htmlBody: {
       type: String,
@@ -16,7 +16,6 @@ const campaignSchema = new mongoose.Schema(
       type: String,
       enum: ['draft', 'scheduled', 'sending', 'sent', 'failed'],
       default: 'draft',
-      index: true,
     },
     scheduledAt: {
       type: Date,
@@ -40,10 +39,10 @@ const campaignSchema = new mongoose.Schema(
       required: true,
     },
   },
-  { timestamps: true }
+  { timestamps: true, versionKey: false }
 )
 
 campaignSchema.index({ createdAt: -1 })
 campaignSchema.index({ status: 1, scheduledAt: 1 })
 
-export default mongoose.model('NewsletterCampaign', campaignSchema)
+export default mongoose.models.NewsletterCampaign || mongoose.model('NewsletterCampaign', campaignSchema)

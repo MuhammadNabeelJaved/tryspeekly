@@ -28,11 +28,9 @@ const subscriberSchema = new mongoose.Schema(
       default: null,
     },
   },
-  { timestamps: false }
+  { timestamps: false, versionKey: false }
 )
 
-subscriberSchema.index({ email: 1 })
-subscriberSchema.index({ token: 1 })
 subscriberSchema.index({ status: 1 })
 
-export default mongoose.model('NewsletterSubscriber', subscriberSchema)
+export default mongoose.models.NewsletterSubscriber || mongoose.model('NewsletterSubscriber', subscriberSchema)
