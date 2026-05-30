@@ -26,7 +26,12 @@ export default function RichTextEditor({ value, onChange, minHeight = '300px' }:
   })
 
   useEffect(() => {
-    if (editor && value === '') editor.commands.clearContent()
+    if (!editor) return
+    if (value === '') {
+      editor.commands.clearContent()
+    } else if (editor.getHTML() !== value) {
+      editor.commands.setContent(value, false)
+    }
   }, [value, editor])
 
   if (!editor) return null
