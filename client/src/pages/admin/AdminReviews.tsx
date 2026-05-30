@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import ConfirmModal from '@/components/ConfirmModal'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Star,
@@ -302,6 +303,8 @@ export default function AdminReviews() {
   const [rejectNote, setRejectNote] = useState('')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [isBulkDeleting, setIsBulkDeleting] = useState(false)
+  const [singleDeleteConfirm, setSingleDeleteConfirm] = useState<string | null>(null)
+  const [bulkConfirm, setBulkConfirm] = useState(false)
 
   // ─── Admin Create Review state ────────────────────────────────────────────────
   const [isCreateOpen, setIsCreateOpen] = useState(false)
@@ -423,8 +426,9 @@ export default function AdminReviews() {
     }
   }
 
-  async function handleDelete(id: string) {
-    if (!window.confirm('Delete this review permanently?')) return
+  function handleDelete(id: string) { setSingleDeleteConfirm(id) }
+
+  async function executeDelete(id: string) {
     try {
       await reviewsService.adminDeleteReview(id)
       toast.success('Review deleted')
@@ -450,8 +454,10 @@ export default function AdminReviews() {
     }
   }
 
-  async function handleBulkDelete() {
-    if (!window.confirm(`Permanently delete ${selectedIds.size} review${selectedIds.size > 1 ? 's' : ''}? This cannot be undone.`)) return
+  function handleBulkDelete() { setBulkConfirm(true) }
+
+  async function executeBulkDelete() {
+    setBulkConfirm(false)
     setIsBulkDeleting(true)
     const ids = Array.from(selectedIds)
     const results = await Promise.allSettled(ids.map(id => reviewsService.adminDeleteReview(id)))
@@ -1080,6 +1086,25 @@ export default function AdminReviews() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <ConfirmModal
+        open={!!singleDeleteConfirm}
+        title="Delete Review?"
+        message="This will permanently remove the review. This cannot be undone."
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={() => { executeDelete(singleDeleteConfirm!); setSingleDeleteConfirm(null) }}
+        onCancel={() => setSingleDeleteConfirm(null)}
+      />
+      <ConfirmModal
+        open={bulkConfirm}
+        title={`Delete ${selectedIds.size} Review${selectedIds.size > 1 ? 's' : ''}?`}
+        message="This will permanently remove all selected reviews. This cannot be undone."
+        confirmLabel="Delete All"
+        variant="danger"
+        onConfirm={executeBulkDelete}
+        onCancel={() => setBulkConfirm(false)}
+      />
     </div>
   )
 }

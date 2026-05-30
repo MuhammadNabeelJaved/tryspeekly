@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import ConfirmModal from '../../components/ConfirmModal'
 import { useForm } from 'react-hook-form'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, MagnifyingGlass, PencilSimple, Trash, X, Check, Eye, FunnelSimple, Handshake, Certificate } from '@phosphor-icons/react'
@@ -191,6 +192,7 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [isBulkDeleting, setIsBulkDeleting] = useState(false)
+  const [bulkConfirm, setBulkConfirm] = useState(false)
 
   const { register, handleSubmit, reset } = useForm<Student>({
     defaultValues: EMPTY
@@ -271,8 +273,10 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
     }
   }
 
-  async function handleBulkDelete() {
-    if (!window.confirm(`Permanently delete ${selectedIds.size} student${selectedIds.size > 1 ? 's' : ''}? This cannot be undone.`)) return
+  function handleBulkDelete() { setBulkConfirm(true) }
+
+  async function executeBulkDelete() {
+    setBulkConfirm(false)
     setIsBulkDeleting(true)
     const ids = Array.from(selectedIds)
     const results = await Promise.allSettled(ids.map(id => axiosClient.delete(`/users/${id}`)))
@@ -738,6 +742,16 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <ConfirmModal
+        open={bulkConfirm}
+        title={`Delete ${selectedIds.size} Student${selectedIds.size > 1 ? 's' : ''}?`}
+        message="This will permanently remove all selected students. This cannot be undone."
+        confirmLabel="Delete All"
+        variant="danger"
+        onConfirm={executeBulkDelete}
+        onCancel={() => setBulkConfirm(false)}
+      />
     </div>
   )
 }
