@@ -10,6 +10,8 @@ import Enrollment from './src/models/enrollment.model.js'
 import Message from './src/models/message.model.js'
 import TeamChat from './src/models/team-chat.model.js'
 import User from './src/models/user.model.js'
+import NewsletterCampaign from './src/models/newsletter-campaign.model.js'
+import { dispatchCampaign } from './src/utils/newsletter-sender.js'
 
 // Override DNS to use Google Public DNS for MongoDB Atlas SRV record lookup
 dns.setServers(['8.8.8.8', '8.8.4.4'])
@@ -134,3 +136,23 @@ connectDB().then(() => {
   console.error('✗ Failed to connect to MongoDB:', err.message)
   process.exit(1)
 })
+
+// ─── Newsletter scheduler — checks for due campaigns every 60 s ───────────────
+setInterval(async () => {
+  try {
+    const due = await NewsletterCampaign.find({
+      status: 'scheduled',
+      scheduledAt: { $lte: new Date() },
+    }).lean()
+
+    for (const campaign of due) {
+      await NewsletterCampaign.findByIdAndUpdate(campaign._id, { status: 'sending' })
+      dispatchCampaign(campaign._id).catch(async (err) => {
+        console.error('[Newsletter scheduler] dispatch error:', err.message)
+        await NewsletterCampaign.findByIdAndUpdate(campaign._id, { status: 'failed' })
+      })
+    }
+  } catch (err) {
+    console.warn('[Newsletter scheduler] error:', err.message)
+  }
+}, 60_000)
