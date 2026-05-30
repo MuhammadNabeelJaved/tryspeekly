@@ -6,7 +6,7 @@ import {
 } from '@phosphor-icons/react'
 import { newsletterService } from '@/services/newsletter.service'
 import type { NewsletterSubscriber, NewsletterCampaign } from '@/services/newsletter.service'
-import RichTextEditor from '@/components/RichTextEditor'
+import NewsletterEditor from '@/components/NewsletterEditor'
 
 const STATUS_BADGE: Record<string, string> = {
   draft:     'bg-slate-100 text-slate-600 dark:bg-white/5 dark:text-neutral-400',
@@ -448,7 +448,7 @@ export default function AdminNewsletter() {
                 <label className="block text-sm font-semibold text-slate-700 dark:text-neutral-300 mb-1.5">
                   Content *
                 </label>
-                <RichTextEditor value={formBody} onChange={setFormBody} minHeight="250px" />
+                <NewsletterEditor value={formBody} onChange={setFormBody} />
               </div>
 
               <div>

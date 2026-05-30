@@ -3,6 +3,7 @@ import { randomUUID } from 'crypto'
 import asyncHandler from '../utils/asyncHandler.js'
 import NewsletterSubscriber from '../models/newsletter-subscriber.model.js'
 import { BadRequestError, NotFoundError, ConflictError } from '../utils/apiErrors.js'
+import { sendNewsletterWelcome } from '../utils/newsletter-sender.js'
 
 const emailSchema = Joi.object({ email: Joi.string().email().lowercase().trim().required() })
 
@@ -21,10 +22,17 @@ export const subscribe = asyncHandler(async (req, res) => {
     existing.unsubscribedAt = null
     existing.token = randomUUID()
     await existing.save()
+    sendNewsletterWelcome({ to: existing.email, token: existing.token }).catch(err =>
+      console.error('[Newsletter] Welcome email error:', err.message)
+    )
     return res.json({ success: true, message: 'Welcome back! You have been re-subscribed.' })
   }
 
-  await NewsletterSubscriber.create({ email: value.email, token: randomUUID() })
+  const newToken = randomUUID()
+  await NewsletterSubscriber.create({ email: value.email, token: newToken })
+  sendNewsletterWelcome({ to: value.email, token: newToken }).catch(err =>
+    console.error('[Newsletter] Welcome email error:', err.message)
+  )
   res.status(201).json({ success: true, message: 'Subscribed successfully!' })
 })
 
