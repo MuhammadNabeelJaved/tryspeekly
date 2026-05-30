@@ -35,6 +35,7 @@ const InstructorDashboardPage = lazy(() => import('@/pages/InstructorDashboardPa
 const CertificateViewPage = lazy(() => import('@/pages/CertificateViewPage'))
 const AdminPage = lazy(() => import('@/pages/AdminPage'))
 const TeamPage = lazy(() => import('@/pages/TeamPage'))
+const UnsubscribePage = lazy(() => import('@/pages/UnsubscribePage'))
 
 import './App.css'
 
@@ -116,6 +117,7 @@ function PublicLayout() {
             <Route path="/cookies" element={<CookiePolicyPage />} />
             <Route path="/payments" element={<PaymentsPage />} />
             <Route path="/financial-aid" element={<FinancialAidPage />} />
+            <Route path="/unsubscribe" element={<UnsubscribePage />} />
           </Routes>
         </Suspense>
       </main>
