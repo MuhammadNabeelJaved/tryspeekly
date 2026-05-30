@@ -305,7 +305,8 @@ export default function AdminPaymentsView() {
       )}
 
       {/* ── Payment Records tab ── */}
-      {activeTab === 'payments' && <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+      {activeTab === 'payments' && <>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         {[
           { label: 'Revenue (PKR)', value: `₨${totalPKR.toLocaleString()}`, Icon: CreditCard, color: 'from-violet-500 to-purple-600', glow: 'rgba(124,58,237,0.35)' },
           { label: 'Revenue (USD)', value: `$${totalUSD}`, Icon: CreditCard, color: 'from-blue-500 to-blue-700', glow: 'rgba(59,130,246,0.35)' },
@@ -465,7 +466,7 @@ export default function AdminPaymentsView() {
           </table>
         </div>
       </div>
-      </div>}
+      </>}
 
       <AdminPaymentCreateModal
         isOpen={createModalOpen}
