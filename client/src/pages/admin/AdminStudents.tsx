@@ -9,6 +9,7 @@ import type { Student } from './adminData'
 import { axiosClient } from '../../lib/axiosClient'
 import { enrollmentsService } from '../../services/enrollments.service'
 import UserAvatar from '../../components/UserAvatar'
+import { useAuth } from '@/context/AuthContext'
 
 const EMPTY: Student = {
   id: '', name: '', email: '', phone: '', country: '', city: '',
@@ -63,6 +64,8 @@ function Select({ register, name, options }: { register: any; name: string; opti
 
 export default function AdminStudents({ store }: { store: AdminStore }) {
   const { students, setStudents } = store
+  const { user } = useAuth()
+  const isAdmin = user?.role === 'admin'
 
   const [apiStudents, setApiStudents] = useState<Student[] | null>(null)
   const [loading, setLoading] = useState(true)
@@ -310,13 +313,15 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
             <FunnelSimple size={15} />
             Filters
           </button>
-          <button
-            onClick={openAdd}
-            className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-sm font-bold shadow-[0_4px_12px_rgba(124,58,237,0.3)] transition-colors"
-          >
-            <Plus size={15} weight="bold" />
-            Add Student
-          </button>
+          {isAdmin && (
+            <button
+              onClick={openAdd}
+              className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-sm font-bold shadow-[0_4px_12px_rgba(124,58,237,0.3)] transition-colors"
+            >
+              <Plus size={15} weight="bold" />
+              Add Student
+            </button>
+          )}
         </div>
       </div>
 
@@ -475,9 +480,9 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button onClick={() => openView(s)} className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-neutral-800 hover:bg-violet-100 dark:hover:bg-violet-950/40 text-slate-500 hover:text-violet-600 dark:hover:text-violet-400 flex items-center justify-center transition-colors" title="View"><Eye size={13} /></button>
-                      <button onClick={() => openEdit(s)} className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-neutral-800 hover:bg-amber-100 dark:hover:bg-amber-950/40 text-slate-500 hover:text-amber-600 dark:hover:text-amber-400 flex items-center justify-center transition-colors" title="Edit"><PencilSimple size={13} /></button>
-                      <button onClick={() => handleIssueCertificate(s)} className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-neutral-800 hover:bg-green-100 dark:hover:bg-green-950/40 text-slate-500 hover:text-green-600 dark:hover:text-green-400 flex items-center justify-center transition-colors" title="Issue Certificate"><Certificate size={13} /></button>
-                      <button onClick={() => setDeleteId(s.id)} className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-neutral-800 hover:bg-red-100 dark:hover:bg-red-950/40 text-slate-500 hover:text-red-600 dark:hover:text-red-400 flex items-center justify-center transition-colors" title="Delete"><Trash size={13} /></button>
+                      {isAdmin && <button onClick={() => openEdit(s)} className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-neutral-800 hover:bg-amber-100 dark:hover:bg-amber-950/40 text-slate-500 hover:text-amber-600 dark:hover:text-amber-400 flex items-center justify-center transition-colors" title="Edit"><PencilSimple size={13} /></button>}
+                      {isAdmin && <button onClick={() => handleIssueCertificate(s)} className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-neutral-800 hover:bg-green-100 dark:hover:bg-green-950/40 text-slate-500 hover:text-green-600 dark:hover:text-green-400 flex items-center justify-center transition-colors" title="Issue Certificate"><Certificate size={13} /></button>}
+                      {isAdmin && <button onClick={() => setDeleteId(s.id)} className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-neutral-800 hover:bg-red-100 dark:hover:bg-red-950/40 text-slate-500 hover:text-red-600 dark:hover:text-red-400 flex items-center justify-center transition-colors" title="Delete"><Trash size={13} /></button>}
                     </div>
                   </td>
                 </tr>
@@ -686,14 +691,16 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
               </div>
 
               {/* Footer actions */}
-              <div className="flex gap-3 px-6 py-4 border-t border-slate-100 dark:border-neutral-800 flex-shrink-0">
-                <button onClick={() => { setModalType(null); setTimeout(() => openEdit(viewStudent), 50) }} className="flex-1 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold flex items-center justify-center gap-2 transition-colors">
-                  <PencilSimple size={14} />Edit
-                </button>
-                <button onClick={() => { setModalType(null); setDeleteId(viewStudent.id) }} className="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-bold flex items-center justify-center gap-2 transition-colors">
-                  <Trash size={14} />Delete
-                </button>
-              </div>
+              {isAdmin && (
+                <div className="flex gap-3 px-6 py-4 border-t border-slate-100 dark:border-neutral-800 flex-shrink-0">
+                  <button onClick={() => { setModalType(null); setTimeout(() => openEdit(viewStudent), 50) }} className="flex-1 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold flex items-center justify-center gap-2 transition-colors">
+                    <PencilSimple size={14} />Edit
+                  </button>
+                  <button onClick={() => { setModalType(null); setDeleteId(viewStudent.id) }} className="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-bold flex items-center justify-center gap-2 transition-colors">
+                    <Trash size={14} />Delete
+                  </button>
+                </div>
+              )}
             </motion.div>
           </motion.div>
         )}
@@ -720,7 +727,7 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
 
       {/* BULK ACTION BAR */}
       <AnimatePresence>
-        {selectedIds.size > 0 && (
+        {isAdmin && selectedIds.size > 0 && (
           <motion.div
             initial={{ y: 80, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}

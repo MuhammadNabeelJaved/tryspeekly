@@ -1,6 +1,5 @@
 import { useState, useRef } from 'react'
 import { useForm } from 'react-hook-form'
-import { motion } from 'framer-motion'
 import toast from 'react-hot-toast'
 import {
   FloppyDisk, CheckCircle, Globe, Phone, Share, MagnifyingGlass,
@@ -14,6 +13,7 @@ import { usersService } from '@/services/users.service'
 import { siteSettingsService } from '@/services/site-settings.service'
 import { extractApiError } from '@/utils/apiError'
 import UserAvatar from '@/components/UserAvatar'
+import ConfirmModal from '@/components/ConfirmModal'
 
 function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
@@ -74,6 +74,7 @@ export default function AdminSettings({ store }: { store: AdminStore }) {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [passwordError, setPasswordError] = useState('')
   const [showResetConfirm, setShowResetConfirm] = useState(false)
+
 
   const { user, setUser } = useAuth()
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -179,6 +180,11 @@ export default function AdminSettings({ store }: { store: AdminStore }) {
         </div>
         <div className="col-span-full">
           <Field label="Footer Copyright Text"><Input register={register} name="site.footerCopyright" placeholder="© 2026 EnglishPro Academy." /></Field>
+        </div>
+        <div className="col-span-full">
+          <Field label="Footer Description" hint="Short text shown under the logo in the footer (max 400 chars)">
+            <Textarea register={register} name="site.footerDescription" placeholder="Empowering learners worldwide to achieve English fluency through interactive courses..." rows={3} />
+          </Field>
         </div>
       </SectionCard>
 
@@ -358,22 +364,15 @@ export default function AdminSettings({ store }: { store: AdminStore }) {
         </div>
       </div>
 
-      {/* ── RESET CONFIRM MODAL ── */}
-      {showResetConfirm && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-white dark:bg-neutral-900 rounded-2xl p-6 w-full max-w-sm border border-slate-100 dark:border-neutral-800 shadow-2xl text-center">
-            <div className="w-14 h-14 rounded-2xl bg-red-100 dark:bg-red-950/40 flex items-center justify-center mx-auto mb-4">
-              <Trash size={26} className="text-red-500" />
-            </div>
-            <h3 className="font-black text-slate-900 dark:text-white mb-1 text-lg">Reset All Data?</h3>
-            <p className="text-sm text-slate-500 dark:text-neutral-400 mb-6 leading-relaxed">This will permanently delete all students, courses, instructors, and CMS edits. This action <strong>cannot be undone</strong>.</p>
-            <div className="flex gap-3">
-              <button type="button" onClick={() => setShowResetConfirm(false)} className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-neutral-700 text-sm font-semibold text-slate-600 dark:text-neutral-400 hover:bg-slate-50 dark:hover:bg-neutral-800 transition-colors">Cancel</button>
-              <button type="button" onClick={handleResetAll} className="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-bold transition-colors">Yes, Reset All</button>
-            </div>
-          </motion.div>
-        </motion.div>
-      )}
+      <ConfirmModal
+        open={showResetConfirm}
+        title="Reset All Data?"
+        message="This will permanently delete all students, courses, instructors, and CMS edits. This action cannot be undone."
+        confirmLabel="Yes, Reset All"
+        variant="danger"
+        onConfirm={() => { setShowResetConfirm(false); handleResetAll() }}
+        onCancel={() => setShowResetConfirm(false)}
+      />
     </form>
   )
 }

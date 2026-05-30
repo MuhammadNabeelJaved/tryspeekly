@@ -1,6 +1,8 @@
 import asyncHandler from '../utils/asyncHandler.js'
 import jwt from 'jsonwebtoken'
 import User from '../models/user.model.js'
+import Course from '../models/course.model.js'
+import Enrollment from '../models/enrollment.model.js'
 import { uploadUserAvatar, deleteFile, extractPublicId } from '../utils/cloudinary.js'
 import { sendForgotPasswordOtp, sendVerificationOtp, sendEmail } from '../utils/email.js'
 import { emitToUser } from '../utils/socket.js'
@@ -43,6 +45,7 @@ const safeUser = (user) => ({
   isVerified: user.isVerified,
   isOnboardingDone: user.isOnboardingDone,
   isBlocked: user.isBlocked,
+  showOnHome: user.showOnHome,
   permissions: user.permissions,
   jobTitle: user.jobTitle,
   createdAt: user.createdAt,
@@ -513,3 +516,84 @@ export const deleteUser = asyncHandler(async (req, res) => {
     res.status(400).json({ success: false, error: { message: error.message } })
   }
 })
+
+// GET /api/v1/users/public-teachers — public: all active teachers for InstructorsPage
+export const getPublicTeachers = asyncHandler(async (req, res) => {
+  try {
+    const teachers = await User.find({ role: 'teacher', isBlocked: false, isDeleted: false })
+      .select('name bio jobTitle profileImage country city showOnHome createdAt')
+      .sort({ createdAt: -1 })
+      .lean()
+
+    if (teachers.length === 0) return res.json({ success: true, data: [] })
+
+    const teacherIds = teachers.map(t => t._id)
+
+    const [courseStats, studentStats, reviewStats] = await Promise.all([
+      Course.aggregate([
+        { $match: { teacher: { $in: teacherIds }, status: 'published' } },
+        { $group: { _id: '$teacher', courseCount: { $sum: 1 } } },
+      ]),
+      Enrollment.aggregate([
+        { $match: { teacher: { $in: teacherIds }, isActive: true } },
+        { $group: { _id: '$teacher', students: { $addToSet: '$student' } } },
+        { $project: { studentCount: { $size: '$students' } } },
+      ]),
+      Course.aggregate([
+        { $match: { teacher: { $in: teacherIds }, status: 'published' } },
+        {
+          $lookup: {
+            from: 'reviews',
+            localField: '_id',
+            foreignField: 'course',
+            pipeline: [{ $match: { type: 'course', status: 'approved' } }],
+            as: 'reviews',
+          },
+        },
+        { $group: { _id: '$teacher', reviewCount: { $sum: { $size: '$reviews' } } } },
+      ]),
+    ])
+
+    const courseMap = Object.fromEntries(courseStats.map(c => [c._id.toString(), c.courseCount]))
+    const studentMap = Object.fromEntries(studentStats.map(s => [s._id.toString(), s.studentCount]))
+    const reviewMap = Object.fromEntries(reviewStats.map(r => [r._id.toString(), r.reviewCount]))
+
+    const enriched = teachers.map(t => ({
+      ...t,
+      courseCount: courseMap[t._id.toString()] ?? 0,
+      studentCount: studentMap[t._id.toString()] ?? 0,
+      reviewCount: reviewMap[t._id.toString()] ?? 0,
+    }))
+
+    res.json({ success: true, data: enriched })
+  } catch (error) {
+    res.status(400).json({ success: false, error: { message: error.message } })
+  }
+})
+
+// GET /api/v1/users/home-instructors — public: teachers marked showOnHome=true
+export const getHomeInstructors = asyncHandler(async (req, res) => {
+  try {
+    const teachers = await User.find({ role: 'teacher', showOnHome: true, isBlocked: false, isDeleted: false })
+      .select('name bio profileImage photo country city createdAt')
+      .sort({ createdAt: -1 })
+    res.json({ success: true, data: teachers })
+  } catch (error) {
+    res.status(400).json({ success: false, error: { message: error.message } })
+  }
+})
+
+// PATCH /api/v1/users/:id/show-on-home — admin: toggle showOnHome for a teacher
+export const toggleShowOnHome = asyncHandler(async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id)
+    if (!user) return res.status(404).json({ success: false, error: { message: 'User not found' } })
+    if (user.role !== 'teacher') return res.status(400).json({ success: false, error: { message: 'Only teachers can be featured on home page' } })
+    user.showOnHome = !user.showOnHome
+    await user.save()
+    res.json({ success: true, message: user.showOnHome ? 'Teacher will now appear on home page' : 'Teacher removed from home page', data: safeUser(user) })
+  } catch (error) {
+    res.status(400).json({ success: false, error: { message: error.message } })
+  }
+})
+

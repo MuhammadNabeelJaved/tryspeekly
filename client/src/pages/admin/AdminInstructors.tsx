@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, PencilSimple, Trash, X, Check, Star, Eye } from '@phosphor-icons/react'
+import { Plus, PencilSimple, Trash, X, Check, Star, Eye, House } from '@phosphor-icons/react'
 import toast from 'react-hot-toast'
+import ConfirmModal from '../../components/ConfirmModal'
 import type { AdminStore } from '../AdminPage'
 import type { Instructor } from './adminData'
 import { axiosClient } from '../../lib/axiosClient'
 import { coursesService } from '../../services/courses.service'
 import UserAvatar from '../../components/UserAvatar'
+import { useAuth } from '@/context/AuthContext'
 
 const EMPTY: Instructor = {
   id: '', name: '', email: '', phone: '', country: '', specialization: '',
@@ -43,11 +45,15 @@ function Input({ register, name, type = 'text', placeholder, valueAsNumber, step
 
 export default function AdminInstructors({ store }: { store: AdminStore }) {
   const { instructors, setInstructors } = store
+  const { user } = useAuth()
+  const isAdmin = user?.role === 'admin'
 
   const [apiInstructors, setApiInstructors] = useState<Instructor[] | null>(null)
   const [loading, setLoading] = useState(true)
   const [courseCountMap, setCourseCountMap] = useState<Record<string, number>>({})
   const [profileImageMap, setProfileImageMap] = useState<Record<string, string>>({})
+  const [showOnHomeMap, setShowOnHomeMap] = useState<Record<string, boolean>>({})
+  const [togglingId, setTogglingId] = useState<string | null>(null)
 
   useEffect(() => {
     async function fetchData() {
@@ -60,9 +66,11 @@ export default function AdminInstructors({ store }: { store: AdminStore }) {
         if (instRes.status === 'fulfilled') {
           const users: any[] = instRes.value.data?.data ?? []
           const imgMap: Record<string, string> = {}
+          const homeMap: Record<string, boolean> = {}
           const mapped: Instructor[] = users.map((u: any, idx: number) => {
             const id = u._id ?? u.id ?? `api-i${idx}`
             if (u.profileImage) imgMap[id] = u.profileImage
+            if (u.showOnHome) homeMap[id] = true
             return {
               id,
               name: u.name ?? '',
@@ -83,6 +91,7 @@ export default function AdminInstructors({ store }: { store: AdminStore }) {
           })
           setApiInstructors(mapped)
           setProfileImageMap(imgMap)
+          setShowOnHomeMap(homeMap)
         }
 
         if (coursesRes.status === 'fulfilled') {
@@ -103,6 +112,19 @@ export default function AdminInstructors({ store }: { store: AdminStore }) {
     fetchData()
   }, [])
 
+  async function toggleShowOnHome(id: string) {
+    setTogglingId(id)
+    try {
+      await axiosClient.patch(`/users/${id}/show-on-home`)
+      setShowOnHomeMap(prev => ({ ...prev, [id]: !prev[id] }))
+      toast.success(showOnHomeMap[id] ? 'Removed from home page' : 'Now showing on home page')
+    } catch {
+      toast.error('Failed to update')
+    } finally {
+      setTogglingId(null)
+    }
+  }
+
   const displayInstructors = apiInstructors ?? instructors
 
   const [modalType, setModalType] = useState<'add' | 'edit' | 'view' | null>(null)
@@ -111,6 +133,7 @@ export default function AdminInstructors({ store }: { store: AdminStore }) {
   const [search, setSearch] = useState('')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [isBulkDeleting, setIsBulkDeleting] = useState(false)
+  const [bulkConfirm, setBulkConfirm] = useState(false)
 
   const { register, handleSubmit, reset } = useForm<Instructor & { coursesInput: string }>({
     defaultValues: { ...EMPTY, coursesInput: '' }
@@ -176,8 +199,10 @@ export default function AdminInstructors({ store }: { store: AdminStore }) {
     }
   }
 
-  async function handleBulkDelete() {
-    if (!window.confirm(`Permanently delete ${selectedIds.size} instructor${selectedIds.size > 1 ? 's' : ''}? This cannot be undone.`)) return
+  function handleBulkDelete() { setBulkConfirm(true) }
+
+  async function executeBulkDelete() {
+    setBulkConfirm(false)
     setIsBulkDeleting(true)
     const ids = Array.from(selectedIds)
     const results = await Promise.allSettled(ids.map(id => axiosClient.delete(`/users/${id}`)))
@@ -205,9 +230,11 @@ export default function AdminInstructors({ store }: { store: AdminStore }) {
           <h2 className="text-lg font-black text-slate-900 dark:text-white">Instructors <span className="text-slate-400 dark:text-neutral-500 font-medium text-base">({displayInstructors.length})</span></h2>
           <p className="text-xs text-slate-400 dark:text-neutral-500 mt-0.5">Manage teaching staff and their courses</p>
         </div>
-        <button onClick={openAdd} className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-sm font-bold shadow-[0_4px_12px_rgba(124,58,237,0.3)] transition-colors">
-          <Plus size={15} weight="bold" />Add Instructor
-        </button>
+        {isAdmin && (
+          <button onClick={openAdd} className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-sm font-bold shadow-[0_4px_12px_rgba(124,58,237,0.3)] transition-colors">
+            <Plus size={15} weight="bold" />Add Instructor
+          </button>
+        )}
       </div>
 
       {/* Search + select-all row */}
@@ -333,20 +360,29 @@ export default function AdminInstructors({ store }: { store: AdminStore }) {
               <button onClick={() => openView(inst)} className="flex-1 py-2.5 text-xs font-semibold text-slate-500 dark:text-neutral-400 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-slate-50 dark:hover:bg-neutral-800/50 flex items-center justify-center gap-1.5 transition-colors">
                 <Eye size={13} />View
               </button>
-              <div className="w-px bg-slate-100 dark:bg-neutral-800" />
-              <button onClick={() => openEdit(inst)} className="flex-1 py-2.5 text-xs font-semibold text-slate-500 dark:text-neutral-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-slate-50 dark:hover:bg-neutral-800/50 flex items-center justify-center gap-1.5 transition-colors">
-                <PencilSimple size={13} />Edit
-              </button>
-              <div className="w-px bg-slate-100 dark:bg-neutral-800" />
-              <button onClick={() => setDeleteId(inst.id)} className="flex-1 py-2.5 text-xs font-semibold text-slate-500 dark:text-neutral-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-slate-50 dark:hover:bg-neutral-800/50 flex items-center justify-center gap-1.5 transition-colors">
-                <Trash size={13} />Remove
-              </button>
+              {isAdmin && (
+                <>
+                  <div className="w-px bg-slate-100 dark:bg-neutral-800" />
+                  <button
+                    onClick={() => toggleShowOnHome(inst.id)}
+                    disabled={togglingId === inst.id}
+                    title={showOnHomeMap[inst.id] ? 'Remove from home page' : 'Show on home page'}
+                    className={`flex-1 py-2.5 text-xs font-semibold hover:bg-slate-50 dark:hover:bg-neutral-800/50 flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50 ${showOnHomeMap[inst.id] ? 'text-violet-600 dark:text-violet-400' : 'text-slate-500 dark:text-neutral-400 hover:text-violet-600 dark:hover:text-violet-400'}`}
+                  >
+                    <House size={13} weight={showOnHomeMap[inst.id] ? 'fill' : 'regular'} />Home
+                  </button>
+                  <div className="w-px bg-slate-100 dark:bg-neutral-800" />
+                  <button onClick={() => setDeleteId(inst.id)} className="flex-1 py-2.5 text-xs font-semibold text-slate-500 dark:text-neutral-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-slate-50 dark:hover:bg-neutral-800/50 flex items-center justify-center gap-1.5 transition-colors">
+                    <Trash size={13} />Remove
+                  </button>
+                </>
+              )}
             </div>
           </motion.div>
         ))}
 
         {/* Add card */}
-        {!loading && <motion.button initial={{ opacity: 0 }} animate={{ opacity: 1 }} onClick={openAdd}
+        {!loading && isAdmin && <motion.button initial={{ opacity: 0 }} animate={{ opacity: 1 }} onClick={openAdd}
           className="border-2 border-dashed border-slate-200 dark:border-neutral-800 rounded-[20px] p-8 flex flex-col items-center justify-center gap-3 text-slate-300 dark:text-neutral-700 hover:border-violet-300 dark:hover:border-violet-700 hover:text-violet-400 dark:hover:text-violet-500 transition-all group"
         >
           <div className="w-12 h-12 rounded-2xl border-2 border-dashed border-current flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -505,6 +541,16 @@ export default function AdminInstructors({ store }: { store: AdminStore }) {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <ConfirmModal
+        open={bulkConfirm}
+        title={`Delete ${selectedIds.size} Instructor${selectedIds.size > 1 ? 's' : ''}?`}
+        message="This will permanently remove all selected instructors. This cannot be undone."
+        confirmLabel="Delete All"
+        variant="danger"
+        onConfirm={executeBulkDelete}
+        onCancel={() => setBulkConfirm(false)}
+      />
     </div>
   )
 }

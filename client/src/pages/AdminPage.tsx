@@ -112,7 +112,7 @@ const ADMIN_SEARCH_ITEMS: SearchItem[] = [
   { label: 'All Users',      description: 'View all users, change roles, block or delete accounts', path: '/admin/users',         Icon: UserSwitch as SearchItem['Icon'] },
   { label: 'Students',       description: 'Manage registered students and enrollments',           path: '/admin/students',      Icon: Users as SearchItem['Icon'] },
   { label: 'Courses',        description: 'Review, approve, and manage courses',                  path: '/admin/courses',       Icon: BookOpen as SearchItem['Icon'] },
-  { label: 'Instructors',    description: 'Manage instructor profiles and courses',               path: '/admin/instructors',   Icon: Chalkboard as SearchItem['Icon'] },
+  { label: 'Instructors',    description: 'Manage instructor profiles, courses, and feature them on the home page',  path: '/admin/instructors',   Icon: Chalkboard as SearchItem['Icon'] },
   { label: 'Team',           description: 'Add team members, assign page permissions and job titles', path: '/admin/team',      Icon: UsersThree as SearchItem['Icon'] },
   { label: 'Payments',       description: 'Review and approve student payment submissions',       path: '/admin/payments',      Icon: CreditCard as SearchItem['Icon'] },
   { label: 'Financial Aid',  description: 'Review financial aid applications',                    path: '/admin/financial-aid', Icon: Handshake as SearchItem['Icon'] },
@@ -130,7 +130,7 @@ const ADMIN_SEARCH_ITEMS: SearchItem[] = [
   { label: 'SEO Manager',    description: 'Manage meta titles, descriptions and keywords',       path: '/admin/seo',           Icon: Globe as SearchItem['Icon'] },
   { label: 'CMS Editor',     description: 'Edit public-facing static content pages',             path: '/admin/cms',           Icon: PencilSimple as SearchItem['Icon'] },
   { label: 'Geo Access',     description: 'Control country-level platform access',               path: '/admin/geo-access',    Icon: Globe as SearchItem['Icon'] },
-  { label: 'Settings',       description: 'Platform settings and admin preferences',             path: '/admin/settings',      Icon: GearSix as SearchItem['Icon'] },
+  { label: 'Settings',       description: 'Site info, footer text, social links, contact info, SEO, and admin account', path: '/admin/settings', Icon: GearSix as SearchItem['Icon'] },
 ]
 
 // ─── TOUR STEPS ───────────────────────────────────────────────────────────────
@@ -163,7 +163,7 @@ const ADMIN_TOUR_STEPS: TourStep[] = [
   {
     target: 'admin-nav-instructors',
     title: 'Instructors',
-    content: 'Manage all instructors on the platform. View their courses count, profile details, and contact info.',
+    content: 'Manage all instructors on the platform. View their courses count, profile details, and contact info. Use the "Home" button on any instructor card to feature them on the public home page — the section auto-hides when no one is featured.',
   },
   {
     target: 'admin-nav-team',
@@ -199,6 +199,11 @@ const ADMIN_TOUR_STEPS: TourStep[] = [
     target: 'admin-nav-email',
     title: 'Email System',
     content: 'Full email automation control center. Enable or disable specific email triggers, customize HTML email templates, send test emails, view delivery logs, and track stats.',
+  },
+  {
+    target: 'admin-nav-newsletter',
+    title: 'Newsletter',
+    content: 'Manage your subscriber list and send broadcast email campaigns. View subscriber stats, manually add or remove subscribers, and send newsletters directly from here.',
   },
   {
     target: 'admin-nav-messages',

@@ -5,7 +5,7 @@ import {
   Money, Certificate, Gift, Chats, ChatCircleDots, EnvelopeSimple,
   Star, Bell, PencilSimple, Globe, CheckCircle, XCircle,
   UserCircle, Lock, ClockCounterClockwise, ArrowRight,
-  Hourglass, SealCheck, Sparkle,
+  Hourglass, SealCheck, Sparkle, Newspaper,
 } from '@phosphor-icons/react'
 import { useAuth } from '@/context/AuthContext'
 import { axiosClient } from '@/lib/axiosClient'
@@ -41,6 +41,7 @@ const ALL_PERMISSIONS = [
       { key: 'support',       label: 'Support',       Icon: ChatCircleDots, path: 'support' },
       { key: 'contacts',      label: 'Contacts',      Icon: EnvelopeSimple, path: 'contacts' },
       { key: 'email',         label: 'Email System',  Icon: EnvelopeSimple, path: 'email' },
+      { key: 'newsletter',    label: 'Newsletter',    Icon: Newspaper,      path: 'newsletter' },
       { key: 'reviews',       label: 'Reviews',       Icon: Star,           path: 'reviews' },
       { key: 'notifications', label: 'Notifications', Icon: Bell,           path: 'notifications' },
     ],
@@ -76,7 +77,7 @@ const LIVE_STAT_DEFS: LiveStat[] = [
   { label: 'Pending Payments',   permission: 'payments',      endpoint: '/payments',        paramKey: 'status', paramVal: 'pending',  value: null, color: 'text-amber-600 dark:text-amber-400' },
   { label: 'Open Tickets',       permission: 'support',       endpoint: '/support',         paramKey: 'status', paramVal: 'open',     value: null, color: 'text-red-500 dark:text-red-400' },
   { label: 'Aid Applications',   permission: 'financial-aid', endpoint: '/financial-aid',                                             value: null, color: 'text-emerald-600 dark:text-emerald-400' },
-  { label: 'Total Contacts',     permission: 'contacts',      endpoint: '/contacts',                                                  value: null, color: 'text-sky-600 dark:text-sky-400' },
+  { label: 'Total Contacts',     permission: 'contacts',      endpoint: '/contact',                                                   value: null, color: 'text-sky-600 dark:text-sky-400' },
 ]
 
 // ─── Greeting helpers ─────────────────────────────────────────────────────────

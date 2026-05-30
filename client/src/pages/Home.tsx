@@ -9,6 +9,8 @@ import Testimonials from '@/components/Testimonials'
 import Reviews from '@/components/Reviews'
 import Process from '@/components/Process'
 import Blog from '@/components/Blog'
+import HomeInstructors from '@/components/HomeInstructors'
+import NewsletterSection from '@/components/NewsletterSection'
 
 const pageVariants = {
   initial: { opacity: 0 },
@@ -49,6 +51,8 @@ export default function Home() {
       <motion.div variants={sectionVariants}><Reviews /></motion.div>
       <motion.div variants={sectionVariants}><Process /></motion.div>
       <motion.div variants={sectionVariants}><Blog /></motion.div>
+      <motion.div variants={sectionVariants}><HomeInstructors /></motion.div>
+      <motion.div variants={sectionVariants}><NewsletterSection /></motion.div>
       <motion.div variants={sectionVariants}><FinancialAidSection /></motion.div>
     </motion.div>
   )

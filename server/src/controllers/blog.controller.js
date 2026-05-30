@@ -61,6 +61,17 @@ export const getAdminBlogs = asyncHandler(async (req, res) => {
   }
 })
 
+// GET /api/v1/blogs/admin/:id — admin: single blog with full content
+export const getAdminBlogById = asyncHandler(async (req, res) => {
+  try {
+    const blog = await Blog.findById(req.params.id).populate('author', 'name profileImage role jobTitle')
+    if (!blog) return res.status(404).json({ success: false, error: { message: 'Blog not found' } })
+    res.json({ success: true, data: blog })
+  } catch (error) {
+    res.status(400).json({ success: false, error: { message: error.message } })
+  }
+})
+
 // POST /api/v1/blogs — admin/teacher
 export const createBlog = asyncHandler(async (req, res) => {
   try {

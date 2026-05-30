@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { Tag, Gift, Users, Wallet, Plus, Trash, ToggleLeft, ToggleRight, Copy, Check, X, Percent, PencilSimple } from '@phosphor-icons/react'
 import toast from 'react-hot-toast'
+import ConfirmModal from '@/components/ConfirmModal'
 import { couponsService } from '@/services/coupons.service'
 import { referralsService } from '@/services/referrals.service'
 import { coursesService } from '@/services/courses.service'
@@ -61,6 +62,7 @@ function CouponsTab() {
   const [coupons, setCoupons] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
+  const [confirmModal, setConfirmModal] = useState<{ id: string } | null>(null)
   const [filterSource, setFilterSource] = useState('')
   const [filterActive, setFilterActive] = useState('')
   const [courses, setCourses] = useState<any[]>([])
@@ -91,8 +93,7 @@ function CouponsTab() {
     } catch { toast.error('Failed to update coupon') }
   }
 
-  async function handleDelete(id: string) {
-    if (!confirm('Delete this coupon?')) return
+  async function handleDeleteConfirmed(id: string) {
     try {
       await couponsService.deleteCoupon(id)
       load()
@@ -177,7 +178,7 @@ function CouponsTab() {
                   </td>
                   <td className="px-4 py-3">
                     {c.source === 'admin' && (
-                      <button onClick={() => handleDelete(c._id)} className="text-red-400 hover:text-red-600 transition-colors">
+                      <button onClick={() => setConfirmModal({ id: c._id })} className="text-red-400 hover:text-red-600 transition-colors">
                         <Trash size={15} />
                       </button>
                     )}
@@ -196,6 +197,16 @@ function CouponsTab() {
           onSuccess={() => { setShowModal(false); load() }}
         />
       )}
+
+      <ConfirmModal
+        open={!!confirmModal}
+        title="Delete Coupon?"
+        message="This coupon will be permanently deleted and can no longer be used."
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={() => { const id = confirmModal!.id; setConfirmModal(null); handleDeleteConfirmed(id) }}
+        onCancel={() => setConfirmModal(null)}
+      />
     </div>
   )
 }
@@ -569,6 +580,7 @@ function OffersTab() {
   const [showModal, setShowModal] = useState(false)
   const [editOffer, setEditOffer] = useState<Offer | null>(null)
   const [courses, setCourses] = useState<any[]>([])
+  const [confirmModal, setConfirmModal] = useState<{ id: string } | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -596,8 +608,7 @@ function OffersTab() {
     } catch { toast.error('Failed to update offer') }
   }
 
-  async function handleDelete(id: string) {
-    if (!confirm('Delete this offer?')) return
+  async function handleDeleteConfirmed(id: string) {
     try {
       await offersService.deleteOffer(id)
       load()
@@ -681,7 +692,7 @@ function OffersTab() {
                       >
                         <PencilSimple size={15} />
                       </button>
-                      <button onClick={() => handleDelete(o._id)} className="text-red-400 hover:text-red-600 transition-colors">
+                      <button onClick={() => setConfirmModal({ id: o._id })} className="text-red-400 hover:text-red-600 transition-colors">
                         <Trash size={15} />
                       </button>
                     </div>
@@ -701,6 +712,16 @@ function OffersTab() {
           onSuccess={() => { setShowModal(false); load() }}
         />
       )}
+
+      <ConfirmModal
+        open={!!confirmModal}
+        title="Delete Offer?"
+        message="This offer will be permanently removed and will no longer be applied to any courses."
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={() => { const id = confirmModal!.id; setConfirmModal(null); handleDeleteConfirmed(id) }}
+        onCancel={() => setConfirmModal(null)}
+      />
     </div>
   )
 }

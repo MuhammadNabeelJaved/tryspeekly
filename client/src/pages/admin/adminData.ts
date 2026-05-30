@@ -270,7 +270,7 @@ export interface CMSPage {
 // ─── SETTINGS TYPE ────────────────────────────────────────────────────────────
 
 export interface AdminSettings {
-  site: { name: string; tagline: string; logoText: string; footerCopyright: string }
+  site: { name: string; tagline: string; logoText: string; footerCopyright: string; footerDescription: string }
   contact: { phone: string; email: string; whatsapp: string; address: string; workingHours: string }
   social: { facebook: string; instagram: string; twitter: string; linkedin: string; youtube: string }
   seo: { metaTitle: string; metaDescription: string; keywords: string }
@@ -285,6 +285,7 @@ export const INITIAL_SETTINGS: AdminSettings = {
     tagline: 'Master English. Change Your Life.',
     logoText: 'EnglishPro',
     footerCopyright: '© 2026 EnglishPro Academy. All rights reserved.',
+    footerDescription: 'Empowering learners worldwide to achieve English fluency through interactive courses, expert instruction, and personalized learning experiences.',
   },
   contact: {
     phone: '+801 555 645 45',

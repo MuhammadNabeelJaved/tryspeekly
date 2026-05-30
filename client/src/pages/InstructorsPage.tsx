@@ -1,88 +1,84 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Star, Globe, Play, TwitterLogo, LinkedinLogo, Certificate, ChalkboardTeacher, ChatCircle } from '@phosphor-icons/react'
+import { Star, Globe, TwitterLogo, LinkedinLogo, Certificate, ChalkboardTeacher, ChatCircle, BookOpen, Users, ChatCircleDots } from '@phosphor-icons/react'
 import { useNavigate } from 'react-router-dom'
 import { axiosClient } from '../lib/axiosClient'
 
 interface Instructor {
   name: string
   role: string
-  experience: string
   students: string
   rating: number
   specialty: string
   image: string
   bio: string
   social: { twitter: string; linkedin: string }
+  courseCount?: number
+  reviewCount?: number
+  studentCount?: number
 }
 
 const FALLBACK_INSTRUCTORS: Instructor[] = [
   {
     name: 'Sarah Johnson',
     role: 'IELTS Expert & Trainer',
-    experience: '8 Years',
     students: '1,200+',
     rating: 4.9,
     specialty: 'IELTS Prep',
     image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=400&auto=format&fit=crop',
     bio: 'Former IELTS examiner with a passion for helping students achieve their target band scores.',
-    social: { twitter: '#', linkedin: '#' }
+    social: { twitter: '#', linkedin: '#' },
   },
   {
     name: 'Mark Williams',
     role: 'Business English Coach',
-    experience: '12 Years',
     students: '890+',
     rating: 4.8,
     specialty: 'Business English',
     image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=400&auto=format&fit=crop',
     bio: 'Specializes in corporate communication, negotiation skills, and professional email writing.',
-    social: { twitter: '#', linkedin: '#' }
+    social: { twitter: '#', linkedin: '#' },
   },
   {
     name: 'Emily Chen',
     role: 'General English Specialist',
-    experience: '6 Years',
     students: '2,100+',
     rating: 5.0,
     specialty: 'General English',
     image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=400&auto=format&fit=crop',
     bio: 'Creates engaging, interactive lessons focused on everyday conversation and confidence building.',
-    social: { twitter: '#', linkedin: '#' }
+    social: { twitter: '#', linkedin: '#' },
   },
   {
     name: 'Michael Brown',
     role: 'Pronunciation Coach',
-    experience: '10 Years',
     students: '1,500+',
     rating: 4.9,
     specialty: 'Speaking',
     image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=400&auto=format&fit=crop',
     bio: 'Expert in accent reduction and natural rhythm, helping you sound more like a native speaker.',
-    social: { twitter: '#', linkedin: '#' }
+    social: { twitter: '#', linkedin: '#' },
   },
   {
     name: 'Lisa Davies',
     role: 'Kids & Teens Educator',
-    experience: '7 Years',
     students: '3,000+',
     rating: 4.8,
     specialty: 'Young Learners',
     image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=400&auto=format&fit=crop',
     bio: 'Uses games, songs, and storytelling to make English learning fun and memorable for children.',
-    social: { twitter: '#', linkedin: '#' }
+    social: { twitter: '#', linkedin: '#' },
   },
   {
     name: 'David Wilson',
     role: 'Advanced Grammar Tutor',
-    experience: '15 Years',
     students: '1,800+',
     rating: 4.9,
     specialty: 'Grammar',
     image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=400&auto=format&fit=crop',
     bio: 'Breaks down complex grammar rules into simple, understandable concepts for advanced learners.',
-    social: { twitter: '#', linkedin: '#' }
-  }
+    social: { twitter: '#', linkedin: '#' },
+  },
 ]
 
 const FEATURES = [
@@ -105,31 +101,36 @@ const FEATURES = [
 
 export default function InstructorsPage() {
   const [instructors, setInstructors] = useState<Instructor[]>(FALLBACK_INSTRUCTORS)
+  const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
 
   useEffect(() => {
     axiosClient
-      .get('/users', { params: { role: 'teacher' } })
+      .get('/users/public-teachers')
       .then((res) => {
         const data = res.data?.data ?? res.data
         if (Array.isArray(data) && data.length > 0) {
           const mapped: Instructor[] = data.map((t: any) => ({
             name: t.name,
-            role: t.bio ?? 'English Instructor',
-            experience: `${t.experience ?? 5}+ Years`,
-            students: `${t.studentCount ?? 500}+`,
-            rating: t.rating ?? 4.9,
-            specialty: (t.specializations ?? ['General English'])[0],
-            image: t.photo ?? 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=400&auto=format&fit=crop',
+            role: t.jobTitle ?? 'English Instructor',
+            students: t.studentCount ?? 0,
+            rating: 4.9,
+            specialty: 'English',
+            image: t.profileImage ?? 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=400&auto=format&fit=crop',
             bio: t.bio ?? 'Experienced English instructor dedicated to your success.',
             social: { twitter: '#', linkedin: '#' },
+            courseCount: t.courseCount ?? 0,
+            reviewCount: t.reviewCount ?? 0,
+            studentCount: t.studentCount ?? 0,
           }))
           setInstructors(mapped)
         }
+        // if data is empty, fallback stays
       })
       .catch(() => {
-        // Keep fallback data on failure
+        // on error, fallback stays
       })
+      .finally(() => setLoading(false))
   }, [])
 
   const pageVariants = {
@@ -207,6 +208,22 @@ export default function InstructorsPage() {
       {/* ─── INSTRUCTORS GRID ─────────────────────────────────── */}
       <section className="py-20 lg:py-28">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {loading && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="bg-white dark:bg-neutral-900 border border-slate-100 dark:border-neutral-800 rounded-3xl overflow-hidden">
+                  <div className="h-64 animate-pulse bg-slate-200 dark:bg-neutral-800" />
+                  <div className="p-6 space-y-3">
+                    <div className="h-4 w-2/3 rounded animate-pulse bg-slate-200 dark:bg-neutral-800" />
+                    <div className="h-3 w-1/2 rounded animate-pulse bg-slate-200 dark:bg-neutral-800" />
+                    <div className="h-3 w-full rounded animate-pulse bg-slate-200 dark:bg-neutral-800" />
+                    <div className="h-3 w-5/6 rounded animate-pulse bg-slate-200 dark:bg-neutral-800" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          {!loading && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {instructors.map((ins, i) => (
               <motion.div
@@ -259,28 +276,42 @@ export default function InstructorsPage() {
                     {ins.bio}
                   </p>
 
-                  <div className="flex items-center gap-4 pt-5 border-t border-slate-100 dark:border-neutral-800 mb-5">
+                  <div className="flex items-center gap-2 pt-5 border-t border-slate-100 dark:border-neutral-800">
                     <div className="flex-1 text-center">
-                      <div className="text-lg font-black text-slate-900 dark:text-white">{ins.students}</div>
-                      <div className="text-xs text-slate-500 dark:text-neutral-400 font-medium uppercase tracking-wider mt-0.5">Students</div>
+                      <div className="flex items-center justify-center gap-1 mb-1">
+                        <BookOpen size={13} className="text-violet-500" />
+                        <span className="text-base font-black text-slate-900 dark:text-white">
+                          {ins.courseCount !== undefined ? ins.courseCount : ins.students}
+                        </span>
+                      </div>
+                      <div className="text-[10px] text-slate-500 dark:text-neutral-400 font-medium uppercase tracking-wider">Courses</div>
                     </div>
                     <div className="w-px h-8 bg-slate-200 dark:bg-neutral-700" />
                     <div className="flex-1 text-center">
-                      <div className="text-lg font-black text-slate-900 dark:text-white">{ins.experience}</div>
-                      <div className="text-xs text-slate-500 dark:text-neutral-400 font-medium uppercase tracking-wider mt-0.5">Experience</div>
+                      <div className="flex items-center justify-center gap-1 mb-1">
+                        <Users size={13} className="text-violet-500" />
+                        <span className="text-base font-black text-slate-900 dark:text-white">
+                          {ins.studentCount !== undefined ? ins.studentCount : ins.students}
+                        </span>
+                      </div>
+                      <div className="text-[10px] text-slate-500 dark:text-neutral-400 font-medium uppercase tracking-wider">Students</div>
+                    </div>
+                    <div className="w-px h-8 bg-slate-200 dark:bg-neutral-700" />
+                    <div className="flex-1 text-center">
+                      <div className="flex items-center justify-center gap-1 mb-1">
+                        <ChatCircleDots size={13} className="text-violet-500" />
+                        <span className="text-base font-black text-slate-900 dark:text-white">
+                          {ins.reviewCount !== undefined ? ins.reviewCount : '—'}
+                        </span>
+                      </div>
+                      <div className="text-[10px] text-slate-500 dark:text-neutral-400 font-medium uppercase tracking-wider">Reviews</div>
                     </div>
                   </div>
-
-                  <button
-                    onClick={() => navigate('/courses')}
-                    className="w-full py-3 rounded-xl bg-slate-50 dark:bg-neutral-800 text-slate-900 dark:text-white font-bold text-sm hover:bg-violet-600 hover:text-white dark:hover:bg-violet-500 transition-colors flex items-center justify-center gap-2"
-                  >
-                    <Play size={16} weight="fill" /> Watch Intro
-                  </button>
                 </div>
               </motion.div>
             ))}
           </div>
+          )}
         </div>
       </section>
 

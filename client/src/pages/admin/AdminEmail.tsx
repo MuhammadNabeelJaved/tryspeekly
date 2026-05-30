@@ -7,6 +7,7 @@ import {
 import toast from 'react-hot-toast'
 import { emailService } from '@/services/email.service'
 import type { EmailSetting, EmailTemplate, EmailLog, EmailStats } from '@/services/email.service'
+import ConfirmModal from '@/components/ConfirmModal'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -180,6 +181,7 @@ function TemplatesTab() {
   const [subject, setSubject] = useState('')
   const [htmlBody, setHtmlBody] = useState('')
   const [previewMode, setPreviewMode] = useState(false)
+  const [confirmModal, setConfirmModal] = useState<{ title: string; message: string; onConfirm: () => void } | null>(null)
 
   useEffect(() => {
     emailService.getTemplates()
@@ -216,9 +218,14 @@ function TemplatesTab() {
     finally { setSaving(false) }
   }
 
-  const reset = async () => {
-    if (!selected || !confirm('Reset this template to the default? Your customizations will be lost.')) return
-    setResetting(true)
+  const reset = () => {
+    if (!selected) return
+    setConfirmModal({
+      title: 'Reset Template?',
+      message: 'This will restore the default template. Your customizations will be permanently lost.',
+      onConfirm: async () => {
+        setConfirmModal(null)
+        setResetting(true)
     try {
       const r = await emailService.resetTemplate(selected.type)
       if (r.success) {
@@ -228,8 +235,10 @@ function TemplatesTab() {
         setTemplates(prev => prev.map(t => t.type === selected.type ? { ...t, isCustomized: false } : t))
         setSelected(prev => prev ? { ...prev, isCustomized: false } : prev)
       }
-    } catch { toast.error('Failed to reset') }
-    finally { setResetting(false) }
+      } catch { toast.error('Failed to reset') }
+        finally { setResetting(false) }
+      },
+    })
   }
 
   const sendTest = async () => {
@@ -357,6 +366,16 @@ function TemplatesTab() {
           </div>
         )}
       </div>
+
+      <ConfirmModal
+        open={!!confirmModal}
+        title={confirmModal?.title ?? ''}
+        message={confirmModal?.message ?? ''}
+        confirmLabel="Reset"
+        variant="warning"
+        onConfirm={() => confirmModal?.onConfirm()}
+        onCancel={() => setConfirmModal(null)}
+      />
     </div>
   )
 }
@@ -373,6 +392,7 @@ function LogsTab() {
   const [typeFilter, setTypeFilter] = useState('')
   const [search, setSearch] = useState('')
   const [clearing, setClearing] = useState(false)
+  const [confirmModal, setConfirmModal] = useState<{ title: string; message: string; onConfirm: () => void } | null>(null)
 
   const fetchLogs = useCallback(() => {
     setLoading(true)
@@ -390,14 +410,20 @@ function LogsTab() {
 
   useEffect(() => { fetchLogs() }, [fetchLogs])
 
-  const clearOldLogs = async () => {
-    if (!confirm('Delete all email logs? This cannot be undone.')) return
-    setClearing(true)
-    try {
-      const r = await emailService.clearLogs()
-      if (r.success) { toast.success(r.message || 'All logs cleared'); fetchLogs() }
-    } catch { toast.error('Failed to clear logs') }
-    finally { setClearing(false) }
+  const clearOldLogs = () => {
+    setConfirmModal({
+      title: 'Delete All Logs?',
+      message: 'This will permanently delete all email delivery logs. This cannot be undone.',
+      onConfirm: async () => {
+        setConfirmModal(null)
+        setClearing(true)
+        try {
+          const r = await emailService.clearLogs()
+          if (r.success) { toast.success(r.message || 'All logs cleared'); fetchLogs() }
+        } catch { toast.error('Failed to clear logs') }
+        finally { setClearing(false) }
+      },
+    })
   }
 
   return (
@@ -487,6 +513,16 @@ function LogsTab() {
           </div>
         )}
       </div>
+
+      <ConfirmModal
+        open={!!confirmModal}
+        title={confirmModal?.title ?? ''}
+        message={confirmModal?.message ?? ''}
+        confirmLabel="Delete All"
+        variant="danger"
+        onConfirm={() => confirmModal?.onConfirm()}
+        onCancel={() => setConfirmModal(null)}
+      />
     </div>
   )
 }

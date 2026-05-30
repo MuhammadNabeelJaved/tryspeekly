@@ -513,7 +513,7 @@ export interface ContactMessage {
 
 export interface SiteSettings {
   _id: string;
-  site: { name?: string; tagline?: string; logoText?: string; footerCopyright?: string };
+  site: { name?: string; tagline?: string; logoText?: string; footerCopyright?: string; footerDescription?: string };
   contact: { phone?: string; email?: string; whatsapp?: string; address?: string; workingHours?: string };
   social: { facebook?: string; instagram?: string; twitter?: string; linkedin?: string; youtube?: string };
   seo: { metaTitle?: string; metaDescription?: string; keywords?: string };

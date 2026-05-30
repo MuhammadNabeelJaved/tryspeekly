@@ -65,7 +65,7 @@ const userSchema = new Schema(
           enum: [
             'overview', 'students', 'courses', 'instructors',
             'payments', 'financial-aid', 'salaries', 'certificates', 'referrals',
-            'messages', 'support', 'contacts', 'email', 'reviews', 'notifications',
+            'messages', 'support', 'contacts', 'email', 'newsletter', 'reviews', 'notifications',
             'blog', 'seo', 'cms', 'geo-access',
           ],
         },
@@ -103,6 +103,10 @@ const userSchema = new Schema(
       default: false,
     },
     isBlocked: {
+      type: Boolean,
+      default: false,
+    },
+    showOnHome: {
       type: Boolean,
       default: false,
     },

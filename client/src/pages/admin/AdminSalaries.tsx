@@ -9,6 +9,7 @@ import toast from 'react-hot-toast'
 import { axiosClient } from '@/lib/axiosClient'
 import { salaryService } from '@/services/salary.service'
 import UserAvatar from '@/components/UserAvatar'
+import ConfirmModal from '@/components/ConfirmModal'
 import type {
   SalaryPackage,
   SalaryPayment,
@@ -990,47 +991,19 @@ export default function AdminSalaries() {
         </div>
       )}
 
-      {/* ── Delete confirm modal ── */}
-      <AnimatePresence>
-        {deleteTarget && (
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
-          >
-            <motion.div
-              initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }}
-              className="bg-white dark:bg-neutral-900 rounded-2xl p-6 w-full max-w-sm border border-slate-100 dark:border-neutral-800 shadow-2xl text-center"
-            >
-              <div className="w-12 h-12 rounded-2xl bg-red-100 dark:bg-red-950/40 flex items-center justify-center mx-auto mb-4">
-                <Warning size={22} className="text-red-500" />
-              </div>
-              <h3 className="font-black text-slate-900 dark:text-white mb-1">
-                {deleteTarget === 'package' ? 'Delete Package?' : 'Delete Payment?'}
-              </h3>
-              <p className="text-sm text-slate-400 dark:text-neutral-500 mb-5">
-                {deleteTarget === 'package'
-                  ? 'This will permanently delete the salary package and all its payment records.'
-                  : 'This payment record will be permanently removed.'}
-              </p>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setDeleteTarget(null)}
-                  className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-neutral-700 text-sm font-semibold text-slate-600 dark:text-neutral-400 hover:bg-slate-50 dark:hover:bg-neutral-800 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => deleteTarget === 'package' ? confirmDeletePackage() : confirmDeletePayment(deleteTarget)}
-                  disabled={saving}
-                  className="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 disabled:opacity-60 text-white text-sm font-bold transition-colors"
-                >
-                  Delete
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <ConfirmModal
+        open={!!deleteTarget}
+        title={deleteTarget === 'package' ? 'Delete Package?' : 'Delete Payment?'}
+        message={
+          deleteTarget === 'package'
+            ? 'This will permanently delete the salary package and all its payment records.'
+            : 'This payment record will be permanently removed.'
+        }
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={() => deleteTarget === 'package' ? confirmDeletePackage() : confirmDeletePayment(deleteTarget!)}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   )
 }

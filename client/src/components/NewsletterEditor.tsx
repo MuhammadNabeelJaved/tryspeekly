@@ -4,15 +4,16 @@ import JoditEditor from 'jodit-react'
 interface Props {
   value: string
   onChange: (html: string) => void
+  height?: number
 }
 
-export default function NewsletterEditor({ value, onChange }: Props) {
+export default function NewsletterEditor({ value, onChange, height = 420 }: Props) {
   const editor = useRef(null)
 
   const config = useMemo(
     () => ({
       readonly: false,
-      height: 420,
+      height,
       toolbarAdaptive: false,
       toolbarSticky: false,
       showCharsCounter: false,
@@ -44,7 +45,7 @@ export default function NewsletterEditor({ value, onChange }: Props) {
         font: '15px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif',
       },
     }),
-    []
+    [height]
   )
 
   return (

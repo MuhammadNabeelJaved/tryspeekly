@@ -6,6 +6,7 @@ import {
   ChartBar, Funnel,
 } from '@phosphor-icons/react'
 import { seoService, type SeoPage } from '../../services/seo.service'
+import ConfirmModal from '@/components/ConfirmModal'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Tab = 'basic' | 'social' | 'schema' | 'sitemap' | 'global'
@@ -96,6 +97,7 @@ export default function AdminSEO() {
   const [showAddPage, setShowAddPage] = useState(false)
   const [newPage, setNewPage] = useState({ pageSlug: '', pageName: '', pageUrl: '' })
   const [schemaError, setSchemaError] = useState('')
+  const [confirmSlug, setConfirmSlug] = useState<string | null>(null)
 
   // Load all pages list
   const loadPages = useCallback(async () => {
@@ -184,8 +186,14 @@ export default function AdminSEO() {
     } catch {}
   }
 
-  const handleDeletePage = async (slug: string) => {
-    if (!confirm(`Delete SEO entry for "${slug}"?`)) return
+  const handleDeletePage = (slug: string) => {
+    setConfirmSlug(slug)
+  }
+
+  const handleDeletePageConfirmed = async () => {
+    if (!confirmSlug) return
+    const slug = confirmSlug
+    setConfirmSlug(null)
     try {
       await seoService.deletePage(slug)
       setPages(prev => prev.filter(p => p.pageSlug !== slug))
@@ -795,6 +803,16 @@ export default function AdminSEO() {
           <Warning size={14} weight="fill" />Unsaved changes
         </div>
       )}
+
+      <ConfirmModal
+        open={!!confirmSlug}
+        title="Delete SEO Entry?"
+        message={`The SEO configuration for "${confirmSlug}" will be permanently deleted.`}
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={handleDeletePageConfirmed}
+        onCancel={() => setConfirmSlug(null)}
+      />
     </div>
   )
 }

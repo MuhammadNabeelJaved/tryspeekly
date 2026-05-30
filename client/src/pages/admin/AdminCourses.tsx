@@ -3,11 +3,13 @@ import { useForm } from 'react-hook-form'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, PencilSimple, Trash, X, Check, Users, Clock, CurrencyCircleDollar, CheckCircle, XCircle, Eye, Star } from '@phosphor-icons/react'
 import toast from 'react-hot-toast'
+import ConfirmModal from '../../components/ConfirmModal'
 import type { AdminStore } from '../AdminPage'
 import type { Course } from './adminData'
 import { coursesService } from '../../services/courses.service'
 import { usersService } from '../../services/users.service'
 import { siteSettingsService } from '../../services/site-settings.service'
+import { useAuth } from '@/context/AuthContext'
 
 const EMPTY: Course = {
   id: '', title: '', level: 'Beginner', duration: '', price: 0, currency: 'PKR', pricingType: 'full_course' as const,
@@ -58,6 +60,8 @@ const REVERSE_STATUS: Record<string, string> = {
 
 export default function AdminCourses({ store }: { store: AdminStore }) {
   const { courses, setCourses } = store
+  const { user } = useAuth()
+  const isAdmin = user?.role === 'admin'
 
   const [apiCourses, setApiCourses] = useState<Course[] | null>(null)
   const [loading, setLoading] = useState(true)
@@ -145,6 +149,7 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
     saveFeatured(featuredIds, val)
   }
 
+  const [bulkConfirm, setBulkConfirm] = useState(false)
   const [modalType, setModalType] = useState<'add' | 'edit' | null>(null)
   const [reviewCourse, setReviewCourse] = useState<Course | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
@@ -333,8 +338,12 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
     }
   }
 
-  async function handleBulkDelete() {
-    if (!window.confirm(`Permanently delete ${selectedIds.size} course${selectedIds.size > 1 ? 's' : ''}? This cannot be undone.`)) return
+  function handleBulkDelete() {
+    setBulkConfirm(true)
+  }
+
+  async function executeBulkDelete() {
+    setBulkConfirm(false)
     setIsBulkDeleting(true)
     const ids = Array.from(selectedIds)
     const results = await Promise.allSettled(ids.map(id => coursesService.deleteCourse(id)))
@@ -389,9 +398,11 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
             />
             on home
           </label>
-          <button onClick={openAdd} className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-sm font-bold shadow-[0_4px_12px_rgba(124,58,237,0.3)] transition-colors">
-            <Plus size={15} weight="bold" />New Course
-          </button>
+          {isAdmin && (
+            <button onClick={openAdd} className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-sm font-bold shadow-[0_4px_12px_rgba(124,58,237,0.3)] transition-colors">
+              <Plus size={15} weight="bold" />New Course
+            </button>
+          )}
         </div>
       </div>
 
@@ -626,10 +637,14 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
                         <div className="w-px bg-slate-100 dark:bg-neutral-800" />
                       </>
                     )}
-                    <button onClick={() => openEdit(course)} className="flex-1 py-2.5 text-xs font-semibold text-slate-500 dark:text-neutral-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-slate-50 dark:hover:bg-neutral-800/50 flex items-center justify-center gap-1.5 transition-colors">
-                      <PencilSimple size={13} />Edit
-                    </button>
-                    <div className="w-px bg-slate-100 dark:bg-neutral-800" />
+                    {isAdmin && (
+                      <>
+                        <button onClick={() => openEdit(course)} className="flex-1 py-2.5 text-xs font-semibold text-slate-500 dark:text-neutral-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-slate-50 dark:hover:bg-neutral-800/50 flex items-center justify-center gap-1.5 transition-colors">
+                          <PencilSimple size={13} />Edit
+                        </button>
+                        <div className="w-px bg-slate-100 dark:bg-neutral-800" />
+                      </>
+                    )}
                     <button onClick={() => setDeleteId(course.id)} className="flex-1 py-2.5 text-xs font-semibold text-slate-500 dark:text-neutral-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-slate-50 dark:hover:bg-neutral-800/50 flex items-center justify-center gap-1.5 transition-colors">
                       <Trash size={13} />Delete
                     </button>
@@ -912,22 +927,25 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
         )}
       </AnimatePresence>
 
-      {/* DELETE CONFIRM */}
-      <AnimatePresence>
-        {deleteId && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} className="bg-white dark:bg-neutral-900 rounded-2xl p-6 w-full max-w-sm border border-slate-100 dark:border-neutral-800 shadow-2xl text-center">
-              <div className="w-12 h-12 rounded-2xl bg-red-100 dark:bg-red-950/40 flex items-center justify-center mx-auto mb-4"><Trash size={22} className="text-red-500" /></div>
-              <h3 className="font-black text-slate-900 dark:text-white mb-1">Delete Course?</h3>
-              <p className="text-sm text-slate-400 dark:text-neutral-500 mb-5">This action cannot be undone.</p>
-              <div className="flex gap-3">
-                <button onClick={() => setDeleteId(null)} className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-neutral-700 text-sm font-semibold text-slate-600 dark:text-neutral-400 hover:bg-slate-50 dark:hover:bg-neutral-800 transition-colors">Cancel</button>
-                <button onClick={() => handleDelete(deleteId)} className="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-bold transition-colors">Delete</button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <ConfirmModal
+        open={!!deleteId}
+        title="Delete Course?"
+        message="This action is permanent and cannot be undone."
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={() => { handleDelete(deleteId!); setDeleteId(null) }}
+        onCancel={() => setDeleteId(null)}
+      />
+
+      <ConfirmModal
+        open={bulkConfirm}
+        title={`Delete ${selectedIds.size} Course${selectedIds.size > 1 ? 's' : ''}?`}
+        message="This will permanently remove all selected courses. This cannot be undone."
+        confirmLabel="Delete All"
+        variant="danger"
+        onConfirm={executeBulkDelete}
+        onCancel={() => setBulkConfirm(false)}
+      />
     </div>
   )
 }

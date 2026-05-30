@@ -5,6 +5,7 @@ import { uploadProfileImage, handleMulterError } from '../middlewares/multer.js'
 import {
   getAllBlogs,
   getAdminBlogs,
+  getAdminBlogById,
   getBlog,
   createBlog,
   updateBlog,
@@ -27,6 +28,7 @@ router.route('/').get(getAllBlogs)
 
 // ─── Admin routes (must be before /:slug to avoid shadowing) ──────────────────
 router.route('/admin/all').get(authenticate, authorizeBlog, getAdminBlogs)
+router.route('/admin/:id').get(authenticate, authorizeBlog, getAdminBlogById)
 
 router.route('/:slug').get(getBlog)
 

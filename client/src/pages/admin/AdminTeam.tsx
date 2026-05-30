@@ -59,6 +59,7 @@ const PERMISSION_GROUPS = [
       { key: 'support', label: 'Support' },
       { key: 'contacts', label: 'Contacts' },
       { key: 'email', label: 'Email System' },
+      { key: 'newsletter', label: 'Newsletter' },
       { key: 'reviews', label: 'Reviews' },
       { key: 'notifications', label: 'Notifications' },
     ],
@@ -406,10 +407,13 @@ export default function AdminTeam() {
             </div>
           )}
           {members.map(member => (
-            <button
+            <div
               key={member._id}
               onClick={() => setSelected(member)}
-              className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${
+              role="button"
+              tabIndex={0}
+              onKeyDown={e => e.key === 'Enter' && setSelected(member)}
+              className={`w-full flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors ${
                 selected?._id === member._id
                   ? 'bg-violet-50 dark:bg-violet-950/30 border-r-2 border-violet-600'
                   : 'hover:bg-slate-50 dark:hover:bg-neutral-800/50'
@@ -436,7 +440,7 @@ export default function AdminTeam() {
                   <Trash size={13} />
                 </button>
               </div>
-            </button>
+            </div>
           ))}
         </div>
       </div>

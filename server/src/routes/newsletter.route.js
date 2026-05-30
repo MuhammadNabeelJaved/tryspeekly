@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import rateLimit from 'express-rate-limit'
-import { authenticate, authorize } from '../middlewares/auth.js'
+import { authenticate, authorizeTeamPage } from '../middlewares/auth.js'
 import {
   subscribe,
   getSubscribers,
@@ -29,8 +29,8 @@ const subscribeLimiter = rateLimit({
 router.post('/subscribers', subscribeLimiter, subscribe)
 router.get('/unsubscribe', unsubscribeByToken)
 
-// ─── Admin ────────────────────────────────────────────────────────────────────
-router.use(authenticate, authorize('admin'))
+// ─── Admin & team members with newsletter permission ──────────────────────────
+router.use(authenticate, authorizeTeamPage('newsletter'))
 
 router.route('/subscribers').get(getSubscribers)
 router.route('/subscribers/:id').delete(deleteSubscriber)

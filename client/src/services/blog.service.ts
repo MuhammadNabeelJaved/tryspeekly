@@ -16,6 +16,11 @@ export const blogService = {
     return response.data;
   },
 
+  async getAdminBlogById(id: string): Promise<BlogSingleResponse> {
+    const response = await axiosClient.get<BlogSingleResponse>(`/blogs/admin/${id}`);
+    return response.data;
+  },
+
   async getBlogBySlug(slug: string): Promise<BlogSingleResponse> {
     const response = await axiosClient.get<BlogSingleResponse>(`/blogs/${slug}`);
     return response.data;

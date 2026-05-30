@@ -4,7 +4,7 @@ import {
   ChartBar, Users, BookOpen, Chalkboard, CreditCard, Handshake,
   Money, Certificate, Gift, Chats, ChatCircleDots, EnvelopeSimple,
   Star, Bell, PencilSimple, Globe, GearSix, SignOut, List, X, ChatTeardropText,
-  SquaresFour, UserCircle, MagnifyingGlass, Sparkle, ChatText,
+  SquaresFour, UserCircle, MagnifyingGlass, Sparkle, ChatText, Newspaper,
 } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '@/context/AuthContext'
@@ -51,6 +51,7 @@ const AdminSalaries      = lazy(() => import('./admin/AdminSalaries'))
 const AdminContacts      = lazy(() => import('./admin/AdminContacts'))
 const AdminReferrals     = lazy(() => import('./admin/AdminReferrals'))
 const AdminEmail         = lazy(() => import('./admin/AdminEmail'))
+const AdminNewsletter    = lazy(() => import('./admin/AdminNewsletter'))
 
 // ─── Permission → nav item mapping ───────────────────────────────────────────
 
@@ -72,6 +73,7 @@ const ALL_NAV = [
   { key: 'support',       label: 'Support',       path: 'support',       Icon: ChatCircleDots },
   { key: 'contacts',      label: 'Contacts',      path: 'contacts',      Icon: EnvelopeSimple },
   { key: 'email',         label: 'Email System',  path: 'email',         Icon: EnvelopeSimple },
+  { key: 'newsletter',   label: 'Newsletter',    path: 'newsletter',    Icon: Newspaper },
   { key: 'reviews',       label: 'Reviews',       path: 'reviews',       Icon: Star },
   { key: 'notifications', label: 'Notifications', path: 'notifications', Icon: Bell },
   { key: 'blog',          label: 'Blog Manager',  path: 'blog',          Icon: PencilSimple },
@@ -252,6 +254,7 @@ export default function TeamPage() {
     support:       'View and respond to support tickets from students and instructors.',
     contacts:      'View messages submitted via the public contact form.',
     email:         'Manage email templates, triggers, delivery logs, and test emails.',
+    newsletter:    'Manage newsletter subscribers and send broadcast email campaigns.',
     reviews:       'Moderate course reviews submitted by students.',
     notifications: 'View and manage platform-wide notifications.',
     blog:          'Create, edit, and publish blog posts for the platform.',
@@ -631,6 +634,7 @@ export default function TeamPage() {
               {permissions.includes('contacts')      && <Route path="/contacts"      element={<AdminContacts />} />}
               {permissions.includes('referrals')     && <Route path="/referrals"     element={<AdminReferrals />} />}
               {permissions.includes('email')         && <Route path="/email"         element={<AdminEmail />} />}
+              {permissions.includes('newsletter')    && <Route path="/newsletter"    element={<AdminNewsletter />} />}
               <Route path="*" element={<Navigate to="/team" replace />} />
             </Routes>
           </Suspense>

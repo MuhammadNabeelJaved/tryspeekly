@@ -9,6 +9,7 @@ const siteSettingsSchema = new Schema(
       tagline: { type: String, trim: true },
       logoText: { type: String, trim: true },
       footerCopyright: { type: String, trim: true },
+      footerDescription: { type: String, trim: true, maxlength: [400, 'Footer description cannot exceed 400 characters'] },
     },
     contact: {
       phone: { type: String, trim: true },

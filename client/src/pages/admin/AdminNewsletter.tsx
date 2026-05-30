@@ -7,6 +7,7 @@ import {
 import { newsletterService } from '@/services/newsletter.service'
 import type { NewsletterSubscriber, NewsletterCampaign } from '@/services/newsletter.service'
 import NewsletterEditor from '@/components/NewsletterEditor'
+import ConfirmModal from '@/components/ConfirmModal'
 
 const STATUS_BADGE: Record<string, string> = {
   draft:     'bg-slate-100 text-slate-600 dark:bg-white/5 dark:text-neutral-400',
@@ -71,27 +72,39 @@ export default function AdminNewsletter() {
     }
   }
 
-  const handleDeleteSub = async (id: string) => {
-    if (!window.confirm('Permanently delete this subscriber? This cannot be undone.')) return
-    try {
-      await newsletterService.deleteSubscriber(id)
-      toast.success('Subscriber deleted')
-      fetchSubscribers(subPage, debouncedSearch)
-    } catch {
-      toast.error('Failed to delete subscriber')
-    }
+  const handleDeleteSub = (id: string) => {
+    setConfirmModal({
+      title: 'Delete Subscriber?',
+      message: 'This will permanently remove the subscriber. This action cannot be undone.',
+      confirmLabel: 'Delete',
+      variant: 'danger',
+      onConfirm: async () => {
+        setConfirmModal(null)
+        try {
+          await newsletterService.deleteSubscriber(id)
+          toast.success('Subscriber deleted')
+          fetchSubscribers(subPage, debouncedSearch)
+        } catch {
+          toast.error('Failed to delete subscriber')
+        }
+      },
+    })
   }
 
   // ─── Campaigns ────────────────────────────────────────────────────────────────
+  const [confirmModal, setConfirmModal] = useState<{ title: string; message: string; confirmLabel: string; variant: 'danger' | 'warning' | 'send' | 'unsubscribe'; onConfirm: () => void } | null>(null)
+
   const [campaigns, setCampaigns] = useState<NewsletterCampaign[]>([])
   const [campLoading, setCampLoading] = useState(false)
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [editingStatus, setEditingStatus] = useState<string | null>(null)
   const [formSubject, setFormSubject] = useState('')
   const [formBody, setFormBody] = useState('')
   const [formSendType, setFormSendType] = useState<'now' | 'scheduled'>('now')
   const [formScheduledAt, setFormScheduledAt] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [editorKey, setEditorKey] = useState(0)
 
   const fetchCampaigns = useCallback(async () => {
     setCampLoading(true)
@@ -115,6 +128,8 @@ export default function AdminNewsletter() {
     setFormSendType('now')
     setFormScheduledAt('')
     setEditingId(null)
+    setEditingStatus(null)
+    setEditorKey(k => k + 1)
   }
 
   const openEditForm = (c: NewsletterCampaign) => {
@@ -123,6 +138,8 @@ export default function AdminNewsletter() {
     setFormSendType(c.scheduledAt ? 'scheduled' : 'now')
     setFormScheduledAt(c.scheduledAt ? new Date(c.scheduledAt).toISOString().slice(0, 16) : '')
     setEditingId(c._id)
+    setEditingStatus(c.status)
+    setEditorKey(k => k + 1)
     setShowForm(true)
   }
 
@@ -133,7 +150,12 @@ export default function AdminNewsletter() {
 
     setSubmitting(true)
     try {
-      if (sendNow) {
+      const isSentCampaign = editingId && !EDITABLE.includes(editingStatus ?? '')
+
+      if (isSentCampaign) {
+        await newsletterService.updateCampaign(editingId!, { subject: formSubject, htmlBody: formBody })
+        toast.success('Campaign updated!')
+      } else if (sendNow) {
         let id = editingId
         if (!id) {
           const res = await newsletterService.createCampaign({ subject: formSubject, htmlBody: formBody, status: 'draft' })
@@ -173,32 +195,48 @@ export default function AdminNewsletter() {
     }
   }
 
-  const handleDirectSend = async (id: string) => {
-    if (!window.confirm('Send this campaign to all active subscribers now? This cannot be undone.')) return
-    try {
-      await newsletterService.sendCampaign(id)
-      toast.success('Campaign is being sent!')
-      fetchCampaigns()
-    } catch (err: unknown) {
-      const message = err && typeof err === 'object' && 'response' in err
-        ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
-        : undefined
-      toast.error(message || 'Failed to send')
-    }
+  const handleDirectSend = (id: string) => {
+    setConfirmModal({
+      title: 'Send Campaign Now?',
+      message: 'This will immediately send the campaign to all active subscribers. This cannot be undone.',
+      confirmLabel: 'Send Now',
+      variant: 'send',
+      onConfirm: async () => {
+        setConfirmModal(null)
+        try {
+          await newsletterService.sendCampaign(id)
+          toast.success('Campaign is being sent!')
+          fetchCampaigns()
+        } catch (err: unknown) {
+          const message = err && typeof err === 'object' && 'response' in err
+            ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
+            : undefined
+          toast.error(message || 'Failed to send')
+        }
+      },
+    })
   }
 
-  const handleDeleteCampaign = async (id: string) => {
-    if (!window.confirm('Delete this campaign? This cannot be undone.')) return
-    try {
-      await newsletterService.deleteCampaign(id)
-      toast.success('Campaign deleted')
-      fetchCampaigns()
-    } catch (err: unknown) {
-      const message = err && typeof err === 'object' && 'response' in err
-        ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
-        : undefined
-      toast.error(message || 'Failed to delete')
-    }
+  const handleDeleteCampaign = (id: string) => {
+    setConfirmModal({
+      title: 'Delete Campaign?',
+      message: 'This will permanently delete the campaign. This action cannot be undone.',
+      confirmLabel: 'Delete',
+      variant: 'danger',
+      onConfirm: async () => {
+        setConfirmModal(null)
+        try {
+          await newsletterService.deleteCampaign(id)
+          toast.success('Campaign deleted')
+          fetchCampaigns()
+        } catch (err: unknown) {
+          const message = err && typeof err === 'object' && 'response' in err
+            ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
+            : undefined
+          toast.error(message || 'Failed to delete')
+        }
+      },
+    })
   }
 
   return (
@@ -332,7 +370,7 @@ export default function AdminNewsletter() {
         <div className="space-y-4">
           <div className="flex justify-end">
             <button
-              onClick={() => { resetForm(); setShowForm(true) }}
+              onClick={() => { resetForm(); setEditorKey(k => k + 1); setShowForm(true) }}
               className="flex items-center gap-2 px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold rounded-xl transition-all shadow-sm hover:shadow-[0_4px_12px_rgba(124,58,237,0.3)]"
             >
               <Plus size={16} weight="bold" />
@@ -378,31 +416,29 @@ export default function AdminNewsletter() {
                       </td>
                       <td className="px-5 py-3.5">
                         <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => openEditForm(c)}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-colors"
+                            title="Edit"
+                          >
+                            <PencilSimple size={15} />
+                          </button>
                           {EDITABLE.includes(c.status) && (
-                            <>
-                              <button
-                                onClick={() => openEditForm(c)}
-                                className="p-1.5 rounded-lg text-slate-400 hover:text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-colors"
-                                title="Edit"
-                              >
-                                <PencilSimple size={15} />
-                              </button>
-                              <button
-                                onClick={() => handleDirectSend(c._id)}
-                                className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors"
-                                title="Send now"
-                              >
-                                <PaperPlaneTilt size={15} />
-                              </button>
-                              <button
-                                onClick={() => handleDeleteCampaign(c._id)}
-                                className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                                title="Delete"
-                              >
-                                <Trash size={15} />
-                              </button>
-                            </>
+                            <button
+                              onClick={() => handleDirectSend(c._id)}
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors"
+                              title="Send now"
+                            >
+                              <PaperPlaneTilt size={15} />
+                            </button>
                           )}
+                          <button
+                            onClick={() => handleDeleteCampaign(c._id)}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                            title="Delete"
+                          >
+                            <Trash size={15} />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -448,46 +484,50 @@ export default function AdminNewsletter() {
                 <label className="block text-sm font-semibold text-slate-700 dark:text-neutral-300 mb-1.5">
                   Content *
                 </label>
-                <NewsletterEditor value={formBody} onChange={setFormBody} />
+                <NewsletterEditor key={editorKey} value={formBody} onChange={setFormBody} />
               </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 dark:text-neutral-300 mb-2">
-                  Send Options
-                </label>
-                <div className="flex gap-3">
-                  {(['now', 'scheduled'] as const).map((type) => (
-                    <button
-                      key={type}
-                      type="button"
-                      onClick={() => setFormSendType(type)}
-                      className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border transition-all ${
-                        formSendType === type
-                          ? 'bg-violet-600 border-violet-600 text-white'
-                          : 'bg-white dark:bg-neutral-800 border-slate-200 dark:border-white/10 text-slate-600 dark:text-neutral-400 hover:border-violet-400'
-                      }`}
-                    >
-                      {type === 'now' ? <PaperPlaneTilt size={15} /> : <Clock size={15} />}
-                      {type === 'now' ? 'Send now' : 'Schedule for later'}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              {!(editingId && !EDITABLE.includes(editingStatus ?? '')) && (
+                <>
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 dark:text-neutral-300 mb-2">
+                      Send Options
+                    </label>
+                    <div className="flex gap-3">
+                      {(['now', 'scheduled'] as const).map((type) => (
+                        <button
+                          key={type}
+                          type="button"
+                          onClick={() => setFormSendType(type)}
+                          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border transition-all ${
+                            formSendType === type
+                              ? 'bg-violet-600 border-violet-600 text-white'
+                              : 'bg-white dark:bg-neutral-800 border-slate-200 dark:border-white/10 text-slate-600 dark:text-neutral-400 hover:border-violet-400'
+                          }`}
+                        >
+                          {type === 'now' ? <PaperPlaneTilt size={15} /> : <Clock size={15} />}
+                          {type === 'now' ? 'Send now' : 'Schedule for later'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
 
-              {formSendType === 'scheduled' && (
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 dark:text-neutral-300 mb-1.5">
-                    <CalendarBlank size={14} className="inline mr-1" />
-                    Schedule Date & Time *
-                  </label>
-                  <input
-                    type="datetime-local"
-                    value={formScheduledAt}
-                    min={new Date(Date.now() + 60_000).toISOString().slice(0, 16)}
-                    onChange={(e) => setFormScheduledAt(e.target.value)}
-                    className="px-4 py-2.5 text-sm bg-white dark:bg-neutral-800 border border-slate-200 dark:border-white/10 rounded-xl outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 text-slate-900 dark:text-neutral-300 transition-all"
-                  />
-                </div>
+                  {formSendType === 'scheduled' && (
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 dark:text-neutral-300 mb-1.5">
+                        <CalendarBlank size={14} className="inline mr-1" />
+                        Schedule Date & Time *
+                      </label>
+                      <input
+                        type="datetime-local"
+                        value={formScheduledAt}
+                        min={new Date(Date.now() + 60_000).toISOString().slice(0, 16)}
+                        onChange={(e) => setFormScheduledAt(e.target.value)}
+                        className="px-4 py-2.5 text-sm bg-white dark:bg-neutral-800 border border-slate-200 dark:border-white/10 rounded-xl outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 text-slate-900 dark:text-neutral-300 transition-all"
+                      />
+                    </div>
+                  )}
+                </>
               )}
             </div>
 
@@ -499,36 +539,58 @@ export default function AdminNewsletter() {
               >
                 Cancel
               </button>
-              <button
-                onClick={() => saveCampaign('draft')}
-                disabled={submitting}
-                className="px-4 py-2 text-sm font-semibold bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-neutral-300 rounded-xl transition-all disabled:opacity-50"
-              >
-                Save Draft
-              </button>
-              {formSendType === 'scheduled' ? (
+              {editingId && !EDITABLE.includes(editingStatus ?? '') ? (
                 <button
-                  onClick={() => saveCampaign('scheduled')}
-                  disabled={submitting}
-                  className="flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-all disabled:opacity-50"
-                >
-                  <Clock size={15} />
-                  {submitting ? 'Scheduling...' : 'Schedule'}
-                </button>
-              ) : (
-                <button
-                  onClick={() => saveCampaign('draft', true)}
+                  onClick={() => saveCampaign('draft')}
                   disabled={submitting}
                   className="flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-violet-600 hover:bg-violet-700 text-white rounded-xl transition-all disabled:opacity-50"
                 >
-                  <PaperPlaneTilt size={15} />
-                  {submitting ? 'Sending...' : 'Send Now'}
+                  {submitting ? 'Saving...' : 'Save Changes'}
                 </button>
+              ) : (
+                <>
+                  <button
+                    onClick={() => saveCampaign('draft')}
+                    disabled={submitting}
+                    className="px-4 py-2 text-sm font-semibold bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-neutral-300 rounded-xl transition-all disabled:opacity-50"
+                  >
+                    Save Draft
+                  </button>
+                  {formSendType === 'scheduled' ? (
+                    <button
+                      onClick={() => saveCampaign('scheduled')}
+                      disabled={submitting}
+                      className="flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-all disabled:opacity-50"
+                    >
+                      <Clock size={15} />
+                      {submitting ? 'Scheduling...' : 'Schedule'}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => saveCampaign('draft', true)}
+                      disabled={submitting}
+                      className="flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-violet-600 hover:bg-violet-700 text-white rounded-xl transition-all disabled:opacity-50"
+                    >
+                      <PaperPlaneTilt size={15} />
+                      {submitting ? 'Sending...' : 'Send Now'}
+                    </button>
+                  )}
+                </>
               )}
             </div>
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        open={!!confirmModal}
+        title={confirmModal?.title ?? ''}
+        message={confirmModal?.message ?? ''}
+        confirmLabel={confirmModal?.confirmLabel}
+        variant={confirmModal?.variant}
+        onConfirm={() => confirmModal?.onConfirm()}
+        onCancel={() => setConfirmModal(null)}
+      />
     </div>
   )
 }

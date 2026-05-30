@@ -11,6 +11,7 @@ import { blogService } from '../../services/blog.service'
 import { siteSettingsService } from '../../services/site-settings.service'
 import type { Blog, CreateBlogDto } from '../../types/api'
 import { extractApiError } from '../../utils/apiError'
+import NewsletterEditor from '../../components/NewsletterEditor'
 
 const EMPTY_BLOG: CreateBlogDto = {
   title: '',
@@ -50,6 +51,8 @@ export default function AdminBlog() {
   const [activeTab, setActiveTab] = useState<'edit' | 'preview'>('edit')
   const [homeBlogCount, setHomeBlogCount] = useState(3)
   const [featuredBlogIds, setFeaturedBlogIds] = useState<string[]>([])
+  const [editorInitialContent, setEditorInitialContent] = useState('')
+  const [editorKey, setEditorKey] = useState(0)
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const featuredDebounce = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -135,15 +138,20 @@ export default function AdminBlog() {
 
   const openAdd = () => {
     reset({ ...EMPTY_BLOG, tagsInput: '' })
+    setEditorInitialContent('')
+    setEditorKey(k => k + 1)
     setModalType('add')
     setEditingId(null)
     setActiveTab('edit')
   }
 
-  const openEdit = (blog: Blog) => {
+  const openEdit = async (blog: Blog) => {
+    setEditingId(blog._id)
+    setModalType('edit')
+    setActiveTab('edit')
     reset({
       title: blog.title,
-      content: blog.content,
+      content: '',
       excerpt: blog.excerpt || '',
       coverImage: blog.coverImage || '',
       status: blog.status,
@@ -151,9 +159,17 @@ export default function AdminBlog() {
       readTime: blog.readTime || '5 min read',
       tagsInput: blog.tags.join(', ')
     })
-    setEditingId(blog._id)
-    setModalType('edit')
-    setActiveTab('edit')
+    setEditorInitialContent('')
+    setEditorKey(k => k + 1)
+    try {
+      const res = await blogService.getAdminBlogById(blog._id)
+      const fullContent = res.data.content || ''
+      setValue('content', fullContent)
+      setEditorInitialContent(fullContent)
+      setEditorKey(k => k + 1)
+    } catch {
+      // silently ignore — editor stays empty
+    }
   }
 
   const onSave = async (data: CreateBlogDto & { tagsInput: string }) => {
@@ -456,11 +472,14 @@ export default function AdminBlog() {
                       </Field>
 
                       <Field label="Article Body Content">
-                        <textarea 
-                          {...register('content', { required: true })} 
-                          placeholder="Write your story..." 
-                          className="w-full min-h-[500px] px-6 py-5 rounded-[32px] border border-slate-200 dark:border-neutral-800 bg-slate-50 dark:bg-neutral-800/50 text-sm sm:text-base text-slate-700 dark:text-neutral-200 outline-none focus:border-violet-500 transition-all leading-relaxed font-serif" 
-                        />
+                        <div className="rounded-[20px] overflow-hidden border border-slate-200 dark:border-neutral-800">
+                          <NewsletterEditor
+                            key={editorKey}
+                            value={editorInitialContent}
+                            onChange={html => setValue('content', html, { shouldValidate: true })}
+                            height={600}
+                          />
+                        </div>
                       </Field>
                     </div>
                   </div>
@@ -512,9 +531,14 @@ export default function AdminBlog() {
                         <div className="prose prose-lg dark:prose-invert max-w-none text-slate-600 dark:text-neutral-300 whitespace-pre-wrap leading-relaxed font-serif italic text-lg opacity-60 mb-8">
                           {watchedExcerpt}
                         </div>
-                        <div className="prose prose-lg dark:prose-invert max-w-none text-slate-700 dark:text-neutral-200 whitespace-pre-wrap leading-relaxed text-[1.1rem]">
-                          {watchedContent || 'Article content will appear here...'}
-                        </div>
+                        {watchedContent ? (
+                          <div
+                            className="prose prose-lg dark:prose-invert max-w-none text-slate-700 dark:text-neutral-200 leading-relaxed"
+                            dangerouslySetInnerHTML={{ __html: watchedContent }}
+                          />
+                        ) : (
+                          <p className="text-slate-400 dark:text-neutral-600 italic">Article content will appear here...</p>
+                        )}
                         
                         <div className="mt-12 pt-8 border-t border-slate-50 dark:border-neutral-800 flex flex-wrap gap-2">
                            {previewTags.map(tag => (
