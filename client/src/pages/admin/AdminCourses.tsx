@@ -10,7 +10,7 @@ import { usersService } from '../../services/users.service'
 import { siteSettingsService } from '../../services/site-settings.service'
 
 const EMPTY: Course = {
-  id: '', title: '', level: 'Beginner', duration: '', price: 0, currency: 'PKR',
+  id: '', title: '', level: 'Beginner', duration: '', price: 0, currency: 'PKR', pricingType: 'full_course' as const,
   instructorId: '', instructorName: '', totalStudents: 0, maxStudents: 15,
   status: 'active', description: '', startDate: new Date().toISOString().split('T')[0],
   schedule: '', nextClassTime: '', nextClassNumber: 1, meetingLink: '', meetingId: '', passcode: '', features: [],
@@ -82,6 +82,7 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
           level: c.level ? c.level.charAt(0).toUpperCase() + c.level.slice(1) : 'Beginner',
           duration: `${c.totalSessions ?? 0} sessions`,
           price: c.price ?? 0,
+          pricingType: (c.pricingType as 'monthly' | 'full_course' | 'per_session') ?? 'full_course',
           priceUSD: c.priceUSD ?? 0,
           currency: c.currency ?? 'PKR',
           instructorId: c.teacher?._id ?? '',
@@ -152,15 +153,19 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
   const [reviewPrice, setReviewPrice] = useState<number>(0)
   const [reviewPriceUSD, setReviewPriceUSD] = useState<number>(0)
   const [reviewCurrency, setReviewCurrency] = useState<'PKR' | 'USD'>('PKR')
+  const [reviewPricingType, setReviewPricingType] = useState<'monthly' | 'full_course' | 'per_session'>('full_course')
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState('All')
   const [activeTab, setActiveTab] = useState<'manage' | 'pending'>('manage')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [isBulkDeleting, setIsBulkDeleting] = useState(false)
 
-  const { register, handleSubmit, reset, setValue } = useForm<Course & { featuresInput: string }>({
+  const { register, handleSubmit, reset, setValue, watch } = useForm<Course & { featuresInput: string }>({
     defaultValues: { ...EMPTY, featuresInput: '' }
   })
+  const watchedPricingType = watch('pricingType') as 'monthly' | 'full_course' | 'per_session'
+  const watchedPrice = watch('price')
+  const watchedDuration = watch('duration')
 
   const filtered = displayCourses.filter(c => {
     const q = search.toLowerCase()
@@ -190,6 +195,7 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
     setReviewPrice(course.price ?? 0)
     setReviewPriceUSD(course.priceUSD ?? 0)
     setReviewCurrency((course.currency as 'PKR' | 'USD') ?? 'PKR')
+    setReviewPricingType((course.pricingType as 'monthly' | 'full_course' | 'per_session') ?? 'full_course')
   }
 
   async function handleReviewAction(courseId: string, action: 'accept' | 'reject', reason?: string) {
@@ -199,7 +205,7 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
         courseId,
         action === 'accept' ? 'approve' : 'reject',
         reason,
-        action === 'accept' ? { price: reviewPrice, priceUSD: reviewPriceUSD, currency: reviewCurrency } : undefined
+        action === 'accept' ? { price: reviewPrice, priceUSD: reviewPriceUSD, currency: reviewCurrency, pricingType: reviewPricingType } : undefined
       )
       const res = await coursesService.getAdminCourses({ limit: 200 })
       const apiData: any[] = res.data ?? []
@@ -209,6 +215,7 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
         level: c.level ? c.level.charAt(0).toUpperCase() + c.level.slice(1) : 'Beginner',
         duration: `${c.totalSessions ?? 0} sessions`,
         price: c.price ?? 0,
+        pricingType: (c.pricingType as 'monthly' | 'full_course' | 'per_session') ?? 'full_course',
         currency: c.currency ?? 'PKR',
         instructorId: c.teacher?._id ?? '',
         instructorName: c.teacher?.name ?? '',
@@ -252,6 +259,7 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
       price: data.price,
       priceUSD: data.priceUSD ?? 0,
       currency: 'PKR',
+      pricingType: data.pricingType ?? 'full_course',
       type: 'group',
       level: levelMap[data.level] ?? 'beginner',
       focus: 'general',
@@ -279,6 +287,7 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
         level: c.level ? c.level.charAt(0).toUpperCase() + c.level.slice(1) : 'Beginner',
         duration: `${c.totalSessions ?? 0} sessions`,
         price: c.price ?? 0,
+        pricingType: (c.pricingType as 'monthly' | 'full_course' | 'per_session') ?? 'full_course',
         currency: c.currency ?? 'PKR',
         instructorId: c.teacher?._id ?? '',
         instructorName: c.teacher?.name ?? '',
@@ -553,8 +562,20 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
                     <p className="text-[11px] text-slate-400 dark:text-neutral-500 mt-0.5 truncate">{course.instructorName}</p>
                   </div>
                   <div className="flex-shrink-0 text-right">
-                    <p className="text-sm font-black text-violet-600 dark:text-violet-400">₨{course.price.toLocaleString()}</p>
-                    {(course.priceUSD ?? 0) > 0 && <p className="text-[10px] font-semibold text-slate-400 dark:text-neutral-500">${course.priceUSD}</p>}
+                    <p className="text-sm font-black text-violet-600 dark:text-violet-400">
+                      ₨{course.price.toLocaleString()}
+                      <span className="text-[10px] font-semibold text-slate-400 dark:text-neutral-500 ml-1">
+                        {course.pricingType === 'monthly' ? '/mo' : course.pricingType === 'per_session' ? '/session' : ''}
+                      </span>
+                    </p>
+                    {(course.priceUSD ?? 0) > 0 && (
+                      <p className="text-[10px] font-semibold text-slate-400 dark:text-neutral-500">${course.priceUSD}</p>
+                    )}
+                    {course.pricingType === 'per_session' && (
+                      <p className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-500 mt-0.5">
+                        ₨{(course.price * parseInt(course.duration)).toLocaleString()} total
+                      </p>
+                    )}
                   </div>
                 </div>
                 <p className="text-xs text-slate-500 dark:text-neutral-400 leading-relaxed mb-3 line-clamp-2">{course.description}</p>
@@ -686,6 +707,38 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
                 <Field label="USD Price">
                   <Input register={register} name="priceUSD" type="number" placeholder="30" valueAsNumber />
                 </Field>
+                <div className="col-span-2">
+                  <Field label="Pricing Type">
+                    <div className="flex gap-2">
+                      {([
+                        { value: 'full_course' as const, label: 'Full Course' },
+                        { value: 'monthly' as const, label: 'Monthly' },
+                        { value: 'per_session' as const, label: 'Per Session' },
+                      ]).map(opt => (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => setValue('pricingType', opt.value)}
+                          className={`flex-1 py-2 rounded-xl text-xs font-bold border transition-all ${
+                            watchedPricingType === opt.value
+                              ? 'bg-violet-600 border-violet-600 text-white'
+                              : 'border-slate-200 dark:border-neutral-700 text-slate-500 dark:text-neutral-400 hover:border-violet-400 bg-slate-50 dark:bg-neutral-800'
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </Field>
+                </div>
+                {watchedPricingType === 'per_session' && Number(watchedPrice) > 0 && parseInt(String(watchedDuration)) > 0 && (
+                  <div className="col-span-2">
+                    <p className="text-xs text-slate-500 dark:text-neutral-400 bg-violet-50 dark:bg-violet-950/20 border border-violet-200 dark:border-violet-800/30 rounded-xl px-3 py-2">
+                      <span className="font-semibold text-violet-700 dark:text-violet-400">Total estimate:</span>{' '}
+                      ₨{(Number(watchedPrice) * parseInt(String(watchedDuration))).toLocaleString()} ({watchedDuration} sessions × ₨{Number(watchedPrice).toLocaleString()}/session)
+                    </p>
+                  </div>
+                )}
                 <Field label="Max Students"><Input register={register} name="maxStudents" type="number" placeholder="15" valueAsNumber /></Field>
                 <Field label="Instructor">
                   <select {...register('instructorId', { onChange: e => pickInstructor(e.target.value) })} className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors">
@@ -779,6 +832,29 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
                       className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors"
                       placeholder="e.g. 30"
                     />
+                  </div>
+                  <div className="col-span-2">
+                    <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-2">Pricing Type</p>
+                    <div className="flex gap-2">
+                      {([
+                        { value: 'full_course' as const, label: 'Full Course' },
+                        { value: 'monthly' as const, label: 'Monthly' },
+                        { value: 'per_session' as const, label: 'Per Session' },
+                      ]).map(opt => (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => setReviewPricingType(opt.value)}
+                          className={`flex-1 py-2 rounded-xl text-xs font-bold border transition-all ${
+                            reviewPricingType === opt.value
+                              ? 'bg-violet-600 border-violet-600 text-white'
+                              : 'border-slate-200 dark:border-neutral-700 text-slate-500 dark:text-neutral-400 hover:border-violet-400 bg-slate-50 dark:bg-neutral-800'
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                   <div>
                     <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-1">Duration & Schedule</p>
