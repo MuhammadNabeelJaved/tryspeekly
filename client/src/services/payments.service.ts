@@ -1,5 +1,5 @@
 import { axiosClient } from '../lib/axiosClient';
-import type { Payment, CreatePaymentDto, AdminCreatePaymentDto, ApiResponse, ApiPaginatedResponse } from '../types/api';
+import type { Payment, CreatePaymentDto, AdminCreatePaymentDto, DirectApprovePaymentDto, UnpaidEnrollment, ApiResponse, ApiPaginatedResponse } from '../types/api';
 
 export const paymentsService = {
   async createPayment(dto: CreatePaymentDto): Promise<{ success: boolean; data: Payment }> {
@@ -51,6 +51,21 @@ export const paymentsService = {
     const response = await axiosClient.post<{ success: boolean; data: Payment }>(
       '/payments/admin',
       dto
+    );
+    return response.data;
+  },
+
+  async directApprovePayment(dto: DirectApprovePaymentDto): Promise<{ success: boolean; data: Payment }> {
+    const response = await axiosClient.post<{ success: boolean; data: Payment }>(
+      '/payments/admin/direct-approve',
+      dto
+    );
+    return response.data;
+  },
+
+  async getUnpaidEnrollments(): Promise<ApiPaginatedResponse<UnpaidEnrollment>> {
+    const response = await axiosClient.get<ApiPaginatedResponse<UnpaidEnrollment>>(
+      '/enrollments/admin/unpaid'
     );
     return response.data;
   },

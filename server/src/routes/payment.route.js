@@ -8,6 +8,7 @@ import {
   approvePayment,
   rejectPayment,
   adminCreatePayment,
+  directApprovePayment,
 } from '../controllers/payment.controller.js'
 
 const router = express.Router()
@@ -19,6 +20,7 @@ router.route('/my').get(authenticate, authorize('student'), getMyPayments)
 // ─── Admin only routes ─────────────────────────────────────────────────────────
 router.route('/').get(authenticate, authorizeTeamPage('payments'), getAllPayments)
 router.route('/admin').post(authenticate, authorizeTeamPage('payments'), adminCreatePayment)
+router.route('/admin/direct-approve').post(authenticate, authorizeTeamPage('payments'), directApprovePayment)
 router.route('/:id/approve').patch(authenticate, authorizeTeamPage('payments'), approvePayment)
 router.route('/:id/reject').patch(authenticate, authorizeTeamPage('payments'), rejectPayment)
 

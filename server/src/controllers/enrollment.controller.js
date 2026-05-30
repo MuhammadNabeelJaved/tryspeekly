@@ -236,3 +236,29 @@ export const getAllEnrollments = asyncHandler(async (req, res) => {
     res.status(400).json({ success: false, error: { message: error.message } })
   }
 })
+
+// GET /api/v1/enrollments/admin/unpaid — admin: enrollments with no payment record yet
+export const getUnpaidEnrollments = asyncHandler(async (req, res) => {
+  try {
+    const { page = 1, limit = 100 } = req.query
+    const skip = (Number(page) - 1) * Number(limit)
+    const filter = { payment: null, isActive: false, financialAid: null }
+    const [enrollments, total] = await Promise.all([
+      Enrollment.find(filter)
+        .populate('student', 'name email profileImage')
+        .populate('course', 'title level price priceUSD currency pricingType')
+        .populate('teacher', 'name')
+        .skip(skip)
+        .limit(Number(limit))
+        .sort({ enrolledAt: -1 }),
+      Enrollment.countDocuments(filter),
+    ])
+    res.json({
+      success: true,
+      data: enrollments,
+      pagination: { page: Number(page), limit: Number(limit), total, totalPages: Math.ceil(total / Number(limit)) },
+    })
+  } catch (error) {
+    res.status(400).json({ success: false, error: { message: error.message } })
+  }
+})

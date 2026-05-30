@@ -382,3 +382,70 @@ export const adminCreatePayment = asyncHandler(async (req, res) => {
     res.status(400).json({ success: false, error: { message: error.message } })
   }
 })
+
+// POST /api/v1/payments/admin/direct-approve — admin: create payment + immediately approve (for WhatsApp payments)
+export const directApprovePayment = asyncHandler(async (req, res) => {
+  try {
+    const { enrollmentId, method, transactionId, amount, currency, adminNote } = req.body
+
+    if (!enrollmentId || !method || !amount) {
+      return res.status(400).json({ success: false, error: { message: 'enrollmentId, method, and amount are required' } })
+    }
+
+    const enrollment = await Enrollment.findById(enrollmentId)
+      .populate('course', 'title price priceUSD currency')
+    if (!enrollment) return res.status(404).json({ success: false, error: { message: 'Enrollment not found' } })
+    if (enrollment.payment) return res.status(409).json({ success: false, error: { message: 'A payment record already exists for this enrollment' } })
+
+    const payment = await Payment.create({
+      student: enrollment.student,
+      course: enrollment.course._id,
+      teacher: enrollment.teacher,
+      method,
+      transactionId: transactionId || '',
+      amount: Number(amount),
+      currency: currency || 'PKR',
+      status: 'approved',
+      adminNote: adminNote || 'Approved by admin (WhatsApp / direct verification)',
+    })
+
+    await Enrollment.findByIdAndUpdate(enrollment._id, { payment: payment._id, isActive: true })
+
+    await createAndEmitNotification({
+      recipientId: enrollment.student,
+      title: 'Payment Approved',
+      message: `Your payment for "${enrollment.course.title}" has been approved. You now have full access.`,
+      type: 'payment',
+      severity: 'low',
+      relatedId: payment._id,
+      relatedType: 'Payment',
+    })
+
+    const student = await User.findById(enrollment.student, 'name email').lean()
+    if (student) {
+      sendEmail({
+        type: 'payment_approved',
+        to: student.email,
+        toName: student.name,
+        variables: {
+          studentName: student.name,
+          courseName: enrollment.course.title,
+          amount: payment.amount,
+          currency: payment.currency,
+          adminNote: payment.adminNote,
+          dashboardUrl: `${process.env.CLIENT_URL || 'http://localhost:5173'}/dashboard`,
+        },
+        metadata: { paymentId: payment._id },
+      }).catch(() => {})
+    }
+
+    const populated = await Payment.findById(payment._id)
+      .populate('student', 'name email')
+      .populate('course', 'title')
+      .populate('teacher', 'name')
+
+    res.status(201).json({ success: true, message: 'Payment approved and course access granted', data: populated })
+  } catch (error) {
+    res.status(400).json({ success: false, error: { message: error.message } })
+  }
+})

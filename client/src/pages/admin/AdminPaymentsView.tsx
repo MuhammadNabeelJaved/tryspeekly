@@ -1,15 +1,39 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
-import { CreditCard, CheckCircle, WarningCircle, XCircle, MagnifyingGlass, FunnelSimple, Plus, Image, LockSimple } from '@phosphor-icons/react'
+import { CreditCard, CheckCircle, WarningCircle, XCircle, MagnifyingGlass, FunnelSimple, Plus, Image, LockSimple, WhatsappLogo } from '@phosphor-icons/react'
 import { paymentsService } from '@/services/payments.service'
-import type { Payment } from '@/types/api'
+import type { Payment, UnpaidEnrollment, PaymentMethod } from '@/types/api'
 import AdminPaymentCreateModal from './AdminPaymentCreateModal'
+import toast from 'react-hot-toast'
 
 type ActionState = { paymentId: string; type: 'approve' | 'reject'; note: string } | null
 
+type DirectApproveState = {
+  enrollmentId: string
+  studentName: string
+  courseName: string
+  method: PaymentMethod
+  amount: string
+  transactionId: string
+  adminNote: string
+} | null
+
+const PAYMENT_METHODS: { value: PaymentMethod; label: string }[] = [
+  { value: 'jazzcash', label: 'JazzCash' },
+  { value: 'easypaisa', label: 'EasyPaisa' },
+  { value: 'nayapay', label: 'NayaPay' },
+  { value: 'sadapay', label: 'SadaPay' },
+  { value: 'zindigi', label: 'Zindigi' },
+  { value: 'bank_local', label: 'Bank (Local)' },
+  { value: 'bank_international', label: 'Bank (Intl)' },
+]
+
 export default function AdminPaymentsView() {
   const [payments, setPayments] = useState<Payment[]>([])
+  const [unpaidEnrollments, setUnpaidEnrollments] = useState<UnpaidEnrollment[]>([])
   const [loading, setLoading] = useState(true)
+  const [unpaidLoading, setUnpaidLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState<'payments' | 'unpaid'>('unpaid')
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState('All')
   const [filterMethod, setFilterMethod] = useState('All')
@@ -17,6 +41,9 @@ export default function AdminPaymentsView() {
   const [actionLoading, setActionLoading] = useState(false)
   const [actionError, setActionError] = useState('')
   const [createModalOpen, setCreateModalOpen] = useState(false)
+  const [directApprove, setDirectApprove] = useState<DirectApproveState>(null)
+  const [directApproveLoading, setDirectApproveLoading] = useState(false)
+  const [directApproveError, setDirectApproveError] = useState('')
 
   const fetchPayments = useCallback(() => {
     setLoading(true)
@@ -26,7 +53,43 @@ export default function AdminPaymentsView() {
       .finally(() => setLoading(false))
   }, [])
 
-  useEffect(() => { fetchPayments() }, [fetchPayments])
+  const fetchUnpaid = useCallback(() => {
+    setUnpaidLoading(true)
+    paymentsService.getUnpaidEnrollments()
+      .then(res => setUnpaidEnrollments(res.data))
+      .catch(() => {})
+      .finally(() => setUnpaidLoading(false))
+  }, [])
+
+  useEffect(() => { fetchPayments(); fetchUnpaid() }, [fetchPayments, fetchUnpaid])
+
+  const handleDirectApproveConfirm = async () => {
+    if (!directApprove) return
+    if (!directApprove.amount || Number(directApprove.amount) <= 0) {
+      setDirectApproveError('Amount is required.')
+      return
+    }
+    setDirectApproveLoading(true)
+    setDirectApproveError('')
+    try {
+      await paymentsService.directApprovePayment({
+        enrollmentId: directApprove.enrollmentId,
+        method: directApprove.method,
+        transactionId: directApprove.transactionId || undefined,
+        amount: Number(directApprove.amount),
+        currency: 'PKR',
+        adminNote: directApprove.adminNote || undefined,
+      })
+      toast.success(`Payment approved — ${directApprove.studentName} now has course access.`)
+      setDirectApprove(null)
+      fetchUnpaid()
+      fetchPayments()
+    } catch (err: any) {
+      setDirectApproveError(err?.response?.data?.error?.message || 'Failed. Please try again.')
+    } finally {
+      setDirectApproveLoading(false)
+    }
+  }
 
   const allMethods = ['All', ...Array.from(new Set(payments.map(p => p.method))).sort()]
 
@@ -81,8 +144,168 @@ export default function AdminPaymentsView() {
         </button>
       </div>
 
+      {/* ── Tab switcher ── */}
+      <div className="flex gap-1 p-1 bg-slate-100 dark:bg-neutral-800 rounded-2xl mb-6 w-fit">
+        <button
+          onClick={() => setActiveTab('unpaid')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${activeTab === 'unpaid' ? 'bg-white dark:bg-neutral-900 text-violet-600 dark:text-violet-400 shadow-sm' : 'text-slate-500 dark:text-neutral-400 hover:text-slate-700 dark:hover:text-neutral-200'}`}
+        >
+          <WhatsappLogo size={15} weight="fill" />
+          No Payment Yet
+          {unpaidEnrollments.length > 0 && (
+            <span className="bg-amber-400 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full min-w-[18px] text-center">{unpaidEnrollments.length}</span>
+          )}
+        </button>
+        <button
+          onClick={() => setActiveTab('payments')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${activeTab === 'payments' ? 'bg-white dark:bg-neutral-900 text-violet-600 dark:text-violet-400 shadow-sm' : 'text-slate-500 dark:text-neutral-400 hover:text-slate-700 dark:hover:text-neutral-200'}`}
+        >
+          <CreditCard size={15} />
+          Payment Records
+          {payments.filter(p => p.status === 'pending').length > 0 && (
+            <span className="bg-amber-400 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full min-w-[18px] text-center">{payments.filter(p => p.status === 'pending').length}</span>
+          )}
+        </button>
+      </div>
+
       {/* Summary cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+      {/* ── No Payment Yet tab ── */}
+      {activeTab === 'unpaid' && (
+        <div>
+          {/* Direct approve panel */}
+          {directApprove && (
+            <div className="mb-4 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/40 space-y-3">
+              <p className="text-sm font-bold text-emerald-800 dark:text-emerald-300">
+                ✓ Approve Payment — <span className="font-black">{directApprove.studentName}</span> · {directApprove.courseName}
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[10px] font-bold text-slate-500 dark:text-neutral-400 uppercase tracking-wide block mb-1">Payment Method</label>
+                  <select
+                    value={directApprove.method}
+                    onChange={e => setDirectApprove(d => d ? { ...d, method: e.target.value as PaymentMethod } : d)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-sm text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors"
+                  >
+                    {PAYMENT_METHODS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-slate-500 dark:text-neutral-400 uppercase tracking-wide block mb-1">Amount (PKR)</label>
+                  <input
+                    type="number"
+                    value={directApprove.amount}
+                    onChange={e => setDirectApprove(d => d ? { ...d, amount: e.target.value } : d)}
+                    placeholder="e.g. 15000"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-sm text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors placeholder-slate-300 dark:placeholder-neutral-600"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-slate-500 dark:text-neutral-400 uppercase tracking-wide block mb-1">Transaction ID (optional)</label>
+                  <input
+                    value={directApprove.transactionId}
+                    onChange={e => setDirectApprove(d => d ? { ...d, transactionId: e.target.value } : d)}
+                    placeholder="e.g. TXN123456"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-sm text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors placeholder-slate-300 dark:placeholder-neutral-600"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-slate-500 dark:text-neutral-400 uppercase tracking-wide block mb-1">Admin Note (optional)</label>
+                  <input
+                    value={directApprove.adminNote}
+                    onChange={e => setDirectApprove(d => d ? { ...d, adminNote: e.target.value } : d)}
+                    placeholder="e.g. Verified via WhatsApp"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-sm text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors placeholder-slate-300 dark:placeholder-neutral-600"
+                  />
+                </div>
+              </div>
+              {directApproveError && <p className="text-xs text-red-500">{directApproveError}</p>}
+              <div className="flex gap-2">
+                <button onClick={handleDirectApproveConfirm} disabled={directApproveLoading}
+                  className="px-4 py-2 rounded-xl font-bold text-sm text-white bg-emerald-600 hover:bg-emerald-700 transition-colors disabled:opacity-50">
+                  {directApproveLoading ? 'Approving…' : 'Confirm & Approve'}
+                </button>
+                <button onClick={() => { setDirectApprove(null); setDirectApproveError('') }}
+                  className="px-4 py-2 rounded-xl font-bold text-sm bg-slate-200 dark:bg-neutral-700 text-slate-700 dark:text-white hover:bg-slate-300 dark:hover:bg-neutral-600 transition-colors">
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-100 dark:border-neutral-800 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm min-w-[700px]">
+                <thead>
+                  <tr className="border-b border-slate-100 dark:border-neutral-800 bg-slate-50 dark:bg-neutral-800/50">
+                    {['Student', 'Course', 'Level', 'Course Price', 'Enrolled On', 'Action'].map(h => (
+                      <th key={h} className="text-left px-4 py-3 text-[10px] font-bold text-slate-400 dark:text-neutral-500 uppercase tracking-wide whitespace-nowrap">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50 dark:divide-neutral-800">
+                  {unpaidLoading && (
+                    <tr><td colSpan={6} className="text-center py-10 text-slate-400 dark:text-neutral-600 text-sm">Loading…</td></tr>
+                  )}
+                  {!unpaidLoading && unpaidEnrollments.length === 0 && (
+                    <tr><td colSpan={6} className="text-center py-10 text-slate-400 dark:text-neutral-600 text-sm">
+                      All enrolled students have submitted payment records.
+                    </td></tr>
+                  )}
+                  {unpaidEnrollments.map(e => {
+                    const price = e.course.currency === 'USD' ? (e.course.priceUSD ?? 0) : (e.course.price ?? 0)
+                    const priceSuffix = e.course.pricingType === 'monthly' ? '/mo' : e.course.pricingType === 'per_session' ? '/session' : ''
+                    const priceLabel = price > 0 ? `${e.course.currency === 'USD' ? '$' : 'Rs.'}${price.toLocaleString()}${priceSuffix}` : 'Free'
+                    const isApproving = directApprove?.enrollmentId === e._id
+                    return (
+                      <tr key={e._id} className={`hover:bg-slate-50 dark:hover:bg-neutral-800/40 transition-colors ${isApproving ? 'bg-emerald-50/50 dark:bg-emerald-950/10' : ''}`}>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
+                              {(e.student.name ?? '?').split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2)}
+                            </div>
+                            <div>
+                              <p className="font-semibold text-slate-900 dark:text-white text-xs">{e.student.name}</p>
+                              <p className="text-[10px] text-slate-400 dark:text-neutral-600 truncate max-w-[120px]">{e.student.email}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-xs text-slate-600 dark:text-neutral-300 max-w-[160px] truncate">{e.course.title}</td>
+                        <td className="px-4 py-3 text-xs text-slate-500 dark:text-neutral-400 capitalize">{e.course.level ?? '—'}</td>
+                        <td className="px-4 py-3 text-xs font-black text-slate-900 dark:text-white whitespace-nowrap">{priceLabel}</td>
+                        <td className="px-4 py-3 text-[10px] text-slate-400 dark:text-neutral-600 whitespace-nowrap">
+                          {new Date(e.enrolledAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </td>
+                        <td className="px-4 py-3">
+                          <button
+                            onClick={() => {
+                              setDirectApprove({
+                                enrollmentId: e._id,
+                                studentName: e.student.name,
+                                courseName: e.course.title,
+                                method: 'jazzcash',
+                                amount: price > 0 ? String(price) : '',
+                                transactionId: '',
+                                adminNote: '',
+                              })
+                              setDirectApproveError('')
+                            }}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors"
+                          >
+                            <CheckCircle size={12} weight="fill" /> Approve Payment
+                          </button>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Payment Records tab ── */}
+      {activeTab === 'payments' && <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         {[
           { label: 'Revenue (PKR)', value: `₨${totalPKR.toLocaleString()}`, Icon: CreditCard, color: 'from-violet-500 to-purple-600', glow: 'rgba(124,58,237,0.35)' },
           { label: 'Revenue (USD)', value: `$${totalUSD}`, Icon: CreditCard, color: 'from-blue-500 to-blue-700', glow: 'rgba(59,130,246,0.35)' },
@@ -242,7 +465,7 @@ export default function AdminPaymentsView() {
           </table>
         </div>
       </div>
-      
+      </div>}
 
       <AdminPaymentCreateModal
         isOpen={createModalOpen}

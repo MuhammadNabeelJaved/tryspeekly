@@ -275,6 +275,24 @@ export interface AdminCreatePaymentDto {
   adminNote?: string;
 }
 
+export interface DirectApprovePaymentDto {
+  enrollmentId: string;
+  method: PaymentMethod;
+  transactionId?: string;
+  amount: number;
+  currency?: 'PKR' | 'USD';
+  adminNote?: string;
+}
+
+export interface UnpaidEnrollment {
+  _id: string;
+  student: { _id: string; name: string; email: string; profileImage?: string };
+  course: { _id: string; title: string; level?: string; price?: number; priceUSD?: number; currency?: 'PKR' | 'USD'; pricingType?: 'monthly' | 'full_course' | 'per_session' };
+  teacher: { _id: string; name: string };
+  enrolledAt: string;
+  isActive: boolean;
+}
+
 // ─── Message Types ────────────────────────────────────────────────────────────
 
 export interface Message {
