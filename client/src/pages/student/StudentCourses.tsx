@@ -243,7 +243,7 @@ export default function StudentCourses() {
   const [myReviews, setMyReviews] = useState<Review[]>([])
   const [activeOffers, setActiveOffers] = useState<Offer[]>([])
   const [chatModal, setChatModal] = useState<{ name: string; courseTitle: string; instructorId: string; profileImage?: string } | null>(null)
-  const [submitModal, setSubmitModal] = useState<{ courseId: string; teacherId: string; courseName?: string; coursePrice?: number; courseCurrency?: 'PKR' | 'USD'; offerDiscountedPrice?: number; offerLabel?: string } | null>(null)
+  const [submitModal, setSubmitModal] = useState<{ courseId: string; teacherId: string; courseName?: string; coursePrice?: number; courseCurrency?: 'PKR' | 'USD'; pricingType?: 'monthly' | 'full_course' | 'per_session'; offerDiscountedPrice?: number; offerLabel?: string } | null>(null)
   const [statusModal, setStatusModal] = useState<{ payment: EnrolledPayment; courseId: string; teacherId: string } | null>(null)
 
   const fetchEnrollments = useCallback(() => {
@@ -288,6 +288,7 @@ export default function StudentCourses() {
       courseName: enrollment.course.title,
       coursePrice: originalPrice,
       courseCurrency: enrollment.course.currency,
+      pricingType: enrollment.course.pricingType,
       offerDiscountedPrice: result?.hasDiscount ? result.discountedPrice : undefined,
       offerLabel: result?.hasDiscount ? result.offer?.title : undefined,
     })
@@ -404,6 +405,7 @@ export default function StudentCourses() {
           courseName={submitModal.courseName}
           coursePrice={submitModal.coursePrice}
           courseCurrency={submitModal.courseCurrency}
+          pricingType={submitModal.pricingType}
           offerDiscountedPrice={submitModal.offerDiscountedPrice}
           offerLabel={submitModal.offerLabel}
           isOpen={!!submitModal}

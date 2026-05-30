@@ -118,6 +118,7 @@ export default function CompleteEnrollmentPopup({ enrollments, onClose, onPaymen
         <PaymentSubmitModal
           courseId={selectedEnrollment.course._id}
           teacherId={selectedEnrollment.teacher._id}
+          pricingType={selectedEnrollment.course.pricingType}
           isOpen={true}
           onClose={() => setSelectedEnrollment(null)}
           onSuccess={() => {

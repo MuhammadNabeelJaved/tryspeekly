@@ -19,7 +19,7 @@ export default function StudentPayments() {
   const [payments, setPayments] = useState<Payment[]>([])
   const [enrollments, setEnrollments] = useState<Enrollment[]>([])
   const [loading, setLoading] = useState(true)
-  const [submitModal, setSubmitModal] = useState<{ courseId: string; teacherId: string; courseName?: string; coursePrice?: number; courseCurrency?: 'PKR' | 'USD' } | null>(null)
+  const [submitModal, setSubmitModal] = useState<{ courseId: string; teacherId: string; courseName?: string; coursePrice?: number; courseCurrency?: 'PKR' | 'USD'; pricingType?: 'monthly' | 'full_course' | 'per_session' } | null>(null)
 
   const fetchData = useCallback(() => {
     setLoading(true)
@@ -73,7 +73,7 @@ export default function StudentPayments() {
                   </p>
                 </div>
                 <button
-                  onClick={() => setSubmitModal({ courseId: e.course._id, teacherId: e.teacher._id, courseName: e.course.title, coursePrice: e.course.currency === 'USD' ? (e.course.priceUSD ?? 0) : (e.course.price ?? 0), courseCurrency: e.course.currency })}
+                  onClick={() => setSubmitModal({ courseId: e.course._id, teacherId: e.teacher._id, courseName: e.course.title, coursePrice: e.course.currency === 'USD' ? (e.course.priceUSD ?? 0) : (e.course.price ?? 0), courseCurrency: e.course.currency, pricingType: e.course.pricingType })}
                   className="flex-shrink-0 px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-bold text-xs transition-colors"
                 >
                   Submit Payment
@@ -198,6 +198,7 @@ export default function StudentPayments() {
           courseName={submitModal.courseName}
           coursePrice={submitModal.coursePrice}
           courseCurrency={submitModal.courseCurrency}
+          pricingType={submitModal.pricingType}
           isOpen={!!submitModal}
           onClose={() => setSubmitModal(null)}
           onSuccess={() => { setSubmitModal(null); fetchData() }}

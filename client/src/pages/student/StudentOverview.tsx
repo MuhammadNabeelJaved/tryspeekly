@@ -577,6 +577,7 @@ export default function StudentOverview({ onNavigate }: { onNavigate: (view: Stu
           courseName={selectedPayEnrollment.course.title}
           coursePrice={selectedPayEnrollment.course.currency === 'USD' ? (selectedPayEnrollment.course.priceUSD ?? 0) : (selectedPayEnrollment.course.price ?? 0)}
           courseCurrency={selectedPayEnrollment.course.currency}
+          pricingType={selectedPayEnrollment.course.pricingType}
           isOpen={true}
           onClose={() => setSelectedPayEnrollment(null)}
           onSuccess={() => {
