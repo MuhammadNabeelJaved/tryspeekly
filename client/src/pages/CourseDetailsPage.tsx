@@ -172,6 +172,11 @@ export default function CourseDetailsPage() {
     return () => { mounted = false }
   }, [])
 
+  const pricingTypeSuffix =
+    apiCourse?.pricingType === 'monthly' ? '/mo'
+    : apiCourse?.pricingType === 'per_session' ? '/session'
+    : ''
+
   // Merge API data into COURSE object for display
   const activeCourse = apiCourse
     ? {
@@ -183,16 +188,8 @@ export default function CourseDetailsPage() {
           ? apiCourse.type.charAt(0).toUpperCase() + apiCourse.type.slice(1)
           : '',
         price: currency === 'PKR'
-          ? `Rs.${(apiCourse.price ?? 0).toLocaleString()}${
-              apiCourse.pricingType === 'monthly' ? '/mo'
-              : apiCourse.pricingType === 'per_session' ? '/session'
-              : ''
-            }`
-          : `$${apiCourse.priceUSD ?? 0}${
-              apiCourse.pricingType === 'monthly' ? '/mo'
-              : apiCourse.pricingType === 'per_session' ? '/session'
-              : ''
-            }`,
+          ? `Rs.${(apiCourse.price ?? 0).toLocaleString()}${pricingTypeSuffix}`
+          : `$${apiCourse.priceUSD ?? 0}${pricingTypeSuffix}`,
         originalPrice: '',
         level: apiCourse.level
           ? apiCourse.level.charAt(0).toUpperCase() + apiCourse.level.slice(1)
@@ -235,11 +232,6 @@ export default function CourseDetailsPage() {
   const priceResult = apiCourse && currency === 'PKR'
     ? getDiscountedPrice(apiCourse._id, apiCourse.price ?? 0, activeOffers)
     : null
-
-  const pricingTypeSuffix =
-    apiCourse?.pricingType === 'monthly' ? '/mo'
-    : apiCourse?.pricingType === 'per_session' ? '/session'
-    : ''
 
   const totalReviewPages = Math.ceil(activeCourse.reviewsList.length / REVIEWS_PER_PAGE)
   const currentReviews = activeCourse.reviewsList.slice(
