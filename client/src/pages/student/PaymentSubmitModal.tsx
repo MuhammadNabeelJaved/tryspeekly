@@ -594,7 +594,7 @@ export default function PaymentSubmitModal({
                         {offerLabel && offerDiscountedPrice && (
                           <p className="flex items-center gap-1 text-xs text-violet-600 dark:text-violet-400 mt-1 font-semibold">
                             <CheckCircle size={12} weight="fill" />
-                            {offerLabel} applied — pay Rs.{offerDiscountedPrice.toLocaleString()}{priceSuffix}
+                            {offerLabel} applied — pay {courseCurrency === 'USD' ? `$${offerDiscountedPrice}${priceSuffix}` : `Rs.${offerDiscountedPrice.toLocaleString()}${priceSuffix}`}
                           </p>
                         )}
                       </div>
