@@ -161,6 +161,7 @@ interface Props {
   courseName?: string
   coursePrice?: number
   courseCurrency?: 'PKR' | 'USD'
+  pricingType?: 'monthly' | 'full_course' | 'per_session'
   offerDiscountedPrice?: number | null
   offerLabel?: string
   isOpen: boolean
@@ -168,7 +169,16 @@ interface Props {
   onSuccess: () => void
 }
 
-export default function PaymentSubmitModal({ courseId, teacherId, courseName, coursePrice, courseCurrency, offerDiscountedPrice, offerLabel, isOpen, onClose, onSuccess }: Props) {
+export default function PaymentSubmitModal({
+  courseId, teacherId, courseName, coursePrice, courseCurrency,
+  pricingType,
+  offerDiscountedPrice, offerLabel, isOpen, onClose, onSuccess
+}: Props) {
+  const priceSuffix =
+    pricingType === 'monthly' ? '/mo'
+    : pricingType === 'per_session' ? '/session'
+    : ''
+
   const [activeTab, setActiveTab] = useState<'local' | 'international'>('local')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [transactionId, setTransactionId] = useState('')
@@ -356,15 +366,15 @@ export default function PaymentSubmitModal({ courseId, teacherId, courseName, co
                           {offerDiscountedPrice ? (
                             <div className="flex flex-col items-end gap-0.5">
                               <span className="text-xs text-slate-400 dark:text-neutral-500 line-through">
-                                {courseCurrency === 'USD' ? `$${coursePrice}` : `Rs.${coursePrice.toLocaleString()}`}
+                                {courseCurrency === 'USD' ? `$${coursePrice}${priceSuffix}` : `Rs.${coursePrice.toLocaleString()}${priceSuffix}`}
                               </span>
                               <span className="text-sm font-black text-violet-600 dark:text-violet-400">
-                                {courseCurrency === 'USD' ? `$${offerDiscountedPrice}` : `Rs.${offerDiscountedPrice.toLocaleString()}`}
+                                {courseCurrency === 'USD' ? `$${offerDiscountedPrice}${priceSuffix}` : `Rs.${offerDiscountedPrice.toLocaleString()}${priceSuffix}`}
                               </span>
                             </div>
                           ) : (
                             <span className="text-sm font-black text-violet-600 dark:text-violet-400">
-                              {courseCurrency === 'USD' ? `$${coursePrice}` : `Rs.${coursePrice.toLocaleString()}`}
+                              {courseCurrency === 'USD' ? `$${coursePrice}${priceSuffix}` : `Rs.${coursePrice.toLocaleString()}${priceSuffix}`}
                             </span>
                           )}
                         </div>
@@ -479,15 +489,15 @@ export default function PaymentSubmitModal({ courseId, teacherId, courseName, co
                           {offerDiscountedPrice ? (
                             <div className="flex flex-col items-end gap-0.5">
                               <span className="text-xs text-slate-400 dark:text-neutral-500 line-through">
-                                {courseCurrency === 'USD' ? `$${coursePrice}` : `Rs.${coursePrice.toLocaleString()}`}
+                                {courseCurrency === 'USD' ? `$${coursePrice}${priceSuffix}` : `Rs.${coursePrice.toLocaleString()}${priceSuffix}`}
                               </span>
                               <span className="text-sm font-black text-violet-600 dark:text-violet-400">
-                                {courseCurrency === 'USD' ? `$${offerDiscountedPrice}` : `Rs.${offerDiscountedPrice.toLocaleString()}`}
+                                {courseCurrency === 'USD' ? `$${offerDiscountedPrice}${priceSuffix}` : `Rs.${offerDiscountedPrice.toLocaleString()}${priceSuffix}`}
                               </span>
                             </div>
                           ) : (
                             <span className="text-sm font-black text-violet-600 dark:text-violet-400">
-                              {courseCurrency === 'USD' ? `$${coursePrice}` : `Rs.${coursePrice.toLocaleString()}`}
+                              {courseCurrency === 'USD' ? `$${coursePrice}${priceSuffix}` : `Rs.${coursePrice.toLocaleString()}${priceSuffix}`}
                             </span>
                           )}
                         </div>
@@ -584,7 +594,7 @@ export default function PaymentSubmitModal({ courseId, teacherId, courseName, co
                         {offerLabel && offerDiscountedPrice && (
                           <p className="flex items-center gap-1 text-xs text-violet-600 dark:text-violet-400 mt-1 font-semibold">
                             <CheckCircle size={12} weight="fill" />
-                            {offerLabel} applied — pay Rs.{offerDiscountedPrice.toLocaleString()}
+                            {offerLabel} applied — pay Rs.{offerDiscountedPrice.toLocaleString()}{priceSuffix}
                           </p>
                         )}
                       </div>
