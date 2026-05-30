@@ -81,6 +81,7 @@ import referralRoutes from './src/routes/referral.route.js'
 import offerRoutes from './src/routes/offer.route.js'
 import emailRoutes from './src/routes/email.route.js'
 import teamRoutes from './src/routes/team.route.js'
+import newsletterRoutes from './src/routes/newsletter.route.js'
 import { seedEmailDefaults } from './src/utils/email.js'
 
 app.use('/api/v1/users', userRoutes)
@@ -111,6 +112,7 @@ app.use('/api/v1/referrals', referralRoutes)
 app.use('/api/v1/offers', offerRoutes)
 app.use('/api/v1/email', emailRoutes)
 app.use('/api/v1/team', teamRoutes)
+app.use('/api/v1/newsletter', newsletterRoutes)
 
 // Seed email defaults after DB is ready (non-blocking)
 setImmediate(() => seedEmailDefaults().catch(() => {}))
