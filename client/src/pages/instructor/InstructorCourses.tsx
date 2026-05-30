@@ -46,6 +46,7 @@ type InstructorCourse = {
   videoPreview?: string
   whatYouWillLearn?: string
   curriculum?: CourseModule[]
+  pricingType?: 'full_course' | 'per_session' | 'monthly'
 }
 
 const EMPTY_COURSE: InstructorCourse = {
@@ -70,7 +71,8 @@ const EMPTY_COURSE: InstructorCourse = {
   image: '',
   videoPreview: '',
   whatYouWillLearn: '',
-  curriculum: []
+  curriculum: [],
+  pricingType: 'full_course',
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -120,6 +122,7 @@ function mapBackendCourse(c: any): InstructorCourse {
     startDate: c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '',
     image: c.thumbnail,
     language: 'English',
+    pricingType: (c.pricingType as 'full_course' | 'per_session' | 'monthly') ?? 'full_course',
   }
 }
 
@@ -305,6 +308,7 @@ export default function InstructorCourses() {
           totalSessions: data.totalClasses || 12,
           sessionDuration: 60,
           maxStudents: data.maxStudents,
+          pricingType: data.pricingType || 'full_course',
         })
         if (res.success) {
           const courseId = res.data._id
@@ -332,6 +336,7 @@ export default function InstructorCourses() {
         const updatePayload: any = {
           title: data.title,
           description: data.description,
+          pricingType: data.pricingType || 'full_course',
         }
         if (thumbMode === 'url' && data.image) updatePayload.thumbnail = data.image
         if (videoMode === 'url' && data.videoPreview) updatePayload.videoPreview = data.videoPreview
@@ -815,11 +820,37 @@ export default function InstructorCourses() {
                       />
 
                       <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider mb-2 border-b border-slate-200 dark:border-neutral-800 pb-2 mt-8">Pricing & Status</h4>
+
+                      <Field label="Pricing Type">
+                        <div className="flex gap-2">
+                          {([
+                            { value: 'full_course', label: 'Full Course' },
+                            { value: 'per_session', label: 'Per Session' },
+                            { value: 'monthly', label: 'Monthly' },
+                          ] as const).map(opt => (
+                            <button
+                              key={opt.value}
+                              type="button"
+                              onClick={() => setValue('pricingType', opt.value)}
+                              className={`flex-1 py-2 rounded-xl text-xs font-bold border transition-all ${
+                                watch('pricingType') === opt.value
+                                  ? 'bg-violet-600 border-violet-600 text-white shadow-[0_2px_8px_rgba(124,58,237,0.3)]'
+                                  : 'border-slate-200 dark:border-neutral-700 text-slate-600 dark:text-neutral-400 hover:border-violet-400 hover:text-violet-600 dark:hover:text-violet-400'
+                              }`}
+                            >
+                              {opt.label}
+                            </button>
+                          ))}
+                        </div>
+                      </Field>
+
                       <div className="flex items-start gap-3 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/30 rounded-xl p-4">
                         <span className="text-amber-500 text-lg shrink-0">₨</span>
                         <div>
                           <p className="text-xs font-bold text-amber-700 dark:text-amber-400">Pricing is managed by Admin</p>
-                          <p className="text-xs text-amber-600/80 dark:text-amber-500/70 mt-0.5 leading-relaxed">Course price and currency are set by the admin when your course is reviewed and approved. You don't need to worry about pricing.</p>
+                          <p className="text-xs text-amber-600/80 dark:text-amber-500/70 mt-0.5 leading-relaxed">
+                            Your selected pricing type helps the admin price it correctly. The actual amount is set by admin at review.
+                          </p>
                         </div>
                       </div>
 
