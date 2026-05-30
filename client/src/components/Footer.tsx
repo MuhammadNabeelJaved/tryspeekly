@@ -2,6 +2,7 @@ import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
 import { LinkedinLogo, TwitterLogo, FacebookLogo, InstagramLogo, Phone, EnvelopeSimple, MapPin, ArrowRight } from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
+import { newsletterService } from '@/services/newsletter.service'
 
 const FOOTER_LINK_CATEGORIES = [
   {
@@ -42,9 +43,15 @@ export default function Footer() {
     defaultValues: { email: '' }
   })
 
-  const onSubmit = (data: { email: string }) => {
-    toast.success(`Subscribed! Updates will be sent to ${data.email}`)
-    reset()
+  const onSubmit = async (data: { email: string }) => {
+    try {
+      const res = await newsletterService.subscribe(data.email)
+      toast.success(res.message || 'Subscribed! You will receive our updates.')
+      reset()
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || 'Failed to subscribe. Please try again.'
+      toast.error(msg)
+    }
   }
 
   return (
