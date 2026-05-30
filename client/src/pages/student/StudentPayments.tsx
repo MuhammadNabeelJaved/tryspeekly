@@ -163,7 +163,7 @@ export default function StudentPayments() {
                         )}
                         {payment.status === 'rejected' && (
                           <button
-                            onClick={() => setSubmitModal({ courseId: payment.course._id, teacherId: payment.teacher._id })}
+                            onClick={() => setSubmitModal({ courseId: payment.course._id, teacherId: payment.teacher._id, courseName: payment.course.title, coursePrice: payment.course.currency === 'USD' ? (payment.course.priceUSD ?? 0) : (payment.course.price ?? 0), courseCurrency: payment.course.currency, pricingType: payment.course.pricingType })}
                             className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-700 text-white text-[10px] font-bold transition-colors"
                           >
                             <ArrowClockwise size={11} weight="bold" />

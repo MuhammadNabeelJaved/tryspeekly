@@ -66,6 +66,7 @@ export interface CourseCard {
   price: string
   pricePKR?: number
   priceUSD?: number
+  pricingType?: 'monthly' | 'full_course' | 'per_session'
   popular: boolean
 }
 
@@ -334,6 +335,7 @@ export default function Courses() {
           price: '',
           pricePKR: course.price,
           priceUSD: course.priceUSD,
+          pricingType: course.pricingType,
           popular: false,
         }))
         setApiCourses(mapped)
@@ -656,6 +658,7 @@ export default function Courses() {
                         {course.title}
                       </h3>
                       {(() => {
+                        const priceSuffix = course.pricingType === 'monthly' ? '/mo' : course.pricingType === 'per_session' ? '/session' : ''
                         if (currency === 'PKR' && course.pricePKR !== undefined) {
                           const result = getDiscountedPrice(course.id, course.pricePKR, activeOffers)
                           if (result.hasDiscount) {
@@ -666,24 +669,24 @@ export default function Courses() {
                                     {result.discountLabel}
                                   </span>
                                   <span className="text-xl font-black text-violet-600 dark:text-violet-400">
-                                    Rs.{result.discountedPrice.toLocaleString()}
+                                    Rs.{result.discountedPrice.toLocaleString()}{priceSuffix}
                                   </span>
                                 </div>
                                 <span className="text-xs text-slate-400 line-through">
-                                  Rs.{result.originalPrice.toLocaleString()}
+                                  Rs.{result.originalPrice.toLocaleString()}{priceSuffix}
                                 </span>
                               </div>
                             )
                           }
                           return (
                             <span className="flex-shrink-0 text-xl font-black text-violet-600 dark:text-violet-400">
-                              Rs.{(course.pricePKR ?? 0).toLocaleString()}
+                              Rs.{(course.pricePKR ?? 0).toLocaleString()}{priceSuffix}
                             </span>
                           )
                         }
                         return (
                           <span className="flex-shrink-0 text-xl font-black text-violet-600 dark:text-violet-400">
-                            {course.priceUSD !== undefined ? `$${course.priceUSD}` : course.price}
+                            {course.priceUSD !== undefined ? `$${course.priceUSD}${priceSuffix}` : course.price}
                           </span>
                         )
                       })()}

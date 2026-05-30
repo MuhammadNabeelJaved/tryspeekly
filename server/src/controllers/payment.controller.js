@@ -121,7 +121,7 @@ export const createPayment = asyncHandler(async (req, res) => {
 export const getMyPayments = asyncHandler(async (req, res) => {
   try {
     const payments = await Payment.find({ student: req.user.id })
-      .populate('course', 'title')
+      .populate('course', 'title price priceUSD currency pricingType')
       .populate('teacher', 'name')
       .sort({ createdAt: -1 })
 

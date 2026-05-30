@@ -238,7 +238,7 @@ export type PaymentStatus = 'pending' | 'approved' | 'rejected';
 export interface Payment {
   _id: string;
   student: { _id: string; name: string; email: string };
-  course: { _id: string; title: string };
+  course: { _id: string; title: string; price?: number; priceUSD?: number; currency?: 'PKR' | 'USD'; pricingType?: 'monthly' | 'full_course' | 'per_session' };
   teacher: { _id: string; name: string };
   method: PaymentMethod;
   transactionId?: string;
