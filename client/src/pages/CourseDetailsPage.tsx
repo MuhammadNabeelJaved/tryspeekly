@@ -183,8 +183,16 @@ export default function CourseDetailsPage() {
           ? apiCourse.type.charAt(0).toUpperCase() + apiCourse.type.slice(1)
           : '',
         price: currency === 'PKR'
-          ? `Rs.${(apiCourse.price ?? 0).toLocaleString()}`
-          : `$${apiCourse.priceUSD ?? 0}`,
+          ? `Rs.${(apiCourse.price ?? 0).toLocaleString()}${
+              apiCourse.pricingType === 'monthly' ? '/mo'
+              : apiCourse.pricingType === 'per_session' ? '/session'
+              : ''
+            }`
+          : `$${apiCourse.priceUSD ?? 0}${
+              apiCourse.pricingType === 'monthly' ? '/mo'
+              : apiCourse.pricingType === 'per_session' ? '/session'
+              : ''
+            }`,
         originalPrice: '',
         level: apiCourse.level
           ? apiCourse.level.charAt(0).toUpperCase() + apiCourse.level.slice(1)
@@ -227,6 +235,11 @@ export default function CourseDetailsPage() {
   const priceResult = apiCourse && currency === 'PKR'
     ? getDiscountedPrice(apiCourse._id, apiCourse.price ?? 0, activeOffers)
     : null
+
+  const pricingTypeSuffix =
+    apiCourse?.pricingType === 'monthly' ? '/mo'
+    : apiCourse?.pricingType === 'per_session' ? '/session'
+    : ''
 
   const totalReviewPages = Math.ceil(activeCourse.reviewsList.length / REVIEWS_PER_PAGE)
   const currentReviews = activeCourse.reviewsList.slice(
@@ -772,12 +785,12 @@ export default function CourseDetailsPage() {
                     <div className="flex items-end gap-3">
                       <span className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">
                         {priceResult?.hasDiscount
-                          ? `Rs.${priceResult.discountedPrice.toLocaleString()}`
+                          ? `Rs.${priceResult.discountedPrice.toLocaleString()}${pricingTypeSuffix}`
                           : activeCourse.price}
                       </span>
                       {priceResult?.hasDiscount && (
                         <span className="text-lg text-slate-400 dark:text-neutral-500 line-through mb-1 font-semibold">
-                          Rs.{priceResult.originalPrice.toLocaleString()}
+                          Rs.{priceResult.originalPrice.toLocaleString()}{pricingTypeSuffix}
                         </span>
                       )}
                     </div>
@@ -1183,13 +1196,13 @@ export default function CourseDetailsPage() {
               <div>
                 {priceResult?.hasDiscount && (
                   <div className="text-xs text-slate-500 dark:text-neutral-400 font-bold mb-0.5 line-through">
-                    Rs.{priceResult.originalPrice.toLocaleString()}
+                    Rs.{priceResult.originalPrice.toLocaleString()}{pricingTypeSuffix}
                   </div>
                 )}
                 <div className="flex items-center gap-2">
                   <div className="text-2xl font-black text-slate-900 dark:text-white">
                     {priceResult?.hasDiscount
-                      ? `Rs.${priceResult.discountedPrice.toLocaleString()}`
+                      ? `Rs.${priceResult.discountedPrice.toLocaleString()}${pricingTypeSuffix}`
                       : activeCourse.price}
                   </div>
                   {priceResult?.hasDiscount && (
