@@ -110,7 +110,13 @@ function mapBackendCourse(c: any): InstructorCourse {
     duration: c.type,
     description: c.description,
     category: c.focus,
-    price: c.price ? `${c.currency === 'PKR' ? 'Rs' : '$'}${c.price}` : '',
+    price: c.price
+      ? `${c.currency === 'PKR' ? 'Rs' : '$'}${c.price}${
+          c.pricingType === 'monthly' ? '/mo'
+          : c.pricingType === 'per_session' ? '/session'
+          : ''
+        }`
+      : '',
     startDate: c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '',
     image: c.thumbnail,
     language: 'English',
