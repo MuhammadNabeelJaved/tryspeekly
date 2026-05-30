@@ -49,7 +49,7 @@ export default function Footer() {
       toast.success(res.message || 'Subscribed! You will receive our updates.')
       reset()
     } catch (err: any) {
-      const msg = err?.response?.data?.message || 'Failed to subscribe. Please try again.'
+      const msg = err?.response?.data?.error?.message || err?.response?.data?.message || 'Failed to subscribe. Please try again.'
       toast.error(msg)
     }
   }
