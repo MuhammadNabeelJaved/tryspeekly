@@ -72,6 +72,7 @@ export default function AdminNewsletter() {
   }
 
   const handleDeleteSub = async (id: string) => {
+    if (!window.confirm('Permanently delete this subscriber? This cannot be undone.')) return
     try {
       await newsletterService.deleteSubscriber(id)
       toast.success('Subscriber deleted')
@@ -127,7 +128,7 @@ export default function AdminNewsletter() {
 
   const saveCampaign = async (status: 'draft' | 'scheduled', sendNow = false) => {
     if (!formSubject.trim()) return toast.error('Subject is required')
-    if (!formBody.trim() || formBody === '<p></p>') return toast.error('Content is required')
+    if (!formBody.trim() || formBody.replace(/<[^>]*>/g, '').trim() === '') return toast.error('Content is required')
     if (status === 'scheduled' && !formScheduledAt) return toast.error('Scheduled time is required')
 
     setSubmitting(true)
@@ -173,6 +174,7 @@ export default function AdminNewsletter() {
   }
 
   const handleDirectSend = async (id: string) => {
+    if (!window.confirm('Send this campaign to all active subscribers now? This cannot be undone.')) return
     try {
       await newsletterService.sendCampaign(id)
       toast.success('Campaign is being sent!')
@@ -186,6 +188,7 @@ export default function AdminNewsletter() {
   }
 
   const handleDeleteCampaign = async (id: string) => {
+    if (!window.confirm('Delete this campaign? This cannot be undone.')) return
     try {
       await newsletterService.deleteCampaign(id)
       toast.success('Campaign deleted')
