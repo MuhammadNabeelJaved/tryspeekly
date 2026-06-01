@@ -1,4 +1,5 @@
 import asyncHandler from '../utils/asyncHandler.js'
+import mongoose from 'mongoose'
 import jwt from 'jsonwebtoken'
 import User from '../models/user.model.js'
 import Course from '../models/course.model.js'
@@ -613,8 +614,9 @@ export const bulkDeleteUsers = asyncHandler(async (req, res) => {
 
   const results = await Promise.allSettled(
     filteredIds.map(async (id) => {
+      if (!mongoose.isValidObjectId(id)) return false
       const user = await User.findById(id)
-      if (!user || user.isDeleted) return
+      if (!user || user.isDeleted) return false
       if (user.profileImage) {
         const publicId = extractPublicId(user.profileImage)
         if (publicId) await deleteFile(publicId, 'image')
@@ -624,10 +626,11 @@ export const bulkDeleteUsers = asyncHandler(async (req, res) => {
       user.profileImage = undefined
       await user.save()
       emitToUser(userId, 'user:deleted', { message: 'Your account has been deleted.' })
+      return true
     })
   )
 
-  const deleted = results.filter(r => r.status === 'fulfilled').length
+  const deleted = results.filter(r => r.status === 'fulfilled' && r.value === true).length
 
   res.json({
     success: true,
