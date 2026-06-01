@@ -19,7 +19,16 @@ export default function StudentPayments() {
   const [payments, setPayments] = useState<Payment[]>([])
   const [enrollments, setEnrollments] = useState<Enrollment[]>([])
   const [loading, setLoading] = useState(true)
-  const [submitModal, setSubmitModal] = useState<{ courseId: string; teacherId: string; courseName?: string; coursePrice?: number; courseCurrency?: 'PKR' | 'USD'; pricingType?: 'monthly' | 'full_course' | 'per_session' } | null>(null)
+  const [submitModal, setSubmitModal] = useState<{
+    courseId: string
+    teacherId: string
+    courseName?: string
+    coursePrice?: number
+    courseCurrency?: 'PKR' | 'USD'
+    pricingType?: 'monthly' | 'full_course' | 'per_session'
+    couponDiscountApplied?: number
+    offerDiscountedPrice?: number
+  } | null>(null)
 
   const fetchData = useCallback(() => {
     setLoading(true)
@@ -73,7 +82,22 @@ export default function StudentPayments() {
                   </p>
                 </div>
                 <button
-                  onClick={() => setSubmitModal({ courseId: e.course._id, teacherId: e.teacher._id, courseName: e.course.title, coursePrice: e.course.currency === 'USD' ? (e.course.priceUSD ?? 0) : (e.course.price ?? 0), courseCurrency: e.course.currency, pricingType: e.course.pricingType })}
+                  onClick={() => {
+                    const originalPrice = e.course.currency === 'USD' ? (e.course.priceUSD ?? 0) : (e.course.price ?? 0)
+                    const couponDiscount = e.discountApplied || 0
+                    const offerDiscount = e.offerDiscountApplied || 0
+                    const totalDiscount = couponDiscount + offerDiscount
+                    setSubmitModal({
+                      courseId: e.course._id,
+                      teacherId: e.teacher._id,
+                      courseName: e.course.title,
+                      coursePrice: originalPrice,
+                      courseCurrency: e.course.currency,
+                      pricingType: e.course.pricingType,
+                      couponDiscountApplied: couponDiscount > 0 ? couponDiscount : undefined,
+                      offerDiscountedPrice: totalDiscount > 0 ? Math.max(0, originalPrice - totalDiscount) : undefined,
+                    })
+                  }}
                   className="flex-shrink-0 px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-bold text-xs transition-colors"
                 >
                   Submit Payment
@@ -121,8 +145,15 @@ export default function StudentPayments() {
                         {METHOD_LABELS[payment.method] ?? payment.method}
                       </span>
                     </td>
-                    <td className="px-5 py-4 whitespace-nowrap text-sm font-black text-slate-900 dark:text-white text-right">
-                      {payment.currency} {payment.amount.toLocaleString()}
+                    <td className="px-5 py-4 whitespace-nowrap text-right">
+                      <p className="text-sm font-black text-slate-900 dark:text-white">
+                        {payment.currency} {payment.amount.toLocaleString()}
+                      </p>
+                      {(payment.discountApplied ?? 0) > 0 && (
+                        <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">
+                          −{payment.currency} {(payment.discountApplied ?? 0).toLocaleString()} discount
+                        </p>
+                      )}
                     </td>
                     <td className="px-5 py-4 whitespace-nowrap text-center">
                       {payment.status === 'approved' && (
@@ -163,7 +194,22 @@ export default function StudentPayments() {
                         )}
                         {payment.status === 'rejected' && (
                           <button
-                            onClick={() => setSubmitModal({ courseId: payment.course._id, teacherId: payment.teacher._id, courseName: payment.course.title, coursePrice: payment.course.currency === 'USD' ? (payment.course.priceUSD ?? 0) : (payment.course.price ?? 0), courseCurrency: payment.course.currency, pricingType: payment.course.pricingType })}
+                            onClick={() => {
+                              const originalPrice = payment.course.currency === 'USD' ? (payment.course.priceUSD ?? 0) : (payment.course.price ?? 0)
+                              const couponDiscount = payment.discountApplied || 0
+                              const offerDiscount = payment.offerDiscountApplied || 0
+                              const totalDiscount = couponDiscount + offerDiscount
+                              setSubmitModal({
+                                courseId: payment.course._id,
+                                teacherId: payment.teacher._id,
+                                courseName: payment.course.title,
+                                coursePrice: originalPrice,
+                                courseCurrency: payment.course.currency,
+                                pricingType: payment.course.pricingType,
+                                couponDiscountApplied: couponDiscount > 0 ? couponDiscount : undefined,
+                                offerDiscountedPrice: totalDiscount > 0 ? Math.max(0, originalPrice - totalDiscount) : undefined,
+                              })
+                            }}
                             className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-700 text-white text-[10px] font-bold transition-colors"
                           >
                             <ArrowClockwise size={11} weight="bold" />
@@ -191,28 +237,22 @@ export default function StudentPayments() {
         </div>
       </div>
 
-      {submitModal && (() => {
-        const enrollment = enrollments.find(e => e.course._id === submitModal.courseId)
-        const savedDiscount = enrollment ? (enrollment.discountApplied || 0) + (enrollment.offerDiscountApplied || 0) : 0
-        const hasSavedDiscount = savedDiscount > 0
-        const discountedPrice = hasSavedDiscount && submitModal.coursePrice ? Math.max(0, submitModal.coursePrice - savedDiscount) : submitModal.coursePrice
-        return (
-          <PaymentSubmitModal
-            courseId={submitModal.courseId}
-            teacherId={submitModal.teacherId}
-            courseName={submitModal.courseName}
-            coursePrice={submitModal.coursePrice}
-            courseCurrency={submitModal.courseCurrency}
-            pricingType={submitModal.pricingType}
-            offerDiscountedPrice={hasSavedDiscount ? discountedPrice : undefined}
-            offerLabel={hasSavedDiscount ? 'Discount' : undefined}
-            hasSavedDiscount={hasSavedDiscount}
-            isOpen={true}
-            onClose={() => setSubmitModal(null)}
-            onSuccess={() => { setSubmitModal(null); fetchData() }}
-          />
-        )
-      })()}
+      {submitModal && (
+        <PaymentSubmitModal
+          courseId={submitModal.courseId}
+          teacherId={submitModal.teacherId}
+          courseName={submitModal.courseName}
+          coursePrice={submitModal.coursePrice}
+          courseCurrency={submitModal.courseCurrency}
+          pricingType={submitModal.pricingType}
+          offerDiscountedPrice={submitModal.offerDiscountedPrice}
+          offerLabel={submitModal.offerDiscountedPrice ? 'Offer discount' : undefined}
+          couponDiscountApplied={submitModal.couponDiscountApplied}
+          isOpen={true}
+          onClose={() => setSubmitModal(null)}
+          onSuccess={() => { setSubmitModal(null); fetchData() }}
+        />
+      )}
     </div>
   )
 }

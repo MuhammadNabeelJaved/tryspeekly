@@ -403,7 +403,14 @@ export default function AdminPaymentsView() {
                   </td>
                   <td className="px-4 py-3 text-xs text-slate-600 dark:text-neutral-300 whitespace-nowrap">{p.course?.title ?? '—'}</td>
                   <td className="px-4 py-3 text-xs text-slate-600 dark:text-neutral-300 whitespace-nowrap capitalize">{p.method.replace('_', ' ')}</td>
-                  <td className="px-4 py-3 text-xs font-black text-slate-900 dark:text-white whitespace-nowrap">{p.currency} {p.amount.toLocaleString()}</td>
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    <p className="text-xs font-black text-slate-900 dark:text-white">{p.currency} {p.amount.toLocaleString()}</p>
+                    {(p.discountApplied ?? 0) > 0 && (
+                      <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">
+                        −{p.currency} {(p.discountApplied ?? 0).toLocaleString()} discount
+                      </p>
+                    )}
+                  </td>
                   <td className="px-4 py-3">
                     <div className="space-y-1">
                       <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold ${

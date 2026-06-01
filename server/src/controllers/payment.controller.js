@@ -199,60 +199,64 @@ export const approvePayment = asyncHandler(async (req, res) => {
     payment.rejectionReason = ''
     await payment.save()
 
-    // ─── Referral reward crediting ────────────────────────────────────────────
+    // ─── Coupon usedCount + Referral reward crediting ────────────────────────
     if (payment.coupon) {
       const coupon = await Coupon.findById(payment.coupon)
-      if (coupon && coupon.source === 'referral' && coupon.referrer) {
-        const alreadyRewarded = await ReferralReward.findOne({ payment: payment._id })
-        if (!alreadyRewarded) {
-          const settings = await SiteSettings.findOne()
-          const referral = settings?.referral
+      if (coupon) {
+        // Increment usedCount for all coupon types on approval
+        await Coupon.findByIdAndUpdate(coupon._id, { $inc: { usedCount: 1 } })
 
-          if (referral?.enabled) {
-            const course = payment.course
-            const courseId = course._id
-            const coursePrice = course.currency === 'USD' ? (course.priceUSD || 0) : (course.price || 0)
+        // Credit referral reward only for referral coupons
+        if (coupon.source === 'referral' && coupon.referrer) {
+          const alreadyRewarded = await ReferralReward.findOne({ payment: payment._id })
+          if (!alreadyRewarded) {
+            const settings = await SiteSettings.findOne()
+            const referral = settings?.referral
 
-            let rewardAmount = 0
-            if (referral.referrerRewardType === 'percentage') {
-              rewardAmount = Math.round((coursePrice * referral.referrerRewardValue) / 100)
-            } else {
-              rewardAmount = referral.referrerRewardValue
-            }
+            if (referral?.enabled) {
+              const course = payment.course
+              const courseId = course._id
+              const coursePrice = course.currency === 'USD' ? (course.priceUSD || 0) : (course.price || 0)
 
-            const enrollment = await Enrollment.findOne({ student: payment.student, course: courseId })
-            if (!enrollment) return
+              let rewardAmount = 0
+              if (referral.referrerRewardType === 'percentage') {
+                rewardAmount = Math.round((coursePrice * referral.referrerRewardValue) / 100)
+              } else {
+                rewardAmount = referral.referrerRewardValue
+              }
 
-            await ReferralReward.create({
-              referrer: coupon.referrer,
-              referee: payment.student,
-              coupon: coupon._id,
-              course: courseId,
-              enrollment: enrollment?._id,
-              payment: payment._id,
-              discountGiven: payment.discountApplied || 0,
-              rewardAmount,
-              status: 'credited',
-              creditedAt: new Date(),
-            })
+              const enrollment = await Enrollment.findOne({ student: payment.student, course: courseId })
+              if (enrollment) {
+                await ReferralReward.create({
+                  referrer: coupon.referrer,
+                  referee: payment.student,
+                  coupon: coupon._id,
+                  course: courseId,
+                  enrollment: enrollment._id,
+                  payment: payment._id,
+                  discountGiven: payment.discountApplied || 0,
+                  rewardAmount,
+                  status: 'credited',
+                  creditedAt: new Date(),
+                })
 
-            await ReferralWallet.findOneAndUpdate(
-              { student: coupon.referrer },
-              {
-                $inc: { balance: rewardAmount, totalEarned: rewardAmount },
-                $push: {
-                  transactions: {
-                    type: 'credit',
-                    amount: rewardAmount,
-                    description: `Referral reward for ${course?.title || 'a course'}`,
-                    date: new Date(),
+                await ReferralWallet.findOneAndUpdate(
+                  { student: coupon.referrer },
+                  {
+                    $inc: { balance: rewardAmount, totalEarned: rewardAmount },
+                    $push: {
+                      transactions: {
+                        type: 'credit',
+                        amount: rewardAmount,
+                        description: `Referral reward for ${course?.title || 'a course'}`,
+                        date: new Date(),
+                      },
+                    },
                   },
-                },
-              },
-              { upsert: true, new: true }
-            )
-
-            await Coupon.findByIdAndUpdate(coupon._id, { $inc: { usedCount: 1 } })
+                  { upsert: true, new: true }
+                )
+              }
+            }
           }
         }
       }
