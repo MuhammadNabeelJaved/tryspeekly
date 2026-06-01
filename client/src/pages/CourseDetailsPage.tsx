@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
@@ -12,6 +12,7 @@ import {
 import { coursesService } from '../services/courses.service'
 import { enrollmentsService } from '../services/enrollments.service'
 import { reviewsService } from '../services/reviews.service'
+import { couponsService } from '../services/coupons.service'
 import { useAuth } from '../context/AuthContext'
 import { useGeo } from '../context/GeoContext'
 import ReviewModal from '../components/ReviewModal'
@@ -19,6 +20,7 @@ import type { Review } from '../types/api'
 import { offersService } from '../services/offers.service'
 import type { Offer } from '../services/offers.service'
 import { getDiscountedPrice } from '../utils/offerUtils'
+import { Spinner, WarningCircle } from '@phosphor-icons/react'
 
 // Dummy Data for the specific course
 const COURSE = {
@@ -135,6 +137,37 @@ export default function CourseDetailsPage() {
   const [isEnrolling, setIsEnrolling] = useState(false);
   const [activeOffers, setActiveOffers] = useState<Offer[]>([])
 
+  const [couponCode, setCouponCode] = useState('')
+  const [couponValidating, setCouponValidating] = useState(false)
+  const [couponResult, setCouponResult] = useState<{
+    valid: boolean
+    reason?: string
+    discountType?: string
+    discountValue?: number
+    discountAmount?: number
+    finalPrice?: number
+    originalPrice?: number
+  } | null>(null)
+  const couponDebounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const handleCouponChange = (value: string) => {
+    setCouponCode(value)
+    setCouponResult(null)
+    if (couponDebounceTimer.current) clearTimeout(couponDebounceTimer.current)
+    if (!value.trim() || !id) { setCouponValidating(false); return }
+    setCouponValidating(true)
+    couponDebounceTimer.current = setTimeout(async () => {
+      try {
+        const res = await couponsService.validateCoupon(value.trim(), id)
+        setCouponResult(res.data)
+      } catch {
+        setCouponResult({ valid: false, reason: 'Unable to validate coupon' })
+      } finally {
+        setCouponValidating(false)
+      }
+    }, 500)
+  }
+
   useEffect(() => {
     if (id) {
       coursesService.getCourseById(id)
@@ -233,6 +266,12 @@ export default function CourseDetailsPage() {
     ? getDiscountedPrice(apiCourse._id, apiCourse.price ?? 0, activeOffers)
     : null
 
+  const couponAdjustedPrice: number | null = (() => {
+    if (!couponResult?.valid || couponResult.discountAmount == null) return null
+    const base = priceResult?.hasDiscount ? priceResult.discountedPrice : (apiCourse?.price ?? 0)
+    return Math.max(0, base - couponResult.discountAmount)
+  })()
+
   const totalReviewPages = Math.ceil(activeCourse.reviewsList.length / REVIEWS_PER_PAGE)
   const currentReviews = activeCourse.reviewsList.slice(
     (currentReviewPage - 1) * REVIEWS_PER_PAGE,
@@ -261,9 +300,17 @@ export default function CourseDetailsPage() {
     }
     setIsEnrolling(true);
     try {
-      await enrollmentsService.enroll({ courseId: activeCourse.id });
-      toast.success('Enrolled! Go to your dashboard to submit payment and unlock the course.');
-      navigate('/dashboard/courses');
+      const res = await enrollmentsService.enroll({ 
+        courseId: activeCourse.id,
+        couponCode: couponResult?.valid ? couponCode.trim().toUpperCase() : undefined
+      });
+      if (res.data.isActive) {
+         toast.success('Enrolled successfully for free!');
+         navigate('/dashboard/courses');
+      } else {
+         toast.success('Enrolled! Go to your dashboard to submit payment and unlock the course.');
+         navigate('/dashboard/courses');
+      }
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: { message?: string }; message?: string } } };
       toast.error(e?.response?.data?.error?.message || e?.response?.data?.message || 'Enrollment failed. Please try again.');
@@ -776,30 +823,93 @@ export default function CourseDetailsPage() {
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-end gap-3">
                       <span className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">
-                        {priceResult?.hasDiscount
-                          ? `Rs.${priceResult.discountedPrice.toLocaleString()}${pricingTypeSuffix}`
-                          : activeCourse.price}
+                        {couponAdjustedPrice != null
+                          ? `Rs.${couponAdjustedPrice.toLocaleString()}${pricingTypeSuffix}`
+                          : priceResult?.hasDiscount
+                            ? `Rs.${priceResult.discountedPrice.toLocaleString()}${pricingTypeSuffix}`
+                            : activeCourse.price}
                       </span>
-                      {priceResult?.hasDiscount && (
+                      {(couponAdjustedPrice != null || priceResult?.hasDiscount) && (
                         <span className="text-lg text-slate-400 dark:text-neutral-500 line-through mb-1 font-semibold">
-                          Rs.{priceResult.originalPrice.toLocaleString()}{pricingTypeSuffix}
+                          {priceResult?.hasDiscount && couponAdjustedPrice != null
+                            ? `Rs.${priceResult.discountedPrice.toLocaleString()}${pricingTypeSuffix}`
+                            : priceResult?.hasDiscount
+                              ? `Rs.${priceResult.originalPrice.toLocaleString()}${pricingTypeSuffix}`
+                              : activeCourse.price}
                         </span>
                       )}
                     </div>
-                    {priceResult?.hasDiscount && (
-                      <div className="bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400 text-xs font-bold px-2.5 py-1 rounded-md flex items-center gap-1">
-                        <Tag size={12} weight="fill" />
-                        {priceResult.discountLabel}
-                      </div>
-                    )}
+                    <div className="flex flex-col items-end gap-1">
+                      {priceResult?.hasDiscount && (
+                        <div className="bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400 text-xs font-bold px-2.5 py-1 rounded-md flex items-center gap-1">
+                          <Tag size={12} weight="fill" />
+                          {priceResult.discountLabel}
+                        </div>
+                      )}
+                      {couponResult?.valid && (
+                        <div className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-xs font-bold px-2.5 py-1 rounded-md flex items-center gap-1">
+                          <Tag size={12} weight="fill" />
+                          Coupon applied
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  {priceResult?.hasDiscount && priceResult.offer?.title && (
+                  {priceResult?.hasDiscount && priceResult.offer?.title && !couponResult?.valid && (
                     <div className="flex items-center gap-2 text-violet-600 dark:text-violet-400 text-xs font-bold mb-6">
                       <Tag size={14} weight="bold" />
                       <span>{priceResult.offer.title} applied</span>
                     </div>
                   )}
-                  <div className="mb-6" />
+                  {couponResult?.valid && (
+                    <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 text-xs font-bold mb-6">
+                      <Tag size={14} weight="bold" />
+                      <span>
+                        {couponResult.discountType === 'percentage'
+                          ? `${couponResult.discountValue}% coupon applied`
+                          : `PKR ${couponResult.discountAmount?.toLocaleString()} coupon applied`}
+                        {priceResult?.hasDiscount && ` + ${priceResult.discountLabel} offer`}
+                      </span>
+                    </div>
+                  )}
+                  <div className="mb-6">
+                    <label className="block text-xs font-bold text-slate-500 dark:text-neutral-400 uppercase tracking-wide mb-1.5">
+                      Coupon Code <span className="normal-case font-normal">(optional)</span>
+                    </label>
+                    <div className="relative">
+                      <Tag size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-neutral-500" />
+                      <input
+                        value={couponCode}
+                        onChange={e => handleCouponChange(e.target.value)}
+                        placeholder="Enter coupon code"
+                        className={`w-full pl-8 pr-9 py-3 rounded-xl border text-sm outline-none transition-colors bg-white dark:bg-neutral-800 text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-neutral-600 ${
+                          couponResult?.valid
+                            ? 'border-emerald-400 dark:border-emerald-600 focus:border-emerald-500'
+                            : couponResult && !couponResult.valid
+                              ? 'border-red-400 dark:border-red-600 focus:border-red-500'
+                              : 'border-slate-200 dark:border-neutral-700 focus:border-violet-500'
+                        }`}
+                      />
+                      {couponValidating && (
+                        <Spinner size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-violet-500 animate-spin" />
+                      )}
+                      {!couponValidating && couponResult?.valid && (
+                        <CheckCircle size={14} weight="fill" className="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-500" />
+                      )}
+                      {!couponValidating && couponResult && !couponResult.valid && (
+                        <WarningCircle size={14} weight="fill" className="absolute right-3 top-1/2 -translate-y-1/2 text-red-500" />
+                      )}
+                    </div>
+                    {couponResult?.valid && (
+                      <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1 font-medium">
+                        ✓ {couponResult.discountType === 'percentage'
+                          ? `${couponResult.discountValue}% discount applied`
+                          : `${currency} ${couponResult.discountAmount ?? couponResult.discountValue} discount applied`}
+                      </p>
+                    )}
+                    {couponResult && !couponResult.valid && (
+                      <p className="text-xs text-red-500 dark:text-red-400 mt-1">{couponResult.reason}</p>
+                    )}
+                  </div>
 
                   {/* Primary CTA */}
                   <motion.button
@@ -1186,26 +1296,42 @@ export default function CourseDetailsPage() {
           >
             <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
               <div>
-                {priceResult?.hasDiscount && (
+                {(couponAdjustedPrice != null || priceResult?.hasDiscount) && (
                   <div className="text-xs text-slate-500 dark:text-neutral-400 font-bold mb-0.5 line-through">
-                    Rs.{priceResult.originalPrice.toLocaleString()}{pricingTypeSuffix}
+                    {priceResult?.hasDiscount && couponAdjustedPrice != null
+                      ? `Rs.${priceResult.discountedPrice.toLocaleString()}${pricingTypeSuffix}`
+                      : priceResult?.hasDiscount
+                        ? `Rs.${priceResult.originalPrice.toLocaleString()}${pricingTypeSuffix}`
+                        : activeCourse.price}
                   </div>
                 )}
                 <div className="flex items-center gap-2">
                   <div className="text-2xl font-black text-slate-900 dark:text-white">
-                    {priceResult?.hasDiscount
-                      ? `Rs.${priceResult.discountedPrice.toLocaleString()}${pricingTypeSuffix}`
-                      : activeCourse.price}
+                    {couponAdjustedPrice != null
+                      ? `Rs.${couponAdjustedPrice.toLocaleString()}${pricingTypeSuffix}`
+                      : priceResult?.hasDiscount
+                        ? `Rs.${priceResult.discountedPrice.toLocaleString()}${pricingTypeSuffix}`
+                        : activeCourse.price}
                   </div>
                   {priceResult?.hasDiscount && (
                     <span className="text-xs font-bold bg-violet-100 dark:bg-violet-900/40 text-violet-600 dark:text-violet-300 px-1.5 py-0.5 rounded-md">
                       {priceResult.discountLabel}
                     </span>
                   )}
+                  {couponResult?.valid && (
+                    <span className="text-xs font-bold bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 px-1.5 py-0.5 rounded-md">
+                      Coupon
+                    </span>
+                  )}
                 </div>
-                {priceResult?.hasDiscount && priceResult.offer?.title && (
+                {priceResult?.hasDiscount && priceResult.offer?.title && !couponResult?.valid && (
                   <div className="text-xs text-violet-600 dark:text-violet-400 font-bold mt-0.5">
                     {priceResult.offer.title} applied
+                  </div>
+                )}
+                {couponResult?.valid && (
+                  <div className="text-xs text-emerald-600 dark:text-emerald-400 font-bold mt-0.5">
+                    Coupon applied
                   </div>
                 )}
               </div>
