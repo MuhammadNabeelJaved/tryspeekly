@@ -1,3 +1,4 @@
+import mongoose from 'mongoose'
 import asyncHandler from '../utils/asyncHandler.js'
 import Payment from '../models/payment.model.js'
 import { uploadPaymentScreenshot, deleteFile, extractPublicId } from '../utils/cloudinary.js'
@@ -428,8 +429,10 @@ export const bulkDeletePayments = asyncHandler(async (req, res) => {
     return res.status(400).json({ success: false, error: { message: 'Cannot delete more than 100 payments at once' } })
   }
 
-  const payments = await Payment.find({ _id: { $in: ids } })
+  const validIds = ids.filter(id => mongoose.isValidObjectId(id))
+  const payments = await Payment.find({ _id: { $in: validIds } })
 
+  const successfulIds = []
   const results = await Promise.allSettled(
     payments.map(async (payment) => {
       if (payment.screenshotUrl) {
@@ -437,12 +440,13 @@ export const bulkDeletePayments = asyncHandler(async (req, res) => {
         if (publicId) await deleteFile(publicId, 'image')
       }
       await Payment.deleteOne({ _id: payment._id })
+      successfulIds.push(payment._id)
       return true
     })
   )
 
-  if (deactivateEnrollments) {
-    await Enrollment.updateMany({ payment: { $in: ids } }, { isActive: false })
+  if (deactivateEnrollments && successfulIds.length > 0) {
+    await Enrollment.updateMany({ payment: { $in: successfulIds } }, { isActive: false })
   }
 
   const deleted = results.filter(r => r.status === 'fulfilled' && r.value === true).length
