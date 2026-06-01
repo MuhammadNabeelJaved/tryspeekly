@@ -113,20 +113,32 @@ export default function CompleteEnrollmentPopup({ enrollments, onClose, onPaymen
         </motion.div>
       </div>
 
-      {/* Open PaymentSubmitModal when a course is selected */}
-      {selectedEnrollment && (
-        <PaymentSubmitModal
-          courseId={selectedEnrollment.course._id}
-          teacherId={selectedEnrollment.teacher._id}
-          pricingType={selectedEnrollment.course.pricingType}
-          isOpen={true}
-          onClose={() => setSelectedEnrollment(null)}
-          onSuccess={() => {
-            setSelectedEnrollment(null)
-            onPaymentSuccess()
-          }}
-        />
-      )}
+      {selectedEnrollment && (() => {
+        const originalPrice = selectedEnrollment.course.currency === 'USD' ? (selectedEnrollment.course.priceUSD ?? 0) : (selectedEnrollment.course.price ?? 0)
+        const couponDiscount = selectedEnrollment.discountApplied || 0
+        const offerDiscount = selectedEnrollment.offerDiscountApplied || 0
+        const totalDiscount = couponDiscount + offerDiscount
+        const discountedPrice = totalDiscount > 0 ? Math.max(0, originalPrice - totalDiscount) : undefined
+        return (
+          <PaymentSubmitModal
+            courseId={selectedEnrollment.course._id}
+            teacherId={selectedEnrollment.teacher._id}
+            courseName={selectedEnrollment.course.title}
+            coursePrice={originalPrice}
+            courseCurrency={selectedEnrollment.course.currency}
+            pricingType={selectedEnrollment.course.pricingType}
+            offerDiscountedPrice={discountedPrice}
+            offerLabel={offerDiscount > 0 ? 'Offer discount' : undefined}
+            couponDiscountApplied={couponDiscount > 0 ? couponDiscount : undefined}
+            isOpen={true}
+            onClose={() => setSelectedEnrollment(null)}
+            onSuccess={() => {
+              setSelectedEnrollment(null)
+              onPaymentSuccess()
+            }}
+          />
+        )
+      })()}
     </>
   )
 }
