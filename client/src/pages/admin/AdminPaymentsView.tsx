@@ -261,11 +261,11 @@ export default function AdminPaymentsView() {
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
                             <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
-                              {(e.student.name ?? '?').split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2)}
+                              {(e.student?.name ?? '?').split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2)}
                             </div>
                             <div>
-                              <p className="font-semibold text-slate-900 dark:text-white text-xs">{e.student.name}</p>
-                              <p className="text-[10px] text-slate-400 dark:text-neutral-600 truncate max-w-[120px]">{e.student.email}</p>
+                              <p className="font-semibold text-slate-900 dark:text-white text-xs">{e.student?.name ?? '—'}</p>
+                              <p className="text-[10px] text-slate-400 dark:text-neutral-600 truncate max-w-[120px]">{e.student?.email ?? '—'}</p>
                             </div>
                           </div>
                         </td>
@@ -280,7 +280,7 @@ export default function AdminPaymentsView() {
                             onClick={() => {
                               setDirectApprove({
                                 enrollmentId: e._id,
-                                studentName: e.student.name,
+                                studentName: e.student?.name ?? '—',
                                 courseName: e.course.title,
                                 method: 'jazzcash',
                                 amount: price > 0 ? String(price) : '',

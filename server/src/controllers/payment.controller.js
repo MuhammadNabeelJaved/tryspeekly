@@ -160,9 +160,11 @@ export const getAllPayments = asyncHandler(async (req, res) => {
       Payment.countDocuments(filter),
     ])
 
+    const validPayments = payments.filter(p => p.student && p.course)
+
     const enrollmentDocs = await Enrollment.find({
-      student: { $in: payments.map(p => p.student._id) },
-      course: { $in: payments.map(p => p.course._id) },
+      student: { $in: validPayments.map(p => p.student._id) },
+      course: { $in: validPayments.map(p => p.course._id) },
     }).select('student course isActive')
 
     const enrollmentMap = {}
@@ -170,7 +172,9 @@ export const getAllPayments = asyncHandler(async (req, res) => {
 
     const data = payments.map(p => ({
       ...p.toObject(),
-      enrollmentActive: enrollmentMap[`${p.student._id}_${p.course._id}`] ?? false,
+      enrollmentActive: p.student && p.course
+        ? (enrollmentMap[`${p.student._id}_${p.course._id}`] ?? false)
+        : false,
     }))
 
     res.json({
