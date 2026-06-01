@@ -399,6 +399,61 @@ export const adminCreatePayment = asyncHandler(async (req, res) => {
   }
 })
 
+// DELETE /api/v1/payments/:id — admin: hard-delete single payment
+export const deletePayment = asyncHandler(async (req, res) => {
+  const payment = await Payment.findById(req.params.id)
+  if (!payment) return res.status(404).json({ success: false, error: { message: 'Payment not found' } })
+
+  if (payment.screenshotUrl) {
+    const publicId = extractPublicId(payment.screenshotUrl)
+    if (publicId) await deleteFile(publicId, 'image')
+  }
+
+  if (req.query.deactivateEnrollment === 'true') {
+    await Enrollment.updateMany({ payment: payment._id }, { isActive: false })
+  }
+
+  await Payment.deleteOne({ _id: payment._id })
+
+  res.json({ success: true, message: 'Payment deleted' })
+})
+
+// DELETE /api/v1/payments/bulk — admin: hard-delete multiple payments
+export const bulkDeletePayments = asyncHandler(async (req, res) => {
+  const { ids, deactivateEnrollments = false } = req.body
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return res.status(400).json({ success: false, error: { message: 'ids must be a non-empty array' } })
+  }
+  if (ids.length > 100) {
+    return res.status(400).json({ success: false, error: { message: 'Cannot delete more than 100 payments at once' } })
+  }
+
+  const payments = await Payment.find({ _id: { $in: ids } })
+
+  const results = await Promise.allSettled(
+    payments.map(async (payment) => {
+      if (payment.screenshotUrl) {
+        const publicId = extractPublicId(payment.screenshotUrl)
+        if (publicId) await deleteFile(publicId, 'image')
+      }
+      await Payment.deleteOne({ _id: payment._id })
+      return true
+    })
+  )
+
+  if (deactivateEnrollments) {
+    await Enrollment.updateMany({ payment: { $in: ids } }, { isActive: false })
+  }
+
+  const deleted = results.filter(r => r.status === 'fulfilled' && r.value === true).length
+
+  res.json({
+    success: true,
+    message: `${deleted} payment${deleted !== 1 ? 's' : ''} deleted`,
+    data: { deleted },
+  })
+})
+
 // POST /api/v1/payments/admin/direct-approve — admin: create payment + immediately approve (for WhatsApp payments)
 export const directApprovePayment = asyncHandler(async (req, res) => {
   try {
