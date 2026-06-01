@@ -25,3 +25,6 @@ Thumbs.db
 
 # Superpowers brainstorm artefacts
 .superpowers/
+
+# Graphify output
+graphify-out/
