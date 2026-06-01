@@ -95,7 +95,7 @@ export default function AdminPaymentsView() {
 
   const filtered = payments.filter(p => {
     const q = search.toLowerCase()
-    const mQ = !q || p.student.name.toLowerCase().includes(q) || p.student.email.toLowerCase().includes(q) || p.method.toLowerCase().includes(q)
+    const mQ = !q || (p.student?.name ?? '').toLowerCase().includes(q) || (p.student?.email ?? '').toLowerCase().includes(q) || p.method.toLowerCase().includes(q)
     const mS = filterStatus === 'All' || p.status === filterStatus
     const mM = filterMethod === 'All' || p.method === filterMethod
     return mQ && mS && mM
@@ -393,15 +393,15 @@ export default function AdminPaymentsView() {
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
-                        {(p.student.name ?? '?').split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2)}
+                        {(p.student?.name ?? '?').split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2)}
                       </div>
                       <div>
-                        <p className="font-semibold text-slate-900 dark:text-white text-xs">{p.student.name}</p>
-                        <p className="text-[10px] text-slate-400 dark:text-neutral-600 truncate max-w-[120px]">{p.student.email}</p>
+                        <p className="font-semibold text-slate-900 dark:text-white text-xs">{p.student?.name ?? '—'}</p>
+                        <p className="text-[10px] text-slate-400 dark:text-neutral-600 truncate max-w-[120px]">{p.student?.email ?? '—'}</p>
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-xs text-slate-600 dark:text-neutral-300 whitespace-nowrap">{p.course.title}</td>
+                  <td className="px-4 py-3 text-xs text-slate-600 dark:text-neutral-300 whitespace-nowrap">{p.course?.title ?? '—'}</td>
                   <td className="px-4 py-3 text-xs text-slate-600 dark:text-neutral-300 whitespace-nowrap capitalize">{p.method.replace('_', ' ')}</td>
                   <td className="px-4 py-3 text-xs font-black text-slate-900 dark:text-white whitespace-nowrap">{p.currency} {p.amount.toLocaleString()}</td>
                   <td className="px-4 py-3">
