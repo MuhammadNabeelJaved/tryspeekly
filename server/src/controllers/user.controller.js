@@ -597,3 +597,42 @@ export const toggleShowOnHome = asyncHandler(async (req, res) => {
   }
 })
 
+// DELETE /api/v1/users/bulk — admin: soft-delete multiple users
+export const bulkDeleteUsers = asyncHandler(async (req, res) => {
+  const { ids } = req.body
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return res.status(400).json({ success: false, error: { message: 'ids must be a non-empty array' } })
+  }
+  if (ids.length > 100) {
+    return res.status(400).json({ success: false, error: { message: 'Cannot delete more than 100 users at once' } })
+  }
+
+  const adminId = req.user._id.toString()
+  const filteredIds = ids.filter(id => id !== adminId)
+  const skipped = ids.length - filteredIds.length
+
+  const results = await Promise.allSettled(
+    filteredIds.map(async (id) => {
+      const user = await User.findById(id)
+      if (!user || user.isDeleted) return
+      if (user.profileImage) {
+        const publicId = extractPublicId(user.profileImage)
+        if (publicId) await deleteFile(publicId, 'image')
+      }
+      const userId = user._id
+      user.isDeleted = true
+      user.profileImage = undefined
+      await user.save()
+      emitToUser(userId, 'user:deleted', { message: 'Your account has been deleted.' })
+    })
+  )
+
+  const deleted = results.filter(r => r.status === 'fulfilled').length
+
+  res.json({
+    success: true,
+    message: `${deleted} user${deleted !== 1 ? 's' : ''} deleted`,
+    data: { deleted, skipped },
+  })
+})
+

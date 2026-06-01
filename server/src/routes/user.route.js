@@ -18,6 +18,7 @@ import {
     requestPasswordReset,
     resetPassword,
     deleteUser,
+    bulkDeleteUsers,
     markOnboardingDone,
     changeUserRole,
     blockUser,
@@ -25,6 +26,7 @@ import {
     getHomeInstructors,
     toggleShowOnHome,
 } from '../controllers/user.controller.js'
+
 
 // Passes for admin or any verified team_member (read-only user lookup)
 const allowTeamMember = (req, res, next) => {
@@ -34,6 +36,7 @@ const allowTeamMember = (req, res, next) => {
 }
 
 const router = express.Router()
+
 
 // ─── Public routes ─────────────────────────────────────────────────────────────
 router.route('/public-teachers').get(getPublicTeachers)
@@ -58,6 +61,7 @@ router.route('/change-password').post(authenticate, changePassword)
 
 // ─── Admin only routes ─────────────────────────────────────────────────────────
 router.route('/').get(authenticate, authorizeTeamPage('students', 'instructors'), getAllUsers)
+router.route('/bulk').delete(authenticate, authorize('admin'), bulkDeleteUsers)
 router.route('/:id/role').patch(authenticate, authorize('admin'), changeUserRole)
 router.route('/:id/block').patch(authenticate, authorize('admin'), blockUser)
 router.route('/:id/show-on-home').patch(authenticate, authorize('admin'), toggleShowOnHome)
