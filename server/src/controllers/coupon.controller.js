@@ -195,3 +195,59 @@ export const validateCoupon = asyncHandler(async (req, res) => {
     res.status(400).json({ success: false, error: { message: error.message } })
   }
 })
+
+// ─── Admin: Get coupon/offer usage tracking ───────────────────────────────────
+export const getCouponUsageTracking = asyncHandler(async (req, res) => {
+  try {
+    const { page = 1, limit = 50, type } = req.query
+    const skip = (Number(page) - 1) * Number(limit)
+
+    const filter = {}
+    if (type === 'coupon') {
+      filter.coupon = { $ne: null }
+    } else if (type === 'offer') {
+      filter.offer = { $ne: null }
+    } else {
+      filter.$or = [
+        { coupon: { $ne: null } },
+        { offer: { $ne: null } },
+        { discountApplied: { $gt: 0 } },
+        { offerDiscountApplied: { $gt: 0 } },
+      ]
+    }
+
+    const [records, total] = await Promise.all([
+      Enrollment.find(filter)
+        .populate('student', 'name email')
+        .populate('course', 'title price priceUSD currency')
+        .populate('coupon', 'code discountType discountValue source')
+        .populate('offer', 'title discountType discountValue')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(Number(limit))
+        .lean(),
+      Enrollment.countDocuments(filter),
+    ])
+
+    const data = records.map(r => ({
+      _id: r._id,
+      student: r.student,
+      course: r.course,
+      coupon: r.coupon,
+      offer: r.offer,
+      discountApplied: r.discountApplied || 0,
+      offerDiscountApplied: r.offerDiscountApplied || 0,
+      totalDiscount: (r.discountApplied || 0) + (r.offerDiscountApplied || 0),
+      isActive: r.isActive,
+      enrolledAt: r.enrolledAt,
+    }))
+
+    res.json({
+      success: true,
+      data,
+      pagination: { page: Number(page), limit: Number(limit), total, totalPages: Math.ceil(total / Number(limit)) },
+    })
+  } catch (error) {
+    res.status(400).json({ success: false, error: { message: error.message } })
+  }
+})

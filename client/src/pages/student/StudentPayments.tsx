@@ -191,19 +191,28 @@ export default function StudentPayments() {
         </div>
       </div>
 
-      {submitModal && (
-        <PaymentSubmitModal
-          courseId={submitModal.courseId}
-          teacherId={submitModal.teacherId}
-          courseName={submitModal.courseName}
-          coursePrice={submitModal.coursePrice}
-          courseCurrency={submitModal.courseCurrency}
-          pricingType={submitModal.pricingType}
-          isOpen={!!submitModal}
-          onClose={() => setSubmitModal(null)}
-          onSuccess={() => { setSubmitModal(null); fetchData() }}
-        />
-      )}
+      {submitModal && (() => {
+        const enrollment = enrollments.find(e => e.course._id === submitModal.courseId)
+        const savedDiscount = enrollment ? (enrollment.discountApplied || 0) + (enrollment.offerDiscountApplied || 0) : 0
+        const hasSavedDiscount = savedDiscount > 0
+        const discountedPrice = hasSavedDiscount && submitModal.coursePrice ? Math.max(0, submitModal.coursePrice - savedDiscount) : submitModal.coursePrice
+        return (
+          <PaymentSubmitModal
+            courseId={submitModal.courseId}
+            teacherId={submitModal.teacherId}
+            courseName={submitModal.courseName}
+            coursePrice={submitModal.coursePrice}
+            courseCurrency={submitModal.courseCurrency}
+            pricingType={submitModal.pricingType}
+            offerDiscountedPrice={hasSavedDiscount ? discountedPrice : undefined}
+            offerLabel={hasSavedDiscount ? 'Discount' : undefined}
+            hasSavedDiscount={hasSavedDiscount}
+            isOpen={true}
+            onClose={() => setSubmitModal(null)}
+            onSuccess={() => { setSubmitModal(null); fetchData() }}
+          />
+        )
+      })()}
     </div>
   )
 }

@@ -1,5 +1,6 @@
 import asyncHandler from '../utils/asyncHandler.js'
 import Blog from '../models/blog.model.js'
+import BlogComment from '../models/blog-comment.model.js'
 import { uploadSiteBanner, deleteFile, extractPublicId } from '../utils/cloudinary.js'
 
 // GET /api/v1/blogs — public
@@ -37,6 +38,51 @@ export const getBlog = asyncHandler(async (req, res) => {
   }
 })
 
+// GET /api/v1/blogs/:slug/comments — public: approved comments for a blog
+export const getBlogComments = asyncHandler(async (req, res) => {
+  try {
+    const blog = await Blog.findOne({ slug: req.params.slug, status: 'published' }).select('_id')
+    if (!blog) return res.status(404).json({ success: false, error: { message: 'Blog not found' } })
+
+    const comments = await BlogComment.find({ blog: blog._id, status: 'approved' })
+      .populate('author', 'name profileImage role')
+      .sort({ createdAt: -1 })
+
+    res.json({ success: true, data: comments })
+  } catch (error) {
+    res.status(400).json({ success: false, error: { message: error.message } })
+  }
+})
+
+// POST /api/v1/blogs/:slug/comments — verified users only
+export const createBlogComment = asyncHandler(async (req, res) => {
+  try {
+    const content = String(req.body.content || '').trim()
+    if (!content) return res.status(400).json({ success: false, error: { message: 'Comment is required' } })
+    if (content.length > 1000) return res.status(400).json({ success: false, error: { message: 'Comment cannot exceed 1000 characters' } })
+
+    const blog = await Blog.findOne({ slug: req.params.slug, status: 'published' }).select('_id')
+    if (!blog) return res.status(404).json({ success: false, error: { message: 'Blog not found' } })
+
+    const comment = await BlogComment.create({
+      blog: blog._id,
+      author: req.user.id,
+      content,
+      status: 'pending',
+    })
+
+    await comment.populate('author', 'name profileImage role')
+
+    res.status(201).json({
+      success: true,
+      message: 'Comment submitted for approval',
+      data: comment,
+    })
+  } catch (error) {
+    res.status(400).json({ success: false, error: { message: error.message } })
+  }
+})
+
 // GET /api/v1/blogs/admin/all — admin: all blogs regardless of status
 export const getAdminBlogs = asyncHandler(async (req, res) => {
   try {
@@ -67,6 +113,74 @@ export const getAdminBlogById = asyncHandler(async (req, res) => {
     const blog = await Blog.findById(req.params.id).populate('author', 'name profileImage role jobTitle')
     if (!blog) return res.status(404).json({ success: false, error: { message: 'Blog not found' } })
     res.json({ success: true, data: blog })
+  } catch (error) {
+    res.status(400).json({ success: false, error: { message: error.message } })
+  }
+})
+
+// GET /api/v1/blogs/admin/comments — admin/blog-team: all comments
+export const getAdminBlogComments = asyncHandler(async (req, res) => {
+  try {
+    const { status = 'all', search, blogId } = req.query
+    const filter = { isDeleted: { $ne: true } }
+    if (status && status !== 'all') filter.status = status
+    if (blogId) filter.blog = blogId
+
+    let comments = await BlogComment.find(filter)
+      .populate('author', 'name email profileImage role')
+      .populate('blog', 'title slug status')
+      .sort({ createdAt: -1 })
+
+    if (search) {
+      const term = String(search).toLowerCase()
+      comments = comments.filter(comment =>
+        comment.content.toLowerCase().includes(term) ||
+        comment.author?.name?.toLowerCase().includes(term) ||
+        comment.author?.email?.toLowerCase().includes(term) ||
+        comment.blog?.title?.toLowerCase().includes(term)
+      )
+    }
+
+    res.json({ success: true, data: comments })
+  } catch (error) {
+    res.status(400).json({ success: false, error: { message: error.message } })
+  }
+})
+
+// PATCH /api/v1/blogs/admin/comments/:id — admin/blog-team: approve or reject
+export const updateBlogCommentStatus = asyncHandler(async (req, res) => {
+  try {
+    const { status } = req.body
+    if (!['approved', 'rejected', 'pending'].includes(status)) {
+      return res.status(400).json({ success: false, error: { message: 'Invalid comment status' } })
+    }
+
+    const comment = await BlogComment.findById(req.params.id)
+    if (!comment) return res.status(404).json({ success: false, error: { message: 'Comment not found' } })
+
+    comment.status = status
+    comment.moderatedBy = req.user.id
+    comment.moderatedAt = new Date()
+    await comment.save()
+    await comment.populate('author', 'name email profileImage role')
+    await comment.populate('blog', 'title slug status')
+
+    res.json({ success: true, message: `Comment ${status}`, data: comment })
+  } catch (error) {
+    res.status(400).json({ success: false, error: { message: error.message } })
+  }
+})
+
+// DELETE /api/v1/blogs/admin/comments/:id — admin/blog-team: soft delete
+export const deleteBlogComment = asyncHandler(async (req, res) => {
+  try {
+    const comment = await BlogComment.findById(req.params.id)
+    if (!comment) return res.status(404).json({ success: false, error: { message: 'Comment not found' } })
+
+    comment.isDeleted = true
+    await comment.save()
+
+    res.json({ success: true, message: 'Comment deleted successfully' })
   } catch (error) {
     res.status(400).json({ success: false, error: { message: error.message } })
   }

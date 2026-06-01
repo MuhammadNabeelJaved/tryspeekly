@@ -26,6 +26,10 @@ const enrollmentSchema = new Schema(
       totalSessions: { type: Number, required: true },
       lastAttendedAt: { type: Date },
     },
+    coupon: { type: mongoose.Schema.Types.ObjectId, ref: 'Coupon', default: null },
+    discountApplied: { type: Number, default: 0 },
+    offerDiscountApplied: { type: Number, default: 0 },
+    offer: { type: mongoose.Schema.Types.ObjectId, ref: 'Offer', default: null },
     attendance: [attendanceSchema],
   },
   { timestamps: true, versionKey: false }

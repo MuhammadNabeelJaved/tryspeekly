@@ -215,11 +215,16 @@ export interface Enrollment {
   progress: { sessionsAttended: number; totalSessions: number; lastAttendedAt?: string };
   createdAt: string;
   updatedAt: string;
+  coupon?: string | null;
+  discountApplied?: number;
+  offer?: string | null;
+  offerDiscountApplied?: number;
 }
 
 export interface CreateEnrollmentDto {
   courseId: string;
   paymentId?: string;
+  couponCode?: string;
 }
 
 export interface EnrollmentListResponse {
@@ -347,6 +352,18 @@ export interface Blog {
   updatedAt: string;
 }
 
+export interface BlogComment {
+  _id: string;
+  blog: string | { _id: string; title: string; slug: string; status?: string };
+  author: { _id: string; name: string; email?: string; profileImage?: string; role?: string };
+  content: string;
+  status: 'pending' | 'approved' | 'rejected';
+  moderatedBy?: string;
+  moderatedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface CreateBlogDto {
   title: string;
   content: string;
@@ -370,6 +387,9 @@ export interface BlogSingleResponse {
   success: boolean;
   data: Blog;
 }
+
+export type BlogCommentListResponse = ApiResponse<BlogComment[]>;
+export type BlogCommentSingleResponse = ApiResponse<BlogComment>;
 
 // ─── Certificate Types ────────────────────────────────────────────────────────
 

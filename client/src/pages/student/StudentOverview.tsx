@@ -564,32 +564,42 @@ export default function StudentOverview({ onNavigate }: { onNavigate: (view: Stu
           setSubmitModalOpen(false)
           setAssignments(prev => prev.map(a =>
             a._id === selectedTask?.assignment._id
-              ? { ...a, submissions: [{ _id: 'temp', student: { _id: '', name: '' }, submittedAt: new Date().toISOString(), fileUrl: '', status: 'submitted' as const }] }
+              ? { ...a, submissions: [{ _id: 'temp', student: { _id: '', name: '' }, enrollment: selectedTask?.enrollmentId ?? '', submittedAt: new Date().toISOString(), fileUrl: '', status: 'submitted' as const }] }
               : a
           ))
         }}
       />
 
-      {selectedPayEnrollment && (
-        <PaymentSubmitModal
-          courseId={selectedPayEnrollment.course._id}
-          teacherId={selectedPayEnrollment.teacher._id}
-          courseName={selectedPayEnrollment.course.title}
-          coursePrice={selectedPayEnrollment.course.currency === 'USD' ? (selectedPayEnrollment.course.priceUSD ?? 0) : (selectedPayEnrollment.course.price ?? 0)}
-          courseCurrency={selectedPayEnrollment.course.currency}
-          pricingType={selectedPayEnrollment.course.pricingType}
-          isOpen={true}
-          onClose={() => setSelectedPayEnrollment(null)}
-          onSuccess={() => {
-            setSelectedPayEnrollment(null)
-            setEnrollments(prev => prev.map(e =>
-              e._id === selectedPayEnrollment._id
-                ? { ...e, payment: { ...e.payment, status: 'pending' } as any }
-                : e
-            ))
-          }}
-        />
-      )}
+      {selectedPayEnrollment && (() => {
+        const originalPrice = selectedPayEnrollment.course.currency === 'USD' ? (selectedPayEnrollment.course.priceUSD ?? 0) : (selectedPayEnrollment.course.price ?? 0)
+        const savedDiscount = (selectedPayEnrollment.discountApplied || 0) + (selectedPayEnrollment.offerDiscountApplied || 0)
+        const hasSavedDiscount = savedDiscount > 0
+        const discountedPrice = hasSavedDiscount ? Math.max(0, originalPrice - savedDiscount) : undefined
+        
+        return (
+          <PaymentSubmitModal
+            courseId={selectedPayEnrollment.course._id}
+            teacherId={selectedPayEnrollment.teacher._id}
+            courseName={selectedPayEnrollment.course.title}
+            coursePrice={originalPrice}
+            courseCurrency={selectedPayEnrollment.course.currency}
+            pricingType={selectedPayEnrollment.course.pricingType}
+            offerDiscountedPrice={discountedPrice}
+            offerLabel={hasSavedDiscount ? 'Discount' : undefined}
+            hasSavedDiscount={hasSavedDiscount}
+            isOpen={true}
+            onClose={() => setSelectedPayEnrollment(null)}
+            onSuccess={() => {
+              setSelectedPayEnrollment(null)
+              setEnrollments(prev => prev.map(e =>
+                e._id === selectedPayEnrollment._id
+                  ? { ...e, payment: { ...e.payment, status: 'pending' } as any }
+                  : e
+              ))
+            }}
+          />
+        )
+      })()}
     </div>
   )
 }

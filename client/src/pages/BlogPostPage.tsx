@@ -1,16 +1,17 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { motion } from 'framer-motion'
 import { useParams, Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import {
   ArrowLeft, CalendarBlank, Clock,
   TwitterLogo, LinkedinLogo, FacebookLogo, Link as LinkIcon,
-  BookmarkSimple, CheckCircle, ArrowRight
+  BookmarkSimple, CheckCircle, ArrowRight, ChatCircle, PaperPlaneTilt, UserCircle
 } from '@phosphor-icons/react'
 import { blogService } from '../services/blog.service'
-import type { Blog } from '../types/api'
+import type { Blog, BlogComment } from '../types/api'
 import { extractApiError } from '../utils/apiError'
 import Loader from '@/components/Loader'
+import { useAuth } from '../context/AuthContext'
 
 function authorLabel(author: { name: string; role?: string }) {
   return author.role === 'admin' ? 'Admin' : author.name
@@ -24,9 +25,13 @@ function authorSubtitle(author: { role?: string; jobTitle?: string }) {
 
 export default function BlogPostPage() {
   const { slug } = useParams()
+  const { user, isAuthenticated } = useAuth()
   const [blog, setBlog] = useState<Blog | null>(null)
   const [related, setRelated] = useState<Blog[]>([])
+  const [comments, setComments] = useState<BlogComment[]>([])
+  const [commentText, setCommentText] = useState('')
   const [loading, setLoading] = useState(true)
+  const [commentSubmitting, setCommentSubmitting] = useState(false)
   const [copied, setCopied] = useState(false)
 
   useEffect(() => {
@@ -36,6 +41,8 @@ export default function BlogPostPage() {
       try {
         const response = await blogService.getBlogBySlug(slug)
         setBlog(response.data)
+        const commentsResponse = await blogService.getBlogComments(slug)
+        setComments(commentsResponse.data)
         
         // Fetch related posts (same tag)
         if (response.data.tags.length > 0) {
@@ -60,6 +67,27 @@ export default function BlogPostPage() {
     navigator.clipboard.writeText(window.location.href)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  const submitComment = async (event: FormEvent) => {
+    event.preventDefault()
+    if (!slug) return
+    const content = commentText.trim()
+    if (content.length < 2) {
+      toast.error('Please write a comment first.')
+      return
+    }
+
+    setCommentSubmitting(true)
+    try {
+      await blogService.submitBlogComment(slug, content)
+      setCommentText('')
+      toast.success('Comment submitted. It will appear after admin approval.')
+    } catch (error: unknown) {
+      toast.error(extractApiError(error, 'Failed to submit comment.'))
+    } finally {
+      setCommentSubmitting(false)
+    }
   }
 
   if (loading) return <div className="pt-32"><Loader /></div>
@@ -206,6 +234,92 @@ export default function BlogPostPage() {
                     {blog.author.bio || 'Expert contributor at EnglishPro Academy. Passionate about helping students achieve their language goals through high-quality educational content.'}
                   </p>
                 </div>
+              </div>
+            </div>
+
+            {/* Comments */}
+            <div className="mt-12 pt-10 border-t border-slate-100 dark:border-neutral-800">
+              <div className="flex items-center justify-between gap-4 mb-8">
+                <div>
+                  <h2 className="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+                    <ChatCircle size={26} weight="bold" className="text-violet-600 dark:text-violet-400" />
+                    Comments
+                  </h2>
+                  <p className="text-sm text-slate-500 dark:text-neutral-500 mt-1">
+                    {comments.length} approved {comments.length === 1 ? 'comment' : 'comments'}
+                  </p>
+                </div>
+              </div>
+
+              {isAuthenticated ? (
+                <form onSubmit={submitComment} className="mb-10 rounded-3xl border border-slate-100 dark:border-neutral-800 bg-slate-50 dark:bg-neutral-900/50 p-5 sm:p-6">
+                  <div className="flex items-start gap-4">
+                    <div className="w-11 h-11 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center text-sm font-black text-violet-600 dark:text-violet-400 overflow-hidden flex-shrink-0">
+                      {user?.profileImage
+                        ? <img src={user.profileImage} alt="" className="w-full h-full object-cover" />
+                        : (user?.name?.charAt(0) || <UserCircle size={22} />)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <textarea
+                        value={commentText}
+                        onChange={event => setCommentText(event.target.value.slice(0, 1000))}
+                        rows={4}
+                        placeholder="Share your thoughts about this article..."
+                        className="w-full resize-none rounded-2xl border border-slate-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 px-4 py-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-neutral-600 outline-none focus:border-violet-500 transition-colors"
+                      />
+                      <div className="mt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <p className="text-xs text-slate-500 dark:text-neutral-500">
+                          Comments are reviewed before they appear publicly.
+                        </p>
+                        <button
+                          type="submit"
+                          disabled={commentSubmitting || commentText.trim().length < 2}
+                          className="inline-flex items-center justify-center gap-2 rounded-2xl bg-violet-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-violet-600/20 transition-all hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          <PaperPlaneTilt size={16} weight="bold" />
+                          {commentSubmitting ? 'Submitting...' : 'Post Comment'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </form>
+              ) : (
+                <div className="mb-10 rounded-3xl border border-slate-100 dark:border-neutral-800 bg-slate-50 dark:bg-neutral-900/50 p-6 text-center">
+                  <p className="text-sm font-semibold text-slate-600 dark:text-neutral-300 mb-4">
+                    Login with a verified account to join the discussion.
+                  </p>
+                  <Link to="/login" className="inline-flex items-center justify-center rounded-2xl bg-violet-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-violet-700 transition-colors">
+                    Login to Comment
+                  </Link>
+                </div>
+              )}
+
+              <div className="space-y-4">
+                {comments.length === 0 ? (
+                  <div className="rounded-3xl border border-dashed border-slate-200 dark:border-neutral-800 p-8 text-center">
+                    <p className="text-sm font-bold text-slate-700 dark:text-neutral-300">No comments yet</p>
+                    <p className="text-xs text-slate-500 dark:text-neutral-500 mt-1">Be the first to share a thoughtful response.</p>
+                  </div>
+                ) : comments.map(comment => (
+                  <div key={comment._id} className="rounded-3xl border border-slate-100 dark:border-neutral-800 bg-white dark:bg-neutral-950 p-5 sm:p-6">
+                    <div className="flex items-start gap-4">
+                      <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-neutral-900 flex items-center justify-center text-sm font-black text-slate-600 dark:text-neutral-300 overflow-hidden flex-shrink-0">
+                        {comment.author.profileImage
+                          ? <img src={comment.author.profileImage} alt="" className="w-full h-full object-cover" />
+                          : comment.author.name.charAt(0)}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2 mb-2">
+                          <p className="text-sm font-black text-slate-900 dark:text-white">{comment.author.name}</p>
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-neutral-600">
+                            {new Date(comment.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          </span>
+                        </div>
+                        <p className="text-sm leading-relaxed text-slate-600 dark:text-neutral-300 whitespace-pre-wrap">{comment.content}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
 

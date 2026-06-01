@@ -3,13 +3,13 @@ import { useForm } from 'react-hook-form'
 import { motion, AnimatePresence } from 'framer-motion'
 import toast from 'react-hot-toast'
 import {
-  Plus, PencilSimple, Trash, X, Check, Eye, MagnifyingGlass,
-  Clock, Tag, Globe, FileText, CalendarBlank, ArrowLeft,
-  TwitterLogo, LinkedinLogo, FacebookLogo, BookmarkSimple, Star
+  Plus, PencilSimple, Trash, X, Check, MagnifyingGlass,
+  Clock, Tag, Globe, FileText, CalendarBlank,
+  TwitterLogo, LinkedinLogo, Star, ChatCircle
 } from '@phosphor-icons/react'
 import { blogService } from '../../services/blog.service'
 import { siteSettingsService } from '../../services/site-settings.service'
-import type { Blog, CreateBlogDto } from '../../types/api'
+import type { Blog, BlogComment, CreateBlogDto } from '../../types/api'
 import { extractApiError } from '../../utils/apiError'
 import NewsletterEditor from '../../components/NewsletterEditor'
 
@@ -30,6 +30,12 @@ const STATUS_COLORS: Record<string, string> = {
   archived: 'bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400',
 }
 
+const COMMENT_STATUS_COLORS: Record<BlogComment['status'], string> = {
+  approved: 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400',
+  pending: 'bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400',
+  rejected: 'bg-red-100 dark:bg-red-950/40 text-red-700 dark:text-red-400',
+}
+
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1.5">
@@ -41,12 +47,17 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 export default function AdminBlog() {
   const [blogs, setBlogs] = useState<Blog[]>([])
+  const [comments, setComments] = useState<BlogComment[]>([])
+  const [managerTab, setManagerTab] = useState<'blogs' | 'comments'>('blogs')
   const [loading, setLoading] = useState(true)
+  const [commentsLoading, setCommentsLoading] = useState(true)
   const [modalType, setModalType] = useState<'add' | 'edit' | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('All')
+  const [commentStatusFilter, setCommentStatusFilter] = useState<'all' | BlogComment['status']>('pending')
+  const [commentSearch, setCommentSearch] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [activeTab, setActiveTab] = useState<'edit' | 'preview'>('edit')
   const [homeBlogCount, setHomeBlogCount] = useState(3)
@@ -112,7 +123,6 @@ export default function AdminBlog() {
   const watchedTagsInput = watch('tagsInput')
   const watchedExcerpt = watch('excerpt')
   const watchedStatus = watch('status')
-  const watchedSlug = watch('slug')
   const watchedReadTime = watch('readTime')
 
   const fetchBlogs = async () => {
@@ -131,10 +141,30 @@ export default function AdminBlog() {
     }
   }
 
+  const fetchComments = async () => {
+    setCommentsLoading(true)
+    try {
+      const params: { status?: string; search?: string } = {}
+      if (commentStatusFilter !== 'all') params.status = commentStatusFilter
+      if (commentSearch) params.search = commentSearch
+      const response = await blogService.getAdminBlogComments(params)
+      setComments(response.data)
+    } catch (error: unknown) {
+      toast.error(extractApiError(error, 'Failed to load blog comments.'))
+    } finally {
+      setCommentsLoading(false)
+    }
+  }
+
   useEffect(() => {
     const timer = setTimeout(fetchBlogs, 300)
     return () => clearTimeout(timer)
   }, [search, statusFilter])
+
+  useEffect(() => {
+    const timer = setTimeout(fetchComments, 300)
+    return () => clearTimeout(timer)
+  }, [commentSearch, commentStatusFilter])
 
   const openAdd = () => {
     reset({ ...EMPTY_BLOG, tagsInput: '' })
@@ -207,6 +237,26 @@ export default function AdminBlog() {
     }
   }
 
+  const updateCommentStatus = async (id: string, status: BlogComment['status']) => {
+    try {
+      await blogService.updateBlogCommentStatus(id, status)
+      fetchComments()
+      toast.success(status === 'approved' ? 'Comment approved.' : status === 'rejected' ? 'Comment rejected.' : 'Comment moved to pending.')
+    } catch (error: unknown) {
+      toast.error(extractApiError(error, 'Failed to update comment.'))
+    }
+  }
+
+  const removeComment = async (id: string) => {
+    try {
+      await blogService.deleteBlogComment(id)
+      fetchComments()
+      toast.success('Comment deleted.')
+    } catch (error: unknown) {
+      toast.error(extractApiError(error, 'Failed to delete comment.'))
+    }
+  }
+
   // Preview data processing
   const previewTags = watchedTagsInput.split(',').map(t => t.trim()).filter(Boolean)
 
@@ -214,17 +264,22 @@ export default function AdminBlog() {
     <div className="p-4 sm:p-6 flex flex-col h-full bg-slate-50 dark:bg-neutral-950">
       
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-5">
         <div className="flex-1">
           <h2 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2">
             Blog Manager
             <span className="text-sm font-medium text-slate-400 dark:text-neutral-500 bg-slate-100 dark:bg-neutral-800 px-2 py-0.5 rounded-lg">
-              {blogs.length}
+              {managerTab === 'blogs' ? blogs.length : comments.length}
             </span>
           </h2>
-          <p className="text-xs text-slate-500 dark:text-neutral-500 mt-1">Manage articles according to platform design</p>
+          <p className="text-xs text-slate-500 dark:text-neutral-500 mt-1">
+            {managerTab === 'blogs'
+              ? 'Create, edit, publish, and feature blog articles.'
+              : 'Review, approve, or reject user comments under blog posts.'}
+          </p>
         </div>
-        <div className="flex items-center gap-3 self-start">
+        {managerTab === 'blogs' && (
+          <div className="flex items-center gap-3 self-start">
           <label className="flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-neutral-400 whitespace-nowrap">
             Show
             <input
@@ -250,10 +305,39 @@ export default function AdminBlog() {
           >
             <Plus size={16} weight="bold" /> New Article
           </button>
-        </div>
+          </div>
+        )}
+      </div>
+
+      <div className="mb-6 inline-flex w-full sm:w-auto rounded-2xl border border-slate-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-1 shadow-sm">
+        <button
+          type="button"
+          onClick={() => setManagerTab('blogs')}
+          className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-black transition-all ${
+            managerTab === 'blogs'
+              ? 'bg-violet-600 text-white shadow-lg shadow-violet-600/20'
+              : 'text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-neutral-800'
+          }`}
+        >
+          <FileText size={16} weight={managerTab === 'blogs' ? 'fill' : 'regular'} />
+          Blog Management
+        </button>
+        <button
+          type="button"
+          onClick={() => setManagerTab('comments')}
+          className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-black transition-all ${
+            managerTab === 'comments'
+              ? 'bg-violet-600 text-white shadow-lg shadow-violet-600/20'
+              : 'text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-neutral-800'
+          }`}
+        >
+          <ChatCircle size={16} weight={managerTab === 'comments' ? 'fill' : 'regular'} />
+          Comment Management
+        </button>
       </div>
 
       {/* Filters & Search */}
+      {managerTab === 'blogs' && (
       <div className="flex flex-col md:flex-row gap-4 mb-6">
         <div className="relative flex-1">
           <MagnifyingGlass size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 dark:text-neutral-600" />
@@ -280,8 +364,126 @@ export default function AdminBlog() {
           ))}
         </div>
       </div>
+      )}
+
+      {/* Comment Moderation */}
+      {managerTab === 'comments' && (
+      <div className="mb-8 rounded-[28px] border border-slate-100 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-5 sm:p-6 shadow-sm">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-5">
+          <div>
+            <h3 className="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
+              <ChatCircle size={20} weight="bold" className="text-violet-600 dark:text-violet-400" />
+              Comment Management
+              <span className="text-xs font-bold text-slate-400 dark:text-neutral-500 bg-slate-50 dark:bg-neutral-800 px-2 py-0.5 rounded-lg">
+                {comments.length}
+              </span>
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-neutral-500 mt-1">Approve or reject comments submitted under blog posts.</p>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative">
+              <MagnifyingGlass size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 dark:text-neutral-600" />
+              <input
+                value={commentSearch}
+                onChange={event => setCommentSearch(event.target.value)}
+                placeholder="Search comments..."
+                className="w-full sm:w-64 pl-9 pr-3 py-2.5 rounded-2xl border border-slate-200 dark:border-neutral-800 bg-slate-50 dark:bg-neutral-950 text-sm text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors"
+              />
+            </div>
+            <div className="flex gap-2">
+              {(['pending', 'approved', 'rejected', 'all'] as const).map(status => (
+                <button
+                  key={status}
+                  onClick={() => setCommentStatusFilter(status)}
+                  className={`px-3 py-2 rounded-xl text-[11px] font-black capitalize transition-all border ${
+                    commentStatusFilter === status
+                      ? 'bg-violet-600 border-violet-600 text-white'
+                      : 'bg-slate-50 dark:bg-neutral-950 border-slate-200 dark:border-neutral-800 text-slate-500 dark:text-neutral-400 hover:border-violet-300'
+                  }`}
+                >
+                  {status}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {commentsLoading ? (
+          <div className="grid md:grid-cols-2 gap-3">
+            {[1, 2].map(i => <div key={i} className="h-28 rounded-3xl bg-slate-50 dark:bg-neutral-800 animate-pulse" />)}
+          </div>
+        ) : comments.length === 0 ? (
+          <div className="rounded-3xl border border-dashed border-slate-200 dark:border-neutral-800 p-8 text-center">
+            <p className="text-sm font-bold text-slate-700 dark:text-neutral-300">No comments found</p>
+            <p className="text-xs text-slate-500 dark:text-neutral-500 mt-1">New user comments will appear here for moderation.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+            {comments.map(comment => {
+              const blogTitle = typeof comment.blog === 'string' ? 'Blog post' : comment.blog.title
+              return (
+                <div key={comment._id} className="rounded-3xl border border-slate-100 dark:border-neutral-800 bg-slate-50 dark:bg-neutral-950 p-4">
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2 mb-1">
+                        <p className="text-sm font-black text-slate-900 dark:text-white truncate">{comment.author.name}</p>
+                        <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider ${COMMENT_STATUS_COLORS[comment.status]}`}>
+                          {comment.status}
+                        </span>
+                      </div>
+                      <p className="text-[11px] font-semibold text-violet-600 dark:text-violet-400 truncate">{blogTitle}</p>
+                    </div>
+                    <p className="text-[10px] font-bold text-slate-400 dark:text-neutral-600 whitespace-nowrap">
+                      {new Date(comment.createdAt).toLocaleDateString('en-GB')}
+                    </p>
+                  </div>
+
+                  <p className="text-sm text-slate-600 dark:text-neutral-300 leading-relaxed whitespace-pre-wrap line-clamp-3 mb-4">
+                    {comment.content}
+                  </p>
+
+                  <div className="flex flex-wrap gap-2">
+                    {comment.status !== 'approved' && (
+                      <button
+                        onClick={() => updateCommentStatus(comment._id, 'approved')}
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-500 text-white text-xs font-bold hover:bg-emerald-600 transition-colors"
+                      >
+                        <Check size={14} weight="bold" /> Approve
+                      </button>
+                    )}
+                    {comment.status !== 'rejected' && (
+                      <button
+                        onClick={() => updateCommentStatus(comment._id, 'rejected')}
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-red-500 text-white text-xs font-bold hover:bg-red-600 transition-colors"
+                      >
+                        <X size={14} weight="bold" /> Reject
+                      </button>
+                    )}
+                    {comment.status !== 'pending' && (
+                      <button
+                        onClick={() => updateCommentStatus(comment._id, 'pending')}
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-800 text-slate-500 dark:text-neutral-400 text-xs font-bold hover:bg-white dark:hover:bg-neutral-900 transition-colors"
+                      >
+                        Pending
+                      </button>
+                    )}
+                    <button
+                      onClick={() => removeComment(comment._id)}
+                      className="ml-auto inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-red-100 dark:border-red-950/50 text-red-500 text-xs font-bold hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
+                    >
+                      <Trash size={14} /> Delete
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+      )}
 
       {/* Blog List */}
+      {managerTab === 'blogs' && (
       <div className="flex-1 min-h-0">
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -393,6 +595,7 @@ export default function AdminBlog() {
           </div>
         )}
       </div>
+      )}
 
       {/* ADD / EDIT MODAL WITH LIVE PREVIEW */}
       <AnimatePresence>

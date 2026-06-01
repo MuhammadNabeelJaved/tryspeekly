@@ -7,6 +7,11 @@ import {
   getAdminBlogs,
   getAdminBlogById,
   getBlog,
+  getBlogComments,
+  createBlogComment,
+  getAdminBlogComments,
+  updateBlogCommentStatus,
+  deleteBlogComment,
   createBlog,
   updateBlog,
   updateBlogCover,
@@ -28,8 +33,15 @@ router.route('/').get(getAllBlogs)
 
 // ─── Admin routes (must be before /:slug to avoid shadowing) ──────────────────
 router.route('/admin/all').get(authenticate, authorizeBlog, getAdminBlogs)
+router.route('/admin/comments').get(authenticate, authorizeBlog, getAdminBlogComments)
+router.route('/admin/comments/:id')
+  .patch(authenticate, authorizeBlog, updateBlogCommentStatus)
+  .delete(authenticate, authorizeBlog, deleteBlogComment)
 router.route('/admin/:id').get(authenticate, authorizeBlog, getAdminBlogById)
 
+router.route('/:slug/comments')
+  .get(getBlogComments)
+  .post(authenticate, createBlogComment)
 router.route('/:slug').get(getBlog)
 
 // ─── Teacher/Admin/Blog-team routes ───────────────────────────────────────────

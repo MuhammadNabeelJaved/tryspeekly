@@ -90,7 +90,7 @@ function EnrollmentCard({
         {/* Row 1: status badges + attendance chip */}
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-2 flex-wrap">
-            <StatusBadge enrollment={enrollment} payment={payment} />
+            <StatusBadge enrollment={enrollment} payment={payment ?? undefined} />
             {isFinancialAid && (
               <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 bg-teal-50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400 rounded-full border border-teal-100 dark:border-teal-900/40 uppercase tracking-wide">
                 <Handshake size={10} weight="fill" /> Aid
@@ -243,7 +243,7 @@ export default function StudentCourses() {
   const [myReviews, setMyReviews] = useState<Review[]>([])
   const [activeOffers, setActiveOffers] = useState<Offer[]>([])
   const [chatModal, setChatModal] = useState<{ name: string; courseTitle: string; instructorId: string; profileImage?: string } | null>(null)
-  const [submitModal, setSubmitModal] = useState<{ courseId: string; teacherId: string; courseName?: string; coursePrice?: number; courseCurrency?: 'PKR' | 'USD'; pricingType?: 'monthly' | 'full_course' | 'per_session'; offerDiscountedPrice?: number; offerLabel?: string } | null>(null)
+  const [submitModal, setSubmitModal] = useState<{ courseId: string; teacherId: string; courseName?: string; coursePrice?: number; courseCurrency?: 'PKR' | 'USD'; pricingType?: 'monthly' | 'full_course' | 'per_session'; offerDiscountedPrice?: number; offerLabel?: string; hasSavedDiscount?: boolean } | null>(null)
   const [statusModal, setStatusModal] = useState<{ payment: EnrolledPayment; courseId: string; teacherId: string } | null>(null)
 
   const fetchEnrollments = useCallback(() => {
@@ -279,9 +279,25 @@ export default function StudentCourses() {
     const originalPrice = enrollment.course.currency === 'USD'
       ? (enrollment.course.priceUSD ?? 0)
       : (enrollment.course.price ?? 0)
-    const result = originalPrice > 0
-      ? getDiscountedPrice(enrollment.course._id, originalPrice, activeOffers)
-      : null
+
+    const savedDiscount = (enrollment.discountApplied || 0) + (enrollment.offerDiscountApplied || 0)
+    let discountedPrice = undefined
+    let offerLabel = undefined
+    let hasSavedDiscount = savedDiscount > 0
+
+    if (hasSavedDiscount) {
+      discountedPrice = Math.max(0, originalPrice - savedDiscount)
+      offerLabel = 'Discount'
+    } else {
+      const result = originalPrice > 0
+        ? getDiscountedPrice(enrollment.course._id, originalPrice, activeOffers)
+        : null
+      if (result?.hasDiscount) {
+        discountedPrice = result.discountedPrice
+        offerLabel = result.offer?.title
+      }
+    }
+
     setSubmitModal({
       courseId: enrollment.course._id,
       teacherId: enrollment.teacher._id,
@@ -289,8 +305,9 @@ export default function StudentCourses() {
       coursePrice: originalPrice,
       courseCurrency: enrollment.course.currency,
       pricingType: enrollment.course.pricingType,
-      offerDiscountedPrice: result?.hasDiscount ? result.discountedPrice : undefined,
-      offerLabel: result?.hasDiscount ? result.offer?.title : undefined,
+      offerDiscountedPrice: discountedPrice,
+      offerLabel: offerLabel,
+      hasSavedDiscount
     })
   }
 
@@ -408,6 +425,7 @@ export default function StudentCourses() {
           pricingType={submitModal.pricingType}
           offerDiscountedPrice={submitModal.offerDiscountedPrice}
           offerLabel={submitModal.offerLabel}
+          hasSavedDiscount={submitModal.hasSavedDiscount}
           isOpen={!!submitModal}
           onClose={() => setSubmitModal(null)}
           onSuccess={handlePaymentSuccess}

@@ -35,14 +35,16 @@ export const createPayment = asyncHandler(async (req, res) => {
     const result = await uploadPaymentScreenshot(req.file.buffer, Date.now())
 
     let couponDoc = null
-    let discountApplied = 0
-    let offerDiscountApplied = 0
+    let discountApplied = enrollment.discountApplied || 0
+    let offerDiscountApplied = enrollment.offerDiscountApplied || 0
     let offerDoc = null
 
     const course = await Course.findById(courseId)
     const coursePrice = course ? (course.currency === 'USD' ? course.priceUSD : course.price) : 0
 
-    if (couponCode) {
+    if (enrollment.coupon) {
+      couponDoc = await Coupon.findById(enrollment.coupon)
+    } else if (couponCode) {
       couponDoc = await Coupon.findOne({ code: couponCode.toUpperCase().trim() })
       const isExpired = couponDoc?.expiresAt && couponDoc.expiresAt < new Date()
       const isExhausted = couponDoc?.maxUses != null && couponDoc.usedCount >= couponDoc.maxUses
@@ -54,24 +56,30 @@ export const createPayment = asyncHandler(async (req, res) => {
             discountApplied = Math.min(couponDoc.discountValue, coursePrice)
           }
         }
+      } else {
+        couponDoc = null // reset if invalid
       }
     }
 
     // ─── Apply active offer discount ──────────────────────────────────────────
-    const now = new Date()
-    const activeOffers = await Offer.find({
-      isActive: true,
-      $and: [
-        { $or: [{ startsAt: null }, { startsAt: { $lte: now } }] },
-        { $or: [{ endsAt: null }, { endsAt: { $gte: now } }] },
-      ],
-    }).lean()
+    if (enrollment.offer) {
+      offerDoc = await Offer.findById(enrollment.offer)
+    } else {
+      const now = new Date()
+      const activeOffers = await Offer.find({
+        isActive: true,
+        $and: [
+          { $or: [{ startsAt: null }, { startsAt: { $lte: now } }] },
+          { $or: [{ endsAt: null }, { endsAt: { $gte: now } }] },
+        ],
+      }).lean()
 
-    if (course && coursePrice) {
-      const { discountedPrice, offer } = getEffectivePrice(courseId, coursePrice, activeOffers)
-      if (offer) {
-        offerDiscountApplied = coursePrice - discountedPrice
-        offerDoc = offer
+      if (course && coursePrice) {
+        const { discountedPrice, offer } = getEffectivePrice(courseId, coursePrice, activeOffers)
+        if (offer) {
+          offerDiscountApplied = coursePrice - discountedPrice
+          offerDoc = offer
+        }
       }
     }
 

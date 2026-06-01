@@ -3,12 +3,17 @@ import Enrollment from '../models/enrollment.model.js'
 import Course from '../models/course.model.js'
 import FinancialAid from '../models/financial-aid.model.js'
 import User from '../models/user.model.js'
+import Coupon from '../models/coupon.model.js'
+import Offer from '../models/offer.model.js'
+import Payment from '../models/payment.model.js'
+import { getEffectivePrice } from '../utils/offerUtils.js'
+import { createAndEmitNotification } from '../utils/notify.js'
 import { sendEmail } from '../utils/email.js'
 
 // POST /api/v1/enrollments — student enrolls in a course
 export const createEnrollment = asyncHandler(async (req, res) => {
   try {
-    const { courseId, paymentId } = req.body
+    const { courseId, paymentId, couponCode } = req.body
 
     const course = await Course.findById(courseId)
     if (!course) return res.status(404).json({ success: false, error: { message: 'Course not found' } })
@@ -17,13 +22,92 @@ export const createEnrollment = asyncHandler(async (req, res) => {
     const existing = await Enrollment.findOne({ student: req.user.id, course: courseId })
     if (existing) return res.status(409).json({ success: false, error: { message: 'Already enrolled in this course' } })
 
+    let couponDoc = null
+    let discountApplied = 0
+    let offerDiscountApplied = 0
+    let offerDoc = null
+    let coursePrice = course.currency === 'USD' ? course.priceUSD : course.price
+
+    if (couponCode) {
+      couponDoc = await Coupon.findOne({ code: couponCode.toUpperCase().trim() })
+      const isExpired = couponDoc?.expiresAt && couponDoc.expiresAt < new Date()
+      const isExhausted = couponDoc?.maxUses != null && couponDoc.usedCount >= couponDoc.maxUses
+      if (couponDoc && couponDoc.isActive && !isExpired && !isExhausted) {
+        if (coursePrice && Number.isFinite(coursePrice)) {
+          if (couponDoc.discountType === 'percentage') {
+            discountApplied = Math.round((coursePrice * couponDoc.discountValue) / 100)
+          } else {
+            discountApplied = Math.min(couponDoc.discountValue, coursePrice)
+          }
+        }
+      } else {
+        return res.status(400).json({ success: false, error: { message: 'Invalid or expired coupon code' } })
+      }
+    }
+
+    const now = new Date()
+    const activeOffers = await Offer.find({
+      isActive: true,
+      $and: [
+        { $or: [{ startsAt: null }, { startsAt: { $lte: now } }] },
+        { $or: [{ endsAt: null }, { endsAt: { $gte: now } }] },
+      ],
+    }).lean()
+
+    if (course && coursePrice) {
+      const { discountedPrice, offer } = getEffectivePrice(courseId, coursePrice, activeOffers)
+      if (offer) {
+        offerDiscountApplied = coursePrice - discountedPrice
+        offerDoc = offer
+      }
+    }
+
+    const finalPrice = Math.max(0, coursePrice - discountApplied - offerDiscountApplied)
+    let isFree = finalPrice === 0 && coursePrice > 0
+
     const enrollment = await Enrollment.create({
       student: req.user.id,
       course: courseId,
       teacher: course.teacher,
-      payment: paymentId,
+      payment: paymentId || null,
       progress: { totalSessions: course.totalSessions },
+      coupon: couponDoc ? couponDoc._id : null,
+      discountApplied,
+      offerDiscountApplied,
+      offer: offerDoc ? offerDoc._id : null,
+      isActive: isFree
     })
+
+    if (isFree) {
+      // Auto-create a payment record for the free enrollment
+      const payment = await Payment.create({
+        student: req.user.id,
+        course: courseId,
+        teacher: course.teacher,
+        method: 'bank_local',
+        transactionId: 'FREE_100_PERCENT',
+        amount: 0,
+        currency: course.currency || 'PKR',
+        status: 'approved',
+        adminNote: 'Auto-approved due to 100% discount',
+        coupon: couponDoc ? couponDoc._id : null,
+        discountApplied,
+        offerDiscountApplied,
+        offer: offerDoc ? offerDoc._id : null,
+      })
+      enrollment.payment = payment._id
+      await enrollment.save()
+
+      await createAndEmitNotification({
+        recipientId: req.user.id,
+        title: 'Enrollment Activated',
+        message: `Your enrollment for "${course.title}" has been automatically approved due to a 100% discount.`,
+        type: 'payment',
+        severity: 'low',
+        relatedId: enrollment._id,
+        relatedType: 'Enrollment',
+      })
+    }
 
     course.enrolledStudents.push(req.user.id)
     await course.save()
