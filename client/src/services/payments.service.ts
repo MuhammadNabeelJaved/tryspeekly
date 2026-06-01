@@ -69,4 +69,23 @@ export const paymentsService = {
     );
     return response.data;
   },
+
+  async deletePayment(id: string, deactivateEnrollment: boolean): Promise<{ message: string }> {
+    const response = await axiosClient.delete<ApiResponse<null>>(
+      `/payments/${id}`,
+      { params: { deactivateEnrollment } }
+    );
+    return { message: response.data.message || 'Payment deleted' };
+  },
+
+  async bulkDeletePayments(
+    ids: string[],
+    deactivateEnrollments: boolean
+  ): Promise<{ message: string; data: { deleted: number } }> {
+    const response = await axiosClient.delete<ApiResponse<{ deleted: number }>>(
+      '/payments/bulk',
+      { data: { ids, deactivateEnrollments } }
+    );
+    return { message: response.data.message || 'Payments deleted', data: response.data.data };
+  },
 };

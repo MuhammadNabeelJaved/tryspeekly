@@ -49,6 +49,14 @@ export const usersService = {
     return { message: response.data.message || 'User deleted' };
   },
 
+  async bulkDelete(ids: string[]): Promise<{ message: string; data: { deleted: number; skipped: number } }> {
+    const response = await axiosClient.delete<ApiResponse<{ deleted: number; skipped: number }>>(
+      '/users/bulk',
+      { data: { ids } }
+    );
+    return { message: response.data.message || 'Users deleted', data: response.data.data };
+  },
+
   async markOnboardingDone(): Promise<User> {
     const response = await axiosClient.patch<ApiResponse<{ user: User }>>('/users/onboarding-done');
     return normalizeUser(response.data.data.user);
