@@ -39,4 +39,28 @@ export const couponsService = {
   async deleteCoupon(id: string) {
     await axiosClient.delete(`/coupons/${id}`)
   },
+
+  async getUsageTracking(params?: {
+    page?: number
+    limit?: number
+    type?: 'coupon' | 'offer'
+  }) {
+    const res = await axiosClient.get('/coupons/tracking', { params })
+    return res.data as {
+      success: boolean
+      data: Array<{
+        _id: string
+        student: { _id: string; name: string; email: string } | null
+        course: { _id: string; title: string; price?: number; priceUSD?: number; currency?: string } | null
+        coupon: { _id: string; code: string; discountType: string; discountValue: number; source: string } | null
+        offer: { _id: string; title: string; discountType: string; discountValue: number } | null
+        discountApplied: number
+        offerDiscountApplied: number
+        totalDiscount: number
+        isActive: boolean
+        enrolledAt: string
+      }>
+      pagination: { page: number; limit: number; total: number; totalPages: number }
+    }
+  },
 }
