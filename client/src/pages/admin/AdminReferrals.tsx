@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
-import { Tag, Gift, Users, Wallet, Plus, Trash, ToggleLeft, ToggleRight, Copy, Check, X, Percent, PencilSimple } from '@phosphor-icons/react'
+import { Tag, Gift, Users, Wallet, Plus, Trash, ToggleLeft, ToggleRight, Copy, Check, X, Percent, PencilSimple, ChartBar } from '@phosphor-icons/react'
 import toast from 'react-hot-toast'
 import ConfirmModal from '@/components/ConfirmModal'
 import { couponsService } from '@/services/coupons.service'
@@ -66,6 +66,27 @@ function CouponsTab() {
   const [filterSource, setFilterSource] = useState('')
   const [filterActive, setFilterActive] = useState('')
   const [courses, setCourses] = useState<any[]>([])
+  const [showTracking, setShowTracking] = useState(false)
+  const [tracking, setTracking] = useState<any[]>([])
+  const [trackingLoading, setTrackingLoading] = useState(false)
+  const [trackingTotal, setTrackingTotal] = useState(0)
+
+  const loadTracking = useCallback(async () => {
+    setTrackingLoading(true)
+    try {
+      const res = await couponsService.getUsageTracking({ type: 'coupon', limit: 50 })
+      if (res.success) {
+        setTracking(res.data)
+        setTrackingTotal(res.pagination.total)
+      }
+    } catch { toast.error('Failed to load usage tracking') }
+    finally { setTrackingLoading(false) }
+  }, [])
+
+  const handleToggleTracking = () => {
+    if (!showTracking && tracking.length === 0) loadTracking()
+    setShowTracking(s => !s)
+  }
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -124,13 +145,22 @@ function CouponsTab() {
             <option value="false">Inactive</option>
           </select>
         </div>
-        <button
-          onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white text-sm font-bold rounded-xl transition-colors"
-        >
-          <Plus size={15} weight="bold" />
-          Create Coupon
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleToggleTracking}
+            className="flex items-center gap-2 px-4 py-2 border border-slate-200 dark:border-neutral-700 text-slate-600 dark:text-neutral-300 text-sm font-semibold rounded-xl hover:bg-slate-50 dark:hover:bg-neutral-800 transition-colors"
+          >
+            <ChartBar size={15} />
+            {showTracking ? 'Hide Usage Log' : `Usage Log${trackingTotal > 0 ? ` (${trackingTotal})` : ''}`}
+          </button>
+          <button
+            onClick={() => setShowModal(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white text-sm font-bold rounded-xl transition-colors"
+          >
+            <Plus size={15} weight="bold" />
+            Create Coupon
+          </button>
+        </div>
       </div>
 
       {loading ? (
@@ -207,6 +237,66 @@ function CouponsTab() {
         onConfirm={() => { const id = confirmModal!.id; setConfirmModal(null); handleDeleteConfirmed(id) }}
         onCancel={() => setConfirmModal(null)}
       />
+
+      {showTracking && (
+        <div className="mt-6">
+          <h3 className="text-sm font-bold text-slate-700 dark:text-neutral-200 mb-3">
+            Coupon Usage Log
+            {trackingTotal > 0 && (
+              <span className="ml-2 text-xs font-semibold text-slate-400 dark:text-neutral-500">
+                ({trackingTotal} total uses)
+              </span>
+            )}
+          </h3>
+          {trackingLoading ? (
+            <div className="text-center py-8 text-slate-400">Loading…</div>
+          ) : tracking.length === 0 ? (
+            <div className="text-center py-8 text-slate-400">No coupon usage recorded yet</div>
+          ) : (
+            <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200 dark:border-neutral-800 overflow-hidden">
+              <table className="w-full text-sm">
+                <thead className="border-b border-slate-100 dark:border-neutral-800 bg-slate-50 dark:bg-neutral-800/50">
+                  <tr>
+                    {['Date', 'Student', 'Course', 'Code', 'Discount Type', 'Amount Saved', 'Status'].map(h => (
+                      <th key={h} className="px-4 py-3 text-left text-xs font-bold text-slate-500 dark:text-neutral-400 uppercase tracking-wider">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50 dark:divide-neutral-800">
+                  {tracking.map(t => (
+                    <tr key={t._id} className="hover:bg-slate-50 dark:hover:bg-neutral-800/30 transition-colors">
+                      <td className="px-4 py-3 text-slate-400 text-xs whitespace-nowrap">
+                        {new Date(t.enrolledAt).toLocaleDateString()}
+                      </td>
+                      <td className="px-4 py-3">
+                        <p className="font-semibold text-slate-900 dark:text-white text-xs">{t.student?.name ?? '—'}</p>
+                        <p className="text-[11px] text-slate-400 dark:text-neutral-500">{t.student?.email ?? ''}</p>
+                      </td>
+                      <td className="px-4 py-3 text-slate-600 dark:text-neutral-300 text-xs max-w-[160px] truncate">
+                        {t.course?.title ?? '—'}
+                      </td>
+                      <td className="px-4 py-3 font-mono font-bold text-violet-600 dark:text-violet-400 text-xs">
+                        {t.coupon?.code ?? '—'}
+                      </td>
+                      <td className="px-4 py-3 text-slate-500 dark:text-neutral-400 text-xs">
+                        {t.coupon?.discountType === 'percentage' ? `${t.coupon.discountValue}%` : `PKR ${t.coupon?.discountValue ?? 0}`}
+                      </td>
+                      <td className="px-4 py-3 font-bold text-emerald-600 dark:text-emerald-400 text-xs">
+                        PKR {t.discountApplied.toLocaleString()}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${t.isActive ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300' : 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'}`}>
+                          {t.isActive ? 'Active' : 'Pending'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
@@ -580,6 +670,27 @@ function OffersTab() {
   const [showModal, setShowModal] = useState(false)
   const [editOffer, setEditOffer] = useState<Offer | null>(null)
   const [courses, setCourses] = useState<any[]>([])
+  const [showOfferTracking, setShowOfferTracking] = useState(false)
+  const [offerTracking, setOfferTracking] = useState<any[]>([])
+  const [offerTrackingLoading, setOfferTrackingLoading] = useState(false)
+  const [offerTrackingTotal, setOfferTrackingTotal] = useState(0)
+
+  const loadOfferTracking = useCallback(async () => {
+    setOfferTrackingLoading(true)
+    try {
+      const res = await couponsService.getUsageTracking({ type: 'offer', limit: 50 })
+      if (res.success) {
+        setOfferTracking(res.data)
+        setOfferTrackingTotal(res.pagination.total)
+      }
+    } catch { toast.error('Failed to load offer tracking') }
+    finally { setOfferTrackingLoading(false) }
+  }, [])
+
+  const handleToggleOfferTracking = () => {
+    if (!showOfferTracking && offerTracking.length === 0) loadOfferTracking()
+    setShowOfferTracking(s => !s)
+  }
   const [confirmModal, setConfirmModal] = useState<{ id: string } | null>(null)
 
   const load = useCallback(async () => {
@@ -628,6 +739,13 @@ function OffersTab() {
             className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-slate-500 dark:text-neutral-400 hover:text-slate-700 dark:hover:text-white border border-slate-200 dark:border-neutral-700 rounded-xl transition-colors"
           >
             Refresh
+          </button>
+          <button
+            onClick={handleToggleOfferTracking}
+            className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-slate-500 dark:text-neutral-400 hover:text-slate-700 dark:hover:text-white border border-slate-200 dark:border-neutral-700 rounded-xl transition-colors"
+          >
+            <ChartBar size={15} />
+            {showOfferTracking ? 'Hide Usage' : `Usage Log${offerTrackingTotal > 0 ? ` (${offerTrackingTotal})` : ''}`}
           </button>
           <button
             onClick={() => { setEditOffer(null); setShowModal(true) }}
@@ -722,6 +840,66 @@ function OffersTab() {
         onConfirm={() => { const id = confirmModal!.id; setConfirmModal(null); handleDeleteConfirmed(id) }}
         onCancel={() => setConfirmModal(null)}
       />
+
+      {showOfferTracking && (
+        <div className="mt-6">
+          <h3 className="text-sm font-bold text-slate-700 dark:text-neutral-200 mb-3">
+            Offer Usage Log
+            {offerTrackingTotal > 0 && (
+              <span className="ml-2 text-xs font-semibold text-slate-400 dark:text-neutral-500">
+                ({offerTrackingTotal} total applications)
+              </span>
+            )}
+          </h3>
+          {offerTrackingLoading ? (
+            <div className="text-center py-8 text-slate-400">Loading…</div>
+          ) : offerTracking.length === 0 ? (
+            <div className="text-center py-8 text-slate-400">No offer usage recorded yet</div>
+          ) : (
+            <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200 dark:border-neutral-800 overflow-hidden">
+              <table className="w-full text-sm">
+                <thead className="border-b border-slate-100 dark:border-neutral-800 bg-slate-50 dark:bg-neutral-800/50">
+                  <tr>
+                    {['Date', 'Student', 'Course', 'Offer Name', 'Discount', 'Amount Saved', 'Status'].map(h => (
+                      <th key={h} className="px-4 py-3 text-left text-xs font-bold text-slate-500 dark:text-neutral-400 uppercase tracking-wider">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50 dark:divide-neutral-800">
+                  {offerTracking.map(t => (
+                    <tr key={t._id} className="hover:bg-slate-50 dark:hover:bg-neutral-800/30 transition-colors">
+                      <td className="px-4 py-3 text-slate-400 text-xs whitespace-nowrap">
+                        {new Date(t.enrolledAt).toLocaleDateString()}
+                      </td>
+                      <td className="px-4 py-3">
+                        <p className="font-semibold text-slate-900 dark:text-white text-xs">{t.student?.name ?? '—'}</p>
+                        <p className="text-[11px] text-slate-400 dark:text-neutral-500">{t.student?.email ?? ''}</p>
+                      </td>
+                      <td className="px-4 py-3 text-slate-600 dark:text-neutral-300 text-xs max-w-[160px] truncate">
+                        {t.course?.title ?? '—'}
+                      </td>
+                      <td className="px-4 py-3 font-semibold text-violet-600 dark:text-violet-400 text-xs">
+                        {t.offer?.title ?? '—'}
+                      </td>
+                      <td className="px-4 py-3 text-slate-500 dark:text-neutral-400 text-xs">
+                        {t.offer?.discountType === 'percentage' ? `${t.offer.discountValue}%` : `PKR ${t.offer?.discountValue ?? 0}`}
+                      </td>
+                      <td className="px-4 py-3 font-bold text-emerald-600 dark:text-emerald-400 text-xs">
+                        PKR {t.offerDiscountApplied.toLocaleString()}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${t.isActive ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300' : 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'}`}>
+                          {t.isActive ? 'Active' : 'Pending'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
