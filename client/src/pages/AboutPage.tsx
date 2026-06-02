@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion'
 import { CheckCircle, Users, Trophy, Target, Heart, Globe, Play } from '@phosphor-icons/react'
 import { useNavigate } from 'react-router-dom'
+import SEOMeta from '@/components/SEOMeta'
 
 export default function AboutPage() {
   const navigate = useNavigate()
@@ -25,6 +26,7 @@ export default function AboutPage() {
       animate="animate"
       className="bg-slate-50 dark:bg-neutral-950 min-h-screen pt-[72px] lg:pt-[80px]"
     >
+      <SEOMeta slug="about" fallbackTitle="About Us — EnglishPro Academy" fallbackDescription="Learn about EnglishPro Academy, our mission, and our team of expert English instructors." />
       {/* ─── HERO SECTION ───────────────────────────────────────── */}
       <section className="relative overflow-hidden bg-white dark:bg-neutral-900 py-16 lg:py-24">
         {/* Dot grid */}

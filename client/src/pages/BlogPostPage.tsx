@@ -11,6 +11,7 @@ import { blogService } from '../services/blog.service'
 import type { Blog, BlogComment } from '../types/api'
 import { extractApiError } from '../utils/apiError'
 import Loader from '@/components/Loader'
+import SEOMeta from '@/components/SEOMeta'
 import { useAuth } from '../context/AuthContext'
 
 function authorLabel(author: { name: string; role?: string } | null) {
@@ -97,7 +98,8 @@ export default function BlogPostPage() {
 
   return (
     <div className="bg-white dark:bg-neutral-950 min-h-screen pt-[72px] lg:pt-[80px] selection:bg-violet-200 dark:selection:bg-violet-900/50">
-      
+      <SEOMeta slug="blog-post" fallbackTitle={blog?.title ? `${blog.title} — EnglishPro Academy` : 'Blog — EnglishPro Academy'} fallbackDescription={blog?.excerpt ?? ''} />
+
       {/* ─── HERO HEADER ──────────────────────────────────────── */}
       <section className="relative pt-12 pb-16 lg:pt-20 lg:pb-24 border-b border-slate-100 dark:border-neutral-800 bg-slate-50 dark:bg-neutral-900 overflow-hidden">
         {/* Background Decorative */}

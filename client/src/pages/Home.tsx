@@ -11,6 +11,7 @@ import Process from '@/components/Process'
 import Blog from '@/components/Blog'
 import HomeInstructors from '@/components/HomeInstructors'
 import NewsletterSection from '@/components/NewsletterSection'
+import SEOMeta from '@/components/SEOMeta'
 
 const pageVariants = {
   initial: { opacity: 0 },
@@ -42,6 +43,7 @@ export default function Home() {
       initial="initial"
       animate="animate"
     >
+      <SEOMeta slug="home" fallbackTitle="EnglishPro Academy — Learn English Online" fallbackDescription="Master English with expert instructors. IELTS prep, Business English, and General English courses with certificates." />
       <motion.div variants={sectionVariants}><Hero /></motion.div>
       <motion.div variants={sectionVariants}><Stats /></motion.div>
       <motion.div variants={sectionVariants}><HomeCourses /></motion.div>

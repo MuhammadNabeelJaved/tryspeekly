@@ -11,6 +11,7 @@ import { blogService } from '../services/blog.service'
 import type { Blog } from '../types/api'
 import { extractApiError } from '../utils/apiError'
 import { newsletterService } from '../services/newsletter.service'
+import SEOMeta from '../components/SEOMeta'
 
 const CATEGORIES = ['All', 'Study Tips', 'Grammar', 'IELTS Prep', 'Vocabulary', 'Career']
 
@@ -84,7 +85,8 @@ export default function BlogPage() {
 
   return (
     <div className="bg-slate-50 dark:bg-neutral-950 min-h-screen pt-[72px] lg:pt-[80px] selection:bg-violet-200 dark:selection:bg-violet-900/50">
-      
+      <SEOMeta slug="blog" fallbackTitle="Blog — EnglishPro Academy" fallbackDescription="Study tips, grammar guides, IELTS prep, and course announcements from EnglishPro Academy." />
+
       {/* ─── HERO SECTION ───────────────────────────────────────── */}
       <section className="relative overflow-hidden bg-white dark:bg-neutral-900 py-16 lg:py-24 border-b border-slate-100 dark:border-neutral-800">
         <div className="absolute inset-0 bg-[radial-gradient(circle,#e2e8f0_1px,transparent_1px)] dark:bg-[radial-gradient(circle,#1e293b_1px,transparent_1px)] bg-[size:24px_24px] opacity-40 pointer-events-none" />

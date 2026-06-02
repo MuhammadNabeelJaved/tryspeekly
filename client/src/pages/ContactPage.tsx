@@ -5,6 +5,7 @@ import toast from 'react-hot-toast'
 import { Envelope, Phone, MapPin, PaperPlaneRight, LinkedinLogo, TwitterLogo, FacebookLogo, InstagramLogo } from '@phosphor-icons/react'
 import { contactService } from '../services/contact.service'
 import { extractApiError } from '../utils/apiError'
+import SEOMeta from '../components/SEOMeta'
 
 const pageVariants: Variants = {
   initial: { opacity: 0 },
@@ -58,7 +59,8 @@ export default function ContactPage() {
 
   return (
     <div className="relative min-h-[100dvh] pt-[120px] lg:pt-[140px] pb-16 lg:pb-24 bg-white dark:bg-neutral-950 overflow-hidden transition-colors duration-300">
-      
+      <SEOMeta slug="contact" fallbackTitle="Contact Us — EnglishPro Academy" fallbackDescription="Get in touch with EnglishPro Academy. Questions about courses, enrollment, or support." />
+
       {/* Ambient background glows */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-[400px] h-[400px] bg-violet-200/40 dark:bg-violet-900/20 rounded-full blur-[120px]" />
