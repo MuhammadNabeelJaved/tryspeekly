@@ -37,7 +37,7 @@ export default function CertificateViewPage() {
     )
   }
 
-  const studentName = cert.student.name
+  const studentName = cert.student?.name ?? 'Student'
   const teacherName = typeof cert.enrollment !== 'string' ? (cert.enrollment.teacher?.name ?? '—') : '—'
   const verifyUrl = `${window.location.origin}/certificate/${cert.certificateId}`
   const formattedDate = new Date(cert.issueDate).toLocaleDateString('en-US', {
@@ -47,7 +47,7 @@ export default function CertificateViewPage() {
   const handleLinkedInShare = () => {
     const url = new URL('https://www.linkedin.com/profile/add')
     url.searchParams.append('startTask', 'CERTIFICATION_NAME')
-    url.searchParams.append('name', cert.course.title)
+    url.searchParams.append('name', cert.course?.title ?? '')
     url.searchParams.append('organizationName', 'EnglishPro Academy')
     url.searchParams.append('issueYear', new Date(cert.issueDate).getFullYear().toString())
     url.searchParams.append('issueMonth', (new Date(cert.issueDate).getMonth() + 1).toString())
@@ -79,7 +79,7 @@ export default function CertificateViewPage() {
               <p className="text-slate-500 text-sm sm:text-base mb-4 font-medium">This is proudly presented to</p>
               <p className="text-[#7c3aed] text-3xl sm:text-4xl font-serif font-bold italic mb-6 border-b-2 border-slate-200 pb-2 px-8 inline-block">{studentName}</p>
               <p className="text-slate-500 text-sm sm:text-base mb-4 font-medium">for successfully completing the course</p>
-              <p className="text-[#1e1b4b] text-xl sm:text-2xl font-bold mb-10 max-w-[80%] leading-snug mx-auto">{cert.course.title}</p>
+              <p className="text-[#1e1b4b] text-xl sm:text-2xl font-bold mb-10 max-w-[80%] leading-snug mx-auto">{cert.course?.title ?? '—'}</p>
               <div className="flex justify-between w-full px-12 mt-auto">
                 <div className="text-center">
                   <div className="border-b-2 border-slate-300 w-32 sm:w-40 mx-auto mb-2" />
@@ -123,12 +123,12 @@ export default function CertificateViewPage() {
             <div className="p-5 space-y-4 text-sm">
               <div>
                 <p className="text-xs text-slate-500 font-bold uppercase tracking-wide mb-1">Course Name</p>
-                <p className="font-bold text-slate-900 leading-tight">{cert.course.title}</p>
+                <p className="font-bold text-slate-900 leading-tight">{cert.course?.title ?? '—'}</p>
               </div>
-              {cert.course.level && (
+              {cert.course?.level && (
                 <div>
                   <p className="text-xs text-slate-500 font-bold uppercase tracking-wide mb-1">Course Level</p>
-                  <span className="inline-block px-2 py-1 bg-slate-100 text-slate-700 font-bold text-xs rounded-md capitalize">{cert.course.level}</span>
+                  <span className="inline-block px-2 py-1 bg-slate-100 text-slate-700 font-bold text-xs rounded-md capitalize">{cert.course?.level}</span>
                 </div>
               )}
               <div>

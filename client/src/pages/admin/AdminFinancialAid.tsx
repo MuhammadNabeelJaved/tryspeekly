@@ -2,8 +2,10 @@ import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   MagnifyingGlass, Eye, FunnelSimple, Handshake, X, SpinnerGap,
-  BookOpen, CheckCircle, CalendarBlank, User, Clock, XCircle,
+  BookOpen, CheckCircle, CalendarBlank, User, Clock, XCircle, Trash,
 } from '@phosphor-icons/react'
+import ConfirmModal from '@/components/ConfirmModal'
+import toast from 'react-hot-toast'
 import { financialAidService } from '@/services/financial-aid.service'
 import { enrollmentsService } from '@/services/enrollments.service'
 import { coursesService } from '@/services/courses.service'
@@ -46,6 +48,11 @@ export default function AdminFinancialAid() {
   const [existingEnrollment, setExistingEnrollment] = useState<Enrollment | null>(null)
   const [checkingEnrollment, setCheckingEnrollment] = useState(false)
 
+  // Bulk delete states
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkConfirm, setBulkConfirm] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
+
   // Student lookup states (for public applications without linked student)
   const [studentSearchQuery, setStudentSearchQuery] = useState('')
   const [foundStudents, setFoundStudents] = useState<UserType[]>([])
@@ -62,6 +69,29 @@ export default function AdminFinancialAid() {
 
   useEffect(() => { fetchApplications() }, [fetchApplications])
 
+  const handleDelete = async () => {
+    if (!deleteTarget) return
+    try {
+      await financialAidService.deleteApplication(deleteTarget)
+      setApplications(prev => prev.filter(a => a._id !== deleteTarget))
+      setSelectedIds(prev => { const n = new Set(prev); n.delete(deleteTarget); return n })
+      toast.success('Application deleted')
+    } catch { toast.error('Failed to delete application') } finally { setDeleteTarget(null) }
+  }
+
+  const handleBulkDelete = async () => {
+    try {
+      const ids = Array.from(selectedIds)
+      const res = await financialAidService.bulkDelete(ids)
+      setApplications(prev => prev.filter(a => !selectedIds.has(a._id)))
+      setSelectedIds(new Set())
+      toast.success(res.message)
+    } catch { toast.error('Failed to delete applications') } finally { setBulkConfirm(false) }
+  }
+
+  const toggleSelect = (id: string) =>
+    setSelectedIds(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n })
+
   useEffect(() => {
     coursesService.getAllCourses({ status: 'published', limit: 200 })
       .then(res => setCourses(res.data))
@@ -74,6 +104,9 @@ export default function AdminFinancialAid() {
     const matchStatus = filterStatus === 'All' || app.status === filterStatus
     return matchSearch && matchStatus
   }).sort((a, b) => new Date(b.appliedAt).getTime() - new Date(a.appliedAt).getTime())
+
+  const allFilteredIds = filtered.map(a => a._id)
+  const allSelected = allFilteredIds.length > 0 && allFilteredIds.every(id => selectedIds.has(id))
 
   const filteredCourses = courses.filter(c => {
     const q = courseSearch.toLowerCase()
@@ -217,6 +250,14 @@ export default function AdminFinancialAid() {
           <table className="w-full text-sm min-w-[700px]">
             <thead>
               <tr className="border-b border-slate-100 dark:border-neutral-800 bg-slate-50 dark:bg-neutral-800/50">
+                <th className="px-4 py-3 w-10">
+                  <input
+                    type="checkbox"
+                    checked={allSelected}
+                    onChange={e => setSelectedIds(e.target.checked ? new Set(allFilteredIds) : new Set())}
+                    className="w-4 h-4 rounded accent-violet-500"
+                  />
+                </th>
                 {['Applicant', 'Phone', 'Date Applied', 'Status', 'Actions'].map(h => (
                   <th key={h} className="text-left px-4 py-3 text-[10px] font-bold text-slate-400 dark:text-neutral-500 uppercase tracking-wide whitespace-nowrap">{h}</th>
                 ))}
@@ -226,16 +267,24 @@ export default function AdminFinancialAid() {
               {loading ? (
                 [1, 2, 3].map(i => (
                   <tr key={i}>
-                    <td colSpan={5} className="px-4 py-4">
+                    <td colSpan={6} className="px-4 py-4">
                       <div className="h-4 bg-slate-100 dark:bg-neutral-800 rounded animate-pulse w-full" />
                     </td>
                   </tr>
                 ))
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={5} className="text-center py-10 text-slate-400 dark:text-neutral-600 text-sm">No applications found</td></tr>
+                <tr><td colSpan={6} className="text-center py-10 text-slate-400 dark:text-neutral-600 text-sm">No applications found</td></tr>
               ) : (
                 filtered.map(app => (
-                  <tr key={app._id} className="hover:bg-slate-50 dark:hover:bg-neutral-800/40 transition-colors group">
+                  <tr key={app._id} className={`transition-colors group ${selectedIds.has(app._id) ? 'bg-red-50/30 dark:bg-red-950/10' : 'hover:bg-slate-50 dark:hover:bg-neutral-800/40'}`}>
+                    <td className="px-4 py-3">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(app._id)}
+                        onChange={() => toggleSelect(app._id)}
+                        className="w-4 h-4 rounded accent-violet-500"
+                      />
+                    </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2.5">
                         <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
@@ -263,6 +312,10 @@ export default function AdminFinancialAid() {
                           className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-neutral-800 hover:bg-violet-100 dark:hover:bg-violet-950/40 text-slate-500 hover:text-violet-600 dark:hover:text-violet-400 flex items-center justify-center transition-colors">
                           <Eye size={13} />
                         </button>
+                        <button onClick={() => setDeleteTarget(app._id)}
+                          className="w-7 h-7 rounded-lg bg-red-50 dark:bg-red-950/30 text-red-500 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-950/50 flex items-center justify-center transition-colors">
+                          <Trash size={13} weight="fill" />
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -272,6 +325,52 @@ export default function AdminFinancialAid() {
           </table>
         </div>
       </div>
+
+      {/* Floating bulk action bar */}
+      <AnimatePresence>
+        {selectedIds.size > 0 && (
+          <motion.div
+            initial={{ y: 80, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 80, opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 px-5 py-3 bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-neutral-700 min-w-max"
+          >
+            <span className="text-sm font-bold text-slate-700 dark:text-white">{selectedIds.size} selected</span>
+            <button onClick={() => setSelectedIds(new Set())} className="text-xs text-slate-400 dark:text-neutral-500 hover:text-slate-600 dark:hover:text-white transition-colors font-medium">Clear</button>
+            <div className="w-px h-5 bg-slate-200 dark:bg-neutral-700" />
+            <button
+              onClick={() => setBulkConfirm(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl text-sm font-bold transition-colors"
+            >
+              <Trash size={14} weight="bold" />
+              Delete {selectedIds.size}
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Single delete confirm */}
+      <ConfirmModal
+        open={!!deleteTarget}
+        title="Delete Application?"
+        message="This will permanently remove this financial aid application from the database."
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
+
+      {/* Bulk delete confirm */}
+      <ConfirmModal
+        open={bulkConfirm}
+        title={`Delete ${selectedIds.size} Application${selectedIds.size !== 1 ? 's' : ''}?`}
+        message={`This will permanently remove ${selectedIds.size} financial aid application${selectedIds.size !== 1 ? 's' : ''} from the database. This cannot be undone.`}
+        confirmLabel={`Delete ${selectedIds.size}`}
+        variant="danger"
+        onConfirm={handleBulkDelete}
+        onCancel={() => setBulkConfirm(false)}
+      />
 
       {/* VIEW / REVIEW MODAL */}
       <AnimatePresence>
@@ -409,12 +508,12 @@ export default function AdminFinancialAid() {
                             </div>
                             <div className="bg-white dark:bg-neutral-800/60 rounded-lg p-2.5">
                               <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wide mb-0.5">Student</p>
-                              <p className="text-xs font-bold text-slate-900 dark:text-white leading-tight">{existingEnrollment.student.name}</p>
-                              <p className="text-[9px] text-slate-400 truncate">{existingEnrollment.student.email}</p>
+                              <p className="text-xs font-bold text-slate-900 dark:text-white leading-tight">{existingEnrollment.student?.name ?? 'Deleted User'}</p>
+                              <p className="text-[9px] text-slate-400 truncate">{existingEnrollment.student?.email ?? '—'}</p>
                             </div>
                             <div className="bg-white dark:bg-neutral-800/60 rounded-lg p-2.5">
                               <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wide mb-0.5">Instructor</p>
-                              <p className="text-xs font-semibold text-slate-900 dark:text-white">{existingEnrollment.teacher.name}</p>
+                              <p className="text-xs font-semibold text-slate-900 dark:text-white">{existingEnrollment.teacher?.name ?? 'Deleted User'}</p>
                             </div>
                             <div className="bg-white dark:bg-neutral-800/60 rounded-lg p-2.5">
                               <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wide mb-0.5">Sessions</p>

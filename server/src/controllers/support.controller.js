@@ -130,3 +130,19 @@ export const getAllTickets = asyncHandler(async (req, res) => {
     res.status(400).json({ success: false, error: { message: error.message } })
   }
 })
+
+// DELETE /api/v1/support/:id — admin: delete a ticket
+export const deleteTicket = asyncHandler(async (req, res) => {
+  const ticket = await SupportTicket.findByIdAndDelete(req.params.id)
+  if (!ticket) return res.status(404).json({ success: false, error: { message: 'Ticket not found' } })
+  res.json({ success: true, message: 'Ticket deleted' })
+})
+
+// DELETE /api/v1/support/bulk — admin: bulk-delete tickets
+export const bulkDeleteTickets = asyncHandler(async (req, res) => {
+  const { ids } = req.body
+  if (!Array.isArray(ids) || ids.length === 0)
+    return res.status(400).json({ success: false, error: { message: 'ids must be a non-empty array' } })
+  const result = await SupportTicket.deleteMany({ _id: { $in: ids } })
+  res.json({ success: true, message: `${result.deletedCount} ticket${result.deletedCount !== 1 ? 's' : ''} deleted`, data: { deleted: result.deletedCount } })
+})

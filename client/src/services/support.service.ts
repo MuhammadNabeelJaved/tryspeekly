@@ -31,4 +31,16 @@ export const supportService = {
     const response = await axiosClient.patch<ApiResponse<SupportTicket>>(`/support/${id}/status`, { status });
     return response.data;
   },
+
+  async deleteTicket(id: string): Promise<{ success: boolean; message: string }> {
+    const response = await axiosClient.delete<{ success: boolean; message: string }>(`/support/${id}`);
+    return response.data;
+  },
+
+  async bulkDelete(ids: string[]): Promise<{ success: boolean; message: string; data: { deleted: number } }> {
+    const response = await axiosClient.delete<{ success: boolean; message: string; data: { deleted: number } }>(
+      '/support/bulk', { data: { ids } }
+    );
+    return response.data;
+  },
 };

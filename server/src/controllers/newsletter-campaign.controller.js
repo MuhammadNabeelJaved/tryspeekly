@@ -101,3 +101,12 @@ export const sendCampaign = asyncHandler(async (req, res) => {
 
   res.json({ success: true, message: 'Campaign is being sent', data: { id: campaign._id } })
 })
+
+// ─── DELETE /api/v1/newsletter/campaigns/bulk (admin) ─────────────────────────
+export const bulkDeleteCampaigns = asyncHandler(async (req, res) => {
+  const { ids } = req.body
+  if (!Array.isArray(ids) || ids.length === 0)
+    return res.status(400).json({ success: false, error: { message: 'ids must be a non-empty array' } })
+  const result = await NewsletterCampaign.deleteMany({ _id: { $in: ids } })
+  res.json({ success: true, message: `${result.deletedCount} campaign${result.deletedCount !== 1 ? 's' : ''} deleted`, data: { deleted: result.deletedCount } })
+})

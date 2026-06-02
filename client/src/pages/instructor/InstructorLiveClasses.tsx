@@ -175,8 +175,8 @@ export default function InstructorLiveClasses() {
           const mappedCompleted: CompletedClass[] = completedLiveClasses.map((lc: { _id: string; course: { _id: string; title: string }; meetingLink: string; classNumber: number; createdAt: string }) => ({
             _id: lc._id,
             id: lc._id,
-            courseId: String(lc.course._id),
-            courseTitle: lc.course.title,
+            courseId: lc.course ? String(lc.course._id) : '',
+            courseTitle: lc.course?.title ?? '—',
             completedAt: new Date(lc.createdAt).toLocaleString(),
             timestamp: new Date(lc.createdAt).getTime(),
             link: lc.meetingLink,

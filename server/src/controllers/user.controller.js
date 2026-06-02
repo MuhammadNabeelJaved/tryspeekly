@@ -47,6 +47,7 @@ const safeUser = (user) => ({
   isOnboardingDone: user.isOnboardingDone,
   isBlocked: user.isBlocked,
   showOnHome: user.showOnHome,
+  showOnCoursesPage: user.showOnCoursesPage,
   permissions: user.permissions,
   jobTitle: user.jobTitle,
   createdAt: user.createdAt,
@@ -593,6 +594,37 @@ export const toggleShowOnHome = asyncHandler(async (req, res) => {
     user.showOnHome = !user.showOnHome
     await user.save()
     res.json({ success: true, message: user.showOnHome ? 'Teacher will now appear on home page' : 'Teacher removed from home page', data: safeUser(user) })
+  } catch (error) {
+    res.status(400).json({ success: false, error: { message: error.message } })
+  }
+})
+
+// GET /api/v1/users/courses-instructors — public: teachers marked showOnCoursesPage=true
+export const getCoursesPageInstructors = asyncHandler(async (req, res) => {
+  try {
+    const teachers = await User.find({ role: 'teacher', showOnCoursesPage: true, isBlocked: false, isDeleted: false })
+      .select('name bio jobTitle profileImage country city createdAt')
+      .sort({ createdAt: -1 })
+      .lean()
+    res.json({ success: true, data: teachers })
+  } catch (error) {
+    res.status(400).json({ success: false, error: { message: error.message } })
+  }
+})
+
+// PATCH /api/v1/users/:id/show-on-courses — admin: toggle showOnCoursesPage for a teacher
+export const toggleShowOnCoursesPage = asyncHandler(async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id)
+    if (!user) return res.status(404).json({ success: false, error: { message: 'User not found' } })
+    if (user.role !== 'teacher') return res.status(400).json({ success: false, error: { message: 'Only teachers can be featured on the courses page' } })
+    user.showOnCoursesPage = !user.showOnCoursesPage
+    await user.save()
+    res.json({
+      success: true,
+      message: user.showOnCoursesPage ? 'Teacher will now appear on courses page' : 'Teacher removed from courses page',
+      data: safeUser(user),
+    })
   } catch (error) {
     res.status(400).json({ success: false, error: { message: error.message } })
   }

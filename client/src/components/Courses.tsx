@@ -4,7 +4,7 @@ import toast from 'react-hot-toast'
 import {
   Clock, Star, Users, GraduationCap, ArrowRight, MagnifyingGlass,
   BookOpen, Trophy, Lightning, ChatCircle, Globe, Medal,
-  CaretDown, CheckCircle, Funnel, Play
+  CaretDown, CheckCircle, Funnel, Play, UserCircle
 } from '@phosphor-icons/react'
 import { useState, useEffect, useRef } from 'react'
 import { coursesService } from '../services/courses.service'
@@ -13,6 +13,8 @@ import { useGeo } from '../context/GeoContext'
 import { offersService } from '../services/offers.service'
 import type { Offer } from '../services/offers.service'
 import { getDiscountedPrice } from '../utils/offerUtils'
+import { usersService } from '../services/users.service'
+import type { User } from '../types/api'
 
 // Animated Counter Component
 function AnimatedCounter({ from, to, duration = 1.5, format }: { from: number, to: number, duration?: number, format?: (val: number) => string }) {
@@ -308,6 +310,7 @@ export default function Courses() {
   const [cardsHovered, setCardsHovered] = useState(false)
   const [apiCourses, setApiCourses] = useState<CourseCard[] | null>(null)
   const [activeOffers, setActiveOffers] = useState<Offer[]>([])
+  const [instructors, setInstructors] = useState<User[]>([])
   const { currency } = useGeo()
   const navigate = useNavigate()
 
@@ -351,6 +354,14 @@ export default function Courses() {
     let mounted = true
     offersService.getActiveOffers()
       .then(r => { if (mounted && r.success) setActiveOffers(r.data) })
+      .catch(() => {})
+    return () => { mounted = false }
+  }, [])
+
+  useEffect(() => {
+    let mounted = true
+    usersService.getCoursesInstructors()
+      .then(data => { if (mounted) setInstructors(data) })
       .catch(() => {})
     return () => { mounted = false }
   }, [])
@@ -885,92 +896,91 @@ export default function Courses() {
       </section>
 
       {/* ─── INSTRUCTORS ──────────────────────────────────────── */}
-      <section className="py-20 lg:py-28 bg-white dark:bg-neutral-900 transition-colors duration-300">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {instructors.length > 0 && (
+        <section className="py-20 lg:py-28 bg-white dark:bg-neutral-900 transition-colors duration-300">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
-          <div className="text-center mb-16">
-            <motion.span
-              initial={{ opacity: 0, y: 10 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="inline-flex items-center gap-2 text-violet-600 dark:text-violet-400 text-sm font-bold tracking-wider uppercase mb-4"
-            >
-              <Globe size={18} weight="fill" /> Meet the Team
-            </motion.span>
-            <motion.h2
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.1 }}
-              className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white mb-4 tracking-tight"
-            >
-              Learn from the{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-purple-600">
-                Best Instructors
-              </span>
-            </motion.h2>
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.2 }}
-              className="text-slate-500 dark:text-neutral-400 text-lg max-w-xl mx-auto"
-            >
-              Our teachers are certified experts with years of real-world teaching experience.
-            </motion.p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-7">
-            {INSTRUCTORS.map((ins, i) => (
-              <motion.div
-                key={ins.name}
-                initial={{ opacity: 0, y: 30 }}
+            <div className="text-center mb-16">
+              <motion.span
+                initial={{ opacity: 0, y: 10 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: i * 0.12 }}
-                className="group bg-slate-50 dark:bg-neutral-950 border border-slate-100 dark:border-neutral-800 rounded-3xl overflow-hidden hover:shadow-xl hover:shadow-violet-600/8 hover:-translate-y-1 transition-all duration-400"
+                className="inline-flex items-center gap-2 text-violet-600 dark:text-violet-400 text-sm font-bold tracking-wider uppercase mb-4"
               >
-                {/* Photo */}
-                <div className="relative h-64 overflow-hidden">
-                  <img
-                    src={ins.image}
-                    alt={ins.name}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent" />
-                  <div className="absolute top-4 right-4">
-                    <span className="px-3 py-1 bg-white/90 backdrop-blur-sm text-violet-600 text-xs font-bold rounded-lg">
-                      {ins.specialty}
-                    </span>
-                  </div>
-                  <div className="absolute bottom-4 left-4 flex items-center gap-1.5 text-white text-sm font-bold">
-                    <Star size={16} weight="fill" className="text-yellow-400" />
-                    {ins.rating}
-                  </div>
-                </div>
+                <Globe size={18} weight="fill" /> Meet the Team
+              </motion.span>
+              <motion.h2
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.1 }}
+                className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white mb-4 tracking-tight"
+              >
+                Learn from the{' '}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-purple-600">
+                  Best Instructors
+                </span>
+              </motion.h2>
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.2 }}
+                className="text-slate-500 dark:text-neutral-400 text-lg max-w-xl mx-auto"
+              >
+                Our teachers are certified experts with years of real-world teaching experience.
+              </motion.p>
+            </div>
 
-                {/* Info */}
-                <div className="p-6">
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">{ins.name}</h3>
-                  <p className="text-violet-600 dark:text-violet-400 text-sm font-semibold mb-4">{ins.role}</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7">
+              {instructors.map((ins, i) => (
+                <motion.div
+                  key={ins._id}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.12 }}
+                  className="group bg-slate-50 dark:bg-neutral-950 border border-slate-100 dark:border-neutral-800 rounded-3xl overflow-hidden hover:shadow-xl hover:shadow-violet-600/8 hover:-translate-y-1 transition-all duration-400"
+                >
+                  {/* Photo */}
+                  <div className="relative h-64 overflow-hidden bg-slate-100 dark:bg-neutral-800">
+                    {ins.photo ? (
+                      <img
+                        src={ins.photo}
+                        alt={ins.name}
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <UserCircle size={80} className="text-slate-300 dark:text-neutral-600" />
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent" />
+                    {ins.jobTitle && (
+                      <div className="absolute top-4 right-4">
+                        <span className="px-3 py-1 bg-white/90 backdrop-blur-sm text-violet-600 text-xs font-bold rounded-lg">
+                          {ins.jobTitle}
+                        </span>
+                      </div>
+                    )}
+                  </div>
 
-                    <div className="flex items-center gap-4 pt-4 border-t border-slate-100 dark:border-neutral-800">
-                      <div className="text-center">
-                        <div className="text-base font-black text-slate-900 dark:text-white">{ins.students}</div>
-                        <div className="text-[11px] text-slate-500 dark:text-neutral-400 font-medium">Students</div>
-                      </div>
-                      <div className="w-px h-8 bg-slate-200 dark:bg-neutral-700" />
-                      <div className="text-center">
-                        <div className="text-base font-black text-slate-900 dark:text-white">{ins.experience}</div>
-                        <div className="text-[11px] text-slate-500 dark:text-neutral-400 font-medium">Experience</div>
-                      </div>
-                    </div>
-                </div>
-              </motion.div>
-            ))}
+                  {/* Info */}
+                  <div className="p-6">
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">{ins.name}</h3>
+                    {ins.jobTitle && (
+                      <p className="text-violet-600 dark:text-violet-400 text-sm font-semibold mb-3">{ins.jobTitle}</p>
+                    )}
+                    {ins.bio && (
+                      <p className="text-slate-500 dark:text-neutral-400 text-xs leading-relaxed line-clamp-3">{ins.bio}</p>
+                    )}
+                  </div>
+                </motion.div>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* ─── FAQ ──────────────────────────────────────────────── */}
       <section className="py-20 lg:py-28 bg-slate-50 dark:bg-neutral-950 transition-colors duration-300">

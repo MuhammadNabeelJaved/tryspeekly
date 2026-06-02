@@ -1,3 +1,4 @@
+import mongoose from 'mongoose'
 import asyncHandler from '../utils/asyncHandler.js'
 import FinancialAid from '../models/financial-aid.model.js'
 import { createAndEmitNotification } from '../utils/notify.js'
@@ -142,4 +143,25 @@ export const updateApplicationStatus = asyncHandler(async (req, res) => {
   } catch (error) {
     res.status(400).json({ success: false, error: { message: error.message } })
   }
+})
+
+// DELETE /api/v1/financial-aid/:id — admin: delete single application
+export const deleteApplication = asyncHandler(async (req, res) => {
+  const app = await FinancialAid.findByIdAndDelete(req.params.id)
+  if (!app) return res.status(404).json({ success: false, error: { message: 'Application not found' } })
+  res.json({ success: true, message: 'Application deleted' })
+})
+
+// DELETE /api/v1/financial-aid/bulk — admin: bulk delete applications
+export const bulkDeleteApplications = asyncHandler(async (req, res) => {
+  const { ids } = req.body
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return res.status(400).json({ success: false, error: { message: 'ids must be a non-empty array' } })
+  }
+  if (ids.length > 100) {
+    return res.status(400).json({ success: false, error: { message: 'Cannot delete more than 100 records at once' } })
+  }
+  const validIds = ids.filter(id => mongoose.isValidObjectId(id))
+  const result = await FinancialAid.deleteMany({ _id: { $in: validIds } })
+  res.json({ success: true, message: `${result.deletedCount} application${result.deletedCount !== 1 ? 's' : ''} deleted`, data: { deleted: result.deletedCount } })
 })

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Gift, Copy, Check, Wallet, ArrowDown, Clock, CheckCircle, XCircle, CalendarBlank, Warning, ListBullets, ChartBar } from '@phosphor-icons/react'
+import { Gift, Copy, Check, Wallet, ArrowDown, Clock, CheckCircle, XCircle, CalendarBlank, Warning, ListBullets, ChartBar, Receipt } from '@phosphor-icons/react'
 import toast from 'react-hot-toast'
 import { referralsService } from '@/services/referrals.service'
 import { enrollmentsService } from '@/services/enrollments.service'
@@ -23,6 +23,7 @@ export default function StudentReferrals() {
   const [codeStats, setCodeStats] = useState<{
     codes: any[]; monthlyLimit: number; thisMonthCount: number; remaining: number; currentMonth: string
   } | null>(null)
+  const [payoutHistory, setPayoutHistory] = useState<any[]>([])
 
   const loadAll = () => {
     referralsService.getPublicSettings().then(r => { if (r.success) setPublicSettings(r.data) }).catch(() => {})
@@ -31,6 +32,7 @@ export default function StudentReferrals() {
     referralsService.getMyRewards().then(r => { if (r.success) setRewards(r.data) }).catch(() => {})
     referralsService.getMyCodeStats().then(r => { if (r.success) setCodeStats(r.data) }).catch(() => {})
     enrollmentsService.getMyEnrollments().then(r => { if (r.success) setEnrollments(r.data) }).catch(() => {})
+    referralsService.getMyPayoutHistory().then(r => { if (r.success) setPayoutHistory(r.data) }).catch(() => {})
   }
 
   useEffect(() => { loadAll() }, [])
@@ -96,6 +98,7 @@ export default function StudentReferrals() {
       setShowPayoutModal(false)
       setPayoutAmount('')
       referralsService.getMyWallet().then(r => { if (r.success) { setWallet(r.data.wallet); setPendingPayout(r.data.pendingPayout) } })
+      referralsService.getMyPayoutHistory().then(r => { if (r.success) setPayoutHistory(r.data) }).catch(() => {})
     } catch (err: any) {
       toast.error(err?.response?.data?.error?.message || 'Failed to submit request')
     } finally { setSubmittingPayout(false) }
@@ -442,6 +445,74 @@ export default function StudentReferrals() {
           </div>
         )}
       </motion.div>
+
+      {/* ── Section 5: Payout Request History ── */}
+      {payoutHistory.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200 dark:border-neutral-800 p-5"
+        >
+          <h3 className="font-black text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+            <Receipt size={18} className="text-violet-600" />
+            Payout Request History
+          </h3>
+
+          <div className="space-y-3">
+            {payoutHistory.map(r => (
+              <div
+                key={r._id}
+                className={`rounded-xl border p-4 ${
+                  r.status === 'approved'
+                    ? 'border-emerald-200 dark:border-emerald-800/40 bg-emerald-50 dark:bg-emerald-950/20'
+                    : r.status === 'rejected'
+                    ? 'border-red-200 dark:border-red-800/40 bg-red-50 dark:bg-red-950/20'
+                    : 'border-amber-200 dark:border-amber-800/40 bg-amber-50 dark:bg-amber-950/20'
+                }`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                      r.status === 'approved' ? 'bg-emerald-100 dark:bg-emerald-900/40' :
+                      r.status === 'rejected' ? 'bg-red-100 dark:bg-red-900/40' :
+                      'bg-amber-100 dark:bg-amber-900/40'
+                    }`}>
+                      {r.status === 'approved'
+                        ? <CheckCircle size={18} weight="fill" className="text-emerald-600 dark:text-emerald-400" />
+                        : r.status === 'rejected'
+                        ? <XCircle size={18} weight="fill" className="text-red-500 dark:text-red-400" />
+                        : <Clock size={18} weight="fill" className="text-amber-600 dark:text-amber-400" />}
+                    </div>
+                    <div>
+                      <p className="text-base font-black text-slate-900 dark:text-white">PKR {r.amount.toLocaleString()}</p>
+                      <p className={`text-xs font-bold capitalize mt-0.5 ${
+                        r.status === 'approved' ? 'text-emerald-600 dark:text-emerald-400' :
+                        r.status === 'rejected' ? 'text-red-500 dark:text-red-400' :
+                        'text-amber-600 dark:text-amber-400'
+                      }`}>{r.status}</p>
+                    </div>
+                  </div>
+
+                  <div className="text-right text-xs text-slate-400 dark:text-neutral-500 space-y-0.5 flex-shrink-0">
+                    <p>Submitted: {new Date(r.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                    {r.processedAt && (
+                      <p>Processed: {new Date(r.processedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                    )}
+                  </div>
+                </div>
+
+                {r.adminNote && (
+                  <div className="mt-3 pt-3 border-t border-black/5 dark:border-white/5">
+                    <p className="text-xs font-semibold text-slate-500 dark:text-neutral-400 uppercase tracking-wide mb-1">Admin Note</p>
+                    <p className="text-sm text-slate-700 dark:text-neutral-300">{r.adminNote}</p>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </motion.div>
+      )}
 
       {/* Payout Modal */}
       {showPayoutModal && (

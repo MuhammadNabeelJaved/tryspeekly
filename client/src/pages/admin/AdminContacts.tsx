@@ -7,6 +7,7 @@ import {
 } from '@phosphor-icons/react'
 import toast from 'react-hot-toast'
 import { contactService } from '../../services/contact.service'
+import ConfirmModal from '@/components/ConfirmModal'
 import type { ContactMessage } from '../../types/api'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -321,6 +322,8 @@ export default function AdminContacts() {
   const [editContact, setEditContact] = useState<ContactMessage | null | 'new'>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkConfirm, setBulkConfirm] = useState(false)
 
   // Derived stats
   const [stats, setStats] = useState({ total: 0, unread: 0, new: 0, inProgress: 0, resolved: 0 })
@@ -394,6 +397,19 @@ export default function AdminContacts() {
     } finally {
       setDeleting(false)
     }
+  }
+
+  const toggleSelect = (id: string) =>
+    setSelectedIds(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n })
+
+  const handleBulkDelete = async () => {
+    try {
+      const res = await contactService.bulkDelete(Array.from(selectedIds))
+      setContacts(prev => prev.filter(c => !selectedIds.has(c._id)))
+      if (detailContact && selectedIds.has(detailContact._id)) setDetailContact(null)
+      setSelectedIds(new Set())
+      toast.success(res.message)
+    } catch { toast.error('Failed to delete') } finally { setBulkConfirm(false) }
   }
 
   const handleStatusChange = async (contact: ContactMessage, status: ContactMessage['status']) => {
@@ -555,12 +571,15 @@ export default function AdminContacts() {
               animate={{ opacity: 1, y: 0 }}
               onClick={() => handleCardClick(contact)}
               className={`group relative bg-white dark:bg-neutral-900 border rounded-2xl p-4 cursor-pointer transition-all hover:shadow-md hover:border-violet-200 dark:hover:border-violet-700/50 ${
-                !contact.isRead
-                  ? 'border-violet-200 dark:border-violet-800/50'
-                  : 'border-slate-100 dark:border-neutral-800'
+                selectedIds.has(contact._id) ? 'border-red-300 dark:border-red-700/50 bg-red-50/20 dark:bg-red-950/5'
+                : !contact.isRead ? 'border-violet-200 dark:border-violet-800/50'
+                : 'border-slate-100 dark:border-neutral-800'
               }`}
             >
-              <div className="flex items-start gap-4">
+              <div className="absolute top-3 left-3 z-10" onClick={e => e.stopPropagation()}>
+                <input type="checkbox" checked={selectedIds.has(contact._id)} onChange={() => toggleSelect(contact._id)} className="w-4 h-4 rounded accent-violet-500" />
+              </div>
+              <div className="flex items-start gap-4 pl-5">
                 {/* Unread dot */}
                 <div className="mt-1 flex-shrink-0">
                   {!contact.isRead ? (
@@ -691,6 +710,26 @@ export default function AdminContacts() {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Floating bulk bar */}
+      <AnimatePresence>
+        {selectedIds.size > 0 && (
+          <motion.div
+            initial={{ y: 80, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 80, opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 px-5 py-3 bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-neutral-700 min-w-max"
+          >
+            <span className="text-sm font-bold text-slate-700 dark:text-white">{selectedIds.size} selected</span>
+            <button onClick={() => setSelectedIds(new Set())} className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-white font-medium">Clear</button>
+            <div className="w-px h-5 bg-slate-200 dark:bg-neutral-700" />
+            <button onClick={() => setBulkConfirm(true)} className="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl text-sm font-bold transition-colors">
+              <Trash size={14} weight="bold" /> Delete {selectedIds.size}
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <ConfirmModal open={bulkConfirm} title={`Delete ${selectedIds.size} Message${selectedIds.size !== 1 ? 's' : ''}?`} message="This will permanently remove the selected contact messages. This cannot be undone." confirmLabel={`Delete ${selectedIds.size}`} variant="danger" onConfirm={handleBulkDelete} onCancel={() => setBulkConfirm(false)} />
     </div>
   )
 }

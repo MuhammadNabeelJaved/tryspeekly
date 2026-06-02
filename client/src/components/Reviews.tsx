@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import toast from 'react-hot-toast'
-import { Star, PencilSimple, X } from '@phosphor-icons/react'
+import { Star, PencilSimple, X, SealCheck } from '@phosphor-icons/react'
 
 import { useAuth } from '@/context/AuthContext'
 import { reviewsService } from '@/services/reviews.service'
@@ -35,10 +35,16 @@ function ReviewDetailModal({ review, onClose }: { review: Review; onClose: () =>
           className="bg-white dark:bg-neutral-900 w-full max-w-lg rounded-2xl shadow-2xl border border-gray-100 dark:border-neutral-800 overflow-hidden"
         >
           <div className="flex items-center justify-between p-6 border-b border-gray-100 dark:border-neutral-800">
-            <div className="flex gap-1">
-              {Array.from({ length: review.rating }).map((_, i) => (
-                <Star key={i} size={18} weight="fill" className="text-violet-500" />
-              ))}
+            <div className="flex items-center gap-3">
+              <div className="flex gap-1">
+                {Array.from({ length: review.rating }).map((_, i) => (
+                  <Star key={i} size={18} weight="fill" className="text-violet-500" />
+                ))}
+              </div>
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 text-[11px] font-semibold border border-green-200 dark:border-green-800/50">
+                <SealCheck size={13} weight="fill" />
+                Verified
+              </span>
             </div>
             <button
               onClick={onClose}
@@ -226,10 +232,28 @@ export default function Reviews() {
   }
 
   // ─── Main render (with reviews) ───────────────────────────────────────────────
-  const marqueeItems = [...reviews, ...reviews]
+  const validReviews = reviews.filter(r => r.author != null)
+  // 4 copies: guarantees viewport coverage even with 2–3 reviews.
+  // CSS animation translates by -25% (= 1 copy width out of 4), so the reset
+  // point is visually identical to the start — truly seamless loop.
+  const marqueeItems = [...validReviews, ...validReviews, ...validReviews, ...validReviews]
 
   return (
     <section className="py-16 lg:py-24 bg-white dark:bg-neutral-950 transition-colors duration-300">
+      <style>{`
+        @keyframes reviews-marquee {
+          from { transform: translateX(0); }
+          to   { transform: translateX(-25%); }
+        }
+        .reviews-marquee-track {
+          animation: reviews-marquee 40s linear infinite;
+          will-change: transform;
+        }
+        .reviews-marquee-track:hover {
+          animation-play-state: paused;
+        }
+      `}</style>
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         <div className="text-center max-w-3xl mx-auto mb-16">
@@ -253,17 +277,7 @@ export default function Reviews() {
         </div>
 
         <div className="relative overflow-hidden mb-16">
-          {/* Infinite Scroll Container — items-stretch enforces equal height */}
-          <motion.div
-            className="flex items-stretch gap-8 w-max"
-            animate={{ x: ['0%', '-50%'] }}
-            transition={{
-              duration: 40,
-              ease: 'linear',
-              repeat: Infinity,
-            }}
-            whileHover={{ animationPlayState: 'paused' }}
-          >
+          <div className="reviews-marquee-track flex items-stretch gap-8 w-max">
             {marqueeItems.map((review, i) => {
               const isLong = review.content.length > CONTENT_LIMIT
               const displayContent = isLong
@@ -275,10 +289,16 @@ export default function Reviews() {
                   key={`${review._id}-${i}`}
                   className="w-[350px] sm:w-[420px] p-8 rounded-2xl bg-gray-50 dark:bg-neutral-900 border border-gray-100 dark:border-neutral-800 flex flex-col shrink-0 shadow-sm"
                 >
-                  <div className="flex gap-1 mb-6">
-                    {Array.from({ length: review.rating }).map((_, si) => (
-                      <Star key={si} size={18} weight="fill" className="text-violet-500" />
-                    ))}
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex gap-1">
+                      {Array.from({ length: review.rating }).map((_, si) => (
+                        <Star key={si} size={18} weight="fill" className="text-violet-500" />
+                      ))}
+                    </div>
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 text-[11px] font-semibold border border-green-200 dark:border-green-800/50">
+                      <SealCheck size={13} weight="fill" />
+                      Verified
+                    </span>
                   </div>
 
                   <p className="text-gray-700 dark:text-gray-300 leading-relaxed mb-3 flex-grow italic">
@@ -314,7 +334,7 @@ export default function Reviews() {
                 </div>
               )
             })}
-          </motion.div>
+          </div>
 
           {/* Fade gradients for seamless look */}
           <div className="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-white dark:from-neutral-950 to-transparent z-10 pointer-events-none" />

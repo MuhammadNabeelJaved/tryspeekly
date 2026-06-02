@@ -90,3 +90,12 @@ export const deleteContact = asyncHandler(async (req, res) => {
   if (!contact) return res.status(404).json({ success: false, message: 'Message not found' })
   res.json({ success: true, message: 'Message deleted' })
 })
+
+// DELETE /api/v1/contact/bulk — admin: bulk-delete contact messages
+export const bulkDeleteContacts = asyncHandler(async (req, res) => {
+  const { ids } = req.body
+  if (!Array.isArray(ids) || ids.length === 0)
+    return res.status(400).json({ success: false, error: { message: 'ids must be a non-empty array' } })
+  const result = await Contact.deleteMany({ _id: { $in: ids } })
+  res.json({ success: true, message: `${result.deletedCount} message${result.deletedCount !== 1 ? 's' : ''} deleted`, data: { deleted: result.deletedCount } })
+})

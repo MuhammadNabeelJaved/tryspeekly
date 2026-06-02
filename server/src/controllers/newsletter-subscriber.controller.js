@@ -89,3 +89,12 @@ export const unsubscribeByToken = asyncHandler(async (req, res) => {
   )
   res.json({ success: true, message: 'You have been unsubscribed successfully.' })
 })
+
+// ─── DELETE /api/v1/newsletter/subscribers/bulk (admin) ───────────────────────
+export const bulkDeleteSubscribers = asyncHandler(async (req, res) => {
+  const { ids } = req.body
+  if (!Array.isArray(ids) || ids.length === 0)
+    return res.status(400).json({ success: false, error: { message: 'ids must be a non-empty array' } })
+  const result = await NewsletterSubscriber.deleteMany({ _id: { $in: ids } })
+  res.json({ success: true, message: `${result.deletedCount} subscriber${result.deletedCount !== 1 ? 's' : ''} deleted`, data: { deleted: result.deletedCount } })
+})

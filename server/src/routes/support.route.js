@@ -7,6 +7,8 @@ import {
   replyToTicket,
   updateTicketStatus,
   getAllTickets,
+  deleteTicket,
+  bulkDeleteTickets,
 } from '../controllers/support.controller.js'
 
 const router = express.Router()
@@ -21,6 +23,8 @@ router.route('/:id/reply').post(authenticate, replyToTicket)
 
 // ─── Admin routes ──────────────────────────────────────────────────────────────
 router.route('/').get(authenticate, authorizeTeamPage('support'), getAllTickets)
+router.route('/bulk').delete(authenticate, authorizeTeamPage('support'), bulkDeleteTickets)
 router.route('/:id/status').patch(authenticate, authorizeTeamPage('support'), updateTicketStatus)
+router.route('/:id').delete(authenticate, authorizeTeamPage('support'), deleteTicket)
 
 export default router

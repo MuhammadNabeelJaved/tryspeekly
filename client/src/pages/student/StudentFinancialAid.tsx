@@ -366,7 +366,7 @@ export default function StudentFinancialAid() {
                           <p className="text-xs font-black text-violet-700 dark:text-violet-300 uppercase tracking-wide">Enrolled — Free Access</p>
                           <span className="ml-auto text-[9px] font-bold bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400 px-2 py-0.5 rounded-full uppercase">Active</span>
                         </div>
-                        <p className="text-sm font-bold text-slate-900 dark:text-white leading-tight">{linked.course.title}</p>
+                        <p className="text-sm font-bold text-slate-900 dark:text-white leading-tight">{linked.course?.title ?? '—'}</p>
                         {linked.teacher && (
                           <p className="text-[11px] text-slate-500 dark:text-neutral-400">
                             Instructor: <span className="font-semibold text-slate-700 dark:text-neutral-200">{linked.teacher.name}</span>

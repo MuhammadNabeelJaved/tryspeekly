@@ -62,7 +62,7 @@ export default function StudentCertificates() {
 
       ctx.fillStyle = '#1e1b4b'
       ctx.font = 'bold 50px Arial'
-      ctx.fillText(cert.course.title, 800, 800)
+      ctx.fillText(cert.course?.title ?? '', 800, 800)
 
       ctx.fillStyle = '#475569'
       ctx.font = '24px Arial'
@@ -91,12 +91,12 @@ export default function StudentCertificates() {
         const dataUrl = await generateCertificateJPG(selectedCert)
         const a = document.createElement('a')
         a.href = dataUrl
-        a.download = `${selectedCert.course.title.replace(/\s+/g, '_')}_Certificate.jpg`
+        a.download = `${(selectedCert.course?.title ?? 'Certificate').replace(/\s+/g, '_')}_Certificate.jpg`
         document.body.appendChild(a); a.click(); document.body.removeChild(a)
       } else {
         const a = document.createElement('a')
         a.href = DUMMY_PDF_BASE64
-        a.download = `${selectedCert.course.title.replace(/\s+/g, '_')}_Certificate.pdf`
+        a.download = `${(selectedCert.course?.title ?? 'Certificate').replace(/\s+/g, '_')}_Certificate.pdf`
         document.body.appendChild(a); a.click(); document.body.removeChild(a)
       }
     } finally {
@@ -108,7 +108,7 @@ export default function StudentCertificates() {
     const verifyUrl = `${window.location.origin}/certificate/${cert.certificateId}`
     const url = new URL('https://www.linkedin.com/profile/add')
     url.searchParams.append('startTask', 'CERTIFICATION_NAME')
-    url.searchParams.append('name', cert.course.title)
+    url.searchParams.append('name', cert.course?.title ?? '')
     url.searchParams.append('organizationName', 'EnglishPro Academy')
     url.searchParams.append('issueYear', new Date(cert.issueDate).getFullYear().toString())
     url.searchParams.append('issueMonth', (new Date(cert.issueDate).getMonth() + 1).toString())
@@ -147,7 +147,7 @@ export default function StudentCertificates() {
               <div className="absolute inset-4 border border-slate-300 dark:border-neutral-600 flex flex-col items-center justify-center p-6 bg-white dark:bg-neutral-900 text-center shadow-sm">
                 <Certificate size={32} weight="fill" className="text-violet-600 dark:text-violet-500 mb-3" />
                 <p className="text-[9px] font-bold text-slate-400 dark:text-neutral-500 uppercase tracking-widest mb-1">Certificate of Completion</p>
-                <h3 className="font-bold text-slate-900 dark:text-white text-sm leading-tight line-clamp-2">{cert.course.title}</h3>
+                <h3 className="font-bold text-slate-900 dark:text-white text-sm leading-tight line-clamp-2">{cert.course?.title ?? '—'}</h3>
                 <div className="mt-auto w-full pt-4 border-t border-slate-100 dark:border-neutral-800 flex justify-between items-end">
                   <div className="text-left">
                     <p className="text-[8px] text-slate-400">Date</p>

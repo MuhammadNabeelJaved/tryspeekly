@@ -695,86 +695,179 @@ function RewardsTab() {
 function PayoutsTab() {
   const [requests, setRequests] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [status, setStatus] = useState('pending')
+  const [statusFilter, setStatusFilter] = useState('all')
   const [processing, setProcessing] = useState<string | null>(null)
+  const [actionPanel, setActionPanel] = useState<{ id: string; action: 'approve' | 'reject'; note: string } | null>(null)
 
   const load = useCallback(() => {
     setLoading(true)
-    referralsService.getPayoutRequests({ status: status || undefined })
+    referralsService.getPayoutRequests({ status: statusFilter === 'all' ? undefined : statusFilter })
       .then(r => { if (r.success) setRequests(r.data) })
       .finally(() => setLoading(false))
-  }, [status])
+  }, [statusFilter])
 
   useEffect(() => { load() }, [load])
 
-  async function handle(id: string, action: 'approve' | 'reject', note?: string) {
-    setProcessing(id)
+  async function handle() {
+    if (!actionPanel) return
+    setProcessing(actionPanel.id)
     try {
-      await referralsService.processPayoutRequest(id, action, note)
-      toast.success(`Payout ${action === 'approve' ? 'approved' : 'rejected'}`)
+      await referralsService.processPayoutRequest(actionPanel.id, actionPanel.action, actionPanel.note || undefined)
+      toast.success(`Payout ${actionPanel.action === 'approve' ? 'approved' : 'rejected'}`)
+      setActionPanel(null)
       load()
     } catch { toast.error('Failed to process request') } finally { setProcessing(null) }
   }
 
+  const pending = requests.filter(r => r.status === 'pending')
+  const history = requests.filter(r => r.status !== 'pending')
+
   return (
-    <div>
-      <div className="mb-4">
-        <select value={status} onChange={e => setStatus(e.target.value)}
+    <div className="space-y-6">
+      {/* Filter */}
+      <div className="flex items-center gap-3">
+        <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}
           className="px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-sm text-slate-700 dark:text-neutral-200">
-          <option value="">All</option>
+          <option value="all">All Requests</option>
           <option value="pending">Pending</option>
           <option value="approved">Approved</option>
           <option value="rejected">Rejected</option>
         </select>
+        <span className="text-xs text-slate-400 dark:text-neutral-500">{requests.length} total</span>
       </div>
 
       {loading ? (
         <div className="text-center py-12 text-slate-400">Loading…</div>
       ) : requests.length === 0 ? (
-        <div className="text-center py-12 text-slate-400">No payout requests</div>
+        <div className="text-center py-12 text-slate-400">No payout requests found</div>
       ) : (
-        <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200 dark:border-neutral-800 overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="border-b border-slate-100 dark:border-neutral-800 bg-slate-50 dark:bg-neutral-800/50">
-              <tr>
-                {['Student', 'Wallet Balance', 'Requested', 'Date', 'Status', 'Actions'].map(h => (
-                  <th key={h} className="px-4 py-3 text-left text-xs font-bold text-slate-500 dark:text-neutral-400 uppercase tracking-wider">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50 dark:divide-neutral-800">
-              {requests.map(r => (
-                <tr key={r._id} className="hover:bg-slate-50 dark:hover:bg-neutral-800/30 transition-colors">
-                  <td className="px-4 py-3 font-semibold text-slate-900 dark:text-white">{r.student?.name}<br /><span className="text-xs text-slate-400 font-normal">{r.student?.email}</span></td>
-                  <td className="px-4 py-3 text-slate-600 dark:text-neutral-300">PKR {r.walletBalance}</td>
-                  <td className="px-4 py-3 font-bold text-violet-600">PKR {r.amount}</td>
-                  <td className="px-4 py-3 text-slate-400 text-xs">{new Date(r.createdAt).toLocaleDateString()}</td>
-                  <td className="px-4 py-3"><StatusBadge status={r.status} /></td>
-                  <td className="px-4 py-3">
-                    {r.status === 'pending' && (
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handle(r._id, 'approve')}
-                          disabled={processing === r._id}
-                          className="px-3 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-xs font-bold rounded-lg hover:bg-emerald-200 dark:hover:bg-emerald-900/50 transition-colors disabled:opacity-50"
-                        >
-                          Approve
-                        </button>
-                        <button
-                          onClick={() => handle(r._id, 'reject', 'Rejected by admin')}
-                          disabled={processing === r._id}
-                          className="px-3 py-1 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-xs font-bold rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors disabled:opacity-50"
-                        >
-                          Reject
-                        </button>
-                      </div>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <>
+          {/* ── Pending section ── */}
+          {(statusFilter === 'all' || statusFilter === 'pending') && pending.length > 0 && (
+            <div>
+              <h3 className="text-sm font-black text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-amber-400 inline-block" />
+                Pending Requests ({pending.length})
+              </h3>
+
+              {/* Action panel */}
+              {actionPanel && (
+                <div className="mb-4 p-4 rounded-2xl bg-slate-50 dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 space-y-3">
+                  <p className="text-sm font-bold text-slate-900 dark:text-white">
+                    {actionPanel.action === 'approve' ? '✓ Approve payout — balance will be deducted' : '✕ Reject payout request'}
+                  </p>
+                  <input
+                    value={actionPanel.note}
+                    onChange={e => setActionPanel(a => a ? { ...a, note: e.target.value } : a)}
+                    placeholder={actionPanel.action === 'approve' ? 'Admin note (optional)' : 'Rejection reason (optional)'}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-sm text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors placeholder-slate-300 dark:placeholder-neutral-600"
+                  />
+                  <div className="flex gap-2">
+                    <button onClick={handle} disabled={!!processing}
+                      className={`px-4 py-2 rounded-xl font-bold text-sm text-white transition-colors disabled:opacity-50 ${actionPanel.action === 'approve' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-red-600 hover:bg-red-700'}`}>
+                      {processing ? 'Processing…' : 'Confirm'}
+                    </button>
+                    <button onClick={() => setActionPanel(null)}
+                      className="px-4 py-2 rounded-xl font-bold text-sm bg-slate-200 dark:bg-neutral-700 text-slate-700 dark:text-white hover:bg-slate-300 dark:hover:bg-neutral-600 transition-colors">
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200 dark:border-neutral-800 overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm min-w-[640px]">
+                    <thead className="border-b border-slate-100 dark:border-neutral-800 bg-slate-50 dark:bg-neutral-800/50">
+                      <tr>
+                        {['Student', 'Wallet Balance', 'Requested Amount', 'Submitted', 'Actions'].map(h => (
+                          <th key={h} className="px-4 py-3 text-left text-xs font-bold text-slate-500 dark:text-neutral-400 uppercase tracking-wider whitespace-nowrap">{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-50 dark:divide-neutral-800">
+                      {pending.map(r => (
+                        <tr key={r._id} className={`transition-colors ${actionPanel?.id === r._id ? 'bg-slate-50/80 dark:bg-neutral-800/40' : 'hover:bg-slate-50 dark:hover:bg-neutral-800/30'}`}>
+                          <td className="px-4 py-3">
+                            <p className="font-semibold text-slate-900 dark:text-white text-sm">{r.student?.name}</p>
+                            <p className="text-xs text-slate-400 dark:text-neutral-500">{r.student?.email}</p>
+                          </td>
+                          <td className="px-4 py-3 text-sm text-slate-600 dark:text-neutral-300 whitespace-nowrap">PKR {(r.walletBalance ?? 0).toLocaleString()}</td>
+                          <td className="px-4 py-3">
+                            <span className="text-base font-black text-violet-600 dark:text-violet-400">PKR {r.amount.toLocaleString()}</span>
+                          </td>
+                          <td className="px-4 py-3 text-xs text-slate-400 dark:text-neutral-500 whitespace-nowrap">
+                            {new Date(r.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => setActionPanel({ id: r._id, action: 'approve', note: '' })}
+                                disabled={!!processing}
+                                className="px-3 py-1.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-xs font-bold rounded-lg hover:bg-emerald-200 dark:hover:bg-emerald-900/50 transition-colors disabled:opacity-50"
+                              >Approve</button>
+                              <button
+                                onClick={() => setActionPanel({ id: r._id, action: 'reject', note: '' })}
+                                disabled={!!processing}
+                                className="px-3 py-1.5 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-xs font-bold rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors disabled:opacity-50"
+                              >Reject</button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── History section ── */}
+          {(statusFilter === 'all' || statusFilter === 'approved' || statusFilter === 'rejected') && history.length > 0 && (
+            <div>
+              <h3 className="text-sm font-black text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-slate-400 inline-block" />
+                History ({history.length})
+              </h3>
+              <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200 dark:border-neutral-800 overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm min-w-[700px]">
+                    <thead className="border-b border-slate-100 dark:border-neutral-800 bg-slate-50 dark:bg-neutral-800/50">
+                      <tr>
+                        {['Student', 'Amount', 'Status', 'Submitted', 'Processed', 'Admin Note'].map(h => (
+                          <th key={h} className="px-4 py-3 text-left text-xs font-bold text-slate-500 dark:text-neutral-400 uppercase tracking-wider whitespace-nowrap">{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-50 dark:divide-neutral-800">
+                      {history.map(r => (
+                        <tr key={r._id} className="hover:bg-slate-50 dark:hover:bg-neutral-800/30 transition-colors">
+                          <td className="px-4 py-3">
+                            <p className="font-semibold text-slate-900 dark:text-white text-sm">{r.student?.name}</p>
+                            <p className="text-xs text-slate-400 dark:text-neutral-500">{r.student?.email}</p>
+                          </td>
+                          <td className="px-4 py-3 font-black text-slate-900 dark:text-white whitespace-nowrap">PKR {r.amount.toLocaleString()}</td>
+                          <td className="px-4 py-3"><StatusBadge status={r.status} /></td>
+                          <td className="px-4 py-3 text-xs text-slate-400 dark:text-neutral-500 whitespace-nowrap">
+                            {new Date(r.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          </td>
+                          <td className="px-4 py-3 text-xs text-slate-400 dark:text-neutral-500 whitespace-nowrap">
+                            {r.processedAt
+                              ? new Date(r.processedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+                              : '—'}
+                          </td>
+                          <td className="px-4 py-3 text-xs text-slate-500 dark:text-neutral-400 max-w-[200px]">
+                            {r.adminNote || <span className="text-slate-300 dark:text-neutral-600">—</span>}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   )

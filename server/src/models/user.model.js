@@ -110,6 +110,10 @@ const userSchema = new Schema(
       type: Boolean,
       default: false,
     },
+    showOnCoursesPage: {
+      type: Boolean,
+      default: false,
+    },
     blockedAt: {
       type: Date,
       select: false,

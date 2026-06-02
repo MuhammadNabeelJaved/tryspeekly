@@ -25,6 +25,8 @@ import {
     getPublicTeachers,
     getHomeInstructors,
     toggleShowOnHome,
+    getCoursesPageInstructors,
+    toggleShowOnCoursesPage,
 } from '../controllers/user.controller.js'
 
 
@@ -41,6 +43,7 @@ const router = express.Router()
 // ─── Public routes ─────────────────────────────────────────────────────────────
 router.route('/public-teachers').get(getPublicTeachers)
 router.route('/home-instructors').get(getHomeInstructors)
+router.route('/courses-instructors').get(getCoursesPageInstructors)
 router.route('/register').post(createUser)
 router.route('/verify-email').post(verifyEmail)
 router.route('/resend-verification').post(resendVerification)
@@ -65,6 +68,7 @@ router.route('/bulk').delete(authenticate, authorize('admin'), bulkDeleteUsers)
 router.route('/:id/role').patch(authenticate, authorize('admin'), changeUserRole)
 router.route('/:id/block').patch(authenticate, authorize('admin'), blockUser)
 router.route('/:id/show-on-home').patch(authenticate, authorize('admin'), toggleShowOnHome)
+router.route('/:id/show-on-courses').patch(authenticate, authorize('admin'), toggleShowOnCoursesPage)
 router.route('/:id')
     .get(authenticate, allowTeamMember, getUserById)
     .delete(authenticate, authorize('admin'), deleteUser)

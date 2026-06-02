@@ -56,7 +56,7 @@ type MethodInfo = {
   receiptEmail: string
 }
 
-const WHATSAPP = 'https://wa.me/923000000000'
+const WHATSAPP = 'https://wa.me/923086925545'
 const RECEIPT_EMAIL = 'payments@englishpro.com'
 
 const LOCAL_METHODS: MethodInfo[] = [

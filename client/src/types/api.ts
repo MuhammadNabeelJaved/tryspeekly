@@ -619,7 +619,7 @@ export interface Review {
     profileImage?: string;
     role: 'student' | 'teacher' | 'admin' | 'team_member';
     email?: string;
-  };
+  } | null;
   course?: {
     _id: string;
     title: string;

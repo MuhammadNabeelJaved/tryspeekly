@@ -6,6 +6,8 @@ import {
   BookOpen, SpinnerGap,
 } from '@phosphor-icons/react'
 import { supportService } from '@/services/support.service'
+import ConfirmModal from '@/components/ConfirmModal'
+import toast from 'react-hot-toast'
 import type { SupportTicket } from '@/types/api'
 
 const STATUS_COLORS: Record<string, string> = {
@@ -157,6 +159,9 @@ export default function AdminSupport() {
   const [activeTicket, setActiveTicket] = useState<SupportTicket | null>(null)
   const [messageInput, setMessageInput] = useState('')
   const [sending, setSending] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkConfirm, setBulkConfirm] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -183,7 +188,7 @@ export default function AdminSupport() {
   const filteredTickets = tickets
     .filter(ticket => {
       const q = search.toLowerCase()
-      const matchesSearch = !q || ticket.student.name.toLowerCase().includes(q) || ticket.subject.toLowerCase().includes(q)
+      const matchesSearch = !q || (ticket.student?.name ?? '').toLowerCase().includes(q) || ticket.subject.toLowerCase().includes(q)
       const matchesStatus = filterStatus === 'All' || ticket.status === filterStatus
       const matchesPriority = filterPriority === 'All' || ticket.priority === filterPriority
       return matchesSearch && matchesStatus && matchesPriority
@@ -205,6 +210,30 @@ export default function AdminSupport() {
     } finally {
       setSending(false)
     }
+  }
+
+  const toggleSelect = (id: string) =>
+    setSelectedIds(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n })
+
+  const handleDeleteOne = async () => {
+    if (!deleteTarget) return
+    try {
+      await supportService.deleteTicket(deleteTarget)
+      setTickets(prev => prev.filter(t => t._id !== deleteTarget))
+      if (activeTicket?._id === deleteTarget) setActiveTicket(null)
+      setSelectedIds(prev => { const n = new Set(prev); n.delete(deleteTarget); return n })
+      toast.success('Ticket deleted')
+    } catch { toast.error('Failed to delete') } finally { setDeleteTarget(null) }
+  }
+
+  const handleBulkDelete = async () => {
+    try {
+      const res = await supportService.bulkDelete(Array.from(selectedIds))
+      setTickets(prev => prev.filter(t => !selectedIds.has(t._id)))
+      if (activeTicket && selectedIds.has(activeTicket._id)) setActiveTicket(null)
+      setSelectedIds(new Set())
+      toast.success(res.message)
+    } catch { toast.error('Failed to delete') } finally { setBulkConfirm(false) }
   }
 
   const handleUpdateStatus = async (ticketId: string, newStatus: SupportTicket['status']) => {
@@ -279,12 +308,17 @@ export default function AdminSupport() {
                     <p className="p-6 text-center text-sm text-slate-400 dark:text-neutral-500">No tickets found.</p>
                   ) : (
                     filteredTickets.map(ticket => (
-                      <button key={ticket._id} onClick={async () => {
-                        setActiveTicket(ticket)
-                        const res = await supportService.getTicketById(ticket._id)
-                        if (res.success) setActiveTicket(res.data)
-                      }}
-                        className={`w-full text-left p-4 transition-colors hover:bg-slate-50 dark:hover:bg-neutral-800/50 ${activeTicket?._id === ticket._id ? 'bg-violet-50 dark:bg-violet-900/20' : ''}`}>
+                      <div key={ticket._id} className={`relative transition-colors ${activeTicket?._id === ticket._id ? 'bg-violet-50 dark:bg-violet-900/20' : selectedIds.has(ticket._id) ? 'bg-red-50/40 dark:bg-red-950/10' : 'hover:bg-slate-50 dark:hover:bg-neutral-800/50'}`}>
+                        <div className="absolute top-3 left-3 z-10 flex items-center gap-1">
+                          <input type="checkbox" checked={selectedIds.has(ticket._id)}
+                            onChange={e => { e.stopPropagation(); toggleSelect(ticket._id) }}
+                            className="w-4 h-4 rounded accent-violet-500" />
+                        </div>
+                        <button onClick={async () => {
+                          setActiveTicket(ticket)
+                          const res = await supportService.getTicketById(ticket._id)
+                          if (res.success) setActiveTicket(res.data)
+                        }} className="w-full text-left p-4 pl-9">
                         <div className="flex items-start gap-2.5 mb-2">
                           <div className="w-8 h-8 rounded-full bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 text-[10px] font-black flex items-center justify-center flex-shrink-0 mt-0.5">
                             {(ticket.student?.name ?? '?').split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2)}
@@ -303,7 +337,13 @@ export default function AdminSupport() {
                         <p className="text-[10px] text-slate-300 dark:text-neutral-600 mt-1.5 text-right">
                           {new Date(ticket.lastMessageAt).toLocaleString()}
                         </p>
-                      </button>
+                        </button>
+                        <button onClick={e => { e.stopPropagation(); setDeleteTarget(ticket._id) }}
+                          className="absolute top-3 right-3 w-6 h-6 rounded-lg bg-red-50 dark:bg-red-950/30 text-red-400 hover:text-red-600 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                          title="Delete ticket">
+                          <Trash size={11} weight="fill" />
+                        </button>
+                      </div>
                     ))
                   )}
                 </div>
@@ -386,6 +426,27 @@ export default function AdminSupport() {
           )}
         </AnimatePresence>
       </div>
+
+      {/* Floating bulk bar */}
+      <AnimatePresence>
+        {selectedIds.size > 0 && (
+          <motion.div
+            initial={{ y: 80, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 80, opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 px-5 py-3 bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-neutral-700 min-w-max"
+          >
+            <span className="text-sm font-bold text-slate-700 dark:text-white">{selectedIds.size} selected</span>
+            <button onClick={() => setSelectedIds(new Set())} className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-white font-medium">Clear</button>
+            <div className="w-px h-5 bg-slate-200 dark:bg-neutral-700" />
+            <button onClick={() => setBulkConfirm(true)} className="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl text-sm font-bold transition-colors">
+              <Trash size={14} weight="bold" /> Delete {selectedIds.size}
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <ConfirmModal open={!!deleteTarget} title="Delete Ticket?" message="This will permanently remove this support ticket and all its messages." confirmLabel="Delete" variant="danger" onConfirm={handleDeleteOne} onCancel={() => setDeleteTarget(null)} />
+      <ConfirmModal open={bulkConfirm} title={`Delete ${selectedIds.size} Ticket${selectedIds.size !== 1 ? 's' : ''}?`} message="This will permanently remove the selected support tickets. This cannot be undone." confirmLabel={`Delete ${selectedIds.size}`} variant="danger" onConfirm={handleBulkDelete} onCancel={() => setBulkConfirm(false)} />
     </div>
   )
 }

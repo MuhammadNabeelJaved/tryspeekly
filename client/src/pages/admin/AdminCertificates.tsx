@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Certificate, MagnifyingGlass, Check, X, Eye, Trash, FunnelSimple, Medal, Clock, SpinnerGap } from '@phosphor-icons/react'
 import { certificatesService } from '@/services/certificates.service'
+import ConfirmModal from '@/components/ConfirmModal'
+import toast from 'react-hot-toast'
 import type { Certificate as CertificateType } from '@/types/api'
 
 export default function AdminCertificates() {
@@ -12,6 +14,9 @@ export default function AdminCertificates() {
   const [modalType, setModalType] = useState<'view' | 'revoke' | null>(null)
   const [selected, setSelected] = useState<CertificateType | null>(null)
   const [revoking, setRevoking] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkConfirm, setBulkConfirm] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
 
   const fetchCertificates = useCallback(() => {
     setLoading(true)
@@ -26,15 +31,40 @@ export default function AdminCertificates() {
   const filtered = certificates.filter(cert => {
     const q = search.toLowerCase()
     const matchSearch = !q
-      || cert.student.name.toLowerCase().includes(q)
-      || cert.course.title.toLowerCase().includes(q)
+      || (cert.student?.name ?? '').toLowerCase().includes(q)
+      || (cert.course?.title ?? '').toLowerCase().includes(q)
       || cert.certificateId.toLowerCase().includes(q)
     const matchStatus = filterStatus === 'All' || cert.status === filterStatus.toLowerCase()
     return matchSearch && matchStatus
   })
 
+  const allFilteredIds = filtered.map(c => c._id)
+  const allSelected = allFilteredIds.length > 0 && allFilteredIds.every(id => selectedIds.has(id))
+
   const issuedCount = certificates.filter(c => c.status === 'issued').length
   const revokedCount = certificates.filter(c => c.status === 'revoked').length
+
+  const toggleSelect = (id: string) =>
+    setSelectedIds(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n })
+
+  const handleDeleteOne = async () => {
+    if (!deleteTarget) return
+    try {
+      await certificatesService.deleteCertificate(deleteTarget)
+      setCertificates(prev => prev.filter(c => c._id !== deleteTarget))
+      setSelectedIds(prev => { const n = new Set(prev); n.delete(deleteTarget); return n })
+      toast.success('Certificate deleted')
+    } catch { toast.error('Failed to delete') } finally { setDeleteTarget(null) }
+  }
+
+  const handleBulkDelete = async () => {
+    try {
+      const res = await certificatesService.bulkDelete(Array.from(selectedIds))
+      setCertificates(prev => prev.filter(c => !selectedIds.has(c._id)))
+      setSelectedIds(new Set())
+      toast.success(res.message)
+    } catch { toast.error('Failed to delete') } finally { setBulkConfirm(false) }
+  }
 
   const handleRevoke = async () => {
     if (!selected) return
@@ -116,6 +146,11 @@ export default function AdminCertificates() {
           <table className="w-full text-sm min-w-[700px]">
             <thead>
               <tr className="border-b border-slate-100 dark:border-neutral-800 bg-slate-50 dark:bg-neutral-800/50">
+                <th className="px-5 py-3 w-10">
+                  <input type="checkbox" checked={allSelected}
+                    onChange={e => setSelectedIds(e.target.checked ? new Set(allFilteredIds) : new Set())}
+                    className="w-4 h-4 rounded accent-violet-500" />
+                </th>
                 {['Student', 'Course', 'Certificate ID', 'Issue Date', 'Status', 'Actions'].map(h => (
                   <th key={h} className="text-left px-5 py-3 text-[10px] font-bold text-slate-400 dark:text-neutral-500 uppercase tracking-wide whitespace-nowrap">{h}</th>
                 ))}
@@ -125,25 +160,28 @@ export default function AdminCertificates() {
               {loading ? (
                 [1, 2, 3].map(i => (
                   <tr key={i}>
-                    <td colSpan={6} className="px-5 py-4">
+                    <td colSpan={7} className="px-5 py-4">
                       <div className="h-4 bg-slate-100 dark:bg-neutral-800 rounded animate-pulse" />
                     </td>
                   </tr>
                 ))
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={6} className="text-center py-10 text-slate-400 dark:text-neutral-600 text-sm">No certificates found</td></tr>
+                <tr><td colSpan={7} className="text-center py-10 text-slate-400 dark:text-neutral-600 text-sm">No certificates found</td></tr>
               ) : (
                 filtered.map(cert => (
-                  <tr key={cert._id} className="hover:bg-slate-50 dark:hover:bg-neutral-800/40 transition-colors group">
+                  <tr key={cert._id} className={`transition-colors group ${selectedIds.has(cert._id) ? 'bg-red-50/30 dark:bg-red-950/10' : 'hover:bg-slate-50 dark:hover:bg-neutral-800/40'}`}>
+                    <td className="px-5 py-4">
+                      <input type="checkbox" checked={selectedIds.has(cert._id)} onChange={() => toggleSelect(cert._id)} className="w-4 h-4 rounded accent-violet-500" />
+                    </td>
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-neutral-800 flex items-center justify-center text-slate-600 dark:text-neutral-300 font-bold text-xs">
-                          {cert.student.name.split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2)}
+                          {cert.student?.name ? cert.student.name.split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2) : '?'}
                         </div>
-                        <p className="font-bold text-slate-900 dark:text-white text-sm">{cert.student.name}</p>
+                        <p className="font-bold text-slate-900 dark:text-white text-sm">{cert.student?.name ?? 'Deleted User'}</p>
                       </div>
                     </td>
-                    <td className="px-5 py-4 text-sm font-semibold text-slate-700 dark:text-neutral-300">{cert.course.title}</td>
+                    <td className="px-5 py-4 text-sm font-semibold text-slate-700 dark:text-neutral-300">{cert.course?.title ?? '—'}</td>
                     <td className="px-5 py-4">
                       <span className="text-xs font-bold text-slate-900 dark:text-white font-mono bg-slate-100 dark:bg-neutral-800 px-1.5 py-0.5 rounded">{cert.certificateId}</span>
                     </td>
@@ -169,10 +207,14 @@ export default function AdminCertificates() {
                         </button>
                         {cert.status === 'issued' && (
                           <button onClick={() => { setSelected(cert); setModalType('revoke') }}
-                            className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-neutral-800 hover:bg-red-100 dark:hover:bg-red-950/40 text-slate-500 hover:text-red-600 dark:hover:text-red-400 flex items-center justify-center transition-colors">
+                            className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-neutral-800 hover:bg-amber-100 dark:hover:bg-amber-950/40 text-slate-500 hover:text-amber-600 dark:hover:text-amber-400 flex items-center justify-center transition-colors" title="Revoke">
                             <Trash size={15} />
                           </button>
                         )}
+                        <button onClick={() => setDeleteTarget(cert._id)}
+                          className="w-8 h-8 rounded-lg bg-red-50 dark:bg-red-950/30 text-red-500 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-950/50 flex items-center justify-center transition-colors" title="Delete record">
+                          <X size={15} weight="bold" />
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -182,6 +224,27 @@ export default function AdminCertificates() {
           </table>
         </div>
       </div>
+
+      {/* Floating bulk bar */}
+      <AnimatePresence>
+        {selectedIds.size > 0 && (
+          <motion.div
+            initial={{ y: 80, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 80, opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 px-5 py-3 bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-neutral-700 min-w-max"
+          >
+            <span className="text-sm font-bold text-slate-700 dark:text-white">{selectedIds.size} selected</span>
+            <button onClick={() => setSelectedIds(new Set())} className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-white font-medium">Clear</button>
+            <div className="w-px h-5 bg-slate-200 dark:bg-neutral-700" />
+            <button onClick={() => setBulkConfirm(true)} className="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl text-sm font-bold transition-colors">
+              <Trash size={14} weight="bold" /> Delete {selectedIds.size}
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <ConfirmModal open={!!deleteTarget} title="Delete Certificate?" message="This will permanently remove this certificate record from the database." confirmLabel="Delete" variant="danger" onConfirm={handleDeleteOne} onCancel={() => setDeleteTarget(null)} />
+      <ConfirmModal open={bulkConfirm} title={`Delete ${selectedIds.size} Certificate${selectedIds.size !== 1 ? 's' : ''}?`} message="This will permanently remove the selected certificate records. This cannot be undone." confirmLabel={`Delete ${selectedIds.size}`} variant="danger" onConfirm={handleBulkDelete} onCancel={() => setBulkConfirm(false)} />
 
       {/* VIEW MODAL */}
       <AnimatePresence>
@@ -197,9 +260,9 @@ export default function AdminCertificates() {
                   <div className="absolute inset-[10px] border border-[#c4b5fd] pointer-events-none" />
                   <Certificate size={32} className="text-violet-600 mb-2" weight="fill" />
                   <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Certificate of Completion</h4>
-                  <p className="text-[#1e1b4b] font-serif italic text-2xl font-bold mb-3 border-b border-slate-200 px-4">{selected.student.name}</p>
+                  <p className="text-[#1e1b4b] font-serif italic text-2xl font-bold mb-3 border-b border-slate-200 px-4">{selected.student?.name ?? 'Deleted User'}</p>
                   <p className="text-[10px] text-slate-500 mb-2">has successfully completed</p>
-                  <p className="text-xs font-bold text-[#1e1b4b] mb-4">{selected.course.title}</p>
+                  <p className="text-xs font-bold text-[#1e1b4b] mb-4">{selected.course?.title ?? '—'}</p>
                   <div className="flex justify-between w-full px-8 text-[8px] text-slate-400 font-bold mt-auto">
                     <p>Date: {new Date(selected.issueDate).toLocaleDateString()}</p>
                     <p>ID: {selected.certificateId}</p>

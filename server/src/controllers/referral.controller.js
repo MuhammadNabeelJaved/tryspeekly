@@ -279,6 +279,18 @@ export const getMyWallet = asyncHandler(async (req, res) => {
   }
 })
 
+// ─── Student: Get my payout history ──────────────────────────────────────────
+export const getMyPayoutHistory = asyncHandler(async (req, res) => {
+  try {
+    const requests = await PayoutRequest.find({ student: req.user.id })
+      .sort({ createdAt: -1 })
+      .lean()
+    res.json({ success: true, data: requests })
+  } catch (error) {
+    res.status(400).json({ success: false, error: { message: error.message } })
+  }
+})
+
 // ─── Student: Request payout ──────────────────────────────────────────────────
 export const createPayoutRequest = asyncHandler(async (req, res) => {
   try {

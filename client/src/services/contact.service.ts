@@ -63,4 +63,11 @@ export const contactService = {
     const response = await axiosClient.delete<ApiResponse<null>>(`/contact/${id}`);
     return { message: response.data.message || 'Deleted' };
   },
+
+  async bulkDelete(ids: string[]): Promise<{ success: boolean; message: string; data: { deleted: number } }> {
+    const response = await axiosClient.delete<{ success: boolean; message: string; data: { deleted: number } }>(
+      '/contact/bulk', { data: { ids } }
+    );
+    return response.data;
+  },
 };

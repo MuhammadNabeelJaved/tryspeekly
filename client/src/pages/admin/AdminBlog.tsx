@@ -426,7 +426,7 @@ export default function AdminBlog() {
                   <div className="flex items-start justify-between gap-3 mb-3">
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2 mb-1">
-                        <p className="text-sm font-black text-slate-900 dark:text-white truncate">{comment.author.name}</p>
+                        <p className="text-sm font-black text-slate-900 dark:text-white truncate">{comment.author?.name ?? 'Deleted User'}</p>
                         <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider ${COMMENT_STATUS_COLORS[comment.status]}`}>
                           {comment.status}
                         </span>
@@ -551,15 +551,15 @@ export default function AdminBlog() {
                   <div className="mt-auto pt-4 border-t border-slate-50 dark:border-neutral-800/50 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <div className="w-6 h-6 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center text-[10px] font-black text-violet-600 dark:text-violet-400 overflow-hidden flex-shrink-0">
-                        {blog.author.profileImage
+                        {blog.author?.profileImage
                           ? <img src={blog.author.profileImage} alt="" className="w-full h-full object-cover" />
-                          : (blog.author.role === 'admin' ? 'A' : blog.author.name.charAt(0))}
+                          : (blog.author?.role === 'admin' ? 'A' : (blog.author?.name?.charAt(0) ?? '?'))}
                       </div>
                       <div>
                         <span className="text-[10px] font-bold text-slate-600 dark:text-neutral-400 block">
-                          {blog.author.role === 'admin' ? 'Admin' : blog.author.name}
+                          {blog.author?.role === 'admin' ? 'Admin' : (blog.author?.name ?? 'Deleted User')}
                         </span>
-                        {blog.author.role === 'team_member' && blog.author.jobTitle && (
+                        {blog.author?.role === 'team_member' && blog.author?.jobTitle && (
                           <span className="text-[9px] font-semibold text-violet-500 dark:text-violet-400">
                             {blog.author.jobTitle}
                           </span>

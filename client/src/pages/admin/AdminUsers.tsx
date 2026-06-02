@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   MagnifyingGlass, X, UserCircle, CheckCircle, Warning,
   ArrowsClockwise, Student, ChalkboardTeacher, UserGear, Crown,
-  FunnelSimple, ProhibitInset, Trash, LockOpen, WarningOctagon,
+  FunnelSimple, ProhibitInset, Trash, LockOpen, WarningOctagon, MonitorPlay,
 } from '@phosphor-icons/react'
 import toast from 'react-hot-toast'
 import { axiosClient } from '@/lib/axiosClient'
@@ -22,6 +22,7 @@ interface PlatformUser {
   role: Role
   isVerified: boolean
   isBlocked: boolean
+  showOnCoursesPage?: boolean
   profileImage?: string
   jobTitle?: string
   createdAt: string
@@ -100,13 +101,15 @@ function ConfirmModal({ user, variant, onClose, onConfirm }: ConfirmModalProps) 
   return (
     <motion.div
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 backdrop-blur-sm"
       onClick={e => e.target === e.currentTarget && onClose()}
     >
       <motion.div
-        initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
-        className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200 dark:border-neutral-800 shadow-2xl w-full max-w-sm p-6"
+        initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+        className="bg-white dark:bg-neutral-900 rounded-t-[28px] border-t border-slate-200 dark:border-neutral-800 shadow-2xl w-full max-w-lg px-6 pt-5 pb-8"
       >
+        <div className="w-10 h-1 rounded-full bg-slate-200 dark:bg-neutral-700 mx-auto mb-5" />
         <div className="flex items-start gap-4 mb-5">
           <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
             variant === 'delete' ? 'bg-red-100 dark:bg-red-950/40' :
@@ -123,9 +126,6 @@ function ConfirmModal({ user, variant, onClose, onConfirm }: ConfirmModalProps) 
             <h2 className="text-base font-black text-slate-900 dark:text-white">{meta.title}</h2>
             <p className="text-xs text-slate-500 dark:text-neutral-400 mt-1 leading-relaxed">{meta.body}</p>
           </div>
-          <button onClick={onClose} className="w-6 h-6 rounded-lg bg-slate-100 dark:bg-neutral-800 flex items-center justify-center text-slate-400 hover:text-slate-600 flex-shrink-0">
-            <X size={12} />
-          </button>
         </div>
 
         <div className="flex gap-2">
@@ -263,13 +263,15 @@ function BulkDeleteConfirmModal({ count, onClose, onConfirm }: {
   return (
     <motion.div
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 backdrop-blur-sm"
       onClick={e => e.target === e.currentTarget && onClose()}
     >
       <motion.div
-        initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
-        className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200 dark:border-neutral-800 shadow-2xl w-full max-w-sm p-6"
+        initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+        className="bg-white dark:bg-neutral-900 rounded-t-[28px] border-t border-slate-200 dark:border-neutral-800 shadow-2xl w-full max-w-lg px-6 pt-5 pb-8"
       >
+        <div className="w-10 h-1 rounded-full bg-slate-200 dark:bg-neutral-700 mx-auto mb-5" />
         <div className="flex items-start gap-4 mb-5">
           <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-950/40 flex items-center justify-center flex-shrink-0">
             <Trash size={20} weight="fill" className="text-red-600 dark:text-red-400" />
@@ -283,9 +285,6 @@ function BulkDeleteConfirmModal({ count, onClose, onConfirm }: {
               This action cannot be undone.
             </p>
           </div>
-          <button onClick={onClose} className="w-6 h-6 rounded-lg bg-slate-100 dark:bg-neutral-800 flex items-center justify-center text-slate-400 hover:text-slate-600 flex-shrink-0">
-            <X size={12} />
-          </button>
         </div>
         <div className="flex gap-2">
           <button onClick={onClose}
@@ -360,6 +359,17 @@ export default function AdminUsers() {
 
   const handleRoleChanged = (userId: string, newRole: Role) => {
     setUsers(prev => prev.map(u => u._id === userId ? { ...u, role: newRole } : u))
+  }
+
+  const handleCoursesPageToggle = async (u: PlatformUser) => {
+    try {
+      const res = await axiosClient.patch(`/users/${u._id}/show-on-courses`)
+      const updated: PlatformUser = res.data.data
+      setUsers(prev => prev.map(x => x._id === u._id ? { ...x, showOnCoursesPage: updated.showOnCoursesPage } : x))
+      toast.success(updated.showOnCoursesPage ? 'Instructor shown on Courses page' : 'Instructor hidden from Courses page')
+    } catch {
+      toast.error('Failed to update instructor visibility')
+    }
   }
 
   const handleBlockToggle = async (u: PlatformUser) => {
@@ -445,26 +455,29 @@ export default function AdminUsers() {
         ))}
       </div>
 
-      {/* Bulk action toolbar */}
-      {selectedIds.size > 0 && (
-        <div className="flex items-center gap-3 px-4 py-2.5 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800/30 rounded-2xl">
-          <span className="text-xs font-bold text-red-700 dark:text-red-400">
-            {selectedIds.size} selected
-          </span>
-          <button
-            onClick={() => setBulkDeleteOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition-colors"
+      {/* Floating bulk action bar */}
+      <AnimatePresence>
+        {selectedIds.size > 0 && (
+          <motion.div
+            initial={{ y: 80, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 80, opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 px-5 py-3 bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-neutral-700 min-w-max"
           >
-            <Trash size={12} weight="fill" /> Delete selected
-          </button>
-          <button
-            onClick={() => setSelectedIds(new Set())}
-            className="text-xs text-red-600 dark:text-red-400 hover:underline font-semibold ml-auto"
-          >
-            Clear
-          </button>
-        </div>
-      )}
+            <span className="text-sm font-bold text-slate-700 dark:text-white">{selectedIds.size} selected</span>
+            <button onClick={() => setSelectedIds(new Set())} className="text-xs text-slate-400 dark:text-neutral-500 hover:text-slate-600 dark:hover:text-white transition-colors font-medium">Clear</button>
+            <div className="w-px h-5 bg-slate-200 dark:bg-neutral-700" />
+            <button
+              onClick={() => setBulkDeleteOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl text-sm font-bold transition-colors"
+            >
+              <Trash size={14} weight="bold" />
+              Delete {selectedIds.size}
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Table */}
       <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200 dark:border-neutral-800 overflow-hidden">
@@ -571,6 +584,21 @@ export default function AdminUsers() {
                         >
                           Role
                         </button>
+
+                        {/* Courses page visibility (teachers only) */}
+                        {u.role === 'teacher' && (
+                          <button
+                            onClick={() => handleCoursesPageToggle(u)}
+                            title={u.showOnCoursesPage ? 'Hide from Courses page' : 'Show on Courses page'}
+                            className={`w-7 h-7 rounded-xl flex items-center justify-center transition-colors ${
+                              u.showOnCoursesPage
+                                ? 'bg-violet-100 dark:bg-violet-950/40 text-violet-600 dark:text-violet-400 hover:bg-violet-200 dark:hover:bg-violet-950/60'
+                                : 'bg-slate-100 dark:bg-neutral-800 text-slate-400 dark:text-neutral-500 hover:bg-slate-200 dark:hover:bg-neutral-700'
+                            }`}
+                          >
+                            <MonitorPlay size={13} weight="fill" />
+                          </button>
+                        )}
 
                         {/* Block / Unblock */}
                         <button

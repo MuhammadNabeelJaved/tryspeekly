@@ -278,7 +278,7 @@ export default function CourseDetailsPage() {
     currentReviewPage * REVIEWS_PER_PAGE
   )
 
-  const sortedCourseReviews = [...courseReviews].sort((a, b) => {
+  const sortedCourseReviews = courseReviews.filter(r => r.author != null).sort((a, b) => {
     if (reviewSort === 'oldest') return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
     if (reviewSort === 'highest') return b.rating - a.rating
     if (reviewSort === 'lowest') return a.rating - b.rating

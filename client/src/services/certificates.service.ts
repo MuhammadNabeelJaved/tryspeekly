@@ -36,4 +36,16 @@ export const certificatesService = {
     const response = await axiosClient.patch<ApiResponse<Certificate>>(`/certificates/${id}/revoke`);
     return response.data;
   },
+
+  async deleteCertificate(id: string): Promise<{ success: boolean; message: string }> {
+    const response = await axiosClient.delete<{ success: boolean; message: string }>(`/certificates/${id}`);
+    return response.data;
+  },
+
+  async bulkDelete(ids: string[]): Promise<{ success: boolean; message: string; data: { deleted: number } }> {
+    const response = await axiosClient.delete<{ success: boolean; message: string; data: { deleted: number } }>(
+      '/certificates/bulk', { data: { ids } }
+    );
+    return response.data;
+  },
 };

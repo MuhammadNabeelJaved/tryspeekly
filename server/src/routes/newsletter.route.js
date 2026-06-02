@@ -7,6 +7,7 @@ import {
   deleteSubscriber,
   adminUnsubscribe,
   unsubscribeByToken,
+  bulkDeleteSubscribers,
 } from '../controllers/newsletter-subscriber.controller.js'
 import {
   getCampaigns,
@@ -15,6 +16,7 @@ import {
   updateCampaign,
   deleteCampaign,
   sendCampaign,
+  bulkDeleteCampaigns,
 } from '../controllers/newsletter-campaign.controller.js'
 
 const router = Router()
@@ -33,10 +35,12 @@ router.get('/unsubscribe', unsubscribeByToken)
 router.use(authenticate, authorizeTeamPage('newsletter'))
 
 router.route('/subscribers').get(getSubscribers)
+router.route('/subscribers/bulk').delete(bulkDeleteSubscribers)
 router.route('/subscribers/:id').delete(deleteSubscriber)
 router.patch('/subscribers/:id/unsubscribe', adminUnsubscribe)
 
 router.route('/campaigns').get(getCampaigns).post(createCampaign)
+router.route('/campaigns/bulk').delete(bulkDeleteCampaigns)
 router.route('/campaigns/:id').get(getCampaign).put(updateCampaign).delete(deleteCampaign)
 router.post('/campaigns/:id/send', sendCampaign)
 

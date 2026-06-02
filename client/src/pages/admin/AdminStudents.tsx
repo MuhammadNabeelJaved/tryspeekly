@@ -709,13 +709,14 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
       {/* DELETE CONFIRM */}
       <AnimatePresence>
         {deleteId && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} className="bg-white dark:bg-neutral-900 rounded-2xl p-6 w-full max-w-sm border border-slate-100 dark:border-neutral-800 shadow-2xl text-center">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center" onClick={e => e.target === e.currentTarget && setDeleteId(null)}>
+            <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', stiffness: 300, damping: 30 }} className="bg-white dark:bg-neutral-900 rounded-t-[28px] border-t border-slate-100 dark:border-neutral-800 shadow-2xl w-full max-w-lg px-6 pt-5 pb-8">
+              <div className="w-10 h-1 rounded-full bg-slate-200 dark:bg-neutral-700 mx-auto mb-5" />
               <div className="w-12 h-12 rounded-2xl bg-red-100 dark:bg-red-950/40 flex items-center justify-center mx-auto mb-4">
                 <Trash size={22} className="text-red-500" />
               </div>
-              <h3 className="font-black text-slate-900 dark:text-white mb-1">Delete Student?</h3>
-              <p className="text-sm text-slate-400 dark:text-neutral-500 mb-5">This action cannot be undone.</p>
+              <h3 className="font-black text-slate-900 dark:text-white mb-1 text-center">Delete Student?</h3>
+              <p className="text-sm text-slate-400 dark:text-neutral-500 mb-5 text-center">This action cannot be undone.</p>
               <div className="flex gap-3">
                 <button onClick={() => setDeleteId(null)} className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-neutral-700 text-sm font-semibold text-slate-600 dark:text-neutral-400 hover:bg-slate-50 dark:hover:bg-neutral-800 transition-colors">Cancel</button>
                 <button onClick={() => handleDelete(deleteId)} className="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-bold transition-colors">Delete</button>

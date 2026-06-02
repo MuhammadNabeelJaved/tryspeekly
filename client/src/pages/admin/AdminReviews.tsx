@@ -477,7 +477,7 @@ export default function AdminReviews() {
   const q = search.toLowerCase()
   const displayed = q
     ? reviews.filter(r =>
-        r.author.name.toLowerCase().includes(q) ||
+        (r.author?.name ?? '').toLowerCase().includes(q) ||
         r.content.toLowerCase().includes(q) ||
         (r.course?.title ?? '').toLowerCase().includes(q)
       )
@@ -630,21 +630,21 @@ export default function AdminReviews() {
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2.5">
                           <div className={AUTHOR_AVATAR_CLS}>
-                            {review.author.profileImage ? (
+                            {review.author?.profileImage ? (
                               <img
                                 src={review.author.profileImage}
                                 alt={review.author.name}
                                 className="w-full h-full object-cover rounded-lg"
                               />
                             ) : (
-                              authorInitials(review.author.name)
+                              authorInitials(review.author?.name ?? 'Deleted User')
                             )}
                           </div>
                           <div>
                             <p className="font-semibold text-slate-900 dark:text-white text-xs">
-                              {review.author.name}
+                              {review.author?.name ?? 'Deleted User'}
                             </p>
-                            {review.author.email && (
+                            {review.author?.email && (
                               <p
                                 className={
                                   'text-[10px] text-slate-400 dark:text-neutral-600 ' +
@@ -660,7 +660,7 @@ export default function AdminReviews() {
 
                       {/* Role */}
                       <td className="px-4 py-3">
-                        <RoleBadge role={review.author.role} />
+                        <RoleBadge role={review.author?.role ?? 'student'} />
                       </td>
 
                       {/* Type */}

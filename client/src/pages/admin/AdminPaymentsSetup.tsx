@@ -40,7 +40,7 @@ const EMPTY_METHOD: PaymentMethodAdmin = {
   fallbackBg: '#6366f1', accentColor: '#6366f1', recommended: false,
   processingTime: 'Instant', buttonText: '', accountTitle: 'EnglishPro Academy',
   accountIban: '', bankName: '', reference: 'Your Full Name',
-  whatsappLink: 'https://wa.me/92300000000', receiptEmail: 'payments@englishpro.com',
+  whatsappLink: 'https://wa.me/923086925545', receiptEmail: 'payments@englishpro.com',
 }
 
 const EMPTY_POLICY: PaymentPolicyAdmin = {

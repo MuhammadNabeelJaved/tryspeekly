@@ -310,7 +310,7 @@ export default function TeamReviews() {
       ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {reviews.map(r => <ReviewCard key={r._id} review={r} />)}
+            {reviews.filter(r => r.author != null).map(r => <ReviewCard key={r._id} review={r} />)}
           </div>
 
           {totalPages > 1 && (

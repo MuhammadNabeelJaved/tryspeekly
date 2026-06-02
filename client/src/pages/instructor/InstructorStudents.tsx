@@ -43,7 +43,7 @@ export default function InstructorStudents() {
 
           if (map.has(sid)) {
             const existing = map.get(sid)!
-            existing.course = `${existing.course}, ${enrollment.course.title}`
+            existing.course = `${existing.course}, ${enrollment.course?.title ?? '—'}`
             existing.attendedClasses += attended
             existing.totalClasses += total
             existing.attendance = existing.totalClasses > 0
@@ -53,8 +53,8 @@ export default function InstructorStudents() {
           } else {
             map.set(sid, {
               id: sid,
-              name: enrollment.student.name,
-              course: enrollment.course.title,
+              name: enrollment.student?.name ?? 'Deleted User',
+              course: enrollment.course?.title ?? '—',
               enrolledAt: enrollment.enrolledAt,
               status: pct >= 80 ? 'excellent' : pct >= 50 ? 'good' : 'needs_attention',
               attendance: pct,

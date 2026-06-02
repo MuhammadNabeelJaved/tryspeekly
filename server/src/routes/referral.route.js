@@ -7,6 +7,7 @@ import {
   getMyRewards,
   getMyWallet,
   createPayoutRequest,
+  getMyPayoutHistory,
   getPublicSettings,
   getAllRewards,
   getPayoutRequests,
@@ -27,6 +28,7 @@ router.get('/my-code-stats', authenticate, authorize('student'), getMyCodeStats)
 router.get('/my-rewards', authenticate, authorize('student'), getMyRewards)
 router.get('/my-wallet', authenticate, authorize('student'), getMyWallet)
 router.post('/payout-request', authenticate, authorize('student'), createPayoutRequest)
+router.get('/my-payout-history', authenticate, authorize('student'), getMyPayoutHistory)
 
 // Admin
 router.get('/', authenticate, authorizeTeamPage('referrals'), getAllRewards)

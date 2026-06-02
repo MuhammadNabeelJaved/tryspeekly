@@ -91,6 +91,35 @@ export default function AdminNewsletter() {
     })
   }
 
+  // ─── Bulk selection ───────────────────────────────────────────────────────────
+  const [selectedSubIds, setSelectedSubIds] = useState<Set<string>>(new Set())
+  const [bulkSubConfirm, setBulkSubConfirm] = useState(false)
+  const [selectedCampIds, setSelectedCampIds] = useState<Set<string>>(new Set())
+  const [bulkCampConfirm, setBulkCampConfirm] = useState(false)
+
+  const toggleSub = (id: string) =>
+    setSelectedSubIds(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n })
+  const toggleCamp = (id: string) =>
+    setSelectedCampIds(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n })
+
+  const handleBulkDeleteSubs = async () => {
+    try {
+      const res = await newsletterService.bulkDeleteSubscribers(Array.from(selectedSubIds))
+      setSubscribers(prev => prev.filter(s => !selectedSubIds.has(s._id)))
+      setSelectedSubIds(new Set())
+      toast.success(res.message)
+    } catch { toast.error('Failed to delete subscribers') } finally { setBulkSubConfirm(false) }
+  }
+
+  const handleBulkDeleteCamps = async () => {
+    try {
+      const res = await newsletterService.bulkDeleteCampaigns(Array.from(selectedCampIds))
+      setCampaigns(prev => prev.filter(c => !selectedCampIds.has(c._id)))
+      setSelectedCampIds(new Set())
+      toast.success(res.message)
+    } catch { toast.error('Failed to delete campaigns') } finally { setBulkCampConfirm(false) }
+  }
+
   // ─── Campaigns ────────────────────────────────────────────────────────────────
   const [confirmModal, setConfirmModal] = useState<{ title: string; message: string; confirmLabel: string; variant: 'danger' | 'warning' | 'send' | 'unsubscribe'; onConfirm: () => void } | null>(null)
 
@@ -292,6 +321,11 @@ export default function AdminNewsletter() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-slate-200 dark:border-white/10">
+                  <th className="px-5 py-3 w-10">
+                    <input type="checkbox" checked={subscribers.length > 0 && subscribers.every(s => selectedSubIds.has(s._id))}
+                      onChange={e => setSelectedSubIds(e.target.checked ? new Set(subscribers.map(s => s._id)) : new Set())}
+                      className="w-4 h-4 rounded accent-violet-500" />
+                  </th>
                   {['Email', 'Status', 'Subscribed', ''].map((h) => (
                     <th key={h} className="text-left px-5 py-3 text-xs font-semibold text-slate-500 dark:text-neutral-500 uppercase tracking-wide">{h}</th>
                   ))}
@@ -303,7 +337,10 @@ export default function AdminNewsletter() {
                 ) : subscribers.length === 0 ? (
                   <tr><td colSpan={4} className="text-center py-12 text-slate-400 dark:text-neutral-600">No subscribers found</td></tr>
                 ) : subscribers.map((sub) => (
-                  <tr key={sub._id} className="border-b border-slate-100 dark:border-white/5 last:border-0 hover:bg-slate-50/50 dark:hover:bg-white/[0.02] transition-colors">
+                  <tr key={sub._id} className={`border-b border-slate-100 dark:border-white/5 last:border-0 transition-colors ${selectedSubIds.has(sub._id) ? 'bg-red-50/30 dark:bg-red-950/10' : 'hover:bg-slate-50/50 dark:hover:bg-white/[0.02]'}`}>
+                    <td className="px-5 py-3.5">
+                      <input type="checkbox" checked={selectedSubIds.has(sub._id)} onChange={() => toggleSub(sub._id)} className="w-4 h-4 rounded accent-violet-500" />
+                    </td>
                     <td className="px-5 py-3.5 font-medium text-slate-900 dark:text-neutral-200">{sub.email}</td>
                     <td className="px-5 py-3.5">
                       <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold capitalize ${
@@ -390,6 +427,11 @@ export default function AdminNewsletter() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-slate-200 dark:border-white/10">
+                    <th className="px-5 py-3 w-10">
+                      <input type="checkbox" checked={campaigns.length > 0 && campaigns.every(c => selectedCampIds.has(c._id))}
+                        onChange={e => setSelectedCampIds(e.target.checked ? new Set(campaigns.map(c => c._id)) : new Set())}
+                        className="w-4 h-4 rounded accent-violet-500" />
+                    </th>
                     <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 dark:text-neutral-500 uppercase tracking-wide">Subject</th>
                     <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 dark:text-neutral-500 uppercase tracking-wide">Status</th>
                     <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 dark:text-neutral-500 uppercase tracking-wide hidden md:table-cell">Date</th>
@@ -399,7 +441,10 @@ export default function AdminNewsletter() {
                 </thead>
                 <tbody>
                   {campaigns.map((c) => (
-                    <tr key={c._id} className="border-b border-slate-100 dark:border-white/5 last:border-0 hover:bg-slate-50/50 dark:hover:bg-white/[0.02] transition-colors">
+                    <tr key={c._id} className={`border-b border-slate-100 dark:border-white/5 last:border-0 transition-colors ${selectedCampIds.has(c._id) ? 'bg-red-50/30 dark:bg-red-950/10' : 'hover:bg-slate-50/50 dark:hover:bg-white/[0.02]'}`}>
+                      <td className="px-5 py-3.5">
+                        <input type="checkbox" checked={selectedCampIds.has(c._id)} onChange={() => toggleCamp(c._id)} className="w-4 h-4 rounded accent-violet-500" />
+                      </td>
                       <td className="px-5 py-3.5 font-medium text-slate-900 dark:text-neutral-200">
                         <span className="block max-w-xs truncate">{c.subject}</span>
                       </td>
@@ -591,6 +636,40 @@ export default function AdminNewsletter() {
         onConfirm={() => confirmModal?.onConfirm()}
         onCancel={() => setConfirmModal(null)}
       />
+
+      {/* Floating bulk bar — subscribers */}
+      {activeTab === 'subscribers' && (
+        <>
+          {selectedSubIds.size > 0 && (
+            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 px-5 py-3 bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-neutral-700 min-w-max animate-[slideUp_0.3s_ease]">
+              <span className="text-sm font-bold text-slate-700 dark:text-white">{selectedSubIds.size} selected</span>
+              <button onClick={() => setSelectedSubIds(new Set())} className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-white font-medium">Clear</button>
+              <div className="w-px h-5 bg-slate-200 dark:bg-neutral-700" />
+              <button onClick={() => setBulkSubConfirm(true)} className="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl text-sm font-bold transition-colors">
+                <Trash size={14} weight="bold" /> Delete {selectedSubIds.size}
+              </button>
+            </div>
+          )}
+          <ConfirmModal open={bulkSubConfirm} title={`Delete ${selectedSubIds.size} Subscriber${selectedSubIds.size !== 1 ? 's' : ''}?`} message="This will permanently remove the selected subscribers. This cannot be undone." confirmLabel={`Delete ${selectedSubIds.size}`} variant="danger" onConfirm={handleBulkDeleteSubs} onCancel={() => setBulkSubConfirm(false)} />
+        </>
+      )}
+
+      {/* Floating bulk bar — campaigns */}
+      {activeTab === 'campaigns' && (
+        <>
+          {selectedCampIds.size > 0 && (
+            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 px-5 py-3 bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-neutral-700 min-w-max animate-[slideUp_0.3s_ease]">
+              <span className="text-sm font-bold text-slate-700 dark:text-white">{selectedCampIds.size} selected</span>
+              <button onClick={() => setSelectedCampIds(new Set())} className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-white font-medium">Clear</button>
+              <div className="w-px h-5 bg-slate-200 dark:bg-neutral-700" />
+              <button onClick={() => setBulkCampConfirm(true)} className="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl text-sm font-bold transition-colors">
+                <Trash size={14} weight="bold" /> Delete {selectedCampIds.size}
+              </button>
+            </div>
+          )}
+          <ConfirmModal open={bulkCampConfirm} title={`Delete ${selectedCampIds.size} Campaign${selectedCampIds.size !== 1 ? 's' : ''}?`} message="This will permanently remove the selected campaigns. This cannot be undone." confirmLabel={`Delete ${selectedCampIds.size}`} variant="danger" onConfirm={handleBulkDeleteCamps} onCancel={() => setBulkCampConfirm(false)} />
+        </>
+      )}
     </div>
   )
 }

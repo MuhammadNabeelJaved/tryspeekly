@@ -6,6 +6,7 @@ import { useAuth } from '../../context/AuthContext'
 import { useSocket } from '@/context/SocketContext'
 import { enrollmentsService } from '../../services/enrollments.service'
 import { paymentsService } from '../../services/payments.service'
+import { certificatesService } from '../../services/certificates.service'
 import { liveClassService } from '@/services/live-class.service'
 import { assignmentsService } from '@/services/assignments.service'
 import { announcementsService } from '@/services/announcements.service'
@@ -33,6 +34,7 @@ export default function StudentOverview({ onNavigate }: { onNavigate: (view: Stu
   const [assignments, setAssignments] = useState<Assignment[]>([])
   const [announcements, setAnnouncements] = useState<Announcement[]>([])
   const [payments, setPayments] = useState<Payment[]>([])
+  const [certificateCount, setCertificateCount] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
   const [liveClassToast, setLiveClassToast] = useState<UpcomingClass | null>(null)
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -43,12 +45,13 @@ export default function StudentOverview({ onNavigate }: { onNavigate: (view: Stu
   useEffect(() => {
     const fetchAll = async () => {
       setIsLoading(true)
-      const [enrollRes, liveRes, assignRes, annRes, payRes] = await Promise.allSettled([
+      const [enrollRes, liveRes, assignRes, annRes, payRes, certRes] = await Promise.allSettled([
         enrollmentsService.getMyEnrollments(),
         liveClassService.getStudentUpcomingClasses(),
         assignmentsService.getMyAssignments(),
         announcementsService.getMyAnnouncements(),
         paymentsService.getMyPayments(),
+        certificatesService.getMyCertificates(),
       ])
 
       if (enrollRes.status === 'fulfilled' && enrollRes.value.success) setEnrollments(enrollRes.value.data)
@@ -57,6 +60,7 @@ export default function StudentOverview({ onNavigate }: { onNavigate: (view: Stu
       if (assignRes.status === 'fulfilled' && assignRes.value.success) setAssignments(assignRes.value.data)
       if (annRes.status === 'fulfilled' && annRes.value.success) setAnnouncements(annRes.value.data)
       if (payRes.status === 'fulfilled' && payRes.value.success) setPayments(payRes.value.data)
+      if (certRes.status === 'fulfilled' && certRes.value.success) setCertificateCount(certRes.value.data.length)
       setIsLoading(false)
     }
     fetchAll()
@@ -296,7 +300,7 @@ export default function StudentOverview({ onNavigate }: { onNavigate: (view: Stu
           </div>
           <div>
             <p className="text-2xl font-black text-slate-900 dark:text-white leading-none">
-              {payments.filter(p => p.status === 'approved').length}
+              {certificateCount}
             </p>
             <p className="text-xs font-bold text-slate-500 dark:text-neutral-400 uppercase mt-1">Certificates</p>
           </div>

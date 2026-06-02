@@ -10,14 +10,17 @@ import {
 import { blogService } from '../services/blog.service'
 import type { Blog } from '../types/api'
 import { extractApiError } from '../utils/apiError'
+import { newsletterService } from '../services/newsletter.service'
 
 const CATEGORIES = ['All', 'Study Tips', 'Grammar', 'IELTS Prep', 'Vocabulary', 'Career']
 
-function authorLabel(author: { name: string; role?: string }) {
+function authorLabel(author: { name: string; role?: string } | null) {
+  if (!author) return 'Unknown'
   return author.role === 'admin' ? 'Admin' : author.name
 }
 
-function authorSubtitle(author: { role?: string; jobTitle?: string }) {
+function authorSubtitle(author: { role?: string; jobTitle?: string } | null) {
+  if (!author) return null
   if (author.role === 'admin') return 'Administrator'
   if (author.role === 'team_member') return author.jobTitle || 'Team Member'
   return null
@@ -29,6 +32,7 @@ export default function BlogPage() {
   const [blogs, setBlogs] = useState<Blog[]>([])
   const [loading, setLoading] = useState(true)
   
+  const [subscribing, setSubscribing] = useState(false)
   const { register, handleSubmit, reset, formState: { errors } } = useForm({
     defaultValues: { email: '' }
   })
@@ -54,9 +58,18 @@ export default function BlogPage() {
     return () => clearTimeout(timer)
   }, [activeCategory, searchQuery])
 
-  const onSubmit = (data: { email: string }) => {
-    toast.success(`Subscribed! We'll send updates to ${data.email}`)
-    reset()
+  const onSubmit = async (data: { email: string }) => {
+    setSubscribing(true)
+    try {
+      const res = await newsletterService.subscribe(data.email)
+      toast.success(res.message || 'Subscribed successfully!')
+      reset()
+    } catch (err: unknown) {
+      const msg = extractApiError(err, 'Subscription failed. Please try again.')
+      toast.error(msg)
+    } finally {
+      setSubscribing(false)
+    }
   }
 
   // Scroll to top on mount
@@ -167,7 +180,7 @@ export default function BlogPage() {
                 <div className="flex items-center justify-between pt-6 border-t border-slate-100 dark:border-neutral-800">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center text-sm font-black text-violet-600 dark:text-violet-400 overflow-hidden flex-shrink-0">
-                      {featuredPost.author.profileImage
+                      {featuredPost.author?.profileImage
                         ? <img src={featuredPost.author.profileImage} alt="" className="w-full h-full object-cover" />
                         : authorLabel(featuredPost.author).charAt(0)}
                     </div>
@@ -291,7 +304,7 @@ export default function BlogPage() {
 
                     <div className="flex items-center gap-3 pt-5 border-t border-slate-50 dark:border-neutral-800/50 mt-auto">
                       <div className="w-8 h-8 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center text-xs font-black text-violet-600 dark:text-violet-400 overflow-hidden flex-shrink-0">
-                        {post.author.profileImage
+                        {post.author?.profileImage
                           ? <img src={post.author.profileImage} alt="" className="w-full h-full object-cover" />
                           : authorLabel(post.author).charAt(0)}
                       </div>
@@ -383,13 +396,14 @@ export default function BlogPage() {
                   />
                   {errors.email && <p className="text-xs text-red-500 mt-1 text-left">{errors.email.message as string}</p>}
                 </div>
-                <motion.button 
+                <motion.button
                   type="submit"
-                  whileHover={{ scale: 1.03, boxShadow: '0 16px 40px rgba(124,58,237,0.45)' }}
-                  whileTap={{ scale: 0.97 }}
-                  className="inline-flex items-center justify-center bg-gradient-to-r from-violet-600 to-purple-600 text-white font-bold px-8 py-4 rounded-2xl shadow-[0_8px_28px_rgba(124,58,237,0.35)] transition-all whitespace-nowrap h-[58px]"
+                  disabled={subscribing}
+                  whileHover={subscribing ? {} : { scale: 1.03, boxShadow: '0 16px 40px rgba(124,58,237,0.45)' }}
+                  whileTap={subscribing ? {} : { scale: 0.97 }}
+                  className="inline-flex items-center justify-center bg-gradient-to-r from-violet-600 to-purple-600 text-white font-bold px-8 py-4 rounded-2xl shadow-[0_8px_28px_rgba(124,58,237,0.35)] transition-all whitespace-nowrap h-[58px] disabled:opacity-70 disabled:cursor-not-allowed"
                 >
-                  Subscribe
+                  {subscribing ? 'Subscribing…' : 'Subscribe'}
                 </motion.button>
               </form>
               <p className="text-xs text-slate-400 dark:text-neutral-500 mt-4">We care about your data in our <Link to="/privacy" className="underline hover:text-violet-600">privacy policy</Link>.</p>

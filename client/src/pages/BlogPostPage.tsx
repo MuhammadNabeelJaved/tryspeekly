@@ -13,11 +13,13 @@ import { extractApiError } from '../utils/apiError'
 import Loader from '@/components/Loader'
 import { useAuth } from '../context/AuthContext'
 
-function authorLabel(author: { name: string; role?: string }) {
+function authorLabel(author: { name: string; role?: string } | null) {
+  if (!author) return 'Unknown'
   return author.role === 'admin' ? 'Admin' : author.name
 }
 
-function authorSubtitle(author: { role?: string; jobTitle?: string }) {
+function authorSubtitle(author: { role?: string; jobTitle?: string } | null) {
+  if (!author) return null
   if (author.role === 'admin') return 'Administrator'
   if (author.role === 'team_member') return author.jobTitle || 'Team Member'
   return 'Content Author'
@@ -127,7 +129,7 @@ export default function BlogPostPage() {
             <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-slate-500 dark:text-neutral-400 font-medium">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center text-sm font-black text-violet-600 dark:text-violet-400 border-2 border-white dark:border-neutral-800 shadow-sm overflow-hidden flex-shrink-0">
-                  {blog.author.profileImage
+                  {blog.author?.profileImage
                     ? <img src={blog.author.profileImage} alt="" className="w-full h-full object-cover" />
                     : authorLabel(blog.author).charAt(0)}
                 </div>
@@ -219,7 +221,7 @@ export default function BlogPostPage() {
             <div className="mt-12 bg-slate-50 dark:bg-neutral-900/50 rounded-3xl p-8 sm:p-10 border border-slate-100 dark:border-neutral-800">
               <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 text-center sm:text-left">
                 <div className="w-24 h-24 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center text-2xl font-black text-violet-600 dark:text-violet-400 shadow-lg border-4 border-white dark:border-neutral-800 overflow-hidden flex-shrink-0">
-                  {blog.author.profileImage
+                  {blog.author?.profileImage
                     ? <img src={blog.author.profileImage} alt={authorLabel(blog.author)} className="w-full h-full object-cover" />
                     : authorLabel(blog.author).charAt(0)}
                 </div>
@@ -231,7 +233,7 @@ export default function BlogPostPage() {
                     {authorSubtitle(blog.author)}
                   </p>
                   <p className="text-slate-500 dark:text-neutral-400 leading-relaxed mb-4">
-                    {blog.author.bio || 'Expert contributor at EnglishPro Academy. Passionate about helping students achieve their language goals through high-quality educational content.'}
+                    {blog.author?.bio || 'Expert contributor at EnglishPro Academy. Passionate about helping students achieve their language goals through high-quality educational content.'}
                   </p>
                 </div>
               </div>
@@ -304,13 +306,13 @@ export default function BlogPostPage() {
                   <div key={comment._id} className="rounded-3xl border border-slate-100 dark:border-neutral-800 bg-white dark:bg-neutral-950 p-5 sm:p-6">
                     <div className="flex items-start gap-4">
                       <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-neutral-900 flex items-center justify-center text-sm font-black text-slate-600 dark:text-neutral-300 overflow-hidden flex-shrink-0">
-                        {comment.author.profileImage
+                        {comment.author?.profileImage
                           ? <img src={comment.author.profileImage} alt="" className="w-full h-full object-cover" />
-                          : comment.author.name.charAt(0)}
+                          : (comment.author?.name?.charAt(0) ?? '?')}
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2 mb-2">
-                          <p className="text-sm font-black text-slate-900 dark:text-white">{comment.author.name}</p>
+                          <p className="text-sm font-black text-slate-900 dark:text-white">{comment.author?.name ?? 'Deleted User'}</p>
                           <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-neutral-600">
                             {new Date(comment.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                           </span>

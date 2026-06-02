@@ -23,4 +23,17 @@ export const financialAidService = {
     });
     return response.data;
   },
+
+  async deleteApplication(id: string): Promise<{ success: boolean; message: string }> {
+    const response = await axiosClient.delete<{ success: boolean; message: string }>(`/financial-aid/${id}`);
+    return response.data;
+  },
+
+  async bulkDelete(ids: string[]): Promise<{ success: boolean; message: string; data: { deleted: number } }> {
+    const response = await axiosClient.delete<{ success: boolean; message: string; data: { deleted: number } }>(
+      '/financial-aid/bulk',
+      { data: { ids } }
+    );
+    return response.data;
+  },
 };

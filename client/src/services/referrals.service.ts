@@ -46,6 +46,14 @@ export const referralsService = {
     return res.data
   },
 
+  async getMyPayoutHistory(): Promise<{ success: boolean; data: Array<{
+    _id: string; amount: number; status: 'pending' | 'approved' | 'rejected'
+    adminNote: string | null; processedAt: string | null; createdAt: string
+  }> }> {
+    const res = await axiosClient.get('/referrals/my-payout-history')
+    return res.data
+  },
+
   async getAllRewards(params?: { page?: number; limit?: number; status?: string }) {
     const res = await axiosClient.get('/referrals', { params })
     return res.data

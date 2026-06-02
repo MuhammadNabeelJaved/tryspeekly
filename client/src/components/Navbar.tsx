@@ -145,7 +145,7 @@ export default function Navbar({ offers = [] }: { offers?: Offer[] }) {
             
             {/* Contact Number */}
             <motion.a
-              href="tel:+80155564545"
+              href="tel:+923086925545"
               className="flex items-center gap-2 text-slate-600 dark:text-neutral-300 hover:text-violet-600 dark:hover:text-violet-300 transition-colors mr-2"
               whileHover={{ scale: 1.04 }}
               whileTap={{ scale: 0.97 }}
@@ -160,7 +160,7 @@ export default function Navbar({ offers = [] }: { offers?: Offer[] }) {
               >
                 <Phone size={15} weight="fill" className="text-violet-600 dark:text-violet-200" />
               </motion.div>
-              <span className="text-sm font-bold tracking-tight">+801 555 645 45</span>
+              <span className="text-sm font-bold tracking-tight">+92 308 692 5545</span>
             </motion.a>
 
             <div className="w-px h-6 bg-slate-200 dark:bg-neutral-800 hidden xl:block"></div>
@@ -345,9 +345,9 @@ export default function Navbar({ offers = [] }: { offers?: Offer[] }) {
                 <div className="h-px bg-slate-100 dark:bg-neutral-800 my-3 mx-4" />
                 
                 <div className="px-4 flex flex-col gap-3">
-                  <a href="tel:+80155564545" className="flex items-center justify-center gap-2 bg-slate-50 dark:bg-neutral-800 py-3 rounded-xl text-slate-700 dark:text-neutral-200 transition-colors">
+                  <a href="tel:+923086925545" className="flex items-center justify-center gap-2 bg-slate-50 dark:bg-neutral-800 py-3 rounded-xl text-slate-700 dark:text-neutral-200 transition-colors">
                     <Phone size={18} weight="fill" className="text-violet-600 dark:text-violet-400" />
-                    <span className="text-sm font-bold tracking-tight">+801 555 645 45</span>
+                    <span className="text-sm font-bold tracking-tight">+92 308 692 5545</span>
                   </a>
                   
                   {!isAuthenticated && (

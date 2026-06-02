@@ -61,4 +61,14 @@ export const usersService = {
     const response = await axiosClient.patch<ApiResponse<{ user: User }>>('/users/onboarding-done');
     return normalizeUser(response.data.data.user);
   },
+
+  async getCoursesInstructors(): Promise<User[]> {
+    const response = await axiosClient.get<ApiResponse<User[]>>('/users/courses-instructors');
+    return response.data.data.map(normalizeUser);
+  },
+
+  async toggleShowOnCoursesPage(id: string): Promise<User> {
+    const response = await axiosClient.patch<ApiResponse<User>>(`/users/${id}/show-on-courses`);
+    return normalizeUser(response.data.data);
+  },
 };

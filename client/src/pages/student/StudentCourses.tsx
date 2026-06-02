@@ -372,9 +372,9 @@ export default function StudentCourses() {
                   key={enrollment._id}
                   enrollment={enrollment}
                   courseReview={courseReview}
-                  onChat={() => setChatModal({ name: enrollment.teacher?.name ?? '—', courseTitle: enrollment.course.title, instructorId: enrollment.teacher._id, profileImage: enrollment.teacher.profileImage })}
+                  onChat={() => setChatModal({ name: enrollment.teacher?.name ?? '—', courseTitle: enrollment.course?.title ?? '—', instructorId: enrollment.teacher?._id ?? '', profileImage: enrollment.teacher?.profileImage })}
                   onSubmitPayment={() => openSubmitModal(enrollment)}
-                  onViewStatus={() => setStatusModal({ payment: enrollment.payment!, courseId: enrollment.course._id, teacherId: enrollment.teacher._id })}
+                  onViewStatus={() => setStatusModal({ payment: enrollment.payment!, courseId: enrollment.course?._id ?? '', teacherId: enrollment.teacher?._id ?? '' })}
                 />
               )
             })}
@@ -396,9 +396,9 @@ export default function StudentCourses() {
               <EnrollmentCard
                 key={enrollment._id}
                 enrollment={enrollment}
-                onChat={() => setChatModal({ name: enrollment.teacher?.name ?? '—', courseTitle: enrollment.course.title, instructorId: enrollment.teacher._id, profileImage: enrollment.teacher.profileImage })}
+                onChat={() => setChatModal({ name: enrollment.teacher?.name ?? '—', courseTitle: enrollment.course?.title ?? '—', instructorId: enrollment.teacher?._id ?? '', profileImage: enrollment.teacher?.profileImage })}
                 onSubmitPayment={() => openSubmitModal(enrollment)}
-                onViewStatus={() => setStatusModal({ payment: enrollment.payment!, courseId: enrollment.course._id, teacherId: enrollment.teacher._id })}
+                onViewStatus={() => setStatusModal({ payment: enrollment.payment!, courseId: enrollment.course?._id ?? '', teacherId: enrollment.teacher?._id ?? '' })}
               />
             ))}
           </div>

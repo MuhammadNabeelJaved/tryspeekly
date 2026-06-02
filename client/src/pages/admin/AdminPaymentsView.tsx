@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
-import { motion } from 'framer-motion'
-import { CreditCard, CheckCircle, WarningCircle, XCircle, MagnifyingGlass, FunnelSimple, Plus, Image, LockSimple, WhatsappLogo, Gift } from '@phosphor-icons/react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { CreditCard, CheckCircle, WarningCircle, XCircle, MagnifyingGlass, FunnelSimple, Plus, Image, LockSimple, WhatsappLogo, Gift, Trash, Warning } from '@phosphor-icons/react'
 import { paymentsService } from '@/services/payments.service'
 import type { Payment, UnpaidEnrollment, PaymentMethod } from '@/types/api'
 import AdminPaymentCreateModal from './AdminPaymentCreateModal'
@@ -45,6 +45,11 @@ export default function AdminPaymentsView() {
   const [directApproveLoading, setDirectApproveLoading] = useState(false)
   const [directApproveError, setDirectApproveError] = useState('')
   const [reprocessingReferral, setReprocessingReferral] = useState<string | null>(null)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; studentName: string } | null>(null)
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
+  const [deactivateEnrollment, setDeactivateEnrollment] = useState(false)
+  const [deleteLoading, setDeleteLoading] = useState(false)
 
   const fetchPayments = useCallback(() => {
     setLoading(true)
@@ -109,6 +114,43 @@ export default function AdminPaymentsView() {
     }
   }
 
+  const handleDelete = async () => {
+    if (!deleteTarget) return
+    setDeleteLoading(true)
+    try {
+      await paymentsService.deletePayment(deleteTarget.id, deactivateEnrollment)
+      setPayments(prev => prev.filter(p => p._id !== deleteTarget.id))
+      setSelectedIds(prev => { const n = new Set(prev); n.delete(deleteTarget.id); return n })
+      toast.success('Payment deleted')
+      setDeleteTarget(null)
+      setDeactivateEnrollment(false)
+    } catch {
+      toast.error('Failed to delete payment')
+    } finally {
+      setDeleteLoading(false)
+    }
+  }
+
+  const handleBulkDelete = async () => {
+    setDeleteLoading(true)
+    try {
+      const ids = Array.from(selectedIds)
+      const res = await paymentsService.bulkDeletePayments(ids, deactivateEnrollment)
+      setPayments(prev => prev.filter(p => !selectedIds.has(p._id)))
+      setSelectedIds(new Set())
+      toast.success(res.message || `${res.data.deleted} payments deleted`)
+      setBulkDeleteOpen(false)
+      setDeactivateEnrollment(false)
+    } catch {
+      toast.error('Failed to delete payments')
+    } finally {
+      setDeleteLoading(false)
+    }
+  }
+
+  const toggleSelect = (id: string) =>
+    setSelectedIds(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n })
+
   const allMethods = ['All', ...Array.from(new Set(payments.map(p => p.method))).sort()]
 
   const filtered = payments.filter(p => {
@@ -118,6 +160,9 @@ export default function AdminPaymentsView() {
     const mM = filterMethod === 'All' || p.method === filterMethod
     return mQ && mS && mM
   })
+
+  const allFilteredIds = filtered.map(p => p._id)
+  const allSelected = allFilteredIds.length > 0 && allFilteredIds.every(id => selectedIds.has(id))
 
   const totalPKR = payments.filter(p => p.status === 'approved' && p.currency === 'PKR').reduce((a, p) => a + p.amount, 0)
   const totalUSD = payments.filter(p => p.status === 'approved' && p.currency === 'USD').reduce((a, p) => a + p.amount, 0)
@@ -270,11 +315,11 @@ export default function AdminPaymentsView() {
                     </td></tr>
                   )}
                   {unpaidEnrollments.map(e => {
-                    const basePrice = e.course.currency === 'USD' ? (e.course.priceUSD ?? 0) : (e.course.price ?? 0)
+                    const basePrice = e.course?.currency === 'USD' ? (e.course.priceUSD ?? 0) : (e.course?.price ?? 0)
                     const totalDiscount = (e.discountApplied ?? 0) + (e.offerDiscountApplied ?? 0)
                     const price = Math.max(0, basePrice - totalDiscount)
-                    const priceSuffix = e.course.pricingType === 'monthly' ? '/mo' : e.course.pricingType === 'per_session' ? '/session' : ''
-                    const symbol = e.course.currency === 'USD' ? '$' : 'Rs.'
+                    const priceSuffix = e.course?.pricingType === 'monthly' ? '/mo' : e.course?.pricingType === 'per_session' ? '/session' : ''
+                    const symbol = e.course?.currency === 'USD' ? '$' : 'Rs.'
                     const priceLabel = price > 0 ? `${symbol}${price.toLocaleString()}${priceSuffix}` : 'Free'
                     const isApproving = directApprove?.enrollmentId === e._id
                     return (
@@ -290,8 +335,8 @@ export default function AdminPaymentsView() {
                             </div>
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-xs text-slate-600 dark:text-neutral-300 max-w-[160px] truncate">{e.course.title}</td>
-                        <td className="px-4 py-3 text-xs text-slate-500 dark:text-neutral-400 capitalize">{e.course.level ?? '—'}</td>
+                        <td className="px-4 py-3 text-xs text-slate-600 dark:text-neutral-300 max-w-[160px] truncate">{e.course?.title ?? '—'}</td>
+                        <td className="px-4 py-3 text-xs text-slate-500 dark:text-neutral-400 capitalize">{e.course?.level ?? '—'}</td>
                         <td className="px-4 py-3 whitespace-nowrap">
                           <p className="text-xs font-black text-slate-900 dark:text-white">{priceLabel}</p>
                           {totalDiscount > 0 && (
@@ -309,7 +354,7 @@ export default function AdminPaymentsView() {
                               setDirectApprove({
                                 enrollmentId: e._id,
                                 studentName: e.student?.name ?? '—',
-                                courseName: e.course.title,
+                                courseName: e.course?.title ?? '—',
                                 method: 'jazzcash',
                                 amount: price > 0 ? String(price) : '',
                                 transactionId: '',
@@ -351,6 +396,30 @@ export default function AdminPaymentsView() {
           </motion.div>
         ))}
       </div>
+
+      {/* Floating bulk action bar */}
+      <AnimatePresence>
+        {selectedIds.size > 0 && (
+          <motion.div
+            initial={{ y: 80, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 80, opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 px-5 py-3 bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-neutral-700 min-w-max"
+          >
+            <span className="text-sm font-bold text-slate-700 dark:text-white">{selectedIds.size} selected</span>
+            <button onClick={() => setSelectedIds(new Set())} className="text-xs text-slate-400 dark:text-neutral-500 hover:text-slate-600 dark:hover:text-white transition-colors font-medium">Clear</button>
+            <div className="w-px h-5 bg-slate-200 dark:bg-neutral-700" />
+            <button
+              onClick={() => setBulkDeleteOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl text-sm font-bold transition-colors"
+            >
+              <Trash size={14} weight="bold" />
+              Delete {selectedIds.size}
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3 mb-5">
@@ -404,6 +473,14 @@ export default function AdminPaymentsView() {
           <table className="w-full text-sm min-w-[800px]">
             <thead>
               <tr className="border-b border-slate-100 dark:border-neutral-800 bg-slate-50 dark:bg-neutral-800/50">
+                <th className="px-4 py-3 w-10">
+                  <input
+                    type="checkbox"
+                    checked={allSelected}
+                    onChange={e => setSelectedIds(e.target.checked ? new Set(allFilteredIds) : new Set())}
+                    className="w-4 h-4 rounded accent-violet-500"
+                  />
+                </th>
                 {['Student', 'Course', 'Method', 'Amount', 'Status', 'Date', 'Screenshot', 'Actions'].map(h => (
                   <th key={h} className="text-left px-4 py-3 text-[10px] font-bold text-slate-400 dark:text-neutral-500 uppercase tracking-wide whitespace-nowrap">{h}</th>
                 ))}
@@ -411,13 +488,21 @@ export default function AdminPaymentsView() {
             </thead>
             <tbody className="divide-y divide-slate-50 dark:divide-neutral-800">
               {loading && (
-                <tr><td colSpan={8} className="text-center py-10 text-slate-400 dark:text-neutral-600 text-sm">Loading…</td></tr>
+                <tr><td colSpan={9} className="text-center py-10 text-slate-400 dark:text-neutral-600 text-sm">Loading…</td></tr>
               )}
               {!loading && filtered.length === 0 && (
-                <tr><td colSpan={8} className="text-center py-10 text-slate-400 dark:text-neutral-600 text-sm">No payments found</td></tr>
+                <tr><td colSpan={9} className="text-center py-10 text-slate-400 dark:text-neutral-600 text-sm">No payments found</td></tr>
               )}
               {filtered.map(p => (
-                <tr key={p._id} className="hover:bg-slate-50 dark:hover:bg-neutral-800/40 transition-colors group">
+                <tr key={p._id} className={`hover:bg-slate-50 dark:hover:bg-neutral-800/40 transition-colors group ${selectedIds.has(p._id) ? 'bg-red-50/30 dark:bg-red-950/10' : ''}`}>
+                  <td className="px-4 py-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(p._id)}
+                      onChange={() => toggleSelect(p._id)}
+                      className="w-4 h-4 rounded accent-violet-500"
+                    />
+                  </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
@@ -507,6 +592,12 @@ export default function AdminPaymentsView() {
                           <Gift size={13} weight="fill" />
                         </button>
                       )}
+                      <button
+                        onClick={() => setDeleteTarget({ id: p._id, studentName: p.student?.name ?? 'this payment' })}
+                        title="Delete payment record"
+                        className="w-7 h-7 rounded-lg bg-red-50 dark:bg-red-950/30 text-red-500 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-950/50 flex items-center justify-center transition-colors">
+                        <Trash size={13} weight="fill" />
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -522,6 +613,112 @@ export default function AdminPaymentsView() {
         onClose={() => setCreateModalOpen(false)}
         onSuccess={() => { setCreateModalOpen(false); fetchPayments() }}
       />
+
+      {/* Single delete confirm */}
+      <AnimatePresence>
+      {deleteTarget && (
+        <motion.div
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end justify-center"
+          onClick={e => e.target === e.currentTarget && (setDeleteTarget(null), setDeactivateEnrollment(false))}
+        >
+          <motion.div
+            initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            className="bg-white dark:bg-neutral-900 rounded-t-[28px] border-t border-slate-100 dark:border-neutral-800 shadow-2xl w-full max-w-lg px-6 pt-5 pb-8"
+          >
+            <div className="w-10 h-1 rounded-full bg-slate-200 dark:bg-neutral-700 mx-auto mb-5" />
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-950/40 flex items-center justify-center flex-shrink-0">
+                <Warning size={20} weight="fill" className="text-red-600 dark:text-red-400" />
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-900 dark:text-white text-sm">Delete Payment</h3>
+                <p className="text-xs text-slate-500 dark:text-neutral-400 mt-0.5">
+                  Delete payment for <span className="font-semibold">{deleteTarget.studentName}</span>?
+                </p>
+              </div>
+            </div>
+            <label className="flex items-center gap-2 text-xs text-slate-600 dark:text-neutral-300 mb-5 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={deactivateEnrollment}
+                onChange={e => setDeactivateEnrollment(e.target.checked)}
+                className="w-4 h-4 rounded accent-red-500"
+              />
+              Also deactivate the student's course enrollment
+            </label>
+            <div className="flex gap-2">
+              <button
+                onClick={handleDelete}
+                disabled={deleteLoading}
+                className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-sm transition-colors disabled:opacity-50"
+              >
+                {deleteLoading ? 'Deleting…' : 'Delete'}
+              </button>
+              <button
+                onClick={() => { setDeleteTarget(null); setDeactivateEnrollment(false) }}
+                className="flex-1 py-2.5 rounded-xl bg-slate-100 dark:bg-neutral-800 text-slate-700 dark:text-white font-bold text-sm hover:bg-slate-200 dark:hover:bg-neutral-700 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+      </AnimatePresence>
+
+      {/* Bulk delete confirm */}
+      <AnimatePresence>
+      {bulkDeleteOpen && (
+        <motion.div
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end justify-center"
+          onClick={e => e.target === e.currentTarget && (setBulkDeleteOpen(false), setDeactivateEnrollment(false))}
+        >
+          <motion.div
+            initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            className="bg-white dark:bg-neutral-900 rounded-t-[28px] border-t border-slate-100 dark:border-neutral-800 shadow-2xl w-full max-w-lg px-6 pt-5 pb-8"
+          >
+            <div className="w-10 h-1 rounded-full bg-slate-200 dark:bg-neutral-700 mx-auto mb-5" />
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-950/40 flex items-center justify-center flex-shrink-0">
+                <Warning size={20} weight="fill" className="text-red-600 dark:text-red-400" />
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-900 dark:text-white text-sm">Delete {selectedIds.size} Payments</h3>
+                <p className="text-xs text-slate-500 dark:text-neutral-400 mt-0.5">This action cannot be undone.</p>
+              </div>
+            </div>
+            <label className="flex items-center gap-2 text-xs text-slate-600 dark:text-neutral-300 mb-5 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={deactivateEnrollment}
+                onChange={e => setDeactivateEnrollment(e.target.checked)}
+                className="w-4 h-4 rounded accent-red-500"
+              />
+              Also deactivate enrollments for all selected payments
+            </label>
+            <div className="flex gap-2">
+              <button
+                onClick={handleBulkDelete}
+                disabled={deleteLoading}
+                className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-sm transition-colors disabled:opacity-50"
+              >
+                {deleteLoading ? 'Deleting…' : `Delete ${selectedIds.size}`}
+              </button>
+              <button
+                onClick={() => { setBulkDeleteOpen(false); setDeactivateEnrollment(false) }}
+                className="flex-1 py-2.5 rounded-xl bg-slate-100 dark:bg-neutral-800 text-slate-700 dark:text-white font-bold text-sm hover:bg-slate-200 dark:hover:bg-neutral-700 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+      </AnimatePresence>
     </div>
   )
 }

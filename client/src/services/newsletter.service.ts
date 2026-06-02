@@ -116,4 +116,18 @@ export const newsletterService = {
     );
     return res.data;
   },
+
+  bulkDeleteSubscribers: async (ids: string[]) => {
+    const res = await axiosClient.delete<{ success: boolean; message: string; data: { deleted: number } }>(
+      '/newsletter/subscribers/bulk', { data: { ids } }
+    );
+    return res.data;
+  },
+
+  bulkDeleteCampaigns: async (ids: string[]) => {
+    const res = await axiosClient.delete<{ success: boolean; message: string; data: { deleted: number } }>(
+      '/newsletter/campaigns/bulk', { data: { ids } }
+    );
+    return res.data;
+  },
 };

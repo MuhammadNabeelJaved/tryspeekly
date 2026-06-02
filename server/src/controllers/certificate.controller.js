@@ -171,3 +171,19 @@ export const getAllCertificates = asyncHandler(async (req, res) => {
     res.status(400).json({ success: false, error: { message: error.message } })
   }
 })
+
+// DELETE /api/v1/certificates/:id — admin: hard-delete a certificate record
+export const deleteCertificate = asyncHandler(async (req, res) => {
+  const cert = await Certificate.findByIdAndDelete(req.params.id)
+  if (!cert) return res.status(404).json({ success: false, error: { message: 'Certificate not found' } })
+  res.json({ success: true, message: 'Certificate deleted' })
+})
+
+// DELETE /api/v1/certificates/bulk — admin: hard-delete multiple certificates
+export const bulkDeleteCertificates = asyncHandler(async (req, res) => {
+  const { ids } = req.body
+  if (!Array.isArray(ids) || ids.length === 0)
+    return res.status(400).json({ success: false, error: { message: 'ids must be a non-empty array' } })
+  const result = await Certificate.deleteMany({ _id: { $in: ids } })
+  res.json({ success: true, message: `${result.deletedCount} certificate${result.deletedCount !== 1 ? 's' : ''} deleted`, data: { deleted: result.deletedCount } })
+})
