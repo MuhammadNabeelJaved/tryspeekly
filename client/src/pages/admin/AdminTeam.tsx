@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef } from 'react'
-import { Users, Plus, PencilSimple, Trash, ChatCircleDots, X, Check } from '@phosphor-icons/react'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { Users, Plus, PencilSimple, Trash, ChatCircleDots, X, Check, Activity, ArrowCounterClockwise } from '@phosphor-icons/react'
+import { activityLogService, type ActivityLogEntry, type ActivitySummaryEntry } from '@/services/activity-log.service'
 
 const TEAM_JOB_TITLES = [
   'Content Manager',
@@ -254,10 +255,151 @@ function MemberModal({ member, onClose, onSave }: MemberModalProps) {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
+// ─── Activity Tab ─────────────────────────────────────────────────────────────
+
+function ActivityTab() {
+  const [logs, setLogs]       = useState<ActivityLogEntry[]>([])
+  const [loading, setLoading] = useState(true)
+  const [page, setPage]       = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [filterMember, setFilterMember]     = useState('')
+  const [filterResource, setFilterResource] = useState('')
+  const [summary, setSummary] = useState<ActivitySummaryEntry[]>([])
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const params: Parameters<typeof activityLogService.getLogs>[0] = { page, limit: 25 }
+      if (filterMember)   params.teamMember = filterMember
+      if (filterResource) params.resource   = filterResource
+      const [logsRes, summaryRes] = await Promise.all([
+        activityLogService.getLogs(params),
+        activityLogService.getSummary(),
+      ])
+      setLogs(logsRes.data)
+      setTotalPages(logsRes.pagination.totalPages)
+      setSummary(summaryRes.data)
+    } catch { /* silent */ }
+    finally { setLoading(false) }
+  }, [page, filterMember, filterResource])
+
+  useEffect(() => { load() }, [load])
+
+  const ACTION_COLORS: Record<string, string> = {
+    create:  'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400',
+    update:  'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400',
+    delete:  'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400',
+    approve: 'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400',
+    reject:  'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400',
+    send:    'bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400',
+    other:   'bg-slate-100 dark:bg-neutral-800 text-slate-500 dark:text-neutral-400',
+  }
+
+  function relativeTime(iso: string) {
+    const diff = Date.now() - new Date(iso).getTime()
+    const m = Math.floor(diff / 60000)
+    if (m < 1)  return 'just now'
+    if (m < 60) return `${m}m ago`
+    const h = Math.floor(m / 60)
+    if (h < 24) return `${h}h ago`
+    return `${Math.floor(h / 24)}d ago`
+  }
+
+  return (
+    <div className="p-5 overflow-y-auto flex-1">
+      {summary.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-5">
+          {summary.slice(0, 6).map(s => (
+            <button
+              key={s._id}
+              onClick={() => { setFilterMember(filterMember === s._id ? '' : s._id); setPage(1) }}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-colors ${
+                filterMember === s._id
+                  ? 'border-violet-500 bg-violet-50 dark:bg-violet-950/30 text-violet-700 dark:text-violet-300'
+                  : 'border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-slate-600 dark:text-neutral-300 hover:border-violet-300'
+              }`}
+            >
+              <span className="w-6 h-6 rounded-full bg-violet-100 dark:bg-violet-900/40 flex items-center justify-center text-[9px] font-black text-violet-600 dark:text-violet-400">
+                {s.member?.name?.charAt(0) ?? '?'}
+              </span>
+              {s.member?.name ?? 'Unknown'}
+              <span className="bg-slate-200 dark:bg-neutral-700 text-slate-600 dark:text-neutral-300 px-1.5 py-0.5 rounded-full text-[9px] font-bold">{s.count}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      <div className="flex gap-2 mb-4 flex-wrap">
+        <select
+          value={filterResource}
+          onChange={e => { setFilterResource(e.target.value); setPage(1) }}
+          className="px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-xs text-slate-700 dark:text-neutral-300 outline-none focus:border-violet-500"
+        >
+          <option value="">All Resources</option>
+          {['blog','review','payment','certificate','financial-aid','support','contact','newsletter-campaign','newsletter-subscriber','seo'].map(r => (
+            <option key={r} value={r}>{r}</option>
+          ))}
+        </select>
+        <button
+          onClick={() => { setFilterMember(''); setFilterResource(''); setPage(1) }}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-xs font-semibold text-slate-500 dark:text-neutral-400 hover:text-violet-600 transition-colors"
+        >
+          <ArrowCounterClockwise size={13} /> Reset
+        </button>
+      </div>
+
+      {loading ? (
+        <div className="flex items-center justify-center py-16">
+          <div className="w-5 h-5 border-2 border-violet-600 border-t-transparent rounded-full animate-spin" />
+        </div>
+      ) : logs.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-16 text-slate-400 dark:text-neutral-600">
+          <Activity size={32} className="mb-2" />
+          <p className="text-sm font-medium">No activity yet</p>
+          <p className="text-xs mt-1">Team member actions will appear here</p>
+        </div>
+      ) : (
+        <div className="space-y-1">
+          {logs.map(log => (
+            <div key={log._id} className="flex items-center gap-3 px-4 py-3 bg-white dark:bg-neutral-900 rounded-xl border border-slate-100 dark:border-neutral-800 hover:border-violet-200 dark:hover:border-violet-800/40 transition-colors">
+              <div className="w-8 h-8 rounded-xl bg-violet-100 dark:bg-violet-900/40 flex items-center justify-center text-[10px] font-black text-violet-600 dark:text-violet-400 flex-shrink-0">
+                {log.teamMember?.name?.charAt(0) ?? '?'}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex flex-wrap items-center gap-1.5 mb-0.5">
+                  <span className="text-sm font-bold text-slate-900 dark:text-white">{log.teamMember?.name ?? 'Unknown'}</span>
+                  <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${ACTION_COLORS[log.action] ?? ACTION_COLORS.other}`}>{log.action}</span>
+                  <span className="text-xs text-slate-500 dark:text-neutral-400 font-mono">{log.resource}</span>
+                  {log.resourceName && <span className="text-xs text-slate-400 dark:text-neutral-500 truncate max-w-[120px]">· {log.resourceName}</span>}
+                </div>
+                {log.details && <p className="text-[11px] text-slate-400 dark:text-neutral-500">{log.details}</p>}
+              </div>
+              <span className="text-[10px] text-slate-300 dark:text-neutral-600 flex-shrink-0 whitespace-nowrap">{relativeTime(log.createdAt)}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 mt-5">
+          <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+            className="px-3 py-1.5 rounded-xl text-xs font-bold text-slate-500 dark:text-neutral-400 bg-slate-100 dark:bg-neutral-800 disabled:opacity-40 hover:bg-slate-200 dark:hover:bg-neutral-700 transition-colors">Prev</button>
+          <span className="text-xs font-semibold text-slate-400 dark:text-neutral-500">{page} / {totalPages}</span>
+          <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+            className="px-3 py-1.5 rounded-xl text-xs font-bold text-slate-500 dark:text-neutral-400 bg-slate-100 dark:bg-neutral-800 disabled:opacity-40 hover:bg-slate-200 dark:hover:bg-neutral-700 transition-colors">Next</button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
+
 export default function AdminTeam() {
   const { user } = useAuth()
   const { socket } = useSocket()
 
+  const [teamTab, setTeamTab] = useState<'members' | 'activity'>('members')
   const [members, setMembers] = useState<TeamMember[]>([])
   const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState<TeamMember | null>(null)
@@ -377,7 +519,26 @@ export default function AdminTeam() {
   }
 
   return (
-    <div className="flex h-full gap-0 overflow-hidden">
+    <div className="flex flex-col h-full overflow-hidden">
+      {/* Tab bar */}
+      <div className="flex gap-1 px-4 pt-4 pb-0 flex-shrink-0">
+        <div className="flex gap-1 bg-slate-100 dark:bg-neutral-800 p-1 rounded-xl">
+          {([['members', 'Members', Users], ['activity', 'Activity Log', Activity]] as const).map(([key, label, Icon]) => (
+            <button key={key} onClick={() => setTeamTab(key as 'members' | 'activity')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+                teamTab === key
+                  ? 'bg-white dark:bg-neutral-900 text-violet-600 dark:text-violet-400 shadow-sm'
+                  : 'text-slate-500 dark:text-neutral-400 hover:text-slate-700 dark:hover:text-neutral-200'
+              }`}>
+              <Icon size={14} />
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {teamTab === 'activity' ? <ActivityTab /> : (
+      <div className="flex flex-1 min-h-0 gap-0 overflow-hidden">
       {/* ── LEFT: Member list ── */}
       <div className="w-72 flex-shrink-0 border-r border-slate-100 dark:border-neutral-800 flex flex-col">
         <div className="px-4 py-4 border-b border-slate-100 dark:border-neutral-800 flex items-center justify-between">
@@ -540,6 +701,9 @@ export default function AdminTeam() {
             </div>
           </div>
         </div>
+      )}
+
+      </div>
       )}
 
       {/* ── Modals ── */}
