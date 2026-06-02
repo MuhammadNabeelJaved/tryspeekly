@@ -98,3 +98,67 @@ export const getPublicSeo = asyncHandler(async (req, res) => {
   ])
   res.json({ success: true, data: { page: page || null, global: global || null } })
 })
+
+// ─── Sitemap & robots.txt (public, for search engines) ────────────────────────
+const SITE_URL = process.env.CLIENT_URL || 'https://yourdomain.com'
+
+// GET /sitemap.xml
+export const getSitemap = asyncHandler(async (req, res) => {
+  const { default: Blog } = await import('../models/blog.model.js')
+  const { default: Course } = await import('../models/course.model.js')
+
+  const [seoPages, blogs, courses] = await Promise.all([
+    Seo.find({ 'sitemap.include': true, isPublic: true }).select('pageUrl sitemap lastModified').lean(),
+    Blog.find({ status: 'published' }).select('slug updatedAt').lean(),
+    Course.find({ status: 'published' }).select('_id updatedAt').lean(),
+  ])
+
+  const urls = []
+
+  for (const p of seoPages) {
+    if (!p.pageUrl) continue
+    urls.push(`
+  <url>
+    <loc>${SITE_URL}${p.pageUrl}</loc>
+    <lastmod>${new Date(p.lastModified || Date.now()).toISOString().slice(0, 10)}</lastmod>
+    <changefreq>${p.sitemap?.changeFreq || 'weekly'}</changefreq>
+    <priority>${p.sitemap?.priority ?? 0.5}</priority>
+  </url>`)
+  }
+
+  for (const b of blogs) {
+    urls.push(`
+  <url>
+    <loc>${SITE_URL}/blog/${b.slug}</loc>
+    <lastmod>${new Date(b.updatedAt).toISOString().slice(0, 10)}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>`)
+  }
+
+  for (const c of courses) {
+    urls.push(`
+  <url>
+    <loc>${SITE_URL}/courses/${c._id}</loc>
+    <lastmod>${new Date(c.updatedAt).toISOString().slice(0, 10)}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>`)
+  }
+
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls.join('')}
+</urlset>`
+
+  res.set('Content-Type', 'application/xml')
+  res.send(xml)
+})
+
+// GET /robots.txt
+export const getRobotsTxt = asyncHandler(async (req, res) => {
+  const global = await Seo.findOne({ pageSlug: '__global__' }).select('global.robotsTxt').lean()
+  const content = global?.global?.robotsTxt ||
+    'User-agent: *\nAllow: /\n\nDisallow: /dashboard/\nDisallow: /admin/\nDisallow: /instructor/\n'
+  res.set('Content-Type', 'text/plain')
+  res.send(`${content}\nSitemap: ${SITE_URL}/sitemap.xml\n`)
+})

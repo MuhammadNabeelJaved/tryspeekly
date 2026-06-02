@@ -3,12 +3,15 @@ import { authenticate, authorizeTeamPage } from '../middlewares/auth.js'
 import { logActivity } from '../middlewares/activityLogger.js'
 import {
   getAllPages, getPage, upsertPage, createPage, deletePage, getPublicSeo,
+  getSitemap, getRobotsTxt,
 } from '../controllers/seo.controller.js'
 
 const router = Router()
 
 // Public — frontend injects meta tags
 router.get('/public/:slug', getPublicSeo)
+router.get('/sitemap.xml', getSitemap)
+router.get('/robots.txt', getRobotsTxt)
 
 // Admin only
 router.use(authenticate, authorizeTeamPage('seo'))
