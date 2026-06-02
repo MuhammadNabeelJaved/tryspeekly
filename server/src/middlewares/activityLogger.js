@@ -18,8 +18,10 @@ export const logActivity = (action, resource, getInfo) => (req, res, next) => {
 
     if (res.statusCode >= 200 && res.statusCode < 300) {
       const info = getInfo ? getInfo(req, body) : {}
+      // authenticate middleware sets req.user = { id, role, permissions } — use .id
+      // (keep ._id as a fallback in case the shape ever changes).
       ActivityLog.create({
-        teamMember:   req.user._id,
+        teamMember:   req.user.id ?? req.user._id,
         action,
         resource,
         resourceId:   info.resourceId   ?? null,
