@@ -8,6 +8,8 @@ import {
 import toast from 'react-hot-toast'
 import { axiosClient } from '@/lib/axiosClient'
 import UserAvatar from '@/components/UserAvatar'
+import { useAuth } from '@/context/AuthContext'
+import { usersService } from '@/services/users.service'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -244,6 +246,63 @@ function RoleModal({ user, onClose, onChanged }: {
   )
 }
 
+// ─── Bulk Delete Confirm Modal ────────────────────────────────────────────────
+
+function BulkDeleteConfirmModal({ count, onClose, onConfirm }: {
+  count: number
+  onClose: () => void
+  onConfirm: () => Promise<void>
+}) {
+  const [loading, setLoading] = useState(false)
+
+  const handleConfirm = async () => {
+    setLoading(true)
+    try { await onConfirm(); onClose() } finally { setLoading(false) }
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4"
+      onClick={e => e.target === e.currentTarget && onClose()}
+    >
+      <motion.div
+        initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
+        className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200 dark:border-neutral-800 shadow-2xl w-full max-w-sm p-6"
+      >
+        <div className="flex items-start gap-4 mb-5">
+          <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-950/40 flex items-center justify-center flex-shrink-0">
+            <Trash size={20} weight="fill" className="text-red-600 dark:text-red-400" />
+          </div>
+          <div className="flex-1">
+            <h2 className="text-base font-black text-slate-900 dark:text-white">
+              Delete {count} account{count !== 1 ? 's' : ''}?
+            </h2>
+            <p className="text-xs text-slate-500 dark:text-neutral-400 mt-1 leading-relaxed">
+              This will permanently delete {count} user account{count !== 1 ? 's' : ''}.
+              This action cannot be undone.
+            </p>
+          </div>
+          <button onClick={onClose} className="w-6 h-6 rounded-lg bg-slate-100 dark:bg-neutral-800 flex items-center justify-center text-slate-400 hover:text-slate-600 flex-shrink-0">
+            <X size={12} />
+          </button>
+        </div>
+        <div className="flex gap-2">
+          <button onClick={onClose}
+            className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-neutral-700 text-sm font-semibold text-slate-600 dark:text-neutral-400 hover:bg-slate-50 dark:hover:bg-neutral-800 transition-colors">
+            Cancel
+          </button>
+          <button onClick={handleConfirm} disabled={loading}
+            className="flex-1 px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-bold transition-colors disabled:opacity-60 flex items-center justify-center gap-2">
+            {loading ? <ArrowsClockwise size={13} className="animate-spin" /> : null}
+            {loading ? 'Deleting…' : `Delete ${count}`}
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  )
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 const ROLE_FILTERS: { label: string; value: Role | 'all' | 'blocked' }[] = [
@@ -267,6 +326,16 @@ export default function AdminUsers() {
   const [selectedUser, setSelectedUser] = useState<PlatformUser | null>(null)
   const [confirmState, setConfirmState] = useState<ConfirmState>(null)
 
+  const { user: currentUser } = useAuth()
+  const [selectedIds, setSelectedIds]       = useState<Set<string>>(new Set())
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
+
+  const allSelectableIds = users.filter(u => u._id !== currentUser?.id).map(u => u._id)
+  const allSelected      = allSelectableIds.length > 0 && allSelectableIds.every(id => selectedIds.has(id))
+
+  const toggleSelect = (id: string) =>
+    setSelectedIds(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s })
+
   const fetchUsers = useCallback(async () => {
     setLoading(true)
     try {
@@ -285,7 +354,7 @@ export default function AdminUsers() {
   }, [page, search, roleFilter])
 
   useEffect(() => { fetchUsers() }, [fetchUsers])
-  useEffect(() => { setPage(1) }, [search, roleFilter])
+  useEffect(() => { setPage(1); setSelectedIds(new Set()) }, [search, roleFilter])
 
   // ── Action handlers ──────────────────────────────────────────────────────────
 
@@ -314,6 +383,21 @@ export default function AdminUsers() {
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { error?: { message?: string } } } })
         ?.response?.data?.error?.message ?? 'Delete failed'
+      toast.error(msg)
+      throw err
+    }
+  }
+
+  const handleBulkDelete = async () => {
+    try {
+      const ids = Array.from(selectedIds)
+      await usersService.bulkDelete(ids)
+      setUsers(prev => prev.filter(u => !selectedIds.has(u._id)))
+      setSelectedIds(new Set())
+      toast.success(`${ids.length} account${ids.length !== 1 ? 's' : ''} deleted.`)
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { error?: { message?: string } } } })
+        ?.response?.data?.error?.message ?? 'Bulk delete failed'
       toast.error(msg)
       throw err
     }
@@ -361,6 +445,27 @@ export default function AdminUsers() {
         ))}
       </div>
 
+      {/* Bulk action toolbar */}
+      {selectedIds.size > 0 && (
+        <div className="flex items-center gap-3 px-4 py-2.5 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800/30 rounded-2xl">
+          <span className="text-xs font-bold text-red-700 dark:text-red-400">
+            {selectedIds.size} selected
+          </span>
+          <button
+            onClick={() => setBulkDeleteOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition-colors"
+          >
+            <Trash size={12} weight="fill" /> Delete selected
+          </button>
+          <button
+            onClick={() => setSelectedIds(new Set())}
+            className="text-xs text-red-600 dark:text-red-400 hover:underline font-semibold ml-auto"
+          >
+            Clear
+          </button>
+        </div>
+      )}
+
       {/* Table */}
       <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200 dark:border-neutral-800 overflow-hidden">
         {loading ? (
@@ -377,6 +482,14 @@ export default function AdminUsers() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-slate-100 dark:border-neutral-800">
+                  <th className="px-4 py-3 w-10">
+                    <input
+                      type="checkbox"
+                      checked={allSelected}
+                      onChange={e => setSelectedIds(e.target.checked ? new Set(allSelectableIds) : new Set())}
+                      className="w-4 h-4 rounded accent-violet-500"
+                    />
+                  </th>
                   <th className="text-left px-4 py-3 text-[11px] font-bold text-slate-400 dark:text-neutral-600 uppercase tracking-widest">User</th>
                   <th className="text-left px-4 py-3 text-[11px] font-bold text-slate-400 dark:text-neutral-600 uppercase tracking-widest">Role</th>
                   <th className="text-left px-4 py-3 text-[11px] font-bold text-slate-400 dark:text-neutral-600 uppercase tracking-widest hidden sm:table-cell">Status</th>
@@ -394,6 +507,15 @@ export default function AdminUsers() {
                         : 'hover:bg-slate-50/50 dark:hover:bg-neutral-800/30'
                     }`}
                   >
+                    <td className="px-4 py-3">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(u._id)}
+                        onChange={() => toggleSelect(u._id)}
+                        disabled={u._id === currentUser?.id}
+                        className="w-4 h-4 rounded accent-violet-500 disabled:opacity-30 disabled:cursor-not-allowed"
+                      />
+                    </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <div className="relative">
@@ -519,6 +641,17 @@ export default function AdminUsers() {
                 await handleBlockToggle(confirmState.user)
               }
             }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Bulk delete confirm modal */}
+      <AnimatePresence>
+        {bulkDeleteOpen && (
+          <BulkDeleteConfirmModal
+            count={selectedIds.size}
+            onClose={() => setBulkDeleteOpen(false)}
+            onConfirm={handleBulkDelete}
           />
         )}
       </AnimatePresence>
