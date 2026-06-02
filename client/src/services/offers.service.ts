@@ -64,4 +64,9 @@ export const offersService = {
   async deleteOffer(id: string): Promise<void> {
     await axiosClient.delete(`/offers/${id}`)
   },
+
+  async bulkDeleteOffers(ids: string[]): Promise<{ success: boolean; message: string; data: { deleted: number } }> {
+    const res = await axiosClient.delete('/offers/bulk', { data: { ids } })
+    return res.data
+  },
 }

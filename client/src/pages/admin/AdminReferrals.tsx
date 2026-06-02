@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Tag, Gift, Users, Wallet, Plus, Trash, ToggleLeft, ToggleRight, Copy, Check, X, Percent, PencilSimple, ChartBar, CalendarBlank } from '@phosphor-icons/react'
 import toast from 'react-hot-toast'
 import ConfirmModal from '@/components/ConfirmModal'
@@ -10,6 +10,88 @@ import { offersService } from '@/services/offers.service'
 import type { Offer } from '@/services/offers.service'
 
 type Tab = 'coupons' | 'settings' | 'rewards' | 'payouts' | 'offers'
+
+// ─── Shared bulk-select helpers ───────────────────────────────────────────────
+
+/** Floating action bar shown when one or more rows are selected. */
+function BulkBar({ count, onClear, onDelete }: { count: number; onClear: () => void; onDelete: () => void }) {
+  return (
+    <AnimatePresence>
+      {count > 0 && (
+        <motion.div
+          initial={{ y: 80, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: 80, opacity: 0 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 px-5 py-3 bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-neutral-700 min-w-max"
+        >
+          <span className="text-sm font-bold text-slate-700 dark:text-white">{count} selected</span>
+          <button onClick={onClear} className="text-xs text-slate-400 dark:text-neutral-500 hover:text-slate-600 dark:hover:text-white transition-colors font-medium">Clear</button>
+          <div className="w-px h-5 bg-slate-200 dark:bg-neutral-700" />
+          <button
+            onClick={onDelete}
+            className="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl text-sm font-bold transition-colors"
+          >
+            <Trash size={14} weight="bold" />
+            Delete {count}
+          </button>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  )
+}
+
+/** Confirmation modal for a bulk delete. */
+function BulkDeleteModal({ open, count, noun, onClose, onConfirm }: {
+  open: boolean
+  count: number
+  noun: string
+  onClose: () => void
+  onConfirm: () => Promise<void>
+}) {
+  const [loading, setLoading] = useState(false)
+  if (!open) return null
+  const handleConfirm = async () => {
+    setLoading(true)
+    try { await onConfirm(); onClose() } finally { setLoading(false) }
+  }
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+      onClick={e => e.target === e.currentTarget && onClose()}>
+      <motion.div
+        initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+        className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200 dark:border-neutral-800 shadow-2xl w-full max-w-sm p-6"
+      >
+        <div className="flex items-start gap-4 mb-5">
+          <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-950/40 flex items-center justify-center flex-shrink-0">
+            <Trash size={20} weight="fill" className="text-red-600 dark:text-red-400" />
+          </div>
+          <div className="flex-1">
+            <h2 className="text-base font-black text-slate-900 dark:text-white">
+              Delete {count} {noun}{count !== 1 ? 's' : ''}?
+            </h2>
+            <p className="text-xs text-slate-500 dark:text-neutral-400 mt-1 leading-relaxed">
+              This will permanently delete {count} {noun}{count !== 1 ? 's' : ''}. This action cannot be undone.
+            </p>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <button onClick={onClose}
+            className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-neutral-700 text-sm font-semibold text-slate-600 dark:text-neutral-400 hover:bg-slate-50 dark:hover:bg-neutral-800 transition-colors">
+            Cancel
+          </button>
+          <button onClick={handleConfirm} disabled={loading}
+            className="flex-1 px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-bold transition-colors disabled:opacity-60">
+            {loading ? 'Deleting…' : `Delete ${count}`}
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  )
+}
+
+const checkboxClass = 'w-4 h-4 rounded accent-violet-500 disabled:opacity-30 disabled:cursor-not-allowed'
 
 export default function AdminReferrals() {
   const [activeTab, setActiveTab] = useState<Tab>('coupons')
@@ -71,6 +153,8 @@ function CouponsTab() {
   const [trackingLoading, setTrackingLoading] = useState(false)
   const [trackingTotal, setTrackingTotal] = useState(0)
   const [expiryModal, setExpiryModal] = useState<{ id: string; code: string; current: string } | null>(null)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkOpen, setBulkOpen] = useState(false)
 
   const loadTracking = useCallback(async () => {
     setTrackingLoading(true)
@@ -123,6 +207,22 @@ function CouponsTab() {
     } catch { toast.error('Failed to delete coupon') }
   }
 
+  // Only admin-created coupons can be deleted (referral coupons are system-managed).
+  const selectableIds = coupons.filter(c => c.source === 'admin').map(c => c._id)
+  const allSelected = selectableIds.length > 0 && selectableIds.every(id => selectedIds.has(id))
+  const toggleSelect = (id: string) =>
+    setSelectedIds(p => { const s = new Set(p); s.has(id) ? s.delete(id) : s.add(id); return s })
+
+  async function handleBulkDelete() {
+    const ids = Array.from(selectedIds)
+    try {
+      await couponsService.bulkDeleteCoupons(ids)
+      setSelectedIds(new Set())
+      toast.success(`${ids.length} coupon${ids.length !== 1 ? 's' : ''} deleted`)
+      load()
+    } catch { toast.error('Bulk delete failed') }
+  }
+
   return (
     <div>
       <div className="flex items-center justify-between mb-4 gap-4 flex-wrap">
@@ -173,6 +273,15 @@ function CouponsTab() {
           <table className="w-full text-sm">
             <thead className="border-b border-slate-100 dark:border-neutral-800 bg-slate-50 dark:bg-neutral-800/50">
               <tr>
+                <th className="px-4 py-3 w-10">
+                  <input
+                    type="checkbox"
+                    checked={allSelected}
+                    onChange={e => setSelectedIds(e.target.checked ? new Set(selectableIds) : new Set())}
+                    disabled={selectableIds.length === 0}
+                    className={checkboxClass}
+                  />
+                </th>
                 {['Code', 'Type', 'Referrer', 'Discount', 'Scope', 'Uses', 'Expiry', 'Status', ''].map(h => (
                   <th key={h} className="px-4 py-3 text-left text-xs font-bold text-slate-500 dark:text-neutral-400 uppercase tracking-wider">{h}</th>
                 ))}
@@ -180,7 +289,17 @@ function CouponsTab() {
             </thead>
             <tbody className="divide-y divide-slate-50 dark:divide-neutral-800">
               {coupons.map(c => (
-                <tr key={c._id} className="hover:bg-slate-50 dark:hover:bg-neutral-800/30 transition-colors">
+                <tr key={c._id} className={`transition-colors ${selectedIds.has(c._id) ? 'bg-violet-50/60 dark:bg-violet-900/10' : 'hover:bg-slate-50 dark:hover:bg-neutral-800/30'}`}>
+                  <td className="px-4 py-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(c._id)}
+                      onChange={() => toggleSelect(c._id)}
+                      disabled={c.source !== 'admin'}
+                      title={c.source !== 'admin' ? 'Referral coupons cannot be deleted' : undefined}
+                      className={checkboxClass}
+                    />
+                  </td>
                   <td className="px-4 py-3 font-mono font-bold text-slate-900 dark:text-white">{c.code}</td>
                   <td className="px-4 py-3">
                     <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${c.source === 'referral' ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300' : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'}`}>
@@ -280,6 +399,9 @@ function CouponsTab() {
         onConfirm={() => { const id = confirmModal!.id; setConfirmModal(null); handleDeleteConfirmed(id) }}
         onCancel={() => setConfirmModal(null)}
       />
+
+      <BulkBar count={selectedIds.size} onClear={() => setSelectedIds(new Set())} onDelete={() => setBulkOpen(true)} />
+      <BulkDeleteModal open={bulkOpen} count={selectedIds.size} noun="coupon" onClose={() => setBulkOpen(false)} onConfirm={handleBulkDelete} />
 
       {showTracking && (
         <div className="mt-6">
@@ -634,13 +756,31 @@ function RewardsTab() {
   const [rewards, setRewards] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [status, setStatus] = useState('')
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkOpen, setBulkOpen] = useState(false)
 
-  useEffect(() => {
+  const load = useCallback(() => {
     setLoading(true)
     referralsService.getAllRewards({ status: status || undefined })
       .then(r => { if (r.success) setRewards(r.data) })
       .finally(() => setLoading(false))
   }, [status])
+
+  useEffect(() => { load() }, [load])
+
+  const allSelected = rewards.length > 0 && rewards.every(r => selectedIds.has(r._id))
+  const toggleSelect = (id: string) =>
+    setSelectedIds(p => { const s = new Set(p); s.has(id) ? s.delete(id) : s.add(id); return s })
+
+  async function handleBulkDelete() {
+    const ids = Array.from(selectedIds)
+    try {
+      await referralsService.bulkDeleteRewards(ids)
+      setSelectedIds(new Set())
+      toast.success(`${ids.length} reward${ids.length !== 1 ? 's' : ''} deleted`)
+      load()
+    } catch { toast.error('Bulk delete failed') }
+  }
 
   return (
     <div>
@@ -663,6 +803,15 @@ function RewardsTab() {
           <table className="w-full text-sm">
             <thead className="border-b border-slate-100 dark:border-neutral-800 bg-slate-50 dark:bg-neutral-800/50">
               <tr>
+                <th className="px-4 py-3 w-10">
+                  <input
+                    type="checkbox"
+                    checked={allSelected}
+                    onChange={e => setSelectedIds(e.target.checked ? new Set(rewards.map(r => r._id)) : new Set())}
+                    disabled={rewards.length === 0}
+                    className={checkboxClass}
+                  />
+                </th>
                 {['Referrer', 'Referee', 'Course', 'Discount Given', 'Reward Earned', 'Status', 'Date'].map(h => (
                   <th key={h} className="px-4 py-3 text-left text-xs font-bold text-slate-500 dark:text-neutral-400 uppercase tracking-wider">{h}</th>
                 ))}
@@ -670,7 +819,10 @@ function RewardsTab() {
             </thead>
             <tbody className="divide-y divide-slate-50 dark:divide-neutral-800">
               {rewards.map(r => (
-                <tr key={r._id} className="hover:bg-slate-50 dark:hover:bg-neutral-800/30 transition-colors">
+                <tr key={r._id} className={`transition-colors ${selectedIds.has(r._id) ? 'bg-violet-50/60 dark:bg-violet-900/10' : 'hover:bg-slate-50 dark:hover:bg-neutral-800/30'}`}>
+                  <td className="px-4 py-3">
+                    <input type="checkbox" checked={selectedIds.has(r._id)} onChange={() => toggleSelect(r._id)} className={checkboxClass} />
+                  </td>
                   <td className="px-4 py-3 font-semibold text-slate-900 dark:text-white">{r.referrer?.name}</td>
                   <td className="px-4 py-3 text-slate-600 dark:text-neutral-300">{r.referee?.name}</td>
                   <td className="px-4 py-3 text-slate-500 dark:text-neutral-400">{r.course?.title}</td>
@@ -686,6 +838,9 @@ function RewardsTab() {
           </table>
         </div>
       )}
+
+      <BulkBar count={selectedIds.size} onClear={() => setSelectedIds(new Set())} onDelete={() => setBulkOpen(true)} />
+      <BulkDeleteModal open={bulkOpen} count={selectedIds.size} noun="reward" onClose={() => setBulkOpen(false)} onConfirm={handleBulkDelete} />
     </div>
   )
 }
@@ -698,6 +853,8 @@ function PayoutsTab() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [processing, setProcessing] = useState<string | null>(null)
   const [actionPanel, setActionPanel] = useState<{ id: string; action: 'approve' | 'reject'; note: string } | null>(null)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkOpen, setBulkOpen] = useState(false)
 
   const load = useCallback(() => {
     setLoading(true)
@@ -707,6 +864,21 @@ function PayoutsTab() {
   }, [statusFilter])
 
   useEffect(() => { load() }, [load])
+
+  const toggleSelect = (id: string) =>
+    setSelectedIds(p => { const s = new Set(p); s.has(id) ? s.delete(id) : s.add(id); return s })
+  const selectMany = (ids: string[], on: boolean) =>
+    setSelectedIds(p => { const s = new Set(p); ids.forEach(id => on ? s.add(id) : s.delete(id)); return s })
+
+  async function handleBulkDelete() {
+    const ids = Array.from(selectedIds)
+    try {
+      await referralsService.bulkDeletePayoutRequests(ids)
+      setSelectedIds(new Set())
+      toast.success(`${ids.length} request${ids.length !== 1 ? 's' : ''} deleted`)
+      load()
+    } catch { toast.error('Bulk delete failed') }
+  }
 
   async function handle() {
     if (!actionPanel) return
@@ -780,6 +952,14 @@ function PayoutsTab() {
                   <table className="w-full text-sm min-w-[640px]">
                     <thead className="border-b border-slate-100 dark:border-neutral-800 bg-slate-50 dark:bg-neutral-800/50">
                       <tr>
+                        <th className="px-4 py-3 w-10">
+                          <input
+                            type="checkbox"
+                            checked={pending.length > 0 && pending.every(r => selectedIds.has(r._id))}
+                            onChange={e => selectMany(pending.map(r => r._id), e.target.checked)}
+                            className={checkboxClass}
+                          />
+                        </th>
                         {['Student', 'Wallet Balance', 'Requested Amount', 'Submitted', 'Actions'].map(h => (
                           <th key={h} className="px-4 py-3 text-left text-xs font-bold text-slate-500 dark:text-neutral-400 uppercase tracking-wider whitespace-nowrap">{h}</th>
                         ))}
@@ -787,7 +967,10 @@ function PayoutsTab() {
                     </thead>
                     <tbody className="divide-y divide-slate-50 dark:divide-neutral-800">
                       {pending.map(r => (
-                        <tr key={r._id} className={`transition-colors ${actionPanel?.id === r._id ? 'bg-slate-50/80 dark:bg-neutral-800/40' : 'hover:bg-slate-50 dark:hover:bg-neutral-800/30'}`}>
+                        <tr key={r._id} className={`transition-colors ${selectedIds.has(r._id) ? 'bg-violet-50/60 dark:bg-violet-900/10' : actionPanel?.id === r._id ? 'bg-slate-50/80 dark:bg-neutral-800/40' : 'hover:bg-slate-50 dark:hover:bg-neutral-800/30'}`}>
+                          <td className="px-4 py-3">
+                            <input type="checkbox" checked={selectedIds.has(r._id)} onChange={() => toggleSelect(r._id)} className={checkboxClass} />
+                          </td>
                           <td className="px-4 py-3">
                             <p className="font-semibold text-slate-900 dark:text-white text-sm">{r.student?.name}</p>
                             <p className="text-xs text-slate-400 dark:text-neutral-500">{r.student?.email}</p>
@@ -834,6 +1017,14 @@ function PayoutsTab() {
                   <table className="w-full text-sm min-w-[700px]">
                     <thead className="border-b border-slate-100 dark:border-neutral-800 bg-slate-50 dark:bg-neutral-800/50">
                       <tr>
+                        <th className="px-4 py-3 w-10">
+                          <input
+                            type="checkbox"
+                            checked={history.length > 0 && history.every(r => selectedIds.has(r._id))}
+                            onChange={e => selectMany(history.map(r => r._id), e.target.checked)}
+                            className={checkboxClass}
+                          />
+                        </th>
                         {['Student', 'Amount', 'Status', 'Submitted', 'Processed', 'Admin Note'].map(h => (
                           <th key={h} className="px-4 py-3 text-left text-xs font-bold text-slate-500 dark:text-neutral-400 uppercase tracking-wider whitespace-nowrap">{h}</th>
                         ))}
@@ -841,7 +1032,10 @@ function PayoutsTab() {
                     </thead>
                     <tbody className="divide-y divide-slate-50 dark:divide-neutral-800">
                       {history.map(r => (
-                        <tr key={r._id} className="hover:bg-slate-50 dark:hover:bg-neutral-800/30 transition-colors">
+                        <tr key={r._id} className={`transition-colors ${selectedIds.has(r._id) ? 'bg-violet-50/60 dark:bg-violet-900/10' : 'hover:bg-slate-50 dark:hover:bg-neutral-800/30'}`}>
+                          <td className="px-4 py-3">
+                            <input type="checkbox" checked={selectedIds.has(r._id)} onChange={() => toggleSelect(r._id)} className={checkboxClass} />
+                          </td>
                           <td className="px-4 py-3">
                             <p className="font-semibold text-slate-900 dark:text-white text-sm">{r.student?.name}</p>
                             <p className="text-xs text-slate-400 dark:text-neutral-500">{r.student?.email}</p>
@@ -869,6 +1063,9 @@ function PayoutsTab() {
           )}
         </>
       )}
+
+      <BulkBar count={selectedIds.size} onClear={() => setSelectedIds(new Set())} onDelete={() => setBulkOpen(true)} />
+      <BulkDeleteModal open={bulkOpen} count={selectedIds.size} noun="payout request" onClose={() => setBulkOpen(false)} onConfirm={handleBulkDelete} />
     </div>
   )
 }
@@ -903,6 +1100,8 @@ function OffersTab() {
     setShowOfferTracking(s => !s)
   }
   const [confirmModal, setConfirmModal] = useState<{ id: string } | null>(null)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkOpen, setBulkOpen] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -936,6 +1135,20 @@ function OffersTab() {
       load()
       toast.success('Offer deleted')
     } catch { toast.error('Failed to delete offer') }
+  }
+
+  const allSelected = offers.length > 0 && offers.every(o => selectedIds.has(o._id))
+  const toggleSelect = (id: string) =>
+    setSelectedIds(p => { const s = new Set(p); s.has(id) ? s.delete(id) : s.add(id); return s })
+
+  async function handleBulkDelete() {
+    const ids = Array.from(selectedIds)
+    try {
+      await offersService.bulkDeleteOffers(ids)
+      setSelectedIds(new Set())
+      toast.success(`${ids.length} offer${ids.length !== 1 ? 's' : ''} deleted`)
+      load()
+    } catch { toast.error('Bulk delete failed') }
   }
 
   return (
@@ -977,6 +1190,15 @@ function OffersTab() {
           <table className="w-full text-sm">
             <thead className="border-b border-slate-100 dark:border-neutral-800 bg-slate-50 dark:bg-neutral-800/50">
               <tr>
+                <th className="px-4 py-3 w-10">
+                  <input
+                    type="checkbox"
+                    checked={allSelected}
+                    onChange={e => setSelectedIds(e.target.checked ? new Set(offers.map(o => o._id)) : new Set())}
+                    disabled={offers.length === 0}
+                    className={checkboxClass}
+                  />
+                </th>
                 {['Title', 'Discount', 'Scope', 'Speed', 'Duration', 'Status', ''].map(h => (
                   <th key={h} className="px-4 py-3 text-left text-xs font-bold text-slate-500 dark:text-neutral-400 uppercase tracking-wider">{h}</th>
                 ))}
@@ -984,7 +1206,10 @@ function OffersTab() {
             </thead>
             <tbody className="divide-y divide-slate-50 dark:divide-neutral-800">
               {offers.map(o => (
-                <tr key={o._id} className="hover:bg-slate-50 dark:hover:bg-neutral-800/30 transition-colors">
+                <tr key={o._id} className={`transition-colors ${selectedIds.has(o._id) ? 'bg-violet-50/60 dark:bg-violet-900/10' : 'hover:bg-slate-50 dark:hover:bg-neutral-800/30'}`}>
+                  <td className="px-4 py-3">
+                    <input type="checkbox" checked={selectedIds.has(o._id)} onChange={() => toggleSelect(o._id)} className={checkboxClass} />
+                  </td>
                   <td className="px-4 py-3 font-semibold text-slate-900 dark:text-white">
                     {o.title}
                     {o.bannerText && (
@@ -1051,6 +1276,9 @@ function OffersTab() {
         onConfirm={() => { const id = confirmModal!.id; setConfirmModal(null); handleDeleteConfirmed(id) }}
         onCancel={() => setConfirmModal(null)}
       />
+
+      <BulkBar count={selectedIds.size} onClear={() => setSelectedIds(new Set())} onDelete={() => setBulkOpen(true)} />
+      <BulkDeleteModal open={bulkOpen} count={selectedIds.size} noun="offer" onClose={() => setBulkOpen(false)} onConfirm={handleBulkDelete} />
 
       {showOfferTracking && (
         <div className="mt-6">

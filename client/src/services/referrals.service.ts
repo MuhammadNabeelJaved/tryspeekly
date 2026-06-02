@@ -74,6 +74,16 @@ export const referralsService = {
     return res.data
   },
 
+  async bulkDeleteRewards(ids: string[]) {
+    const res = await axiosClient.delete('/referrals/rewards/bulk', { data: { ids } })
+    return res.data as { success: boolean; message: string; data: { deleted: number } }
+  },
+
+  async bulkDeletePayoutRequests(ids: string[]) {
+    const res = await axiosClient.delete('/referrals/payout-requests/bulk', { data: { ids } })
+    return res.data as { success: boolean; message: string; data: { deleted: number } }
+  },
+
   async updateReferralSettings(dto: {
     enabled?: boolean
     refereeDiscountType?: 'percentage' | 'fixed'

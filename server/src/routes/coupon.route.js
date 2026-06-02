@@ -2,7 +2,7 @@ import { Router } from 'express'
 import { authenticate, authorizeTeamPage } from '../middlewares/auth.js'
 import { logActivity } from '../middlewares/activityLogger.js'
 import {
-  createCoupon, getCoupons, getCoupon, updateCoupon, deleteCoupon,
+  createCoupon, getCoupons, getCoupon, updateCoupon, deleteCoupon, bulkDeleteCoupons,
   validateCoupon, getCouponUsageTracking,
 } from '../controllers/coupon.controller.js'
 
@@ -15,6 +15,9 @@ router.route('/tracking').get(authenticate, authorizeTeamPage('referrals'), getC
 router.route('/')
   .get(authenticate, authorizeTeamPage('referrals'), getCoupons)
   .post(authenticate, authorizeTeamPage('referrals'), logActivity('create', 'coupon', (req, body) => ({ resourceId: body?.data?._id, resourceName: req.body.code ?? '', details: 'Created coupon' })), createCoupon)
+
+router.route('/bulk')
+  .delete(authenticate, authorizeTeamPage('referrals'), logActivity('delete', 'coupon', (req) => ({ details: `Bulk-deleted ${req.body?.ids?.length ?? 0} coupons` })), bulkDeleteCoupons)
 
 router.route('/:id')
   .get(authenticate, authorizeTeamPage('referrals'), getCoupon)

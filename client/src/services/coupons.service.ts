@@ -40,6 +40,11 @@ export const couponsService = {
     await axiosClient.delete(`/coupons/${id}`)
   },
 
+  async bulkDeleteCoupons(ids: string[]) {
+    const res = await axiosClient.delete('/coupons/bulk', { data: { ids } })
+    return res.data as { success: boolean; message: string; data: { deleted: number } }
+  },
+
   async getUsageTracking(params?: {
     page?: number
     limit?: number

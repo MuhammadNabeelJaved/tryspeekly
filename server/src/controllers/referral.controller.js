@@ -1,3 +1,5 @@
+import mongoose from 'mongoose'
+
 import asyncHandler from '../utils/asyncHandler.js'
 import Coupon from '../models/coupon.model.js'
 import ReferralReward from '../models/referral-reward.model.js'
@@ -492,4 +494,38 @@ export const updateReferralSettings = asyncHandler(async (req, res) => {
   } catch (error) {
     res.status(400).json({ success: false, error: { message: error.message } })
   }
+})
+
+// ─── Admin: Bulk-delete referral rewards ─────────────────────────────────────
+export const bulkDeleteRewards = asyncHandler(async (req, res) => {
+  const { ids } = req.body
+  if (!Array.isArray(ids) || ids.length === 0)
+    return res.status(400).json({ success: false, error: { message: 'ids must be a non-empty array' } })
+  if (ids.length > 100)
+    return res.status(400).json({ success: false, error: { message: 'Cannot delete more than 100 rewards at once' } })
+
+  const validIds = ids.filter(id => mongoose.isValidObjectId(id))
+  const result = await ReferralReward.deleteMany({ _id: { $in: validIds } })
+  res.json({
+    success: true,
+    message: `${result.deletedCount} reward${result.deletedCount !== 1 ? 's' : ''} deleted`,
+    data: { deleted: result.deletedCount },
+  })
+})
+
+// ─── Admin: Bulk-delete payout requests ──────────────────────────────────────
+export const bulkDeletePayoutRequests = asyncHandler(async (req, res) => {
+  const { ids } = req.body
+  if (!Array.isArray(ids) || ids.length === 0)
+    return res.status(400).json({ success: false, error: { message: 'ids must be a non-empty array' } })
+  if (ids.length > 100)
+    return res.status(400).json({ success: false, error: { message: 'Cannot delete more than 100 requests at once' } })
+
+  const validIds = ids.filter(id => mongoose.isValidObjectId(id))
+  const result = await PayoutRequest.deleteMany({ _id: { $in: validIds } })
+  res.json({
+    success: true,
+    message: `${result.deletedCount} payout request${result.deletedCount !== 1 ? 's' : ''} deleted`,
+    data: { deleted: result.deletedCount },
+  })
 })

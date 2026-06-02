@@ -1,3 +1,5 @@
+import mongoose from 'mongoose'
+
 import asyncHandler from '../utils/asyncHandler.js'
 import Offer from '../models/offer.model.js'
 import { BadRequestError, NotFoundError } from '../utils/apiErrors.js'
@@ -134,4 +136,19 @@ export const deleteOffer = asyncHandler(async (req, res) => {
   const offer = await Offer.findByIdAndDelete(req.params.id)
   if (!offer) throw new NotFoundError('Offer not found')
   res.status(204).send()
+})
+
+// ─── DELETE /api/v1/offers/bulk (admin) ──────────────────────────────────────
+export const bulkDeleteOffers = asyncHandler(async (req, res) => {
+  const { ids } = req.body
+  if (!Array.isArray(ids) || ids.length === 0) throw new BadRequestError('ids must be a non-empty array')
+  if (ids.length > 100) throw new BadRequestError('Cannot delete more than 100 offers at once')
+
+  const validIds = ids.filter(id => mongoose.isValidObjectId(id))
+  const result = await Offer.deleteMany({ _id: { $in: validIds } })
+  res.json({
+    success: true,
+    message: `${result.deletedCount} offer${result.deletedCount !== 1 ? 's' : ''} deleted`,
+    data: { deleted: result.deletedCount },
+  })
 })

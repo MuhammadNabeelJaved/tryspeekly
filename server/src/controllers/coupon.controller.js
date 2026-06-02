@@ -1,3 +1,5 @@
+import mongoose from 'mongoose'
+
 import asyncHandler from '../utils/asyncHandler.js'
 import Coupon from '../models/coupon.model.js'
 import Course from '../models/course.model.js'
@@ -119,6 +121,24 @@ export const deleteCoupon = asyncHandler(async (req, res) => {
   } catch (error) {
     res.status(400).json({ success: false, error: { message: error.message } })
   }
+})
+
+// ─── Admin: Bulk-delete coupons ────────────────────────────────────────────────
+// Only admin-created coupons are deletable; referral coupons are system-managed.
+export const bulkDeleteCoupons = asyncHandler(async (req, res) => {
+  const { ids } = req.body
+  if (!Array.isArray(ids) || ids.length === 0)
+    return res.status(400).json({ success: false, error: { message: 'ids must be a non-empty array' } })
+  if (ids.length > 100)
+    return res.status(400).json({ success: false, error: { message: 'Cannot delete more than 100 coupons at once' } })
+
+  const validIds = ids.filter(id => mongoose.isValidObjectId(id))
+  const result = await Coupon.deleteMany({ _id: { $in: validIds }, source: 'admin' })
+  res.json({
+    success: true,
+    message: `${result.deletedCount} coupon${result.deletedCount !== 1 ? 's' : ''} deleted`,
+    data: { deleted: result.deletedCount },
+  })
 })
 
 // ─── Student: Validate coupon ──────────────────────────────────────────────────
