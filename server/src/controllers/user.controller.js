@@ -641,7 +641,7 @@ export const bulkDeleteUsers = asyncHandler(async (req, res) => {
     return res.status(400).json({ success: false, error: { message: 'Cannot delete more than 100 users at once' } })
   }
 
-  const adminId = req.user._id.toString()
+  const adminId = req.user.id.toString()
   const filteredIds = ids.filter(id => id !== adminId)
   const skipped = ids.length - filteredIds.length
 
