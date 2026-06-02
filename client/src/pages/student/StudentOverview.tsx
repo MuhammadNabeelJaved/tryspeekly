@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CalendarBlank, CheckCircle, CreditCard, Clock, VideoCamera, HandWaving, Megaphone, ClipboardText, ChartLineUp, Certificate, ArrowRight, Warning, X } from '@phosphor-icons/react'
+import UserAvatar from '@/components/UserAvatar'
 import { useAuth } from '../../context/AuthContext'
 import { useSocket } from '@/context/SocketContext'
 import { enrollmentsService } from '../../services/enrollments.service'
@@ -24,6 +25,15 @@ type UpcomingClass = {
   scheduledAt: string | null
   status: 'scheduled' | 'active' | 'completed' | 'cancelled'
   createdAt: string
+}
+
+// Cover gradient fallback (when a course has no thumbnail), keyed by level.
+const LEVEL_GRADIENT: Record<string, string> = {
+  beginner: 'from-emerald-400 via-teal-400 to-cyan-500',
+  intermediate: 'from-sky-400 via-blue-500 to-indigo-500',
+  advanced: 'from-violet-500 via-purple-500 to-fuchsia-600',
+  business: 'from-amber-400 via-orange-500 to-rose-500',
+  kids: 'from-pink-400 via-rose-400 to-red-500',
 }
 
 export default function StudentOverview({ onNavigate }: { onNavigate: (view: StudentView) => void }) {
@@ -379,55 +389,71 @@ export default function StudentOverview({ onNavigate }: { onNavigate: (view: Stu
                 const attendance = total > 0 ? Math.min(100, Math.round((attended / total) * 100)) : 0
                 const schedule = scheduleLabel(enrollment)
                 const liveForCourse = upcomingClasses.find(c => c.course._id === enrollment.course._id)
+                const level = (enrollment.course.level ?? 'beginner').toLowerCase()
+                const gradient = LEVEL_GRADIENT[level] ?? LEVEL_GRADIENT.beginner
+                const thumbnail = enrollment.course.thumbnail
+                const isLive = liveForCourse?.status === 'active'
 
                 return (
                   <Link
                     key={enrollment._id}
                     to={`/dashboard/courses/${enrollment.course._id}`}
-                    className="bg-slate-50 dark:bg-neutral-800/30 rounded-2xl p-4 border border-slate-100 dark:border-neutral-800 flex flex-col hover:bg-slate-100 dark:hover:bg-neutral-800/50 transition-colors group"
+                    className="group/card bg-white dark:bg-neutral-900 rounded-2xl border border-slate-100 dark:border-neutral-800 overflow-hidden flex flex-col transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-slate-200/60 dark:hover:shadow-black/40"
                   >
-                    <div className="flex justify-between items-start mb-3">
-                      <div className="w-10 h-10 rounded-xl bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center text-violet-600 dark:text-violet-400 group-hover:scale-110 transition-transform">
-                        <VideoCamera size={20} weight="fill" />
-                      </div>
+                    {/* Cover */}
+                    <div className="relative h-24 overflow-hidden">
+                      {thumbnail ? (
+                        <img src={thumbnail} alt={enrollment.course.title} className="w-full h-full object-cover transition-transform duration-500 group-hover/card:scale-105" />
+                      ) : (
+                        <div className={`relative w-full h-full bg-gradient-to-br ${gradient}`}>
+                          <VideoCamera size={40} weight="duotone" className="absolute right-3 bottom-2 text-white/25" />
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
                       {enrollment.course.level && (
-                        <span className="text-[10px] font-bold px-2 py-1 bg-white dark:bg-neutral-800 text-slate-600 dark:text-neutral-400 rounded-md border border-slate-200 dark:border-neutral-700">
+                        <span className="absolute top-2.5 left-2.5 inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/90 dark:bg-black/50 backdrop-blur-md text-slate-700 dark:text-white capitalize shadow-sm">
                           {enrollment.course.level}
+                        </span>
+                      )}
+                      {isLive && (
+                        <span className="absolute top-2.5 right-2.5 inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-500 text-white shadow-sm">
+                          <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" /> LIVE
                         </span>
                       )}
                     </div>
 
-                    <h4 className="font-bold text-slate-900 dark:text-white leading-tight mb-1 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">
-                      {enrollment.course.title}
-                    </h4>
-                    <p className="text-xs text-slate-500 dark:text-neutral-400 mb-4">Inst: {enrollment.teacher?.name ?? '—'}</p>
+                    {/* Body */}
+                    <div className="p-4 flex flex-col gap-2.5 flex-1">
+                      <h4 className="text-sm font-bold text-slate-900 dark:text-white leading-snug line-clamp-2 min-h-[2.4rem] group-hover/card:text-violet-600 dark:group-hover/card:text-violet-400 transition-colors">
+                        {enrollment.course.title}
+                      </h4>
 
-                    <div className="mt-auto space-y-2">
-                      {schedule && (
-                        <div className="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-neutral-300 bg-white dark:bg-neutral-800 p-2 rounded-lg border border-slate-100 dark:border-neutral-700">
-                          <CalendarBlank size={14} className="text-violet-600" />
-                          {schedule}
-                        </div>
-                      )}
-                      {liveForCourse && (
-                        <div className={`flex items-center gap-2 text-xs font-semibold p-2 rounded-lg border ${
-                          liveForCourse.status === 'active'
-                            ? 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/10 border-red-100 dark:border-red-900/20'
-                            : 'text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-900/10 border-violet-100 dark:border-violet-900/20'
-                        }`}>
-                          <Clock size={14} />
-                          {liveForCourse.status === 'active' ? 'LIVE NOW' : (
-                            liveForCourse.scheduledAt
-                              ? `Next: ${new Date(liveForCourse.scheduledAt).toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}`
-                              : 'Scheduled'
-                          )}
-                        </div>
-                      )}
-                      <div className="flex justify-between items-center text-xs font-bold pt-1">
-                        <span className="text-slate-500 dark:text-neutral-400">Attendance</span>
-                        <span className={attendance >= 80 ? 'text-green-600' : 'text-amber-500'}>
-                          {attendance}% ({attended}/{total})
+                      <div className="flex items-center gap-2">
+                        <UserAvatar src={enrollment.teacher?.profileImage} name={enrollment.teacher?.name} size="xs" />
+                        <p className="text-xs font-semibold text-slate-600 dark:text-neutral-300 truncate">{enrollment.teacher?.name ?? '—'}</p>
+                      </div>
+
+                      {liveForCourse && !isLive && liveForCourse.scheduledAt && (
+                        <span className="inline-flex items-center gap-1.5 text-xs text-slate-400 dark:text-neutral-500">
+                          <Clock size={13} /> Next: {new Date(liveForCourse.scheduledAt).toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                         </span>
+                      )}
+                      {(!liveForCourse || isLive) && schedule && (
+                        <span className="inline-flex items-center gap-1.5 text-xs text-slate-400 dark:text-neutral-500">
+                          <CalendarBlank size={13} /> {schedule}
+                        </span>
+                      )}
+
+                      <div className="flex-1" />
+
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-slate-400 dark:text-neutral-500 font-medium">{attended} of {total} sessions</span>
+                          <span className="font-bold text-slate-700 dark:text-neutral-200">{attendance}%</span>
+                        </div>
+                        <div className="h-1.5 bg-slate-100 dark:bg-neutral-800 rounded-full overflow-hidden">
+                          <div className={`h-full rounded-full bg-gradient-to-r ${gradient} transition-all duration-700`} style={{ width: `${attendance}%` }} />
+                        </div>
                       </div>
                     </div>
                   </Link>
