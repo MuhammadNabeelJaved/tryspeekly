@@ -1,4 +1,3 @@
-import { Helmet } from 'react-helmet-async'
 import { useSEO } from '../hooks/useSEO'
 
 interface Props {
@@ -7,6 +6,11 @@ interface Props {
   fallbackDescription?: string
 }
 
+/**
+ * Injects SEO meta tags into <head>.
+ * React 19 natively hoists <title>, <meta>, and <link> rendered anywhere in the
+ * tree up to <head> — no helmet library required.
+ */
 export default function SEOMeta({ slug, fallbackTitle = 'EnglishPro Academy', fallbackDescription = '' }: Props) {
   const seo = useSEO(slug)
   if (!seo) return null
@@ -25,7 +29,7 @@ export default function SEOMeta({ slug, fallbackTitle = 'EnglishPro Academy', fa
   ].filter(Boolean).join(', ')
 
   return (
-    <Helmet>
+    <>
       <title>{title}</title>
       {description && <meta name="description" content={description} />}
       {keywords    && <meta name="keywords"    content={keywords} />}
@@ -54,10 +58,10 @@ export default function SEOMeta({ slug, fallbackTitle = 'EnglishPro Academy', fa
         <meta name="google-site-verification" content={seo.global.googleSiteVerification} />
       )}
 
-      {/* JSON-LD Structured Data */}
+      {/* JSON-LD Structured Data — valid anywhere in the document for crawlers */}
       {seo.schemaMarkup && (
-        <script type="application/ld+json">{seo.schemaMarkup}</script>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: seo.schemaMarkup }} />
       )}
-    </Helmet>
+    </>
   )
 }
