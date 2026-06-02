@@ -11,6 +11,7 @@ import {
   directApprovePayment,
   deletePayment,
   bulkDeletePayments,
+  reprocessReferralReward,
 } from '../controllers/payment.controller.js'
 
 const router = express.Router()
@@ -26,6 +27,7 @@ router.route('/admin/direct-approve').post(authenticate, authorizeTeamPage('paym
 router.route('/bulk').delete(authenticate, authorizeTeamPage('payments'), bulkDeletePayments)
 router.route('/:id/approve').patch(authenticate, authorizeTeamPage('payments'), approvePayment)
 router.route('/:id/reject').patch(authenticate, authorizeTeamPage('payments'), rejectPayment)
+router.route('/:id/reprocess-referral').post(authenticate, authorizeTeamPage('payments'), reprocessReferralReward)
 router.route('/:id').delete(authenticate, authorizeTeamPage('payments'), deletePayment)
 
 export default router

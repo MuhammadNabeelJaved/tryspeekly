@@ -253,6 +253,9 @@ export interface Payment {
   status: PaymentStatus;
   adminNote?: string;
   rejectionReason?: string;
+  coupon?: { _id: string; code: string; source: string };
+  discountApplied?: number;
+  offerDiscountApplied?: number;
   enrollmentActive?: boolean;
   createdAt: string;
   updatedAt: string;
@@ -296,6 +299,8 @@ export interface UnpaidEnrollment {
   teacher: { _id: string; name: string };
   enrolledAt: string;
   isActive: boolean;
+  discountApplied?: number;
+  offerDiscountApplied?: number;
 }
 
 // ─── Message Types ────────────────────────────────────────────────────────────

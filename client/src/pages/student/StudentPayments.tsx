@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { Receipt, CheckCircle, Clock, XCircle, Image, LockSimple, ArrowClockwise, Warning } from '@phosphor-icons/react'
+import { Receipt, CheckCircle, Clock, XCircle, Image, LockSimple, ArrowClockwise, Warning, Gift } from '@phosphor-icons/react'
 import { paymentsService } from '@/services/payments.service'
 import { enrollmentsService } from '@/services/enrollments.service'
 import type { Payment, Enrollment } from '@/types/api'
@@ -153,6 +153,11 @@ export default function StudentPayments() {
                         <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">
                           −{payment.currency} {(payment.discountApplied ?? 0).toLocaleString()} discount
                         </p>
+                      )}
+                      {payment.coupon?.source === 'referral' && (
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 text-[10px] font-bold mt-0.5">
+                          <Gift size={9} weight="fill" /> Referral: {payment.coupon.code}
+                        </span>
                       )}
                     </td>
                     <td className="px-5 py-4 whitespace-nowrap text-center">

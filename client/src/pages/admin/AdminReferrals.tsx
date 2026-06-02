@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
-import { Tag, Gift, Users, Wallet, Plus, Trash, ToggleLeft, ToggleRight, Copy, Check, X, Percent, PencilSimple, ChartBar } from '@phosphor-icons/react'
+import { Tag, Gift, Users, Wallet, Plus, Trash, ToggleLeft, ToggleRight, Copy, Check, X, Percent, PencilSimple, ChartBar, CalendarBlank } from '@phosphor-icons/react'
 import toast from 'react-hot-toast'
 import ConfirmModal from '@/components/ConfirmModal'
 import { couponsService } from '@/services/coupons.service'
@@ -70,6 +70,7 @@ function CouponsTab() {
   const [tracking, setTracking] = useState<any[]>([])
   const [trackingLoading, setTrackingLoading] = useState(false)
   const [trackingTotal, setTrackingTotal] = useState(0)
+  const [expiryModal, setExpiryModal] = useState<{ id: string; code: string; current: string } | null>(null)
 
   const loadTracking = useCallback(async () => {
     setTrackingLoading(true)
@@ -172,7 +173,7 @@ function CouponsTab() {
           <table className="w-full text-sm">
             <thead className="border-b border-slate-100 dark:border-neutral-800 bg-slate-50 dark:bg-neutral-800/50">
               <tr>
-                {['Code', 'Type', 'Discount', 'Scope', 'Uses', 'Expiry', 'Status', ''].map(h => (
+                {['Code', 'Type', 'Referrer', 'Discount', 'Scope', 'Uses', 'Expiry', 'Status', ''].map(h => (
                   <th key={h} className="px-4 py-3 text-left text-xs font-bold text-slate-500 dark:text-neutral-400 uppercase tracking-wider">{h}</th>
                 ))}
               </tr>
@@ -186,6 +187,14 @@ function CouponsTab() {
                       {c.source === 'referral' ? 'Referral' : 'Manual'}
                     </span>
                   </td>
+                  <td className="px-4 py-3">
+                    {c.referrer ? (
+                      <div>
+                        <p className="text-xs font-semibold text-slate-700 dark:text-neutral-200">{c.referrer.name}</p>
+                        <p className="text-[11px] text-slate-400 dark:text-neutral-500">{c.referrer.email}</p>
+                      </div>
+                    ) : <span className="text-slate-300 dark:text-neutral-700 text-xs">—</span>}
+                  </td>
                   <td className="px-4 py-3 text-slate-700 dark:text-neutral-300">
                     {c.discountType === 'percentage' ? `${c.discountValue}%` : `PKR ${c.discountValue}`}
                   </td>
@@ -195,8 +204,19 @@ function CouponsTab() {
                   <td className="px-4 py-3 text-slate-500 dark:text-neutral-400">
                     {c.usedCount}{c.maxUses !== null ? `/${c.maxUses}` : ''}
                   </td>
-                  <td className="px-4 py-3 text-slate-500 dark:text-neutral-400">
-                    {c.expiresAt ? new Date(c.expiresAt).toLocaleDateString() : '—'}
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    {c.expiresAt ? (
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-xs text-slate-500 dark:text-neutral-400">
+                          {new Date(c.expiresAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </span>
+                        {new Date(c.expiresAt) < new Date() && (
+                          <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 w-fit">
+                            Expired
+                          </span>
+                        )}
+                      </div>
+                    ) : <span className="text-slate-300 dark:text-neutral-700">—</span>}
                   </td>
                   <td className="px-4 py-3">
                     <button onClick={() => handleToggle(c._id, c.isActive)} className="transition-colors">
@@ -207,11 +227,24 @@ function CouponsTab() {
                     </button>
                   </td>
                   <td className="px-4 py-3">
-                    {c.source === 'admin' && (
-                      <button onClick={() => setConfirmModal({ id: c._id })} className="text-red-400 hover:text-red-600 transition-colors">
-                        <Trash size={15} />
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setExpiryModal({
+                          id: c._id,
+                          code: c.code,
+                          current: c.expiresAt ? new Date(c.expiresAt).toISOString().slice(0, 10) : '',
+                        })}
+                        title="Set expiry date"
+                        className="text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
+                      >
+                        <CalendarBlank size={15} />
                       </button>
-                    )}
+                      {c.source === 'admin' && (
+                        <button onClick={() => setConfirmModal({ id: c._id })} className="text-red-400 hover:text-red-600 transition-colors">
+                          <Trash size={15} />
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -225,6 +258,16 @@ function CouponsTab() {
           courses={courses}
           onClose={() => setShowModal(false)}
           onSuccess={() => { setShowModal(false); load() }}
+        />
+      )}
+
+      {expiryModal && (
+        <SetExpiryModal
+          couponId={expiryModal.id}
+          couponCode={expiryModal.code}
+          currentExpiry={expiryModal.current}
+          onClose={() => setExpiryModal(null)}
+          onSuccess={() => { setExpiryModal(null); load() }}
         />
       )}
 
@@ -297,6 +340,81 @@ function CouponsTab() {
           )}
         </div>
       )}
+    </div>
+  )
+}
+
+function SetExpiryModal({
+  couponId, couponCode, currentExpiry, onClose, onSuccess,
+}: { couponId: string; couponCode: string; currentExpiry: string; onClose: () => void; onSuccess: () => void }) {
+  const [expiresAt, setExpiresAt] = useState(currentExpiry)
+  const [saving, setSaving] = useState(false)
+
+  async function handleSave() {
+    setSaving(true)
+    try {
+      await couponsService.updateCoupon(couponId, { expiresAt: expiresAt || null })
+      toast.success(expiresAt ? `Expiry set to ${new Date(expiresAt).toLocaleDateString()}` : 'Expiry cleared')
+      onSuccess()
+    } catch { toast.error('Failed to update expiry') } finally { setSaving(false) }
+  }
+
+  const isExpired = expiresAt && new Date(expiresAt) < new Date()
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200 dark:border-neutral-800 p-6 w-full max-w-sm shadow-xl"
+      >
+        <div className="flex items-center justify-between mb-5">
+          <div>
+            <h3 className="font-black text-slate-900 dark:text-white">Set Expiry Date</h3>
+            <p className="text-xs text-slate-400 dark:text-neutral-500 mt-0.5 font-mono">{couponCode}</p>
+          </div>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-neutral-200"><X size={18} /></button>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <label className="text-xs font-bold text-slate-500 dark:text-neutral-400 uppercase tracking-wide mb-1.5 block">
+              Expiry Date
+            </label>
+            <input
+              type="date"
+              value={expiresAt}
+              onChange={e => setExpiresAt(e.target.value)}
+              min={new Date().toISOString().slice(0, 10)}
+              className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors"
+            />
+            {isExpired && (
+              <p className="text-xs text-red-500 mt-1">This date is in the past — the code will be rejected immediately.</p>
+            )}
+            {!expiresAt && (
+              <p className="text-xs text-slate-400 dark:text-neutral-500 mt-1">Leave blank for no expiry (code never expires).</p>
+            )}
+          </div>
+
+          <div className="flex gap-3">
+            {expiresAt && (
+              <button
+                onClick={() => setExpiresAt('')}
+                className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-neutral-700 text-sm font-bold text-slate-500 dark:text-neutral-400 hover:bg-slate-50 dark:hover:bg-neutral-800 transition-colors"
+              >
+                Clear
+              </button>
+            )}
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="flex-1 py-2.5 bg-violet-600 hover:bg-violet-700 disabled:opacity-60 text-white font-bold rounded-xl text-sm transition-colors"
+            >
+              {saving ? 'Saving…' : 'Save'}
+            </button>
+          </div>
+        </div>
+      </motion.div>
     </div>
   )
 }

@@ -78,6 +78,13 @@ export const paymentsService = {
     return { message: response.data.message || 'Payment deleted' };
   },
 
+  async reprocessReferral(id: string): Promise<{ success: boolean; message: string; data?: { rewardAmount?: number; alreadyProcessed?: boolean } }> {
+    const response = await axiosClient.post<{ success: boolean; message: string; data?: { rewardAmount?: number; alreadyProcessed?: boolean } }>(
+      `/payments/${id}/reprocess-referral`
+    );
+    return response.data;
+  },
+
   async bulkDeletePayments(
     ids: string[],
     deactivateEnrollments: boolean

@@ -16,6 +16,21 @@ export const referralsService = {
     return res.data
   },
 
+  async getMyCodeStats(): Promise<{
+    success: boolean
+    data: {
+      codes: Array<{
+        _id: string; code: string; scope: string; expiresAt: string | null
+        usedCount: number; isActive: boolean; isExpired: boolean; createdAt: string
+        course?: { _id: string; title: string } | null; shareUrl: string
+      }>
+      monthlyLimit: number; thisMonthCount: number; remaining: number; currentMonth: string
+    }
+  }> {
+    const res = await axiosClient.get('/referrals/my-code-stats')
+    return res.data
+  },
+
   async getMyRewards(params?: { page?: number; limit?: number }) {
     const res = await axiosClient.get('/referrals/my-rewards', { params })
     return res.data

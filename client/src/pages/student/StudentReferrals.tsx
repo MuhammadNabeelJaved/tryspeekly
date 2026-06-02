@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Gift, Copy, Check, Wallet, ArrowDown, Clock, CheckCircle, XCircle } from '@phosphor-icons/react'
+import { Gift, Copy, Check, Wallet, ArrowDown, Clock, CheckCircle, XCircle, CalendarBlank, Warning, ListBullets, ChartBar } from '@phosphor-icons/react'
 import toast from 'react-hot-toast'
 import { referralsService } from '@/services/referrals.service'
 import { enrollmentsService } from '@/services/enrollments.service'
@@ -19,17 +19,34 @@ export default function StudentReferrals() {
   const [showPayoutModal, setShowPayoutModal] = useState(false)
   const [submittingPayout, setSubmittingPayout] = useState(false)
   const [copied, setCopied] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<'codes' | 'history'>('codes')
+  const [codeStats, setCodeStats] = useState<{
+    codes: any[]; monthlyLimit: number; thisMonthCount: number; remaining: number; currentMonth: string
+  } | null>(null)
 
-  useEffect(() => {
+  const loadAll = () => {
     referralsService.getPublicSettings().then(r => { if (r.success) setPublicSettings(r.data) }).catch(() => {})
     referralsService.getMyWallet().then(r => { if (r.success) { setWallet(r.data.wallet); setPendingPayout(r.data.pendingPayout) } }).catch(() => {})
     referralsService.getMyCodes().then(r => { if (r.success) setMyCodes(r.data.coupons ?? r.data) }).catch(() => {})
     referralsService.getMyRewards().then(r => { if (r.success) setRewards(r.data) }).catch(() => {})
+    referralsService.getMyCodeStats().then(r => { if (r.success) setCodeStats(r.data) }).catch(() => {})
     enrollmentsService.getMyEnrollments().then(r => { if (r.success) setEnrollments(r.data) }).catch(() => {})
-  }, [])
+  }
+
+  useEffect(() => { loadAll() }, [])
 
   const generalCode = myCodes.find(c => c.scope === 'platform')
   const courseCodes = myCodes.filter(c => c.scope === 'course')
+
+  function expiryInfo(code: any): { label: string; urgent: boolean; expired: boolean } | null {
+    if (!code?.expiresAt) return null
+    const exp = new Date(code.expiresAt)
+    const now = new Date()
+    if (exp < now) return { label: 'Expired', urgent: false, expired: true }
+    const daysLeft = Math.ceil((exp.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+    if (daysLeft <= 7) return { label: `Expires in ${daysLeft} day${daysLeft === 1 ? '' : 's'}`, urgent: true, expired: false }
+    return { label: `Expires ${exp.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}`, urgent: false, expired: false }
+  }
 
   async function handleGenerateGeneral() {
     setGeneratingGeneral(true)
@@ -37,9 +54,12 @@ export default function StudentReferrals() {
       const res = await referralsService.generateCode()
       if (res.success) {
         referralsService.getMyCodes().then(r => { if (r.success) setMyCodes(r.data.coupons ?? r.data) })
+        referralsService.getMyCodeStats().then(r => { if (r.success) setCodeStats(r.data) })
         toast.success('General referral code generated!')
       }
-    } catch { toast.error('Failed to generate code') } finally { setGeneratingGeneral(false) }
+    } catch (err: any) {
+      toast.error(err?.response?.data?.error?.message || 'Failed to generate code')
+    } finally { setGeneratingGeneral(false) }
   }
 
   async function handleGenerateCourse() {
@@ -49,10 +69,13 @@ export default function StudentReferrals() {
       const res = await referralsService.generateCode(selectedCourse)
       if (res.success) {
         referralsService.getMyCodes().then(r => { if (r.success) setMyCodes(r.data.coupons ?? r.data) })
+        referralsService.getMyCodeStats().then(r => { if (r.success) setCodeStats(r.data) })
         toast.success('Course referral link generated!')
         setSelectedCourse('')
       }
-    } catch { toast.error('Failed to generate link') } finally { setGeneratingCourse(false) }
+    } catch (err: any) {
+      toast.error(err?.response?.data?.error?.message || 'Failed to generate link')
+    } finally { setGeneratingCourse(false) }
   }
 
   function copyToClipboard(text: string, id: string) {
@@ -181,31 +204,126 @@ export default function StudentReferrals() {
         )}
       </motion.div>
 
-      {/* ── Section 3: Referral Codes ── */}
+      {/* ── Section 3: Referral Codes + History ── */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
         className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200 dark:border-neutral-800 p-5"
       >
-        <h3 className="font-black text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-          <Gift size={18} className="text-violet-600" />
-          Your Referral Codes
-        </h3>
+        {/* Tab switcher */}
+        <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
+          <div className="flex gap-1 bg-slate-100 dark:bg-neutral-800 p-1 rounded-xl">
+            <button
+              onClick={() => setActiveTab('codes')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${activeTab === 'codes' ? 'bg-white dark:bg-neutral-700 text-violet-600 dark:text-violet-400 shadow-sm' : 'text-slate-500 dark:text-neutral-400'}`}
+            >
+              <Gift size={13} /> Your Referral Codes
+            </button>
+            <button
+              onClick={() => setActiveTab('history')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${activeTab === 'history' ? 'bg-white dark:bg-neutral-700 text-violet-600 dark:text-violet-400 shadow-sm' : 'text-slate-500 dark:text-neutral-400'}`}
+            >
+              <ChartBar size={13} /> Code History
+            </button>
+          </div>
+
+          {/* Monthly limit badge */}
+          {codeStats && (
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-violet-50 dark:bg-violet-950/30 border border-violet-100 dark:border-violet-900 rounded-xl">
+              <ListBullets size={13} className="text-violet-500 flex-shrink-0" />
+              <span className="text-xs font-semibold text-violet-700 dark:text-violet-300">
+                {codeStats.thisMonthCount}/{codeStats.monthlyLimit} codes · {codeStats.currentMonth}
+              </span>
+              <span className={`text-xs font-black px-1.5 py-0.5 rounded-full ${codeStats.remaining > 0 ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400' : 'bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400'}`}>
+                {codeStats.remaining > 0 ? `${codeStats.remaining} left` : 'Limit reached'}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {activeTab === 'history' ? (
+          /* ── Code History tab ── */
+          <div>
+            {!codeStats || codeStats.codes.length === 0 ? (
+              <div className="text-center py-8 text-slate-400 dark:text-neutral-500 text-sm">No codes generated yet.</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-100 dark:border-neutral-800">
+                      {['Code', 'Scope', 'Uses', 'Created', 'Expiry', 'Status'].map(h => (
+                        <th key={h} className="pb-3 text-left text-xs font-bold text-slate-400 dark:text-neutral-500 uppercase tracking-wider pr-4">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50 dark:divide-neutral-800">
+                    {codeStats.codes.map(c => {
+                      const isExpired = c.isExpired
+                      const isInactive = !c.isActive
+                      return (
+                        <tr key={c._id} className={`${isExpired ? 'opacity-60' : ''}`}>
+                          <td className="py-3 pr-4 font-mono font-bold text-violet-600 dark:text-violet-400 text-xs">{c.code}</td>
+                          <td className="py-3 pr-4 text-slate-500 dark:text-neutral-400 text-xs">
+                            {c.scope === 'platform' ? 'General' : (c.course?.title || 'Course')}
+                          </td>
+                          <td className="py-3 pr-4 text-slate-500 dark:text-neutral-400 text-xs">{c.usedCount}</td>
+                          <td className="py-3 pr-4 text-slate-400 text-xs whitespace-nowrap">
+                            {new Date(c.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          </td>
+                          <td className="py-3 pr-4 text-xs whitespace-nowrap">
+                            {c.expiresAt
+                              ? <span className={isExpired ? 'text-red-500 dark:text-red-400 font-semibold' : 'text-slate-400 dark:text-neutral-500'}>
+                                  {new Date(c.expiresAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                </span>
+                              : <span className="text-slate-300 dark:text-neutral-600">—</span>
+                            }
+                          </td>
+                          <td className="py-3">
+                            {isExpired
+                              ? <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">Expired</span>
+                              : isInactive
+                              ? <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-neutral-800 text-slate-500 dark:text-neutral-400">Inactive</span>
+                              : <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400">Active</span>
+                            }
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        ) : (
+          /* ── Active Codes tab ── */
+          <div>
 
         {/* General code */}
         <div className="mb-5">
           <p className="text-sm font-bold text-slate-700 dark:text-neutral-200 mb-2">General Code (any course)</p>
           {generalCode ? (
-            <div className="flex items-center gap-3 bg-slate-50 dark:bg-neutral-800 rounded-xl px-4 py-3">
-              <code className="flex-1 font-mono text-sm font-bold text-violet-600 dark:text-violet-400">{generalCode.code}</code>
-              <button
-                onClick={() => copyToClipboard(generalCode.shareUrl, 'general')}
-                className="flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-neutral-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
-              >
-                {copied === 'general' ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
-                {copied === 'general' ? 'Copied!' : 'Copy Link'}
-              </button>
+            <div className="bg-slate-50 dark:bg-neutral-800 rounded-xl px-4 py-3 space-y-2">
+              <div className="flex items-center gap-3">
+                <code className="flex-1 font-mono text-sm font-bold text-violet-600 dark:text-violet-400">{generalCode.code}</code>
+                <button
+                  onClick={() => copyToClipboard(generalCode.shareUrl, 'general')}
+                  disabled={expiryInfo(generalCode)?.expired}
+                  className="flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-neutral-400 hover:text-violet-600 dark:hover:text-violet-400 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  {copied === 'general' ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
+                  {copied === 'general' ? 'Copied!' : 'Copy Link'}
+                </button>
+              </div>
+              {expiryInfo(generalCode) && (() => {
+                const info = expiryInfo(generalCode)!
+                return (
+                  <div className={`flex items-center gap-1.5 text-[11px] font-semibold ${info.expired ? 'text-red-500 dark:text-red-400' : info.urgent ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400 dark:text-neutral-500'}`}>
+                    {info.expired ? <Warning size={12} weight="fill" /> : <CalendarBlank size={12} />}
+                    {info.label}
+                  </div>
+                )
+              })()}
             </div>
           ) : (
             <button
@@ -243,24 +361,38 @@ export default function StudentReferrals() {
 
           {courseCodes.length > 0 && (
             <div className="space-y-2">
-              {courseCodes.map(c => (
-                <div key={c._id} className="flex items-center gap-3 bg-slate-50 dark:bg-neutral-800 rounded-xl px-4 py-3">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs text-slate-400 dark:text-neutral-500 truncate">{c.course?.title}</p>
-                    <code className="font-mono text-sm font-bold text-violet-600 dark:text-violet-400">{c.code}</code>
+              {courseCodes.map(c => {
+                const info = expiryInfo(c)
+                return (
+                  <div key={c._id} className="bg-slate-50 dark:bg-neutral-800 rounded-xl px-4 py-3 space-y-1.5">
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs text-slate-400 dark:text-neutral-500 truncate">{c.course?.title}</p>
+                        <code className="font-mono text-sm font-bold text-violet-600 dark:text-violet-400">{c.code}</code>
+                      </div>
+                      <button
+                        onClick={() => copyToClipboard(c.shareUrl, c._id)}
+                        disabled={info?.expired}
+                        className="flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-neutral-400 hover:text-violet-600 dark:hover:text-violet-400 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex-shrink-0"
+                      >
+                        {copied === c._id ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
+                        {copied === c._id ? 'Copied!' : 'Copy'}
+                      </button>
+                    </div>
+                    {info && (
+                      <div className={`flex items-center gap-1.5 text-[11px] font-semibold ${info.expired ? 'text-red-500 dark:text-red-400' : info.urgent ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400 dark:text-neutral-500'}`}>
+                        {info.expired ? <Warning size={12} weight="fill" /> : <CalendarBlank size={12} />}
+                        {info.label}
+                      </div>
+                    )}
                   </div>
-                  <button
-                    onClick={() => copyToClipboard(c.shareUrl, c._id)}
-                    className="flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-neutral-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors flex-shrink-0"
-                  >
-                    {copied === c._id ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
-                    {copied === c._id ? 'Copied!' : 'Copy'}
-                  </button>
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </div>
+          </div>
+        )}
       </motion.div>
 
       {/* ── Section 4: Referral History ── */}

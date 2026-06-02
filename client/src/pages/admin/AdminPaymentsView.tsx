@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
-import { CreditCard, CheckCircle, WarningCircle, XCircle, MagnifyingGlass, FunnelSimple, Plus, Image, LockSimple, WhatsappLogo } from '@phosphor-icons/react'
+import { CreditCard, CheckCircle, WarningCircle, XCircle, MagnifyingGlass, FunnelSimple, Plus, Image, LockSimple, WhatsappLogo, Gift } from '@phosphor-icons/react'
 import { paymentsService } from '@/services/payments.service'
 import type { Payment, UnpaidEnrollment, PaymentMethod } from '@/types/api'
 import AdminPaymentCreateModal from './AdminPaymentCreateModal'
@@ -44,6 +44,7 @@ export default function AdminPaymentsView() {
   const [directApprove, setDirectApprove] = useState<DirectApproveState>(null)
   const [directApproveLoading, setDirectApproveLoading] = useState(false)
   const [directApproveError, setDirectApproveError] = useState('')
+  const [reprocessingReferral, setReprocessingReferral] = useState<string | null>(null)
 
   const fetchPayments = useCallback(() => {
     setLoading(true)
@@ -88,6 +89,23 @@ export default function AdminPaymentsView() {
       setDirectApproveError(err?.response?.data?.error?.message || 'Failed. Please try again.')
     } finally {
       setDirectApproveLoading(false)
+    }
+  }
+
+  const handleReprocessReferral = async (paymentId: string) => {
+    setReprocessingReferral(paymentId)
+    try {
+      const res = await paymentsService.reprocessReferral(paymentId)
+      if (res.data?.alreadyProcessed) {
+        toast.success('Referral reward was already credited.')
+      } else {
+        toast.success(res.message || 'Referral reward credited successfully!')
+        fetchPayments()
+      }
+    } catch (err: any) {
+      toast.error(err?.response?.data?.error?.message || 'Failed to process referral reward.')
+    } finally {
+      setReprocessingReferral(null)
     }
   }
 
@@ -252,9 +270,12 @@ export default function AdminPaymentsView() {
                     </td></tr>
                   )}
                   {unpaidEnrollments.map(e => {
-                    const price = e.course.currency === 'USD' ? (e.course.priceUSD ?? 0) : (e.course.price ?? 0)
+                    const basePrice = e.course.currency === 'USD' ? (e.course.priceUSD ?? 0) : (e.course.price ?? 0)
+                    const totalDiscount = (e.discountApplied ?? 0) + (e.offerDiscountApplied ?? 0)
+                    const price = Math.max(0, basePrice - totalDiscount)
                     const priceSuffix = e.course.pricingType === 'monthly' ? '/mo' : e.course.pricingType === 'per_session' ? '/session' : ''
-                    const priceLabel = price > 0 ? `${e.course.currency === 'USD' ? '$' : 'Rs.'}${price.toLocaleString()}${priceSuffix}` : 'Free'
+                    const symbol = e.course.currency === 'USD' ? '$' : 'Rs.'
+                    const priceLabel = price > 0 ? `${symbol}${price.toLocaleString()}${priceSuffix}` : 'Free'
                     const isApproving = directApprove?.enrollmentId === e._id
                     return (
                       <tr key={e._id} className={`hover:bg-slate-50 dark:hover:bg-neutral-800/40 transition-colors ${isApproving ? 'bg-emerald-50/50 dark:bg-emerald-950/10' : ''}`}>
@@ -271,7 +292,14 @@ export default function AdminPaymentsView() {
                         </td>
                         <td className="px-4 py-3 text-xs text-slate-600 dark:text-neutral-300 max-w-[160px] truncate">{e.course.title}</td>
                         <td className="px-4 py-3 text-xs text-slate-500 dark:text-neutral-400 capitalize">{e.course.level ?? '—'}</td>
-                        <td className="px-4 py-3 text-xs font-black text-slate-900 dark:text-white whitespace-nowrap">{priceLabel}</td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <p className="text-xs font-black text-slate-900 dark:text-white">{priceLabel}</p>
+                          {totalDiscount > 0 && (
+                            <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">
+                              −{symbol}{totalDiscount.toLocaleString()} discount
+                            </p>
+                          )}
+                        </td>
                         <td className="px-4 py-3 text-[10px] text-slate-400 dark:text-neutral-600 whitespace-nowrap">
                           {new Date(e.enrolledAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                         </td>
@@ -410,6 +438,11 @@ export default function AdminPaymentsView() {
                         −{p.currency} {(p.discountApplied ?? 0).toLocaleString()} discount
                       </p>
                     )}
+                    {p.coupon?.source === 'referral' && (
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 text-[10px] font-bold mt-0.5">
+                        <Gift size={9} weight="fill" /> {p.coupon.code}
+                      </span>
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     <div className="space-y-1">
@@ -463,6 +496,15 @@ export default function AdminPaymentsView() {
                           title="Reject — locks course access"
                           className="w-7 h-7 rounded-lg bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 hover:bg-red-100 flex items-center justify-center transition-colors">
                           <XCircle size={13} weight="fill" />
+                        </button>
+                      )}
+                      {p.status === 'approved' && !p.coupon && (
+                        <button
+                          onClick={() => handleReprocessReferral(p._id)}
+                          disabled={reprocessingReferral === p._id}
+                          title="Check & process referral reward for this payment"
+                          className="w-7 h-7 rounded-lg bg-violet-50 dark:bg-violet-950/30 text-violet-600 dark:text-violet-400 hover:bg-violet-100 flex items-center justify-center transition-colors disabled:opacity-50">
+                          <Gift size={13} weight="fill" />
                         </button>
                       )}
                     </div>

@@ -132,6 +132,7 @@ export const getMyPayments = asyncHandler(async (req, res) => {
     const payments = await Payment.find({ student: req.user.id })
       .populate('course', 'title price priceUSD currency pricingType')
       .populate('teacher', 'name')
+      .populate('coupon', 'code source')
       .sort({ createdAt: -1 })
 
     const enrollments = await Enrollment.find({ student: req.user.id }).select('course isActive')
@@ -157,7 +158,7 @@ export const getAllPayments = asyncHandler(async (req, res) => {
     const skip = (Number(page) - 1) * Number(limit)
 
     const [payments, total] = await Promise.all([
-      Payment.find(filter).populate('student', 'name email').populate('course', 'title').populate('teacher', 'name').skip(skip).limit(Number(limit)).sort({ createdAt: -1 }),
+      Payment.find(filter).populate('student', 'name email').populate('course', 'title').populate('teacher', 'name').populate('coupon', 'code source').skip(skip).limit(Number(limit)).sort({ createdAt: -1 }),
       Payment.countDocuments(filter),
     ])
 
@@ -199,6 +200,15 @@ export const approvePayment = asyncHandler(async (req, res) => {
     payment.adminNote = req.body.adminNote || ''
     payment.rejectionReason = ''
     await payment.save()
+
+    // ─── Sync payment.coupon from enrollment if missing ──────────────────────
+    if (!payment.coupon) {
+      const enrollmentForSync = await Enrollment.findOne({ student: payment.student, course: payment.course._id })
+      if (enrollmentForSync?.coupon) {
+        await Payment.findByIdAndUpdate(payment._id, { coupon: enrollmentForSync.coupon })
+        payment.coupon = enrollmentForSync.coupon
+      }
+    }
 
     // ─── Coupon usedCount + Referral reward crediting ────────────────────────
     if (payment.coupon) {
@@ -482,9 +492,65 @@ export const directApprovePayment = asyncHandler(async (req, res) => {
       currency: currency || 'PKR',
       status: 'approved',
       adminNote: adminNote || 'Approved by admin (WhatsApp / direct verification)',
+      coupon: enrollment.coupon || null,
+      discountApplied: enrollment.discountApplied || 0,
+      offerDiscountApplied: enrollment.offerDiscountApplied || 0,
+      offer: enrollment.offer || null,
     })
 
     await Enrollment.findByIdAndUpdate(enrollment._id, { payment: payment._id, isActive: true })
+
+    // ─── Coupon usedCount + Referral reward crediting ────────────────────────
+    if (payment.coupon) {
+      const coupon = await Coupon.findById(payment.coupon)
+      if (coupon) {
+        await Coupon.findByIdAndUpdate(coupon._id, { $inc: { usedCount: 1 } })
+        if (coupon.source === 'referral' && coupon.referrer) {
+          const alreadyRewarded = await ReferralReward.findOne({ payment: payment._id })
+          if (!alreadyRewarded) {
+            const settings = await SiteSettings.findOne()
+            const referral = settings?.referral
+            if (referral?.enabled) {
+              const course = enrollment.course
+              const coursePrice = course.currency === 'USD' ? (course.priceUSD || 0) : (course.price || 0)
+              let rewardAmount = 0
+              if (referral.referrerRewardType === 'percentage') {
+                rewardAmount = Math.round((coursePrice * referral.referrerRewardValue) / 100)
+              } else {
+                rewardAmount = referral.referrerRewardValue
+              }
+              await ReferralReward.create({
+                referrer: coupon.referrer,
+                referee: enrollment.student,
+                coupon: coupon._id,
+                course: course._id,
+                enrollment: enrollment._id,
+                payment: payment._id,
+                discountGiven: enrollment.discountApplied || 0,
+                rewardAmount,
+                status: 'credited',
+                creditedAt: new Date(),
+              })
+              await ReferralWallet.findOneAndUpdate(
+                { student: coupon.referrer },
+                {
+                  $inc: { balance: rewardAmount, totalEarned: rewardAmount },
+                  $push: {
+                    transactions: {
+                      type: 'credit',
+                      amount: rewardAmount,
+                      description: `Referral reward for ${course?.title || 'a course'}`,
+                      date: new Date(),
+                    },
+                  },
+                },
+                { upsert: true, new: true }
+              )
+            }
+          }
+        }
+      }
+    }
 
     await createAndEmitNotification({
       recipientId: enrollment.student,
@@ -520,6 +586,98 @@ export const directApprovePayment = asyncHandler(async (req, res) => {
       .populate('teacher', 'name')
 
     res.status(201).json({ success: true, message: 'Payment approved and course access granted', data: populated })
+  } catch (error) {
+    res.status(400).json({ success: false, error: { message: error.message } })
+  }
+})
+
+// POST /api/v1/payments/:id/reprocess-referral — admin: retroactively credit referral reward
+export const reprocessReferralReward = asyncHandler(async (req, res) => {
+  try {
+    const payment = await Payment.findById(req.params.id).populate('course', 'title price priceUSD currency')
+    if (!payment) return res.status(404).json({ success: false, error: { message: 'Payment not found' } })
+    if (payment.status !== 'approved') {
+      return res.status(400).json({ success: false, error: { message: 'Payment must be approved before processing referral reward' } })
+    }
+
+    // Sync coupon from enrollment if missing on payment
+    let couponId = payment.coupon
+    const enrollment = await Enrollment.findOne({ student: payment.student, course: payment.course._id })
+    if (!couponId && enrollment?.coupon) {
+      couponId = enrollment.coupon
+      await Payment.findByIdAndUpdate(payment._id, { coupon: enrollment.coupon })
+    }
+
+    if (!couponId) {
+      return res.status(400).json({ success: false, error: { message: 'No coupon found on this payment or its enrollment' } })
+    }
+
+    const coupon = await Coupon.findById(couponId)
+    if (!coupon) return res.status(404).json({ success: false, error: { message: 'Coupon not found' } })
+    if (coupon.source !== 'referral' || !coupon.referrer) {
+      return res.status(400).json({ success: false, error: { message: 'Coupon is not a referral coupon' } })
+    }
+
+    const alreadyRewarded = await ReferralReward.findOne({ payment: payment._id })
+    if (alreadyRewarded) {
+      return res.json({ success: true, message: 'Referral reward was already processed', data: { alreadyProcessed: true } })
+    }
+
+    const settings = await SiteSettings.findOne()
+    const referral = settings?.referral
+    if (!referral?.enabled) {
+      return res.status(400).json({ success: false, error: { message: 'Referral system is currently disabled' } })
+    }
+
+    await Coupon.findByIdAndUpdate(coupon._id, { $inc: { usedCount: 1 } })
+
+    const course = payment.course
+    const coursePrice = course.currency === 'USD' ? (course.priceUSD || 0) : (course.price || 0)
+    let rewardAmount = 0
+    if (referral.referrerRewardType === 'percentage') {
+      rewardAmount = Math.round((coursePrice * referral.referrerRewardValue) / 100)
+    } else {
+      rewardAmount = referral.referrerRewardValue
+    }
+
+    if (!enrollment) {
+      return res.status(404).json({ success: false, error: { message: 'Enrollment not found' } })
+    }
+
+    await ReferralReward.create({
+      referrer: coupon.referrer,
+      referee: payment.student,
+      coupon: coupon._id,
+      course: course._id,
+      enrollment: enrollment._id,
+      payment: payment._id,
+      discountGiven: payment.discountApplied || enrollment.discountApplied || 0,
+      rewardAmount,
+      status: 'credited',
+      creditedAt: new Date(),
+    })
+
+    await ReferralWallet.findOneAndUpdate(
+      { student: coupon.referrer },
+      {
+        $inc: { balance: rewardAmount, totalEarned: rewardAmount },
+        $push: {
+          transactions: {
+            type: 'credit',
+            amount: rewardAmount,
+            description: `Referral reward for ${course?.title || 'a course'}`,
+            date: new Date(),
+          },
+        },
+      },
+      { upsert: true, new: true }
+    )
+
+    res.json({
+      success: true,
+      message: `Referral reward of ${course.currency} ${rewardAmount} credited to referrer`,
+      data: { rewardAmount },
+    })
   } catch (error) {
     res.status(400).json({ success: false, error: { message: error.message } })
   }
