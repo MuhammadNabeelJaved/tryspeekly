@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
-import { Users, BookOpen, CreditCard, TrendUp, Globe, ChartPieSlice, ArrowRight, Student, Handshake } from '@phosphor-icons/react'
+import { Users, BookOpen, CreditCard, TrendUp, Globe, ChartPieSlice, ArrowRight, Student, Handshake, Broom } from '@phosphor-icons/react'
+import toast from 'react-hot-toast'
 import type { AdminView } from '@/pages/AdminPage'
 import type { AdminStats, ApiResponse } from '@/types/api'
 import { axiosClient } from '@/lib/axiosClient'
 import { useAuth } from '@/context/AuthContext'
+import ConfirmModal from '@/components/ConfirmModal'
 
 const FLAG_MAP: Record<string, string> = {
   'Pakistan': '🇵🇰',
@@ -46,15 +48,34 @@ export default function AdminOverview({ onNavigate }: { onNavigate: (v: AdminVie
   const { user } = useAuth()
   const [stats, setStats] = useState<AdminStats | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [confirmCleanup, setConfirmCleanup] = useState(false)
+  const [cleaning, setCleaning] = useState(false)
 
-  useEffect(() => {
-    axiosClient
+  const fetchStats = useCallback(() => {
+    return axiosClient
       .get<ApiResponse<AdminStats>>('/stats/admin')
       .then((res) => { if (res.data.success) setStats(res.data.data) })
       .catch(() => {})
       .finally(() => setIsLoading(false))
   }, [])
 
+  useEffect(() => { fetchStats() }, [fetchStats])
+
+  const handleCleanup = async () => {
+    setCleaning(true)
+    try {
+      const res = await axiosClient.post<ApiResponse<Record<string, number>>>('/stats/admin/cleanup-deleted')
+      toast.success(res.data.message || 'Cleanup complete')
+      await fetchStats()
+    } catch {
+      toast.error('Cleanup failed')
+    } finally {
+      setCleaning(false)
+      setConfirmCleanup(false)
+    }
+  }
+
+  const isAdmin = user?.role === 'admin'
   const now = new Date()
 
   const statCards = [
@@ -256,9 +277,21 @@ export default function AdminOverview({ onNavigate }: { onNavigate: (v: AdminVie
               <TrendUp size={13} weight="fill" className="text-violet-600 dark:text-violet-400" />
               <span className="text-violet-700 dark:text-violet-300 text-xs font-bold tracking-wide uppercase">Recent Enrollments</span>
             </div>
-            <button type="button" onClick={() => onNavigate('students')} className="text-xs text-violet-600 dark:text-violet-400 font-semibold hover:underline flex items-center gap-1">
-              View all <ArrowRight size={11} />
-            </button>
+            <div className="flex items-center gap-3">
+              {isAdmin && (
+                <button
+                  type="button"
+                  onClick={() => setConfirmCleanup(true)}
+                  title="Remove deleted accounts and orphaned data from the database"
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-red-500 dark:text-neutral-500 dark:hover:text-red-400 transition-colors"
+                >
+                  <Broom size={13} weight="fill" /> Clean up
+                </button>
+              )}
+              <button type="button" onClick={() => onNavigate('students')} className="text-xs text-violet-600 dark:text-violet-400 font-semibold hover:underline flex items-center gap-1">
+                View all <ArrowRight size={11} />
+              </button>
+            </div>
           </div>
           <div className="divide-y divide-slate-50 dark:divide-neutral-800">
             {isLoading
@@ -402,6 +435,16 @@ export default function AdminOverview({ onNavigate }: { onNavigate: (v: AdminVie
           </div>
         </motion.div>
       </div>
+
+      <ConfirmModal
+        open={confirmCleanup}
+        title="Clean up deleted data?"
+        message="This permanently removes all soft-deleted user accounts and their orphaned records (enrollments, payments, certificates, reviews, referral data, notifications, support tickets) from the database. This cannot be undone."
+        confirmLabel={cleaning ? 'Cleaning…' : 'Remove permanently'}
+        variant="danger"
+        onConfirm={handleCleanup}
+        onCancel={() => setConfirmCleanup(false)}
+      />
     </div>
   )
 }

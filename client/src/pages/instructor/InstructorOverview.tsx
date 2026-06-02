@@ -3,7 +3,7 @@ import { useAuth } from '@/context/AuthContext'
 import { coursesService } from '@/services/courses.service'
 import { enrollmentsService } from '@/services/enrollments.service'
 import { reviewsService } from '@/services/reviews.service'
-import { BookOpen, Users, ArrowRight, MagnifyingGlass, X, Star } from '@phosphor-icons/react'
+import { BookOpen, Users, ArrowRight, MagnifyingGlass, X, Star, Hourglass, Wallet } from '@phosphor-icons/react'
 import ReviewModal from '@/components/ReviewModal'
 import type { InstructorView } from '@/pages/InstructorDashboardPage'
 import type { Review } from '@/types/api'
@@ -177,54 +177,24 @@ export default function InstructorOverview({ onNavigate }: InstructorOverviewPro
       </div>
 
       {/* Stats row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-neutral-900 rounded-2xl p-5 border border-slate-200 dark:border-neutral-800 shadow-sm">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 flex items-center justify-center">
-              <Users size={20} weight="fill" />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          { label: 'Total Students', value: totalStudents, Icon: Users, accent: 'border-l-violet-500', tile: 'from-violet-500 to-purple-600', glow: 'rgba(124,58,237,0.3)' },
+          { label: 'Active Courses', value: activeCount, Icon: BookOpen, accent: 'border-l-blue-500', tile: 'from-blue-500 to-blue-700', glow: 'rgba(59,130,246,0.3)' },
+          { label: 'Pending Review', value: pendingCount, Icon: Hourglass, accent: 'border-l-amber-500', tile: 'from-amber-500 to-orange-600', glow: 'rgba(245,158,11,0.3)' },
+          { label: 'Total Earnings', value: `PKR ${earnings.toLocaleString()}`, Icon: Wallet, accent: 'border-l-emerald-500', tile: 'from-emerald-500 to-emerald-700', glow: 'rgba(16,185,129,0.3)' },
+        ].map((s) => (
+          <div
+            key={s.label}
+            className={`bg-white dark:bg-neutral-900 rounded-3xl border border-slate-100 dark:border-neutral-800 border-l-4 ${s.accent} p-5 hover:shadow-lg hover:shadow-violet-100/30 dark:hover:shadow-violet-950/20 transition-all duration-200`}
+          >
+            <div className={`w-11 h-11 rounded-2xl bg-gradient-to-br ${s.tile} flex items-center justify-center mb-3`} style={{ boxShadow: `0 4px 12px ${s.glow}` }}>
+              <s.Icon size={20} weight="fill" className="text-white" />
             </div>
-            <div>
-              <p className="text-sm font-bold text-slate-500 dark:text-neutral-400">Total Students</p>
-              <p className="text-2xl font-black text-slate-900 dark:text-white">{totalStudents}</p>
-            </div>
+            <p className="text-2xl font-black text-slate-900 dark:text-white leading-none mb-1">{s.value}</p>
+            <p className="text-xs font-semibold text-slate-400 dark:text-neutral-500">{s.label}</p>
           </div>
-        </div>
-
-        <div className="bg-white dark:bg-neutral-900 rounded-2xl p-5 border border-slate-200 dark:border-neutral-800 shadow-sm">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center">
-              <BookOpen size={20} weight="fill" />
-            </div>
-            <div>
-              <p className="text-sm font-bold text-slate-500 dark:text-neutral-400">Active Courses</p>
-              <p className="text-2xl font-black text-slate-900 dark:text-white">{activeCount}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-neutral-900 rounded-2xl p-5 border border-slate-200 dark:border-neutral-800 shadow-sm">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 flex items-center justify-center">
-              <BookOpen size={20} weight="fill" />
-            </div>
-            <div>
-              <p className="text-sm font-bold text-slate-500 dark:text-neutral-400">Pending Reviews</p>
-              <p className="text-2xl font-black text-slate-900 dark:text-white">{pendingCount}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-neutral-900 rounded-2xl p-5 border border-slate-200 dark:border-neutral-800 shadow-sm">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 flex items-center justify-center">
-              <BookOpen size={20} weight="fill" />
-            </div>
-            <div>
-              <p className="text-sm font-bold text-slate-500 dark:text-neutral-400">Total Earnings</p>
-              <p className="text-2xl font-black text-slate-900 dark:text-white">PKR {earnings.toLocaleString()}</p>
-            </div>
-          </div>
-        </div>
+        ))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -258,7 +228,7 @@ export default function InstructorOverview({ onNavigate }: InstructorOverviewPro
                     <span className="text-xs font-semibold text-slate-500 dark:text-neutral-400 bg-slate-100 dark:bg-neutral-800 px-2.5 py-1 rounded-md">
                       Next: {course.nextClass}
                     </span>
-                    <button className="text-xs font-bold bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 px-3 py-1 rounded-lg hover:bg-violet-200 dark:hover:bg-violet-900/50 transition-colors">
+                    <button onClick={() => onNavigate('courses')} className="text-xs font-bold bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 px-3 py-1 rounded-lg hover:bg-violet-200 dark:hover:bg-violet-900/50 transition-colors">
                       Manage
                     </button>
                   </div>
