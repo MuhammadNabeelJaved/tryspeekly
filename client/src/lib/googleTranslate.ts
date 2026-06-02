@@ -64,31 +64,43 @@ export function loadGoogleTranslate(): void {
   document.body.appendChild(s)
 }
 
-/** Write the googtrans cookie on path=/ and (in prod) the apex domain. */
+/** Set the googtrans cookie to a value on path=/ and (in prod) the apex domain. */
 function writeCookie(value: string) {
   const host = window.location.hostname
-  const expires = value ? '' : '; expires=Thu, 01 Jan 1970 00:00:00 GMT'
-  const cookie = value ? `googtrans=${value}` : 'googtrans='
-  document.cookie = `${cookie}; path=/${expires}`
+  document.cookie = `googtrans=${value}; path=/`
   if (host && host !== 'localhost' && !/^[\d.]+$/.test(host)) {
     const apex = host.replace(/^www\./, '')
-    document.cookie = `${cookie}; path=/; domain=.${apex}${expires}`
+    document.cookie = `googtrans=${value}; path=/; domain=.${apex}`
   }
 }
 
-/** Switch the page language. Updates cookie, drives the hidden combo, sets <html dir>. */
-export function setLanguage(code: string): void {
-  writeCookie(buildGoogtransValue(code))
-  document.documentElement.dir = isRtl(code) ? 'rtl' : 'ltr'
-
-  const combo = document.querySelector<HTMLSelectElement>('.goog-te-combo')
-  if (combo) {
-    combo.value = code === 'en' ? '' : code
-    combo.dispatchEvent(new Event('change'))
-    if (code === 'en') window.location.reload()
-  } else {
-    window.location.reload()
+/** Delete the googtrans cookie across the path/domain variants Google may have set. */
+function deleteCookie() {
+  const host = window.location.hostname
+  const past = 'expires=Thu, 01 Jan 1970 00:00:00 GMT'
+  document.cookie = `googtrans=; path=/; ${past}`
+  document.cookie = `googtrans=; ${past}`
+  if (host && host !== 'localhost' && !/^[\d.]+$/.test(host)) {
+    const apex = host.replace(/^www\./, '')
+    document.cookie = `googtrans=; path=/; domain=.${apex}; ${past}`
+    document.cookie = `googtrans=; path=/; domain=${apex}; ${past}`
   }
+}
+
+/**
+ * Switch the page language. Always reloads so the Google engine re-reads the
+ * cookie from a clean state (driving the hidden combo is unreliable — its option
+ * list has no empty value, so resetting to English silently fails).
+ */
+export function setLanguage(code: string): void {
+  if (code === 'en') {
+    deleteCookie()
+    document.documentElement.dir = 'ltr'
+  } else {
+    writeCookie(buildGoogtransValue(code))
+    document.documentElement.dir = isRtl(code) ? 'rtl' : 'ltr'
+  }
+  window.location.reload()
 }
 
 export function getCurrentLanguage(): string {
