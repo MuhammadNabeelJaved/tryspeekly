@@ -4,7 +4,6 @@ import {
   MagnifyingGlass, Trash, UserMinus, PaperPlaneTilt,
   PencilSimple, Plus, CalendarBlank, X, Clock, DownloadSimple,
 } from '@phosphor-icons/react'
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import { newsletterService } from '@/services/newsletter.service'
 import type { NewsletterSubscriber, NewsletterCampaign } from '@/services/newsletter.service'
 import NewsletterEditor from '@/components/NewsletterEditor'
@@ -329,26 +328,31 @@ export default function AdminNewsletter() {
         )}
 
         {/* Growth chart */}
-        {growth.length > 0 && (
-          <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200 dark:border-white/10 p-5">
-            <p className="text-sm font-bold text-slate-900 dark:text-white mb-4">Subscriber Growth (Last 6 Months)</p>
-            <ResponsiveContainer width="100%" height={140}>
-              <BarChart data={growth} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-                <XAxis dataKey="month" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} />
-                <Tooltip
-                  contentStyle={{ borderRadius: 12, border: 'none', fontSize: 12, boxShadow: '0 4px 20px rgba(0,0,0,0.15)' }}
-                  cursor={{ fill: 'rgba(124,58,237,0.06)' }}
-                />
-                <Bar dataKey="subscribers" radius={[6, 6, 0, 0]}>
-                  {growth.map((_, i) => (
-                    <Cell key={i} fill={i === growth.length - 1 ? '#7c3aed' : '#c4b5fd'} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        )}
+        {growth.length > 0 && (() => {
+          const maxVal = Math.max(...growth.map(g => g.subscribers), 1)
+          return (
+            <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200 dark:border-white/10 p-5">
+              <p className="text-sm font-bold text-slate-900 dark:text-white mb-4">Subscriber Growth (Last 6 Months)</p>
+              <div className="flex items-end justify-between gap-3 h-36 pt-4">
+                {growth.map((g, i) => {
+                  const isLatest = i === growth.length - 1
+                  const heightPct = Math.max(4, Math.round((g.subscribers / maxVal) * 100))
+                  return (
+                    <div key={`${g.month}-${i}`} className="flex-1 flex flex-col items-center justify-end h-full gap-2 group">
+                      <span className="text-[11px] font-bold text-slate-600 dark:text-neutral-300">{g.subscribers}</span>
+                      <div
+                        className={`w-full rounded-t-md transition-all ${isLatest ? 'bg-violet-600' : 'bg-violet-300 dark:bg-violet-900/50'} group-hover:opacity-80`}
+                        style={{ height: `${heightPct}%` }}
+                        title={`${g.month}: ${g.subscribers} subscriber${g.subscribers !== 1 ? 's' : ''}`}
+                      />
+                      <span className="text-[10px] text-slate-400 dark:text-neutral-500 font-medium">{g.month}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )
+        })()}
 
         <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200 dark:border-white/10">
           <div className="p-5 border-b border-slate-200 dark:border-white/10 flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
