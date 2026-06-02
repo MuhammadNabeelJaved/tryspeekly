@@ -137,11 +137,12 @@ export const getMyPayments = asyncHandler(async (req, res) => {
 
     const enrollments = await Enrollment.find({ student: req.user.id }).select('course isActive')
     const enrollmentMap = {}
-    enrollments.forEach(e => { enrollmentMap[e.course.toString()] = e.isActive })
+    enrollments.forEach(e => { if (e.course) enrollmentMap[e.course.toString()] = e.isActive })
 
     const data = payments.map(p => ({
       ...p.toObject(),
-      enrollmentActive: enrollmentMap[p.course._id.toString()] ?? false,
+      // p.course can be null if the course was deleted (populate returns null)
+      enrollmentActive: p.course ? (enrollmentMap[p.course._id.toString()] ?? false) : false,
     }))
 
     res.json({ success: true, data })

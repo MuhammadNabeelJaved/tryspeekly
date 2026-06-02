@@ -37,8 +37,9 @@ export default function StudentPayments() {
       enrollmentsService.getMyEnrollments(),
     ])
       .then(([paymentsRes, enrollmentsRes]) => {
-        if (paymentsRes.success) setPayments(paymentsRes.data)
-        if (enrollmentsRes.success) setEnrollments(enrollmentsRes.data)
+        // Drop records whose course was deleted (populate returns null) to avoid crashes
+        if (paymentsRes.success) setPayments(paymentsRes.data.filter(p => p.course != null))
+        if (enrollmentsRes.success) setEnrollments(enrollmentsRes.data.filter(e => e.course != null))
       })
       .catch(() => {})
       .finally(() => setLoading(false))

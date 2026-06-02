@@ -54,9 +54,11 @@ export default function StudentOverview({ onNavigate }: { onNavigate: (view: Stu
         certificatesService.getMyCertificates(),
       ])
 
-      if (enrollRes.status === 'fulfilled' && enrollRes.value.success) setEnrollments(enrollRes.value.data)
+      if (enrollRes.status === 'fulfilled' && enrollRes.value.success)
+        // Drop enrollments whose course was deleted (populate returns null) so the dashboard never crashes
+        setEnrollments(enrollRes.value.data.filter(e => e.course != null))
       if (liveRes.status === 'fulfilled' && liveRes.value.success)
-        setUpcomingClasses(liveRes.value.data as UpcomingClass[])
+        setUpcomingClasses((liveRes.value.data as UpcomingClass[]).filter(c => c.course != null))
       if (assignRes.status === 'fulfilled' && assignRes.value.success) setAssignments(assignRes.value.data)
       if (annRes.status === 'fulfilled' && annRes.value.success) setAnnouncements(annRes.value.data)
       if (payRes.status === 'fulfilled' && payRes.value.success) setPayments(payRes.value.data)
@@ -126,7 +128,7 @@ export default function StudentOverview({ onNavigate }: { onNavigate: (view: Stu
   const bannerClass = activeLiveClass
 
   const scheduleLabel = (e: Enrollment) => {
-    const rs = e.course.recurringSchedule
+    const rs = e.course?.recurringSchedule
     if (!rs || rs.length === 0) return null
     const days = rs.map(r => r.day.slice(0, 3)).join(', ')
     return `${days} • ${rs[0].time}`

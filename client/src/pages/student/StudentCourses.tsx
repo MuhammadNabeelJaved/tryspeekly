@@ -249,7 +249,7 @@ export default function StudentCourses() {
   const fetchEnrollments = useCallback(() => {
     setLoading(true)
     enrollmentsService.getMyEnrollments()
-      .then(res => { if (res.success) setEnrollments(res.data) })
+      .then(res => { if (res.success) setEnrollments(res.data.filter(e => e.course != null)) })
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [])
