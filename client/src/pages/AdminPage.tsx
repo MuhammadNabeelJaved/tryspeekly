@@ -126,6 +126,7 @@ const ADMIN_SEARCH_ITEMS: SearchItem[] = [
   { label: 'Notifications',  description: 'Platform-wide notification management',               path: '/admin/notifications', Icon: Bell as SearchItem['Icon'] },
   { label: 'Email System',   description: 'Manage email templates, triggers, logs and test delivery', path: '/admin/email',      Icon: EnvelopeSimple as SearchItem['Icon'] },
   { label: 'Newsletter',     description: 'Manage newsletter subscribers and send email campaigns',  path: '/admin/newsletter',    Icon: Newspaper as SearchItem['Icon'] },
+  { label: 'Payments Setup', description: 'Configure payment methods, account details, WhatsApp link and receipt email for student payments', path: '/admin/payments-setup', Icon: CreditCard as SearchItem['Icon'] },
   { label: 'Blog Manager',   description: 'Create and publish blog posts',                       path: '/admin/blog',          Icon: PencilSimple as SearchItem['Icon'] },
   { label: 'SEO Manager',    description: 'Manage meta titles, descriptions and keywords',       path: '/admin/seo',           Icon: Globe as SearchItem['Icon'] },
   { label: 'CMS Editor',     description: 'Edit public-facing static content pages',             path: '/admin/cms',           Icon: PencilSimple as SearchItem['Icon'] },
@@ -168,7 +169,7 @@ const ADMIN_TOUR_STEPS: TourStep[] = [
   {
     target: 'admin-nav-team',
     title: 'Team',
-    content: 'Manage your internal team members. Add new members, assign a job title, grant or revoke access to specific admin pages, and chat directly with each member. Permission changes notify members in real time.',
+    content: 'Manage your internal team members. Add members, assign job titles, grant page permissions, and chat with each member. The Activity Log tab shows every action each team member has performed — approvals, deletions, status changes — so you always know who changed what.',
   },
   {
     target: 'admin-nav-payments',
