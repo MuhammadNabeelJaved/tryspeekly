@@ -1,5 +1,7 @@
 import asyncHandler from '../utils/asyncHandler.js'
 import SupportTicket from '../models/support.model.js'
+import User from '../models/user.model.js'
+import { sendEmail } from '../utils/email.js'
 
 // POST /api/v1/support — student: create ticket
 export const createTicket = asyncHandler(async (req, res) => {
@@ -72,6 +74,25 @@ export const replyToTicket = asyncHandler(async (req, res) => {
     ticket.lastMessageAt = new Date()
     if (ticket.status === 'closed') ticket.status = 'open'
     await ticket.save()
+
+    // When staff replies, email the student who owns the ticket (fire-and-forget)
+    if (!isOwner) {
+      User.findById(ticket.student, 'name email').lean().then(student => {
+        if (!student?.email) return
+        sendEmail({
+          type: 'support_reply',
+          to: student.email,
+          toName: student.name,
+          variables: {
+            studentName: student.name,
+            subject: ticket.subject,
+            replyPreview: content.length > 160 ? `${content.slice(0, 160)}…` : content,
+            dashboardUrl: `${process.env.CLIENT_URL || 'http://localhost:5173'}/dashboard/support`,
+          },
+          metadata: { ticketId: ticket._id },
+        }).catch(() => {})
+      }).catch(() => {})
+    }
 
     res.json({ success: true, message: 'Reply added', data: ticket.messages[ticket.messages.length - 1] })
   } catch (error) {

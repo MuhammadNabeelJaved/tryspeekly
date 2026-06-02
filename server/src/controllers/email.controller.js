@@ -31,6 +31,11 @@ const DEMO_VARS = {
   review_submitted:              { reviewerName: 'Muhammad Nabeel', reviewType: 'Course Review', courseName: 'Advanced English Communication', rating: '5' },
   review_approved:               { reviewerName: 'Muhammad Nabeel', reviewType: 'Course Review', courseName: 'Advanced English Communication' },
   offer_created:                 { userName: 'Muhammad Nabeel', offerTitle: 'Eid Special Discount', courseName: 'Advanced English Communication', discountPercent: '30%', offerDescription: 'Celebrate Eid with a special discount on our top-rated English course!', endsAt: '30 June 2026', courseUrl: `${process.env.CLIENT_URL || 'http://localhost:5173'}/courses` },
+  team_member_welcome:           { name: 'Muhammad Nabeel', email: 'team@example.com', jobTitle: 'Content Manager', loginUrl: `${process.env.CLIENT_URL || 'http://localhost:5173'}/login` },
+  certificate_issued:            { studentName: 'Muhammad Nabeel', courseName: 'Advanced English Communication', certificateId: 'EPC-2026-0042', certificateUrl: `${process.env.CLIENT_URL || 'http://localhost:5173'}/certificate/EPC-2026-0042` },
+  payout_approved:               { studentName: 'Muhammad Nabeel', amount: '1500', currency: 'PKR', walletBalance: '500', dashboardUrl: `${process.env.CLIENT_URL || 'http://localhost:5173'}/dashboard/referrals` },
+  payout_rejected:               { studentName: 'Muhammad Nabeel', amount: '1500', currency: 'PKR', reason: 'Minimum payout threshold not met.', dashboardUrl: `${process.env.CLIENT_URL || 'http://localhost:5173'}/dashboard/referrals` },
+  support_reply:                 { studentName: 'Muhammad Nabeel', subject: 'Cannot access my course', replyPreview: 'Thanks for reaching out — we have restored your access. Please log out and back in to see the change.', dashboardUrl: `${process.env.CLIENT_URL || 'http://localhost:5173'}/dashboard/support` },
 }
 
 // ─── Settings ─────────────────────────────────────────────────────────────────

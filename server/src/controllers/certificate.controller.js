@@ -1,6 +1,32 @@
 import asyncHandler from '../utils/asyncHandler.js'
 import Certificate from '../models/certificate.model.js'
 import Enrollment from '../models/enrollment.model.js'
+import User from '../models/user.model.js'
+import Course from '../models/course.model.js'
+import { sendEmail } from '../utils/email.js'
+
+// Fire-and-forget: email the student that their certificate is ready.
+async function emailCertificateIssued(cert) {
+  try {
+    const [student, course] = await Promise.all([
+      User.findById(cert.student, 'name email').lean(),
+      Course.findById(cert.course, 'title').lean(),
+    ])
+    if (!student?.email) return
+    sendEmail({
+      type: 'certificate_issued',
+      to: student.email,
+      toName: student.name,
+      variables: {
+        studentName: student.name,
+        courseName: course?.title ?? 'your course',
+        certificateId: cert.certificateId,
+        certificateUrl: `${process.env.CLIENT_URL || 'http://localhost:5173'}/certificate/${cert.certificateId}`,
+      },
+      metadata: { certificateId: cert._id },
+    }).catch(() => {})
+  } catch { /* ignore */ }
+}
 
 // POST /api/v1/certificates — admin/teacher: issue certificate
 export const issueCertificate = asyncHandler(async (req, res) => {
@@ -20,6 +46,8 @@ export const issueCertificate = asyncHandler(async (req, res) => {
       course: enrollment.course,
       credentialUrl,
     })
+
+    emailCertificateIssued(certificate)
 
     res.status(201).json({ success: true, message: 'Certificate issued successfully', data: certificate })
   } catch (error) {
@@ -117,6 +145,8 @@ export const claimCertificate = asyncHandler(async (req, res) => {
       .populate('student', 'name')
       .populate('course', 'title level thumbnail')
       .populate({ path: 'enrollment', populate: { path: 'teacher', select: 'name' } })
+
+    emailCertificateIssued(cert)
 
     res.status(201).json({ success: true, message: 'Certificate claimed successfully', data: populated })
   } catch (error) {

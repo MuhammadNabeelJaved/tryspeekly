@@ -7,6 +7,8 @@ import SiteSettings from '../models/site-settings.model.js'
 import Course from '../models/course.model.js'
 import Enrollment from '../models/enrollment.model.js'
 import Payment from '../models/payment.model.js'
+import User from '../models/user.model.js'
+import { sendEmail } from '../utils/email.js'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -411,6 +413,7 @@ export const processPayoutRequest = asyncHandler(async (req, res) => {
       return res.status(400).json({ success: false, error: { message: 'Request is already processed' } })
     }
 
+    let remainingBalance = 0
     if (action === 'approve') {
       const wallet = await ReferralWallet.findById(request.wallet)
       if (!wallet || wallet.balance < request.amount) {
@@ -420,6 +423,7 @@ export const processPayoutRequest = asyncHandler(async (req, res) => {
       wallet.totalPaidOut += request.amount
       wallet.transactions.push({ type: 'debit', amount: request.amount, description: 'Payout approved by admin' })
       await wallet.save()
+      remainingBalance = wallet.balance
 
       await ReferralReward.updateMany({ referrer: request.student, status: 'credited' }, { status: 'paid_out' })
 
@@ -431,6 +435,29 @@ export const processPayoutRequest = asyncHandler(async (req, res) => {
     request.adminNote = adminNote || null
     request.processedAt = new Date()
     await request.save()
+
+    // Notify the student of the payout decision (fire-and-forget)
+    User.findById(request.student, 'name email').lean().then(student => {
+      if (!student?.email) return
+      const dashboardUrl = `${process.env.CLIENT_URL || 'http://localhost:5173'}/dashboard/referrals`
+      if (action === 'approve') {
+        sendEmail({
+          type: 'payout_approved',
+          to: student.email,
+          toName: student.name,
+          variables: { studentName: student.name, amount: String(request.amount), currency: 'PKR', walletBalance: String(remainingBalance), dashboardUrl },
+          metadata: { payoutRequestId: request._id },
+        }).catch(() => {})
+      } else {
+        sendEmail({
+          type: 'payout_rejected',
+          to: student.email,
+          toName: student.name,
+          variables: { studentName: student.name, amount: String(request.amount), currency: 'PKR', reason: adminNote || 'Not specified', dashboardUrl },
+          metadata: { payoutRequestId: request._id },
+        }).catch(() => {})
+      }
+    }).catch(() => {})
 
     const actionLabel = action === 'approve' ? 'approved' : 'rejected'
     res.json({ success: true, message: `Payout request ${actionLabel}`, data: { request } })

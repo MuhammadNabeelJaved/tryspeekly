@@ -666,6 +666,87 @@ export const DEFAULT_TEMPLATES = [
       ${note('This is a time-limited offer. Act quickly before it expires and the price goes back to normal.')}
     `, 'Exclusive {{discountPercent}}% discount offer just for you'),
   },
+
+  // ── Certificates ──────────────────────────────────────────────────────────
+  {
+    type: 'certificate_issued',
+    name: 'Certificate Issued (Student)',
+    subject: '🎓 Your certificate for {{courseName}} is ready!',
+    variables: ['studentName', 'courseName', 'certificateId', 'certificateUrl'],
+    htmlBody: wrap(`
+      ${iconCircle('🎓', '#faf5ff')}
+      ${badge('Certificate Earned', 'success')}
+      ${h1('Congratulations, {{studentName}}!')}
+      ${para('You have successfully completed <strong>{{courseName}}</strong> and earned your certificate of completion. We\'re proud of your dedication and progress.')}
+      ${infoTable(
+        infoRow('Course', '{{courseName}}') +
+        infoRow('Credential ID', '{{certificateId}}') +
+        infoRow('Status', '✓ Issued')
+      )}
+      ${btn('View & Download Certificate', '{{certificateUrl}}', '#7c3aed')}
+      ${note('You can share this certificate on LinkedIn or download it as a PDF anytime from your dashboard.')}
+    `, 'Your certificate for {{courseName}} is ready to download'),
+  },
+
+  // ── Referral payouts ──────────────────────────────────────────────────────
+  {
+    type: 'payout_approved',
+    name: 'Payout Approved (Student)',
+    subject: '💸 Your payout of {{currency}} {{amount}} has been approved',
+    variables: ['studentName', 'amount', 'currency', 'walletBalance', 'dashboardUrl'],
+    htmlBody: wrap(`
+      ${iconCircle('💸', '#ecfdf5')}
+      ${badge('Payout Approved', 'success')}
+      ${h1('Your Payout is on the Way!')}
+      ${para('Hi <strong>{{studentName}}</strong>, good news — your referral payout request has been approved and processed.')}
+      ${infoTable(
+        infoRow('Payout Amount', '{{currency}} {{amount}}') +
+        infoRow('Remaining Wallet Balance', '{{currency}} {{walletBalance}}') +
+        infoRow('Status', '✓ Approved')
+      )}
+      ${btn('View My Wallet', '{{dashboardUrl}}', '#059669')}
+      ${note('Thank you for spreading the word about EnglishPro. Keep sharing your referral link to earn more rewards!')}
+    `, 'Your referral payout has been approved'),
+  },
+  {
+    type: 'payout_rejected',
+    name: 'Payout Rejected (Student)',
+    subject: 'Update on your payout request — EnglishPro',
+    variables: ['studentName', 'amount', 'currency', 'reason', 'dashboardUrl'],
+    htmlBody: wrap(`
+      ${iconCircle('📋', '#fef2f2')}
+      ${badge('Payout Not Approved', 'danger')}
+      ${h1('About Your Payout Request')}
+      ${para('Hi <strong>{{studentName}}</strong>, we\'ve reviewed your referral payout request of <strong>{{currency}} {{amount}}</strong> and it could not be approved at this time.')}
+      ${infoTable(
+        infoRow('Requested Amount', '{{currency}} {{amount}}') +
+        infoRow('Status', '✗ Not Approved') +
+        infoRow('Reason', '{{reason}}')
+      )}
+      ${btn('View My Wallet', '{{dashboardUrl}}', '#7c3aed')}
+      ${note('Your referral balance remains intact. If you have any questions, please reach out to our support team.')}
+    `, 'Update on your referral payout request'),
+  },
+
+  // ── Support ───────────────────────────────────────────────────────────────
+  {
+    type: 'support_reply',
+    name: 'Support Ticket Reply (Student)',
+    subject: 'New reply to your support ticket — EnglishPro',
+    variables: ['studentName', 'subject', 'replyPreview', 'dashboardUrl'],
+    htmlBody: wrap(`
+      ${iconCircle('💬', '#eff6ff')}
+      ${badge('New Reply', 'info')}
+      ${h1('Our Team Replied to You')}
+      ${para('Hi <strong>{{studentName}}</strong>, our support team has responded to your ticket: <strong>{{subject}}</strong>.')}
+      ${infoTable(
+        infoRow('Ticket', '{{subject}}') +
+        infoRow('Reply', '{{replyPreview}}')
+      )}
+      ${btn('View Conversation', '{{dashboardUrl}}', '#2563eb')}
+      ${note('Open your support page to read the full reply and continue the conversation.')}
+    `, 'Our support team replied to your ticket'),
+  },
 ]
 
 // ─── Default settings ─────────────────────────────────────────────────────────
@@ -708,4 +789,11 @@ export const DEFAULT_SETTINGS = [
   { type: 'offer_created',               name: 'New Offer/Discount (Students)',         description: 'Sent to relevant enrolled students when admin creates a new offer',     category: 'offers',       enabled: true },
   // Team Members
   { type: 'team_member_welcome',         name: 'Team Member Welcome',                   description: 'Sent to a new team member when their account is created by admin',     category: 'team',         enabled: true },
+  // Certificates
+  { type: 'certificate_issued',          name: 'Certificate Issued (Student)',          description: 'Sent to student when a certificate is issued or claimed',               category: 'courses',      enabled: true },
+  // Referral Payouts
+  { type: 'payout_approved',             name: 'Payout Approved (Student)',             description: 'Sent to student when admin approves their referral payout request',    category: 'referrals',    enabled: true },
+  { type: 'payout_rejected',             name: 'Payout Rejected (Student)',             description: 'Sent to student when admin rejects their referral payout request',     category: 'referrals',    enabled: true },
+  // Support
+  { type: 'support_reply',               name: 'Support Ticket Reply (Student)',        description: 'Sent to student when support staff replies to their ticket',           category: 'support',      enabled: true },
 ]
