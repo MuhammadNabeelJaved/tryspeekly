@@ -9,6 +9,7 @@ import {
 } from '@phosphor-icons/react'
 import TourGuide, { type TourStep } from '@/components/TourGuide'
 import DashboardSearch, { type SearchItem } from '@/components/DashboardSearch'
+import LanguageSwitcher from '@/components/LanguageSwitcher'
 import type { Student, Instructor, Course, CMSPage } from './admin/adminData'
 import { INITIAL_STUDENTS, INITIAL_INSTRUCTORS, INITIAL_COURSES, INITIAL_CMS_PAGES } from './admin/adminData'
 import Loader from '@/components/Loader'
@@ -682,6 +683,7 @@ export default function AdminPage() {
 
           <div className="flex items-center gap-2">
             <DashboardSearch items={ADMIN_SEARCH_ITEMS} />
+            <LanguageSwitcher compact />
 
             {/* Dark mode */}
             <button

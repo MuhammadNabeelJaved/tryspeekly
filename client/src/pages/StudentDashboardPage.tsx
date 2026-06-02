@@ -8,6 +8,7 @@ import {
 import Loader from '@/components/Loader'
 import TourGuide, { type TourStep } from '@/components/TourGuide'
 import DashboardSearch, { type SearchItem } from '@/components/DashboardSearch'
+import LanguageSwitcher from '@/components/LanguageSwitcher'
 import { useAuth } from '../context/AuthContext'
 import { usersService } from '../services/users.service'
 import { useSocket } from '../context/SocketContext'
@@ -352,6 +353,7 @@ export default function StudentDashboardPage() {
 
           <div className="flex items-center gap-2">
             <DashboardSearch items={STUDENT_SEARCH_ITEMS} />
+            <LanguageSwitcher compact />
 
             {/* Dark mode */}
             <button

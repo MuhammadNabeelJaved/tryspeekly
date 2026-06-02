@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { List, X, Phone, SquaresFour, SignOut } from '@phosphor-icons/react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { ThemeToggle } from './ThemeToggle'
+import LanguageSwitcher from './LanguageSwitcher'
 import { useAuth } from '../context/AuthContext'
 import OffersMarquee from './OffersMarquee'
 import UserAvatar from './UserAvatar'
@@ -239,13 +240,15 @@ export default function Navbar({ offers = [] }: { offers?: Offer[] }) {
               </>
             )}
 
-            <div className="ml-1">
+            <div className="ml-1 flex items-center gap-2">
+              <LanguageSwitcher />
               <ThemeToggle />
             </div>
           </div>
 
           {/* Mobile Actions */}
           <div className="lg:hidden flex items-center gap-2">
+            <LanguageSwitcher compact />
             <ThemeToggle />
 
             {/* Mobile profile avatar + dropdown */}
