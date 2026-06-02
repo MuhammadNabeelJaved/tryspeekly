@@ -162,7 +162,9 @@ export default function InstructorLiveClasses() {
 
           // Build scheduled classes map keyed by courseId
           const scheduledMap: Record<string, ScheduledClass> = {}
-          scheduledLiveClasses.forEach((lc: { _id: string; course: { _id: string }; scheduledAt: string }) => {
+          scheduledLiveClasses.forEach((lc: { _id: string; course?: { _id: string } | null; scheduledAt: string }) => {
+            // Skip live classes whose course was deleted (null after populate).
+            if (!lc.course) return
             scheduledMap[String(lc.course._id)] = {
               _id: lc._id,
               courseId: String(lc.course._id),
@@ -186,7 +188,7 @@ export default function InstructorLiveClasses() {
 
           const mappedCourses: InstructorCourse[] = activeCourses.map((course: { _id: string; title: string; enrolledStudents: unknown[]; status: string; totalSessions: number; level?: string; description?: string }) => {
             const courseIdStr = String(course._id)
-            const liveClass = activeLiveClasses.find((lc: { course: { _id: string } }) => String(lc.course._id) === courseIdStr)
+            const liveClass = activeLiveClasses.find((lc: { course?: { _id: string } | null }) => String(lc.course?._id) === courseIdStr)
             return {
               _id: course._id,
               id: courseIdStr,
@@ -229,11 +231,11 @@ export default function InstructorLiveClasses() {
       try {
         const response = await liveClassService.getTeacherCompletedClasses()
         if (response.success && response.data) {
-          const mapped: CompletedClass[] = response.data.map((lc: { _id: string; course: { _id: string; title: string }; meetingLink: string; classNumber: number; createdAt: string }) => ({
+          const mapped: CompletedClass[] = response.data.map((lc: { _id: string; course?: { _id: string; title: string } | null; meetingLink: string; classNumber: number; createdAt: string }) => ({
             _id: lc._id,
             id: lc._id,
-            courseId: lc.course._id,
-            courseTitle: lc.course.title,
+            courseId: lc.course?._id ?? '',
+            courseTitle: lc.course?.title ?? '—',
             completedAt: new Date(lc.createdAt).toLocaleString(),
             timestamp: new Date(lc.createdAt).getTime(),
             link: lc.meetingLink,
