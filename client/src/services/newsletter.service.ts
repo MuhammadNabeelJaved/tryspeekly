@@ -117,6 +117,16 @@ export const newsletterService = {
     return res.data;
   },
 
+  getStats: async (): Promise<{ success: boolean; data: { total: number; active: number; unsubscribed: number; thisMonth: number } }> => {
+    const res = await axiosClient.get('/newsletter/stats')
+    return res.data
+  },
+
+  getGrowth: async (): Promise<{ success: boolean; data: Array<{ month: string; subscribers: number }> }> => {
+    const res = await axiosClient.get('/newsletter/growth')
+    return res.data
+  },
+
   bulkDeleteSubscribers: async (ids: string[]) => {
     const res = await axiosClient.delete<{ success: boolean; message: string; data: { deleted: number } }>(
       '/newsletter/subscribers/bulk', { data: { ids } }

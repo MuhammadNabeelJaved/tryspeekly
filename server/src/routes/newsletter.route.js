@@ -9,6 +9,8 @@ import {
   adminUnsubscribe,
   unsubscribeByToken,
   bulkDeleteSubscribers,
+  getNewsletterStats,
+  getNewsletterGrowth,
 } from '../controllers/newsletter-subscriber.controller.js'
 import {
   getCampaigns,
@@ -34,6 +36,9 @@ router.get('/unsubscribe', unsubscribeByToken)
 
 // ─── Admin & team members with newsletter permission ──────────────────────────
 router.use(authenticate, authorizeTeamPage('newsletter'))
+
+router.get('/stats',  getNewsletterStats)
+router.get('/growth', getNewsletterGrowth)
 
 router.route('/subscribers').get(getSubscribers)
 router.route('/subscribers/bulk').delete(bulkDeleteSubscribers)

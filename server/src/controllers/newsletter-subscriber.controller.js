@@ -98,3 +98,42 @@ export const bulkDeleteSubscribers = asyncHandler(async (req, res) => {
   const result = await NewsletterSubscriber.deleteMany({ _id: { $in: ids } })
   res.json({ success: true, message: `${result.deletedCount} subscriber${result.deletedCount !== 1 ? 's' : ''} deleted`, data: { deleted: result.deletedCount } })
 })
+
+// ─── GET /api/v1/newsletter/stats (admin) ─────────────────────────────────────
+export const getNewsletterStats = asyncHandler(async (req, res) => {
+  const now = new Date()
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+  const [total, active, unsubscribed, thisMonth] = await Promise.all([
+    NewsletterSubscriber.countDocuments({}),
+    NewsletterSubscriber.countDocuments({ status: 'active' }),
+    NewsletterSubscriber.countDocuments({ status: 'unsubscribed' }),
+    NewsletterSubscriber.countDocuments({ subscribedAt: { $gte: startOfMonth } }),
+  ])
+  res.json({ success: true, data: { total, active, unsubscribed, thisMonth } })
+})
+
+// ─── GET /api/v1/newsletter/growth (admin) ────────────────────────────────────
+export const getNewsletterGrowth = asyncHandler(async (req, res) => {
+  const sixMonthsAgo = new Date()
+  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5)
+  sixMonthsAgo.setDate(1)
+  sixMonthsAgo.setHours(0, 0, 0, 0)
+
+  const rows = await NewsletterSubscriber.aggregate([
+    { $match: { subscribedAt: { $gte: sixMonthsAgo } } },
+    {
+      $group: {
+        _id: { year: { $year: '$subscribedAt' }, month: { $month: '$subscribedAt' } },
+        count: { $sum: 1 },
+      },
+    },
+    { $sort: { '_id.year': 1, '_id.month': 1 } },
+  ])
+
+  const data = rows.map(r => ({
+    month: new Date(r._id.year, r._id.month - 1).toLocaleString('en-US', { month: 'short', year: '2-digit' }),
+    subscribers: r.count,
+  }))
+
+  res.json({ success: true, data })
+})
