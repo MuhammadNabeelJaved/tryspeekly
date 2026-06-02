@@ -21,7 +21,7 @@ router.route('/claim').post(authenticate, authorize('student'), claimCertificate
 router.route('/verify/:certificateId').get(verifyCertificate)
 router.route('/').get(authenticate, authorizeTeamPage('certificates'), getAllCertificates)
 router.route('/').post(authenticate, authorize('teacher', 'admin'), issueCertificate)
-router.route('/bulk').delete(authenticate, authorizeTeamPage('certificates'), bulkDeleteCertificates)
+router.route('/bulk').delete(authenticate, authorizeTeamPage('certificates'), logActivity('delete', 'certificate', (req) => ({ details: `Bulk-deleted ${req.body?.ids?.length ?? 0} certificates` })), bulkDeleteCertificates)
 
 // ─── Parameterised routes (must come AFTER all specific paths) ──────────────
 router.route('/:id').get(getCertificate)

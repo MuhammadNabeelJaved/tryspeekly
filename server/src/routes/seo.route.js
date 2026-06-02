@@ -18,11 +18,11 @@ router.use(authenticate, authorizeTeamPage('seo'))
 
 router.route('/')
   .get(getAllPages)
-  .post(createPage)
+  .post(logActivity('create', 'seo', (req) => ({ resourceName: req.body.pageSlug ?? '', details: `Created SEO page ${req.body.pageSlug ?? ''}` })), createPage)
 
 router.route('/:slug')
   .get(getPage)
   .put(logActivity('update', 'seo', (req) => ({ resourceName: req.params.slug, details: `Updated SEO for /${req.params.slug}` })), upsertPage)
-  .delete(deletePage)
+  .delete(logActivity('delete', 'seo', (req) => ({ resourceName: req.params.slug, details: `Deleted SEO page ${req.params.slug}` })), deletePage)
 
 export default router

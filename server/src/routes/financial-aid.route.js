@@ -18,8 +18,8 @@ router.route('/my').get(authenticate, authorize('student'), getMyApplications)
 
 // ─── Admin routes ──────────────────────────────────────────────────────────────
 router.route('/').get(authenticate, authorizeTeamPage('financial-aid'), getAllApplications)
-router.route('/bulk').delete(authenticate, authorizeTeamPage('financial-aid'), bulkDeleteApplications)
+router.route('/bulk').delete(authenticate, authorizeTeamPage('financial-aid'), logActivity('delete', 'financial-aid', (req) => ({ details: `Bulk-deleted ${req.body?.ids?.length ?? 0} applications` })), bulkDeleteApplications)
 router.route('/:id/status').patch(authenticate, authorizeTeamPage('financial-aid'), logActivity('update', 'financial-aid', (req) => ({ resourceId: req.params.id, details: `Status → ${req.body.status ?? ''}` })), updateApplicationStatus)
-router.route('/:id').delete(authenticate, authorizeTeamPage('financial-aid'), deleteApplication)
+router.route('/:id').delete(authenticate, authorizeTeamPage('financial-aid'), logActivity('delete', 'financial-aid', (req) => ({ resourceId: req.params.id, details: 'Deleted application' })), deleteApplication)
 
 export default router

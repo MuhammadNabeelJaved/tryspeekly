@@ -1,5 +1,6 @@
 import express from 'express'
 import { authenticate, authorize, authorizeTeamPage } from '../middlewares/auth.js'
+import { logActivity } from '../middlewares/activityLogger.js'
 import {
   createEnrollment,
   getMyEnrollments,
@@ -24,7 +25,7 @@ router.route('/teacher/my').get(authenticate, authorize('teacher', 'admin'), get
 // ─── Admin routes (also visible to team members with students/courses/instructors pages) ───
 router.route('/').get(authenticate, authorizeTeamPage('students', 'courses', 'instructors'), getAllEnrollments)
 router.route('/admin/unpaid').get(authenticate, authorizeTeamPage('payments'), getUnpaidEnrollments)
-router.route('/admin/financial-aid').post(authenticate, authorizeTeamPage('students', 'courses', 'instructors'), adminEnrollWithFinancialAid)
+router.route('/admin/financial-aid').post(authenticate, authorizeTeamPage('students', 'courses', 'instructors'), logActivity('create', 'enrollment', (req) => ({ details: 'Enrolled student via financial aid' })), adminEnrollWithFinancialAid)
 router.route('/by-financial-aid/:aidId').get(authenticate, authorizeTeamPage('students', 'courses', 'instructors'), getEnrollmentByFinancialAid)
 
 // ─── Parameterised routes (must come after all static paths) ──────────────────

@@ -41,13 +41,13 @@ router.get('/stats',  getNewsletterStats)
 router.get('/growth', getNewsletterGrowth)
 
 router.route('/subscribers').get(getSubscribers)
-router.route('/subscribers/bulk').delete(bulkDeleteSubscribers)
+router.route('/subscribers/bulk').delete(logActivity('delete', 'newsletter-subscriber', (req) => ({ details: `Bulk-deleted ${req.body?.ids?.length ?? 0} subscribers` })), bulkDeleteSubscribers)
 router.route('/subscribers/:id').delete(logActivity('delete', 'newsletter-subscriber', (req) => ({ resourceId: req.params.id, details: 'Subscriber deleted' })), deleteSubscriber)
-router.patch('/subscribers/:id/unsubscribe', adminUnsubscribe)
+router.patch('/subscribers/:id/unsubscribe', logActivity('update', 'newsletter-subscriber', (req) => ({ resourceId: req.params.id, details: 'Unsubscribed subscriber' })), adminUnsubscribe)
 
-router.route('/campaigns').get(getCampaigns).post(createCampaign)
-router.route('/campaigns/bulk').delete(bulkDeleteCampaigns)
-router.route('/campaigns/:id').get(getCampaign).put(updateCampaign).delete(deleteCampaign)
+router.route('/campaigns').get(getCampaigns).post(logActivity('create', 'newsletter-campaign', (req, body) => ({ resourceId: body?.data?._id, resourceName: req.body.subject ?? '', details: 'Created campaign' })), createCampaign)
+router.route('/campaigns/bulk').delete(logActivity('delete', 'newsletter-campaign', (req) => ({ details: `Bulk-deleted ${req.body?.ids?.length ?? 0} campaigns` })), bulkDeleteCampaigns)
+router.route('/campaigns/:id').get(getCampaign).put(logActivity('update', 'newsletter-campaign', (req) => ({ resourceId: req.params.id, details: 'Updated campaign' })), updateCampaign).delete(logActivity('delete', 'newsletter-campaign', (req) => ({ resourceId: req.params.id, details: 'Deleted campaign' })), deleteCampaign)
 router.post('/campaigns/:id/send', logActivity('send', 'newsletter-campaign', (req) => ({ resourceId: req.params.id, details: 'Campaign sent' })), sendCampaign)
 
 export default router

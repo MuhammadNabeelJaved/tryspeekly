@@ -1,5 +1,6 @@
 import express from 'express'
 import { authenticate, authorize, authorizeTeamPage } from '../middlewares/auth.js'
+import { logActivity } from '../middlewares/activityLogger.js'
 import {
   getAllPackages,
   createPackage,
@@ -20,18 +21,18 @@ router.get('/my', authenticate, authorize('teacher'), getMyPackage)
 // ─── Admin routes ──────────────────────────────────────────────────────────────
 router.route('/')
   .get(authenticate, authorizeTeamPage('salaries'), getAllPackages)
-  .post(authenticate, authorizeTeamPage('salaries'), createPackage)
+  .post(authenticate, authorizeTeamPage('salaries'), logActivity('create', 'salary-package', (req, body) => ({ resourceId: body?.data?._id, details: 'Created salary package' })), createPackage)
 
 router.route('/:id')
-  .patch(authenticate, authorizeTeamPage('salaries'), updatePackage)
-  .delete(authenticate, authorizeTeamPage('salaries'), deletePackage)
+  .patch(authenticate, authorizeTeamPage('salaries'), logActivity('update', 'salary-package', (req) => ({ resourceId: req.params.id, details: 'Updated salary package' })), updatePackage)
+  .delete(authenticate, authorizeTeamPage('salaries'), logActivity('delete', 'salary-package', (req) => ({ resourceId: req.params.id, details: 'Deleted salary package' })), deletePackage)
 
 router.route('/:id/payments')
   .get(authenticate, authorizeTeamPage('salaries'), getPackagePayments)
-  .post(authenticate, authorizeTeamPage('salaries'), addPayment)
+  .post(authenticate, authorizeTeamPage('salaries'), logActivity('create', 'salary-payment', (req) => ({ resourceId: req.params.id, details: 'Recorded salary payment' })), addPayment)
 
 router.route('/:id/payments/:paymentId')
-  .patch(authenticate, authorizeTeamPage('salaries'), updatePayment)
-  .delete(authenticate, authorizeTeamPage('salaries'), deletePayment)
+  .patch(authenticate, authorizeTeamPage('salaries'), logActivity('update', 'salary-payment', (req) => ({ resourceId: req.params.paymentId, details: 'Updated salary payment' })), updatePayment)
+  .delete(authenticate, authorizeTeamPage('salaries'), logActivity('delete', 'salary-payment', (req) => ({ resourceId: req.params.paymentId, details: 'Deleted salary payment' })), deletePayment)
 
 export default router
