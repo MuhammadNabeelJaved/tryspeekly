@@ -251,12 +251,13 @@ export const getAllUsers = asyncHandler(async (req, res) => {
     const { page = 1, limit = 20, role, search, blocked } = req.query
     const filter = {}
 
-    // Non-admins can only see students and teachers
+    // Non-admins can only see students and teachers — but still honor a specific
+    // role filter (e.g. the Instructors page requesting ?role=teacher) as long as
+    // it stays within the allowed set.
     if (req.user.role !== 'admin') {
-      filter.role = { $in: ['student', 'teacher'] }
-    }
-
-    if (req.user.role === 'admin' && role) {
+      const allowed = ['student', 'teacher']
+      filter.role = role && allowed.includes(role) ? role : { $in: allowed }
+    } else if (role) {
       filter.role = role
     }
     if (req.user.role === 'admin' && blocked === 'true') {

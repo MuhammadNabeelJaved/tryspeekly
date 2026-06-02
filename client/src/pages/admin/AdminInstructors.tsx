@@ -64,7 +64,9 @@ export default function AdminInstructors({ store }: { store: AdminStore }) {
         ])
 
         if (instRes.status === 'fulfilled') {
-          const users: any[] = instRes.value.data?.data ?? []
+          // Defensive: only teachers belong on the Instructors page (guards against
+          // any endpoint that returns a broader user set).
+          const users: any[] = (instRes.value.data?.data ?? []).filter((u: any) => u.role === 'teacher')
           const imgMap: Record<string, string> = {}
           const homeMap: Record<string, boolean> = {}
           const mapped: Instructor[] = users.map((u: any, idx: number) => {
