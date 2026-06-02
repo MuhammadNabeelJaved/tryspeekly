@@ -2,8 +2,9 @@ import { useState, useEffect, useCallback } from 'react'
 import toast from 'react-hot-toast'
 import {
   MagnifyingGlass, Trash, UserMinus, PaperPlaneTilt,
-  PencilSimple, Plus, CalendarBlank, X, Clock,
+  PencilSimple, Plus, CalendarBlank, X, Clock, DownloadSimple,
 } from '@phosphor-icons/react'
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import { newsletterService } from '@/services/newsletter.service'
 import type { NewsletterSubscriber, NewsletterCampaign } from '@/services/newsletter.service'
 import NewsletterEditor from '@/components/NewsletterEditor'
@@ -38,11 +39,23 @@ export default function AdminNewsletter() {
   const [subPage, setSubPage] = useState(1)
   const [subTotalPages, setSubTotalPages] = useState(1)
   const [subTotal, setSubTotal] = useState(0)
+  const [stats, setStats]   = useState<{ total: number; active: number; unsubscribed: number; thisMonth: number } | null>(null)
+  const [growth, setGrowth] = useState<Array<{ month: string; subscribers: number }>>([])
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(subSearch), 400)
     return () => clearTimeout(t)
   }, [subSearch])
+
+  useEffect(() => {
+    if (activeTab !== 'subscribers') return
+    Promise.all([newsletterService.getStats(), newsletterService.getGrowth()])
+      .then(([s, g]) => {
+        if (s.success) setStats(s.data)
+        if (g.success) setGrowth(g.data)
+      })
+      .catch(() => {})
+  }, [activeTab])
 
   const fetchSubscribers = useCallback(async (page: number, search: string) => {
     setSubLoading(true)
@@ -297,6 +310,46 @@ export default function AdminNewsletter() {
 
       {/* ── SUBSCRIBERS ── */}
       {activeTab === 'subscribers' && (
+        <>
+        {/* Stats cards */}
+        {stats && (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            {[
+              { label: 'Total Subscribers', value: stats.total,        color: 'text-violet-600' },
+              { label: 'Active',            value: stats.active,       color: 'text-emerald-600' },
+              { label: 'Unsubscribed',      value: stats.unsubscribed, color: 'text-slate-500' },
+              { label: 'New This Month',    value: stats.thisMonth,    color: 'text-blue-600' },
+            ].map(({ label, value, color }) => (
+              <div key={label} className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200 dark:border-white/10 p-4">
+                <p className={`text-2xl font-black leading-none mb-1 ${color}`}>{value.toLocaleString()}</p>
+                <p className="text-xs text-slate-500 dark:text-neutral-500 font-medium">{label}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Growth chart */}
+        {growth.length > 0 && (
+          <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200 dark:border-white/10 p-5">
+            <p className="text-sm font-bold text-slate-900 dark:text-white mb-4">Subscriber Growth (Last 6 Months)</p>
+            <ResponsiveContainer width="100%" height={140}>
+              <BarChart data={growth} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                <XAxis dataKey="month" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                <Tooltip
+                  contentStyle={{ borderRadius: 12, border: 'none', fontSize: 12, boxShadow: '0 4px 20px rgba(0,0,0,0.15)' }}
+                  cursor={{ fill: 'rgba(124,58,237,0.06)' }}
+                />
+                <Bar dataKey="subscribers" radius={[6, 6, 0, 0]}>
+                  {growth.map((_, i) => (
+                    <Cell key={i} fill={i === growth.length - 1 ? '#7c3aed' : '#c4b5fd'} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+
         <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200 dark:border-white/10">
           <div className="p-5 border-b border-slate-200 dark:border-white/10 flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
             <div className="flex items-center gap-3">
@@ -305,15 +358,36 @@ export default function AdminNewsletter() {
                 {subTotal} total
               </span>
             </div>
-            <div className="relative w-full sm:w-72">
-              <MagnifyingGlass size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Search by email..."
-                value={subSearch}
-                onChange={(e) => { setSubSearch(e.target.value); setSubPage(1) }}
-                className="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 text-slate-900 dark:text-neutral-300 placeholder-slate-400 dark:placeholder-neutral-600 transition-all"
-              />
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <div className="relative flex-1 sm:w-72">
+                <MagnifyingGlass size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Search by email..."
+                  value={subSearch}
+                  onChange={(e) => { setSubSearch(e.target.value); setSubPage(1) }}
+                  className="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 text-slate-900 dark:text-neutral-300 placeholder-slate-400 dark:placeholder-neutral-600 transition-all"
+                />
+              </div>
+              <button
+                onClick={() => {
+                  newsletterService.getSubscribers({ limit: 9999 }).then(res => {
+                    const rows = [
+                      ['email', 'status', 'subscribedAt'],
+                      ...res.data.subscribers.map(s => [s.email, s.status, new Date(s.subscribedAt).toISOString()]),
+                    ]
+                    const csv = rows.map(r => r.join(',')).join('\n')
+                    const blob = new Blob([csv], { type: 'text/csv' })
+                    const url = URL.createObjectURL(blob)
+                    const a = document.createElement('a'); a.href = url
+                    a.download = `subscribers-${new Date().toISOString().slice(0, 10)}.csv`
+                    a.click(); URL.revokeObjectURL(url)
+                  }).catch(() => toast.error('Export failed'))
+                }}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-neutral-900 text-xs font-semibold text-slate-600 dark:text-neutral-300 hover:border-violet-300 hover:text-violet-600 transition-colors whitespace-nowrap"
+              >
+                <DownloadSimple size={14} /> Export CSV
+              </button>
             </div>
           </div>
 
@@ -400,6 +474,7 @@ export default function AdminNewsletter() {
             </div>
           )}
         </div>
+        </>
       )}
 
       {/* ── CAMPAIGNS ── */}

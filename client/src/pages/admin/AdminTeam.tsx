@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { Users, Plus, PencilSimple, Trash, ChatCircleDots, X, Check, Activity, ArrowCounterClockwise } from '@phosphor-icons/react'
+import { Users, Plus, PencilSimple, Trash, ChatCircleDots, X, Check, ClockCounterClockwise, ArrowCounterClockwise } from '@phosphor-icons/react'
 import { activityLogService, type ActivityLogEntry, type ActivitySummaryEntry } from '@/services/activity-log.service'
 
 const TEAM_JOB_TITLES = [
@@ -354,7 +354,7 @@ function ActivityTab() {
         </div>
       ) : logs.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-slate-400 dark:text-neutral-600">
-          <Activity size={32} className="mb-2" />
+          <ClockCounterClockwise size={32} className="mb-2" />
           <p className="text-sm font-medium">No activity yet</p>
           <p className="text-xs mt-1">Team member actions will appear here</p>
         </div>
@@ -523,7 +523,7 @@ export default function AdminTeam() {
       {/* Tab bar */}
       <div className="flex gap-1 px-4 pt-4 pb-0 flex-shrink-0">
         <div className="flex gap-1 bg-slate-100 dark:bg-neutral-800 p-1 rounded-xl">
-          {([['members', 'Members', Users], ['activity', 'Activity Log', Activity]] as const).map(([key, label, Icon]) => (
+          {([['members', 'Members', Users], ['activity', 'Activity Log', ClockCounterClockwise]] as const).map(([key, label, Icon]) => (
             <button key={key} onClick={() => setTeamTab(key as 'members' | 'activity')}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
                 teamTab === key
