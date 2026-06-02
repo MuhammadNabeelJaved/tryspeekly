@@ -1,11 +1,48 @@
 import { useState, useRef, useEffect, type ChangeEvent } from 'react'
 import { CaretDown, MagnifyingGlass, Check } from '@phosphor-icons/react'
+import { useGeo } from '@/context/GeoContext'
 
 interface Country {
   code: string
   name: string
   dialCode: string
   flag: string
+}
+
+// Example local mobile numbers (without dial code) shown as placeholder per country.
+const PHONE_EXAMPLES: Record<string, string> = {
+  US: '201 555 0123', GB: '7400 123456', CA: '416 555 0123', AU: '412 345 678',
+  DE: '1512 3456789', FR: '6 12 34 56 78', ES: '612 345 678', IT: '312 345 6789',
+  NL: '6 12345678', BE: '470 12 34 56', CH: '78 123 45 67', AT: '664 123456',
+  SE: '70 123 45 67', NO: '412 34 567', DK: '20 12 34 56', FI: '41 2345678',
+  PT: '912 345 678', IE: '85 123 4567', NZ: '21 123 4567', SG: '8123 4567',
+  HK: '5123 4567', JP: '90 1234 5678', KR: '10 1234 5678', PK: '300 1234567',
+  BD: '1812 345678', LK: '71 234 5678', NP: '981 2345678', AF: '70 123 4567',
+  IR: '912 345 6789', IQ: '791 234 5678', SY: '944 567 890', YE: '712 345 678',
+  JO: '79 123 4567', LB: '71 123 456', PS: '599 123 456', AE: '50 123 4567',
+  SA: '51 234 5678', QA: '3312 3456', KW: '5012 3456', BH: '3612 3456',
+  OM: '9212 3456', EG: '101 234 5678', ZA: '71 123 4567', NG: '802 123 4567',
+  KE: '712 345 678', MA: '650 123456', DZ: '551 23 45 67', TN: '20 123 456',
+  GH: '23 123 4567', TZ: '621 234 567', UG: '712 345678', ET: '91 123 4567',
+  TR: '501 234 5678', RU: '912 345 6789', UA: '50 123 4567', PL: '512 345 678',
+  GR: '691 234 5678', CZ: '601 123 456', RO: '712 345 678', HU: '20 123 4567',
+  CN: '131 2345 6789', TH: '81 234 5678', MY: '12 345 6789', ID: '812 3456 7890',
+  PH: '917 123 4567', VN: '91 234 56 78', BR: '11 91234 5678', MX: '55 1234 5678',
+  AR: '11 2345 6789', CL: '9 6123 4567', CO: '321 1234567', PE: '912 345 678',
+  VE: '412 1234567', EC: '99 123 4567', BO: '71234567', PY: '961 456789',
+  UY: '94 231 234', DO: '809 234 5678', CU: '5123 4567', JM: '876 123 4567',
+  TT: '868 123 4567', TW: '912 345 678', MM: '92 123 4567', KH: '91 234 567',
+  LA: '20 23 123 456', BN: '712 3456', MN: '8812 3456', UZ: '90 123 4567',
+  KZ: '701 234 5678', TJ: '917 123 456', TM: '65 123456', KG: '700 123 456',
+  GE: '555 12 34 56', AM: '77 123456', AZ: '40 123 45 67',
+}
+
+/** Pick the country whose dial code the value starts with (longest match wins). */
+function detectCountryFromValue(val: string, list: Country[]): Country | null {
+  if (!val) return null
+  const matches = list.filter(c => val.startsWith(c.dialCode))
+  if (!matches.length) return null
+  return [...matches].sort((a, b) => b.dialCode.length - a.dialCode.length)[0]
 }
 
 const COUNTRIES: Country[] = [
@@ -115,14 +152,34 @@ interface PhoneInputProps {
 }
 
 export default function PhoneInput({ value, onChange, placeholder = 'Phone number', label, error }: PhoneInputProps) {
+  const geo = useGeo()
   const [isOpen, setIsOpen] = useState(false)
   const [search, setSearch] = useState('')
   const [selectedCountry, setSelectedCountry] = useState<Country>(() => {
-    const defaultCountry = COUNTRIES.find(c => c.dialCode === '+92') || COUNTRIES[0]
-    return defaultCountry
+    // 1) If a number is already present (e.g. editing in settings), match its dial code
+    const fromValue = detectCountryFromValue(value, COUNTRIES)
+    if (fromValue) return fromValue
+    // 2) Otherwise default to the user's detected country (cached geo may be ready immediately)
+    const fromGeo = COUNTRIES.find(c => c.code === geo.country)
+    if (fromGeo) return fromGeo
+    // 3) Final fallback
+    return COUNTRIES.find(c => c.code === 'PK') || COUNTRIES[0]
   })
+  // True once the user manually changes the country — stops geo from overriding their choice.
+  const userPicked = useRef(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
+
+  // When geo resolves after mount, snap to the detected country —
+  // but only if the user hasn't picked one and hasn't typed a number yet.
+  useEffect(() => {
+    if (userPicked.current || value) return
+    const fromGeo = COUNTRIES.find(c => c.code === geo.country)
+    if (fromGeo && fromGeo.code !== selectedCountry.code) {
+      setSelectedCountry(fromGeo)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [geo.country])
 
   const filteredCountries = COUNTRIES.filter(country =>
     country.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -153,6 +210,7 @@ export default function PhoneInput({ value, onChange, placeholder = 'Phone numbe
   }
 
   const handleCountrySelect = (country: Country) => {
+    userPicked.current = true
     const currentPhone = value.replace(selectedCountry.dialCode, '')
     setSelectedCountry(country)
     onChange(`${country.dialCode}${currentPhone}`)
@@ -161,6 +219,10 @@ export default function PhoneInput({ value, onChange, placeholder = 'Phone numbe
   }
 
   const displayPhone = value.replace(selectedCountry.dialCode, '')
+  // Country-specific example number; falls back to the passed placeholder.
+  const phonePlaceholder = PHONE_EXAMPLES[selectedCountry.code]
+    ? `e.g. ${PHONE_EXAMPLES[selectedCountry.code]}`
+    : placeholder
 
   return (
     <div>
@@ -228,7 +290,7 @@ export default function PhoneInput({ value, onChange, placeholder = 'Phone numbe
           type="tel"
           value={displayPhone}
           onChange={handlePhoneChange}
-          placeholder={placeholder}
+          placeholder={phonePlaceholder}
           className={`flex-1 px-4 py-2.5 rounded-r-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-slate-900 dark:text-white text-sm outline-none transition-colors ${
             error
               ? 'border-red-400 focus:border-red-500'
