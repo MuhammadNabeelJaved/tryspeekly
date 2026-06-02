@@ -59,9 +59,9 @@ export default function StudentOverview({ onNavigate }: { onNavigate: (view: Stu
         setEnrollments(enrollRes.value.data.filter(e => e.course != null))
       if (liveRes.status === 'fulfilled' && liveRes.value.success)
         setUpcomingClasses((liveRes.value.data as UpcomingClass[]).filter(c => c.course != null))
-      if (assignRes.status === 'fulfilled' && assignRes.value.success) setAssignments(assignRes.value.data)
+      if (assignRes.status === 'fulfilled' && assignRes.value.success) setAssignments(assignRes.value.data.filter(a => a.course != null))
       if (annRes.status === 'fulfilled' && annRes.value.success) setAnnouncements(annRes.value.data)
-      if (payRes.status === 'fulfilled' && payRes.value.success) setPayments(payRes.value.data)
+      if (payRes.status === 'fulfilled' && payRes.value.success) setPayments(payRes.value.data.filter(p => p.course != null))
       if (certRes.status === 'fulfilled' && certRes.value.success) setCertificateCount(certRes.value.data.length)
       setIsLoading(false)
     }
@@ -192,7 +192,7 @@ export default function StudentOverview({ onNavigate }: { onNavigate: (view: Stu
                 </button>
               </div>
               <p className="text-sm font-black text-slate-900 dark:text-white mb-0.5">Class is starting!</p>
-              <p className="text-xs text-slate-500 dark:text-neutral-400 mb-3 truncate font-medium">{liveClassToast.course.title}</p>
+              <p className="text-xs text-slate-500 dark:text-neutral-400 mb-3 truncate font-medium">{liveClassToast.course?.title ?? '—'}</p>
               {liveClassToast.meetingLink ? (
                 <a
                   href={liveClassToast.meetingLink}
