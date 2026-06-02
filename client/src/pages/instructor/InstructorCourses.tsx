@@ -251,7 +251,9 @@ export default function InstructorCourses() {
         // Build completed classes map: max sessionsAttended across all enrollments per course
         const completedMap: Record<string, number> = {}
         if (enrollmentsRes.success && enrollmentsRes.data) {
-          enrollmentsRes.data.forEach((enr: { course: { _id: string } | string; progress?: { sessionsAttended?: number } }) => {
+          enrollmentsRes.data.forEach((enr: { course?: { _id: string } | string | null; progress?: { sessionsAttended?: number } }) => {
+            // Guard against enrollments whose course was deleted (null after populate).
+            if (!enr.course) return
             const courseId = typeof enr.course === 'string' ? enr.course : enr.course._id
             const attended = enr.progress?.sessionsAttended ?? 0
             completedMap[courseId] = Math.max(completedMap[courseId] ?? 0, attended)
