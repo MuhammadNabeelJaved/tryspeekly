@@ -619,15 +619,14 @@ export default function AdminPaymentsView() {
       {deleteTarget && (
         <motion.div
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end justify-center"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
           onClick={e => e.target === e.currentTarget && (setDeleteTarget(null), setDeactivateEnrollment(false))}
         >
           <motion.div
-            initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+            initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className="bg-white dark:bg-neutral-900 rounded-t-[28px] border-t border-slate-100 dark:border-neutral-800 shadow-2xl w-full max-w-lg px-6 pt-5 pb-8"
+            className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-100 dark:border-neutral-800 shadow-2xl w-full max-w-sm p-6"
           >
-            <div className="w-10 h-1 rounded-full bg-slate-200 dark:bg-neutral-700 mx-auto mb-5" />
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-950/40 flex items-center justify-center flex-shrink-0">
                 <Warning size={20} weight="fill" className="text-red-600 dark:text-red-400" />
@@ -673,15 +672,14 @@ export default function AdminPaymentsView() {
       {bulkDeleteOpen && (
         <motion.div
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end justify-center"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
           onClick={e => e.target === e.currentTarget && (setBulkDeleteOpen(false), setDeactivateEnrollment(false))}
         >
           <motion.div
-            initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+            initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className="bg-white dark:bg-neutral-900 rounded-t-[28px] border-t border-slate-100 dark:border-neutral-800 shadow-2xl w-full max-w-lg px-6 pt-5 pb-8"
+            className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-100 dark:border-neutral-800 shadow-2xl w-full max-w-sm p-6"
           >
-            <div className="w-10 h-1 rounded-full bg-slate-200 dark:bg-neutral-700 mx-auto mb-5" />
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-950/40 flex items-center justify-center flex-shrink-0">
                 <Warning size={20} weight="fill" className="text-red-600 dark:text-red-400" />

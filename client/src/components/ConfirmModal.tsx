@@ -56,7 +56,7 @@ export default function ConfirmModal({
   return (
     <AnimatePresence>
       {open && (
-        <div className="fixed inset-0 z-[110] flex items-end justify-center">
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -65,13 +65,12 @@ export default function ConfirmModal({
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
           />
           <motion.div
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%' }}
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className="relative bg-white dark:bg-neutral-900 rounded-t-[28px] w-full max-w-lg px-6 pt-6 pb-8 border-t border-slate-100 dark:border-neutral-800 shadow-2xl text-center"
+            className="relative bg-white dark:bg-neutral-900 rounded-[32px] w-full max-w-sm p-8 border border-slate-100 dark:border-neutral-800 shadow-2xl text-center"
           >
-            <div className="w-10 h-1 rounded-full bg-slate-200 dark:bg-neutral-700 mx-auto mb-6" />
             <div className={`w-16 h-16 rounded-3xl ${cfg.bg} flex items-center justify-center mx-auto mb-5 ${cfg.iconBg}`}>
               {cfg.icon}
             </div>

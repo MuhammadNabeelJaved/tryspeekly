@@ -709,9 +709,8 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
       {/* DELETE CONFIRM */}
       <AnimatePresence>
         {deleteId && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center" onClick={e => e.target === e.currentTarget && setDeleteId(null)}>
-            <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', stiffness: 300, damping: 30 }} className="bg-white dark:bg-neutral-900 rounded-t-[28px] border-t border-slate-100 dark:border-neutral-800 shadow-2xl w-full max-w-lg px-6 pt-5 pb-8">
-              <div className="w-10 h-1 rounded-full bg-slate-200 dark:bg-neutral-700 mx-auto mb-5" />
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={e => e.target === e.currentTarget && setDeleteId(null)}>
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} transition={{ type: 'spring', stiffness: 300, damping: 30 }} className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-100 dark:border-neutral-800 shadow-2xl w-full max-w-sm p-6">
               <div className="w-12 h-12 rounded-2xl bg-red-100 dark:bg-red-950/40 flex items-center justify-center mx-auto mb-4">
                 <Trash size={22} className="text-red-500" />
               </div>
