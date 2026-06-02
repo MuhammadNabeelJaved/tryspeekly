@@ -1,14 +1,18 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { ArrowLeft, CheckCircle, Certificate, LinkedinLogo } from '@phosphor-icons/react'
+import { ArrowLeft, CheckCircle, Certificate, LinkedinLogo, FilePdf, Image as ImageIcon } from '@phosphor-icons/react'
 import { certificatesService } from '@/services/certificates.service'
+import CertificateDesign from '@/components/CertificateDesign'
+import { exportCertificateJPG, exportCertificatePDF } from '@/utils/certificateExport'
 import type { Certificate as CertificateType } from '@/types/api'
 
 export default function CertificateViewPage() {
   const { id } = useParams<{ id: string }>()
   const [cert, setCert] = useState<CertificateType | null>(null)
   const [loading, setLoading] = useState(true)
+  const [downloading, setDownloading] = useState(false)
+  const certRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!id) { setLoading(false); return }
@@ -44,6 +48,30 @@ export default function CertificateViewPage() {
     year: 'numeric', month: 'long', day: 'numeric',
   })
 
+  const certData = {
+    studentName,
+    courseName: cert.course?.title ?? 'Course',
+    date: new Date(cert.issueDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }),
+    certificateId: cert.certificateId,
+    instructorName: teacherName !== '—' ? teacherName : undefined,
+    instructorTitle: 'Course Instructor',
+  }
+
+  const handleDownload = async (format: 'jpg' | 'pdf') => {
+    if (!certRef.current) return
+    setDownloading(true)
+    const filename = `${(cert.course?.title ?? 'Certificate').replace(/\s+/g, '_')}_Certificate.${format}`
+    try {
+      if (format === 'jpg') await exportCertificateJPG(certRef.current, filename)
+      else await exportCertificatePDF(certRef.current, filename)
+      toast.success('Certificate downloaded!')
+    } catch {
+      toast.error('Download failed. Please try again.')
+    } finally {
+      setDownloading(false)
+    }
+  }
+
   const handleLinkedInShare = () => {
     const url = new URL('https://www.linkedin.com/profile/add')
     url.searchParams.append('startTask', 'CERTIFICATION_NAME')
@@ -68,29 +96,31 @@ export default function CertificateViewPage() {
       </div>
 
       <div className="max-w-5xl w-full grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Certificate visual */}
+        {/* Certificate visual (the real design — also the JPG/PDF capture source) */}
         <div className="lg:col-span-2">
-          <div className="w-full bg-white p-6 sm:p-10 relative shadow-xl overflow-hidden border border-slate-200 aspect-[4/3] flex flex-col justify-center">
-            <div className="absolute inset-4 border-[8px] border-[#1e1b4b] pointer-events-none" />
-            <div className="absolute inset-[20px] border-[2px] border-[#c4b5fd] pointer-events-none" />
-            <div className="relative z-10 text-center flex flex-col items-center h-full justify-center">
-              <h2 className="text-[#7c3aed] text-lg sm:text-xl font-black tracking-[0.2em] mb-4">ENGLISHPRO ACADEMY</h2>
-              <h1 className="text-[#1e1b4b] text-3xl sm:text-4xl font-serif font-bold italic mb-4 leading-tight">Certificate of Completion</h1>
-              <p className="text-slate-500 text-sm sm:text-base mb-4 font-medium">This is proudly presented to</p>
-              <p className="text-[#7c3aed] text-3xl sm:text-4xl font-serif font-bold italic mb-6 border-b-2 border-slate-200 pb-2 px-8 inline-block">{studentName}</p>
-              <p className="text-slate-500 text-sm sm:text-base mb-4 font-medium">for successfully completing the course</p>
-              <p className="text-[#1e1b4b] text-xl sm:text-2xl font-bold mb-10 max-w-[80%] leading-snug mx-auto">{cert.course?.title ?? '—'}</p>
-              <div className="flex justify-between w-full px-12 mt-auto">
-                <div className="text-center">
-                  <div className="border-b-2 border-slate-300 w-32 sm:w-40 mx-auto mb-2" />
-                  <p className="text-slate-500 font-bold text-xs">Date: {formattedDate}</p>
-                </div>
-                <div className="text-center">
-                  <div className="border-b-2 border-slate-300 w-32 sm:w-40 mx-auto mb-2" />
-                  <p className="text-slate-500 font-bold text-xs">ID: {cert.certificateId}</p>
-                </div>
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-4 sm:p-5 overflow-x-auto">
+            <div className="mx-auto" style={{ width: 640, height: 452 }}>
+              <div style={{ transform: 'scale(0.64)', transformOrigin: 'top left' }}>
+                <CertificateDesign ref={certRef} data={certData} />
               </div>
             </div>
+          </div>
+          {/* Download actions */}
+          <div className="flex gap-3 mt-4">
+            <button
+              onClick={() => handleDownload('pdf')}
+              disabled={downloading}
+              className="flex-1 flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-700 disabled:opacity-60 text-white font-bold py-3 rounded-xl transition-colors shadow-sm"
+            >
+              <FilePdf size={18} weight="fill" /> Download PDF
+            </button>
+            <button
+              onClick={() => handleDownload('jpg')}
+              disabled={downloading}
+              className="flex-1 flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 disabled:opacity-60 text-white font-bold py-3 rounded-xl transition-colors shadow-sm"
+            >
+              <ImageIcon size={18} weight="fill" /> Download JPG
+            </button>
           </div>
         </div>
 

@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Certificate, MagnifyingGlass, Check, X, Eye, Trash, FunnelSimple, Medal, Clock, SpinnerGap } from '@phosphor-icons/react'
 import { certificatesService } from '@/services/certificates.service'
 import ConfirmModal from '@/components/ConfirmModal'
+import CertificateDesign from '@/components/CertificateDesign'
 import toast from 'react-hot-toast'
 import type { Certificate as CertificateType } from '@/types/api'
 
@@ -255,17 +256,16 @@ export default function AdminCertificates() {
                 <h3 className="text-base font-black text-slate-900 dark:text-white">Certificate Preview</h3>
                 <button onClick={() => setModalType(null)} className="w-8 h-8 rounded-full bg-slate-100 dark:bg-neutral-800 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors"><X size={15} /></button>
               </div>
-              <div className="p-6 bg-slate-50 dark:bg-neutral-950 flex justify-center">
-                <div className="w-full aspect-[4/3] bg-white p-6 border-[6px] border-[#1e1b4b] relative shadow-lg flex flex-col items-center justify-center text-center">
-                  <div className="absolute inset-[10px] border border-[#c4b5fd] pointer-events-none" />
-                  <Certificate size={32} className="text-violet-600 mb-2" weight="fill" />
-                  <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Certificate of Completion</h4>
-                  <p className="text-[#1e1b4b] font-serif italic text-2xl font-bold mb-3 border-b border-slate-200 px-4">{selected.student?.name ?? 'Deleted User'}</p>
-                  <p className="text-[10px] text-slate-500 mb-2">has successfully completed</p>
-                  <p className="text-xs font-bold text-[#1e1b4b] mb-4">{selected.course?.title ?? '—'}</p>
-                  <div className="flex justify-between w-full px-8 text-[8px] text-slate-400 font-bold mt-auto">
-                    <p>Date: {new Date(selected.issueDate).toLocaleDateString()}</p>
-                    <p>ID: {selected.certificateId}</p>
+              <div className="p-6 bg-slate-50 dark:bg-neutral-950 flex justify-center overflow-x-auto">
+                <div style={{ width: 520, height: 368, flexShrink: 0 }}>
+                  <div style={{ transform: 'scale(0.52)', transformOrigin: 'top left' }}>
+                    <CertificateDesign data={{
+                      studentName: selected.student?.name ?? 'Deleted User',
+                      courseName: selected.course?.title ?? '—',
+                      date: new Date(selected.issueDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }),
+                      certificateId: selected.certificateId,
+                      instructorTitle: 'Course Instructor',
+                    }} />
                   </div>
                 </div>
               </div>

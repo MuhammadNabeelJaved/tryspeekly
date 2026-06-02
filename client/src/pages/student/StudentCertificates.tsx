@@ -1,9 +1,24 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Certificate, DownloadSimple, LinkedinLogo, X, CircleNotch, FilePdf, Image as ImageIcon, Link as LinkIcon } from '@phosphor-icons/react'
 import toast from 'react-hot-toast'
 import { useAuth } from '@/context/AuthContext'
 import { certificatesService } from '@/services/certificates.service'
+import CertificateDesign, { type CertificateData } from '@/components/CertificateDesign'
+import { exportCertificateJPG, exportCertificatePDF } from '@/utils/certificateExport'
 import type { Certificate as CertificateType } from '@/types/api'
+
+function toCertData(cert: CertificateType, studentName: string): CertificateData {
+  const enrollment = cert.enrollment
+  const instructorName = typeof enrollment === 'object' && enrollment?.teacher?.name ? enrollment.teacher.name : undefined
+  return {
+    studentName: studentName || 'Student',
+    courseName: cert.course?.title ?? 'Course',
+    date: new Date(cert.issueDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }),
+    certificateId: cert.certificateId,
+    instructorName,
+    instructorTitle: 'Course Instructor',
+  }
+}
 
 export default function StudentCertificates() {
   const { user } = useAuth()
@@ -12,6 +27,7 @@ export default function StudentCertificates() {
   const [selectedCert, setSelectedCert] = useState<CertificateType | null>(null)
   const [downloadFormat, setDownloadFormat] = useState<'pdf' | 'jpg'>('pdf')
   const [isDownloading, setIsDownloading] = useState(false)
+  const certRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     certificatesService.getMyCertificates()
@@ -20,87 +36,21 @@ export default function StudentCertificates() {
       .finally(() => setLoading(false))
   }, [])
 
-  const generateCertificateJPG = (cert: CertificateType) => {
-    return new Promise<string>((resolve) => {
-      const canvas = document.createElement('canvas')
-      canvas.width = 1600
-      canvas.height = 1200
-      const ctx = canvas.getContext('2d')
-      if (!ctx) return resolve('')
-
-      ctx.fillStyle = '#ffffff'
-      ctx.fillRect(0, 0, canvas.width, canvas.height)
-
-      ctx.strokeStyle = '#1e1b4b'
-      ctx.lineWidth = 15
-      ctx.strokeRect(40, 40, canvas.width - 80, canvas.height - 80)
-
-      ctx.strokeStyle = '#c4b5fd'
-      ctx.lineWidth = 4
-      ctx.strokeRect(65, 65, canvas.width - 130, canvas.height - 130)
-
-      ctx.fillStyle = '#7c3aed'
-      ctx.textAlign = 'center'
-      ctx.font = 'bold 36px Arial'
-      ctx.fillText('ENGLISHPRO ACADEMY', 800, 160)
-
-      ctx.fillStyle = '#1e1b4b'
-      ctx.font = 'bold 80px "Times New Roman", Times, serif'
-      ctx.fillText('Certificate of Completion', 800, 320)
-
-      ctx.fillStyle = '#64748b'
-      ctx.font = '32px Arial'
-      ctx.fillText('This is proudly presented to', 800, 440)
-
-      ctx.fillStyle = '#7c3aed'
-      ctx.font = 'italic bold 90px "Times New Roman", Times, serif'
-      ctx.fillText(user?.name ?? '', 800, 580)
-
-      ctx.fillStyle = '#64748b'
-      ctx.font = '32px Arial'
-      ctx.fillText('for successfully completing the course', 800, 700)
-
-      ctx.fillStyle = '#1e1b4b'
-      ctx.font = 'bold 50px Arial'
-      ctx.fillText(cert.course?.title ?? '', 800, 800)
-
-      ctx.fillStyle = '#475569'
-      ctx.font = '24px Arial'
-      const issueDate = new Date(cert.issueDate).toLocaleDateString('en-US', {
-        year: 'numeric', month: 'long', day: 'numeric',
-      })
-      ctx.fillText(`Date: ${issueDate}`, 300, 1000)
-      ctx.fillText(`Credential ID: ${cert.certificateId}`, 1300, 1000)
-
-      ctx.lineWidth = 2
-      ctx.strokeStyle = '#cbd5e1'
-      ctx.beginPath(); ctx.moveTo(200, 960); ctx.lineTo(400, 960); ctx.stroke()
-      ctx.beginPath(); ctx.moveTo(1150, 960); ctx.lineTo(1450, 960); ctx.stroke()
-
-      resolve(canvas.toDataURL('image/jpeg', 1.0))
-    })
-  }
-
-  const DUMMY_PDF_BASE64 = 'data:application/pdf;base64,JVBERi0xLjAKMSAwIG9iago8PC9UeXBlL0NhdGFsb2cvUGFnZXMgMiAwIFI+PgplbmRvYmoKMiAwIG9iago8PC9UeXBlL0NhdGFsb2cvS2lkc1szIDAgUl0vQ291bnQgMT4+CmVuZG9iagozIDAgb2JqCjw8L1R5cGUvUGFnZS9NZWRpYUJveFswIDAgNTk1IDg0Ml0vUGFyZW50IDIgMCBSPj4KZW5kb2JqCnRyYWlsZXIKPDwvUm9vdCAxIDAgUj4+CiUlRU9G'
-
   const handleDownload = async () => {
-    if (!selectedCert) return
+    if (!selectedCert || !certRef.current) return
     setIsDownloading(true)
+    const filename = `${(selectedCert.course?.title ?? 'Certificate').replace(/\s+/g, '_')}_Certificate.${downloadFormat}`
     try {
       if (downloadFormat === 'jpg') {
-        const dataUrl = await generateCertificateJPG(selectedCert)
-        const a = document.createElement('a')
-        a.href = dataUrl
-        a.download = `${(selectedCert.course?.title ?? 'Certificate').replace(/\s+/g, '_')}_Certificate.jpg`
-        document.body.appendChild(a); a.click(); document.body.removeChild(a)
+        await exportCertificateJPG(certRef.current, filename)
       } else {
-        const a = document.createElement('a')
-        a.href = DUMMY_PDF_BASE64
-        a.download = `${(selectedCert.course?.title ?? 'Certificate').replace(/\s+/g, '_')}_Certificate.pdf`
-        document.body.appendChild(a); a.click(); document.body.removeChild(a)
+        await exportCertificatePDF(certRef.current, filename)
       }
+      toast.success('Certificate downloaded!')
+    } catch {
+      toast.error('Download failed. Please try again.')
     } finally {
-      setTimeout(() => { setIsDownloading(false); setSelectedCert(null) }, 1000)
+      setIsDownloading(false)
     }
   }
 
@@ -201,13 +151,23 @@ export default function StudentCertificates() {
       {selectedCert && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-sm" onClick={() => !isDownloading && setSelectedCert(null)} />
-          <div className="bg-white dark:bg-neutral-900 rounded-3xl w-full max-w-md relative z-10 shadow-2xl shadow-black/20 overflow-hidden">
-            <div className="flex justify-between items-center p-5 border-b border-slate-100 dark:border-neutral-800">
-              <h3 className="font-bold text-slate-900 dark:text-white">Download Certificate</h3>
+          <div className="bg-white dark:bg-neutral-900 rounded-3xl w-full max-w-2xl relative z-10 shadow-2xl shadow-black/20 overflow-hidden max-h-[92vh] overflow-y-auto">
+            <div className="flex justify-between items-center p-5 border-b border-slate-100 dark:border-neutral-800 sticky top-0 bg-white dark:bg-neutral-900 z-10">
+              <h3 className="font-bold text-slate-900 dark:text-white">Your Certificate</h3>
               <button onClick={() => !isDownloading && setSelectedCert(null)} className="text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors">
                 <X size={20} weight="bold" />
               </button>
             </div>
+
+            {/* Live preview — the same element captured for JPG/PDF (scaled for display) */}
+            <div className="bg-slate-100 dark:bg-neutral-950 p-5 flex justify-center overflow-x-auto">
+              <div style={{ width: 600, height: 424, flexShrink: 0 }}>
+                <div style={{ transform: 'scale(0.6)', transformOrigin: 'top left' }}>
+                  <CertificateDesign ref={certRef} data={toCertData(selectedCert, user?.name ?? '')} />
+                </div>
+              </div>
+            </div>
+
             <div className="p-6">
               <p className="text-sm text-slate-600 dark:text-neutral-400 mb-5">Choose your preferred format. JPG is best for sharing on social media, PDF for printing.</p>
               <div className="grid grid-cols-2 gap-4 mb-6">
