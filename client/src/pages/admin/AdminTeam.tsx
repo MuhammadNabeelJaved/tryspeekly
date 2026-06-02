@@ -336,7 +336,7 @@ function ActivityTab() {
           className="px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-xs text-slate-700 dark:text-neutral-300 outline-none focus:border-violet-500"
         >
           <option value="">All Resources</option>
-          {['blog','review','payment','certificate','financial-aid','support','contact','newsletter-campaign','newsletter-subscriber','seo'].map(r => (
+          {['course','blog','review','payment','certificate','financial-aid','support','contact','newsletter-campaign','newsletter-subscriber','seo'].map(r => (
             <option key={r} value={r}>{r}</option>
           ))}
         </select>

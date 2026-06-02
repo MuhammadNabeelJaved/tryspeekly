@@ -1,5 +1,6 @@
 import express from 'express'
 import { authenticate, authorize, authorizeTeamPage } from '../middlewares/auth.js'
+import { logActivity } from '../middlewares/activityLogger.js'
 import { uploadImageFile, uploadVideoFile, handleMulterError } from '../middlewares/multer.js'
 import {
   getAllCourses,
@@ -41,8 +42,8 @@ router.route('/:id').patch(authenticate, authorize('teacher', 'admin'), updateCo
 router.route('/:id/thumbnail').patch(authenticate, authorize('teacher', 'admin'), uploadImageFile, handleMulterError, updateCourseThumbnail)
 router.route('/:id/video-preview').patch(authenticate, authorize('teacher', 'admin'), uploadVideoFile, handleMulterError, updateCourseVideoPreview)
 router.route('/:id/submit').patch(authenticate, authorize('teacher'), submitCourseForReview)
-router.route('/:id/review').patch(authenticate, authorizeTeamPage('courses'), reviewCourse)
-router.route('/:id').delete(authenticate, authorizeTeamPage('courses'), deleteCourse)
+router.route('/:id/review').patch(authenticate, authorizeTeamPage('courses'), logActivity('update', 'course', (req, body) => ({ resourceId: req.params.id, resourceName: body?.data?.title ?? '', details: `Course review: ${req.body.status ?? ''}` })), reviewCourse)
+router.route('/:id').delete(authenticate, authorizeTeamPage('courses'), logActivity('delete', 'course', (req, body) => ({ resourceId: req.params.id, resourceName: body?.data?.title ?? '', details: 'Deleted course' })), deleteCourse)
 
 // ─── Materials ─────────────────────────────────────────────────────────────────
 router.route('/:id/materials').get(authenticate, getMaterials)
