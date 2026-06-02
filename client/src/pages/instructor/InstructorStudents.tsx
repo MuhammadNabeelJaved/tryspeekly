@@ -36,6 +36,8 @@ export default function InstructorStudents() {
 
         const map = new Map<string, Student>()
         res.data.forEach((enrollment) => {
+          // Skip enrollments whose student was deleted (null after populate).
+          if (!enrollment.student) return
           const sid = enrollment.student._id
           const attended = enrollment.progress?.sessionsAttended ?? 0
           const total = enrollment.progress?.totalSessions ?? 0

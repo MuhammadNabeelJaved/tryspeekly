@@ -504,7 +504,7 @@ export default function AdminFinancialAid() {
                           <div className="grid grid-cols-2 gap-2 pt-1">
                             <div className="bg-white dark:bg-neutral-800/60 rounded-lg p-2.5">
                               <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wide mb-0.5">Course</p>
-                              <p className="text-xs font-bold text-slate-900 dark:text-white leading-tight">{existingEnrollment.course.title}</p>
+                              <p className="text-xs font-bold text-slate-900 dark:text-white leading-tight">{existingEnrollment.course?.title ?? '—'}</p>
                             </div>
                             <div className="bg-white dark:bg-neutral-800/60 rounded-lg p-2.5">
                               <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wide mb-0.5">Student</p>

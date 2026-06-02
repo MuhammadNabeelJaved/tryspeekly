@@ -378,7 +378,7 @@ export default function StudentFinancialAid() {
                           <span>{linked.progress.sessionsAttended}/{linked.progress.totalSessions} sessions</span>
                         </div>
                         <Link
-                          to={`/dashboard/courses/${linked.course._id}`}
+                          to={`/dashboard/courses/${linked.course?._id ?? ''}`}
                           className="mt-3 w-full flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold py-2.5 rounded-xl transition-colors shadow-[0_4px_12px_rgba(124,58,237,0.25)]"
                         >
                           <BookOpen size={14} weight="fill" />

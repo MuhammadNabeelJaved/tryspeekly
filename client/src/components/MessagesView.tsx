@@ -70,7 +70,8 @@ export default function MessagesView({ title, subtitle }: Props) {
   const loadConversations = useCallback(async () => {
     try {
       const res = await messagesService.getConversations();
-      if (res.success) setConversations(res.data);
+      // Drop conversations whose counterpart user was deleted (null after populate).
+      if (res.success) setConversations(res.data.filter(c => c.user));
     } catch {}
   }, []);
 

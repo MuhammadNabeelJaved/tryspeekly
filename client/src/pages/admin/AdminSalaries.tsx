@@ -150,7 +150,7 @@ export default function AdminSalaries() {
       const users: { _id?: string; id?: string; name?: string; email?: string; profileImage?: string }[] =
         usersRes.status === 'fulfilled' ? (usersRes.value.data?.data ?? []) : []
       const pkgs: SalaryPackage[] = pkgsRes.status === 'fulfilled' ? (pkgsRes.value.data ?? []) : []
-      const pkgMap = new Map(pkgs.map(p => [p.teacher._id, p]))
+      const pkgMap = new Map(pkgs.filter(p => p.teacher).map(p => [p.teacher._id, p]))
 
       const pendingRequests: SalaryRequest[] = pendingRes.status === 'fulfilled' ? (pendingRes.value.data ?? []) : []
       setPendingTeacherIds(new Set(pendingRequests.map(r => r.teacher)))

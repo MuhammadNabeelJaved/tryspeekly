@@ -34,7 +34,7 @@ export default function InstructorSupport() {
         const res = await messagesService.getConversations()
         if (res.success && res.data.length > 0) {
           // Find admin/support user
-          const support = res.data.find(c => c.user.role === 'admin')
+          const support = res.data.find(c => c.user?.role === 'admin')
           if (support) {
             setSupportUserId(support.user._id)
             // Fetch support conversation messages
