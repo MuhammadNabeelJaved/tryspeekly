@@ -22,9 +22,12 @@ const CATEGORY_LABELS: Record<string, string> = {
   reviews: 'Reviews',
   offers: 'Offers & Discounts',
   contact: 'Contact',
+  referrals: 'Referrals & Payouts',
+  support: 'Support',
+  team: 'Team',
 }
 
-const CATEGORY_ORDER = ['auth', 'payments', 'courses', 'financial_aid', 'live_classes', 'assignments', 'salary', 'reviews', 'offers', 'contact']
+const CATEGORY_ORDER = ['auth', 'payments', 'courses', 'financial_aid', 'live_classes', 'assignments', 'salary', 'reviews', 'offers', 'referrals', 'support', 'contact', 'team']
 
 function groupByCategory(settings: EmailSetting[]) {
   const grouped: Record<string, EmailSetting[]> = {}
