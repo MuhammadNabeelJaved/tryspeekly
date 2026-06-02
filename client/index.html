@@ -9,9 +9,17 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800&display=swap" rel="stylesheet" />
+    <style>
+      /* Hide Google Translate's injected banner, tooltip, and body offset */
+      .goog-te-banner-frame, .skiptranslate { display: none !important; }
+      body { top: 0 !important; position: static !important; }
+      #goog-gt-tt, .goog-te-balloon-frame { display: none !important; }
+      .goog-text-highlight { background: none !important; box-shadow: none !important; }
+    </style>
   </head>
   <body>
     <div id="root"></div>
+    <div id="google_translate_element" aria-hidden="true" style="position:absolute;left:-9999px;top:-9999px;"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

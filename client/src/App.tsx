@@ -10,6 +10,7 @@ import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import ScrollToTop from '@/components/ScrollToTop'
 import Loader from '@/components/Loader'
+import { loadGoogleTranslate, applyInitialDir } from '@/lib/googleTranslate'
 import AIChatWidget from '@/components/AIChatWidget'
 import { offersService, type Offer } from '@/services/offers.service'
 
@@ -223,6 +224,11 @@ function RoleChangeHandler() {
 }
 
 function App() {
+  useEffect(() => {
+    applyInitialDir()
+    loadGoogleTranslate()
+  }, [])
+
   return (
     <AppErrorBoundary>
     <BrowserRouter>
