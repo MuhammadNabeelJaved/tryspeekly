@@ -264,7 +264,8 @@ export default function InstructorCourses() {
           setCourses([])
         }
       } catch {
-        setCourses(FALLBACK_COURSES)
+        setCourses([])
+        toast.error('Failed to load courses')
       } finally {
         setIsLoading(false)
       }
