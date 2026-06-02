@@ -73,11 +73,11 @@ type NavItem = { view: AdminView; label: string; path: string; Icon: React.FC<{ 
 
 const NAV_CORE: NavItem[] = [
   { view: 'overview',    label: 'Overview',    path: '',            Icon: ChartBar as NavItem['Icon'] },
-  { view: 'users',       label: 'All Users',   path: 'users',       Icon: UserSwitch as NavItem['Icon'] },
   { view: 'students',    label: 'Students',    path: 'students',    Icon: Users as NavItem['Icon'] },
   { view: 'courses',     label: 'Courses',     path: 'courses',     Icon: BookOpen as NavItem['Icon'] },
   { view: 'instructors', label: 'Instructors', path: 'instructors', Icon: Chalkboard as NavItem['Icon'] },
-  { view: 'team', label: 'Team', path: 'team', Icon: UsersThree as NavItem['Icon'] },
+  { view: 'team',        label: 'Team',        path: 'team',        Icon: UsersThree as NavItem['Icon'] },
+  { view: 'users',       label: 'All Users',   path: 'users',       Icon: UserSwitch as NavItem['Icon'] },
 ]
 
 const NAV_FINANCE: NavItem[] = [
@@ -91,11 +91,11 @@ const NAV_FINANCE: NavItem[] = [
 const NAV_COMMUNICATION: NavItem[] = [
   { view: 'messages',      label: 'Messages',      path: 'messages',      Icon: Chats as NavItem['Icon'] },
   { view: 'support',       label: 'Support',       path: 'support',       Icon: ChatCircleDots as NavItem['Icon'] },
-  { view: 'contacts',      label: 'Contacts',      path: 'contacts',      Icon: EnvelopeSimple as NavItem['Icon'] },
-  { view: 'email',         label: 'Email System',  path: 'email',         Icon: EnvelopeSimple as NavItem['Icon'] },
-  { view: 'newsletter',    label: 'Newsletter',    path: 'newsletter',    Icon: Newspaper as NavItem['Icon'] },
   { view: 'reviews',       label: 'Reviews',       path: 'reviews',       Icon: Star as NavItem['Icon'] },
+  { view: 'contacts',      label: 'Contacts',      path: 'contacts',      Icon: EnvelopeSimple as NavItem['Icon'] },
   { view: 'notifications', label: 'Notifications', path: 'notifications', Icon: Bell as NavItem['Icon'] },
+  { view: 'newsletter',    label: 'Newsletter',    path: 'newsletter',    Icon: Newspaper as NavItem['Icon'] },
+  { view: 'email',         label: 'Email System',  path: 'email',         Icon: EnvelopeSimple as NavItem['Icon'] },
 ]
 
 const NAV_CONTENT: NavItem[] = [

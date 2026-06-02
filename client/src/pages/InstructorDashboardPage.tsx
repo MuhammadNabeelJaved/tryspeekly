@@ -118,12 +118,12 @@ type NavItem = { view: InstructorView; label: string; path: string; Icon: React.
 
 const NAV_MAIN: NavItem[] = [
   { view: 'overview', label: 'Dashboard', path: '', Icon: House as NavItem['Icon'] },
-  { view: 'courses', label: 'My Courses', path: 'courses', Icon: BookOpen as NavItem['Icon'] },
   { view: 'live', label: 'Live Classes', path: 'live', Icon: VideoCamera as NavItem['Icon'] },
+  { view: 'courses', label: 'My Courses', path: 'courses', Icon: BookOpen as NavItem['Icon'] },
   { view: 'students', label: 'My Students', path: 'students', Icon: Users as NavItem['Icon'] },
   { view: 'assignments', label: 'Assignments', path: 'assignments', Icon: CheckCircle as NavItem['Icon'] },
-  { view: 'salary', label: 'My Salary', path: 'salary', Icon: Money as NavItem['Icon'] },
   { view: 'messages', label: 'Messages', path: 'messages', Icon: Chats as NavItem['Icon'] },
+  { view: 'salary', label: 'My Salary', path: 'salary', Icon: Money as NavItem['Icon'] },
 ]
 
 const NAV_PREFS: NavItem[] = [

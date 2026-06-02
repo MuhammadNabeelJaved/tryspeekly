@@ -119,10 +119,10 @@ type NavItem = { view: StudentView; label: string; path: string; Icon: React.FC<
 const NAV_MAIN: NavItem[] = [
   { view: 'overview', label: 'Home', path: '', Icon: House as NavItem['Icon'] },
   { view: 'courses', label: 'My Courses', path: 'courses', Icon: BookOpen as NavItem['Icon'] },
-  { view: 'certificates', label: 'Certificates', path: 'certificates', Icon: Certificate as NavItem['Icon'] },
   { view: 'payments', label: 'Payments', path: 'payments', Icon: CreditCard as NavItem['Icon'] },
-  { view: 'financial-aid', label: 'Financial Aid', path: 'financial-aid', Icon: Handshake as NavItem['Icon'] },
   { view: 'messages', label: 'Messages', path: 'messages', Icon: Chats as NavItem['Icon'] },
+  { view: 'certificates', label: 'Certificates', path: 'certificates', Icon: Certificate as NavItem['Icon'] },
+  { view: 'financial-aid', label: 'Financial Aid', path: 'financial-aid', Icon: Handshake as NavItem['Icon'] },
   { view: 'referrals', label: 'Referrals', path: 'referrals', Icon: Gift as NavItem['Icon'] },
   { view: 'reviews', label: 'My Reviews', path: 'reviews', Icon: Star as NavItem['Icon'] },
 ]
