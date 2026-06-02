@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Certificate, MagnifyingGlass, Check, X, Eye, Trash, FunnelSimple, Medal, Clock, SpinnerGap } from '@phosphor-icons/react'
 import { certificatesService } from '@/services/certificates.service'
 import ConfirmModal from '@/components/ConfirmModal'
-import CertificateDesign from '@/components/CertificateDesign'
+import CertificateCanvas from '@/components/CertificateCanvas'
 import toast from 'react-hot-toast'
 import type { Certificate as CertificateType } from '@/types/api'
 
@@ -256,17 +256,15 @@ export default function AdminCertificates() {
                 <h3 className="text-base font-black text-slate-900 dark:text-white">Certificate Preview</h3>
                 <button onClick={() => setModalType(null)} className="w-8 h-8 rounded-full bg-slate-100 dark:bg-neutral-800 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors"><X size={15} /></button>
               </div>
-              <div className="p-6 bg-slate-50 dark:bg-neutral-950 flex justify-center overflow-x-auto">
-                <div style={{ width: 520, height: 368, flexShrink: 0 }}>
-                  <div style={{ transform: 'scale(0.52)', transformOrigin: 'top left' }}>
-                    <CertificateDesign data={{
-                      studentName: selected.student?.name ?? 'Deleted User',
-                      courseName: selected.course?.title ?? '—',
-                      date: new Date(selected.issueDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }),
-                      certificateId: selected.certificateId,
-                      instructorTitle: 'Course Instructor',
-                    }} />
-                  </div>
+              <div className="p-6 bg-slate-50 dark:bg-neutral-950 flex justify-center">
+                <div style={{ width: '100%', maxWidth: 560 }} className="rounded-lg overflow-hidden shadow">
+                  <CertificateCanvas data={{
+                    studentName: selected.student?.name ?? 'Deleted User',
+                    courseName: selected.course?.title ?? '—',
+                    date: new Date(selected.issueDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }),
+                    certificateId: selected.certificateId,
+                    instructorTitle: 'Course Instructor',
+                  }} />
                 </div>
               </div>
               <div className="px-6 py-4 border-t border-slate-100 dark:border-neutral-800 flex justify-between items-center bg-white dark:bg-neutral-900">

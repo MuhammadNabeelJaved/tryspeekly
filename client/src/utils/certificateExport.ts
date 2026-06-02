@@ -1,21 +1,6 @@
-import html2canvas from 'html2canvas-pro'
 import { jsPDF } from 'jspdf'
 
-/** Rasterize the certificate element to a high-res canvas (fonts loaded first). */
-async function renderCanvas(el: HTMLElement): Promise<HTMLCanvasElement> {
-  // Ensure web fonts (Great Vibes / DM Sans) are ready so text renders correctly.
-  if (document.fonts?.ready) {
-    try { await document.fonts.ready } catch { /* ignore */ }
-  }
-  return html2canvas(el, {
-    scale: 2,
-    backgroundColor: '#ffffff',
-    useCORS: true,
-    logging: false,
-    width: el.offsetWidth,
-    height: el.offsetHeight,
-  })
-}
+import { CERT_W, CERT_H } from '@/components/certificateRenderer'
 
 function triggerDownload(dataUrl: string, filename: string) {
   const a = document.createElement('a')
@@ -26,19 +11,15 @@ function triggerDownload(dataUrl: string, filename: string) {
   document.body.removeChild(a)
 }
 
-/** Download the certificate element as a JPG image. */
-export async function exportCertificateJPG(el: HTMLElement, filename: string): Promise<void> {
-  const canvas = await renderCanvas(el)
+/** Download the rendered certificate canvas as a JPG image. */
+export async function exportCertificateJPG(canvas: HTMLCanvasElement, filename: string): Promise<void> {
   triggerDownload(canvas.toDataURL('image/jpeg', 0.95), filename)
 }
 
-/** Download the certificate element as a single-page landscape PDF. */
-export async function exportCertificatePDF(el: HTMLElement, filename: string): Promise<void> {
-  const canvas = await renderCanvas(el)
+/** Download the rendered certificate canvas as a single-page landscape PDF. */
+export async function exportCertificatePDF(canvas: HTMLCanvasElement, filename: string): Promise<void> {
   const img = canvas.toDataURL('image/jpeg', 0.95)
-  const w = el.offsetWidth
-  const h = el.offsetHeight
-  const pdf = new jsPDF({ orientation: 'landscape', unit: 'px', format: [w, h] })
-  pdf.addImage(img, 'JPEG', 0, 0, w, h)
+  const pdf = new jsPDF({ orientation: 'landscape', unit: 'px', format: [CERT_W, CERT_H] })
+  pdf.addImage(img, 'JPEG', 0, 0, CERT_W, CERT_H)
   pdf.save(filename)
 }

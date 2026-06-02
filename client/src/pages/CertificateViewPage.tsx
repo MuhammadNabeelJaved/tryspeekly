@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { ArrowLeft, CheckCircle, Certificate, LinkedinLogo, FilePdf, Image as ImageIcon } from '@phosphor-icons/react'
 import { certificatesService } from '@/services/certificates.service'
-import CertificateDesign from '@/components/CertificateDesign'
+import CertificateCanvas from '@/components/CertificateCanvas'
 import { exportCertificateJPG, exportCertificatePDF } from '@/utils/certificateExport'
 import type { Certificate as CertificateType } from '@/types/api'
 
@@ -12,7 +12,7 @@ export default function CertificateViewPage() {
   const [cert, setCert] = useState<CertificateType | null>(null)
   const [loading, setLoading] = useState(true)
   const [downloading, setDownloading] = useState(false)
-  const certRef = useRef<HTMLDivElement>(null)
+  const certRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
     if (!id) { setLoading(false); return }
@@ -98,11 +98,9 @@ export default function CertificateViewPage() {
       <div className="max-w-5xl w-full grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Certificate visual (the real design — also the JPG/PDF capture source) */}
         <div className="lg:col-span-2">
-          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-4 sm:p-5 overflow-x-auto">
-            <div className="mx-auto" style={{ width: 640, height: 452 }}>
-              <div style={{ transform: 'scale(0.64)', transformOrigin: 'top left' }}>
-                <CertificateDesign ref={certRef} data={certData} />
-              </div>
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-4 sm:p-5">
+            <div className="mx-auto rounded-lg overflow-hidden shadow-sm" style={{ width: '100%' }}>
+              <CertificateCanvas ref={certRef} data={certData} />
             </div>
           </div>
           {/* Download actions */}

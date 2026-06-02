@@ -3,7 +3,7 @@ import { Certificate, DownloadSimple, LinkedinLogo, X, CircleNotch, FilePdf, Ima
 import toast from 'react-hot-toast'
 import { useAuth } from '@/context/AuthContext'
 import { certificatesService } from '@/services/certificates.service'
-import CertificateDesign, { type CertificateData } from '@/components/CertificateDesign'
+import CertificateCanvas, { type CertificateData } from '@/components/CertificateCanvas'
 import { exportCertificateJPG, exportCertificatePDF } from '@/utils/certificateExport'
 import type { Certificate as CertificateType } from '@/types/api'
 
@@ -27,7 +27,7 @@ export default function StudentCertificates() {
   const [selectedCert, setSelectedCert] = useState<CertificateType | null>(null)
   const [downloadFormat, setDownloadFormat] = useState<'pdf' | 'jpg'>('pdf')
   const [isDownloading, setIsDownloading] = useState(false)
-  const certRef = useRef<HTMLDivElement>(null)
+  const certRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
     certificatesService.getMyCertificates()
@@ -159,12 +159,10 @@ export default function StudentCertificates() {
               </button>
             </div>
 
-            {/* Live preview — the same element captured for JPG/PDF (scaled for display) */}
-            <div className="bg-slate-100 dark:bg-neutral-950 p-5 flex justify-center overflow-x-auto">
-              <div style={{ width: 600, height: 424, flexShrink: 0 }}>
-                <div style={{ transform: 'scale(0.6)', transformOrigin: 'top left' }}>
-                  <CertificateDesign ref={certRef} data={toCertData(selectedCert, user?.name ?? '')} />
-                </div>
+            {/* Live preview — the SAME canvas exported to JPG/PDF (CSS-sized for display) */}
+            <div className="bg-slate-100 dark:bg-neutral-950 p-5 flex justify-center">
+              <div style={{ width: '100%', maxWidth: 600 }} className="shadow-lg rounded-lg overflow-hidden">
+                <CertificateCanvas ref={certRef} data={toCertData(selectedCert, user?.name ?? '')} />
               </div>
             </div>
 
