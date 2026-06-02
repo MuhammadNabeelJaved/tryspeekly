@@ -1,5 +1,6 @@
 import express from 'express'
 import { authenticate, authorize, authorizeTeamPage } from '../middlewares/auth.js'
+import { logActivity } from '../middlewares/activityLogger.js'
 import {
   issueCertificate,
   getMyCertificates,
@@ -24,7 +25,7 @@ router.route('/bulk').delete(authenticate, authorizeTeamPage('certificates'), bu
 
 // ─── Parameterised routes (must come AFTER all specific paths) ──────────────
 router.route('/:id').get(getCertificate)
-router.route('/:id').delete(authenticate, authorizeTeamPage('certificates'), deleteCertificate)
-router.route('/:id/revoke').patch(authenticate, authorizeTeamPage('certificates'), revokeCertificate)
+router.route('/:id').delete(authenticate, authorizeTeamPage('certificates'), logActivity('delete', 'certificate', (req) => ({ resourceId: req.params.id, details: 'Certificate deleted' })), deleteCertificate)
+router.route('/:id/revoke').patch(authenticate, authorizeTeamPage('certificates'), logActivity('update', 'certificate', (req) => ({ resourceId: req.params.id, details: 'Certificate revoked' })), revokeCertificate)
 
 export default router

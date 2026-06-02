@@ -1,6 +1,7 @@
 import express from 'express'
 
 import { authenticate, authorizeTeamPage } from '../middlewares/auth.js'
+import { logActivity } from '../middlewares/activityLogger.js'
 import {
   getPublicReviews,
   getCourseReviews,
@@ -26,9 +27,9 @@ router.get('/course/:courseId', getCourseReviews)
 // ─── Admin (before /:id to avoid shadowing) ──────────────────────────────────
 router.get('/admin', authenticate, authorizeTeamPage('reviews'), getAdminReviews)
 router.post('/admin', authenticate, authorizeTeamPage('reviews'), adminCreateReview)
-router.patch('/admin/:id/status', authenticate, authorizeTeamPage('reviews'), updateReviewStatus)
+router.patch('/admin/:id/status', authenticate, authorizeTeamPage('reviews'), logActivity('update', 'review', (req) => ({ resourceId: req.params.id, details: `Status → ${req.body.status ?? ''}` })), updateReviewStatus)
 router.patch('/admin/:id/feature', authenticate, authorizeTeamPage('reviews'), toggleFeatured)
-router.delete('/admin/:id', authenticate, authorizeTeamPage('reviews'), adminDeleteReview)
+router.delete('/admin/:id', authenticate, authorizeTeamPage('reviews'), logActivity('delete', 'review', (req) => ({ resourceId: req.params.id, details: 'Deleted review' })), adminDeleteReview)
 
 // ─── Team member: all approved team experience reviews ────────────────────────
 router.get('/team', authenticate, getTeamReviews)

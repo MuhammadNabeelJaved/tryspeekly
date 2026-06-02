@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import { authenticate, authorizeTeamPage } from '../middlewares/auth.js'
+import { logActivity } from '../middlewares/activityLogger.js'
 import {
   getAllPages, getPage, upsertPage, createPage, deletePage, getPublicSeo,
 } from '../controllers/seo.controller.js'
@@ -18,7 +19,7 @@ router.route('/')
 
 router.route('/:slug')
   .get(getPage)
-  .put(upsertPage)
+  .put(logActivity('update', 'seo', (req) => ({ resourceName: req.params.slug, details: `Updated SEO for /${req.params.slug}` })), upsertPage)
   .delete(deletePage)
 
 export default router

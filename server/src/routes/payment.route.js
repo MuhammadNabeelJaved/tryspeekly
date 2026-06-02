@@ -1,5 +1,6 @@
 import express from 'express'
 import { authenticate, authorize, authorizeTeamPage } from '../middlewares/auth.js'
+import { logActivity } from '../middlewares/activityLogger.js'
 import { uploadPaymentScreenshot, handleMulterError } from '../middlewares/multer.js'
 import {
   createPayment,
@@ -25,8 +26,8 @@ router.route('/').get(authenticate, authorizeTeamPage('payments'), getAllPayment
 router.route('/admin').post(authenticate, authorizeTeamPage('payments'), adminCreatePayment)
 router.route('/admin/direct-approve').post(authenticate, authorizeTeamPage('payments'), directApprovePayment)
 router.route('/bulk').delete(authenticate, authorizeTeamPage('payments'), bulkDeletePayments)
-router.route('/:id/approve').patch(authenticate, authorizeTeamPage('payments'), approvePayment)
-router.route('/:id/reject').patch(authenticate, authorizeTeamPage('payments'), rejectPayment)
+router.route('/:id/approve').patch(authenticate, authorizeTeamPage('payments'), logActivity('approve', 'payment', (req) => ({ resourceId: req.params.id, details: 'Payment approved' })), approvePayment)
+router.route('/:id/reject').patch(authenticate, authorizeTeamPage('payments'), logActivity('reject', 'payment', (req) => ({ resourceId: req.params.id, details: `Rejected: ${req.body.rejectionReason ?? ''}` })), rejectPayment)
 router.route('/:id/reprocess-referral').post(authenticate, authorizeTeamPage('payments'), reprocessReferralReward)
 router.route('/:id').delete(authenticate, authorizeTeamPage('payments'), deletePayment)
 

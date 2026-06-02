@@ -1,5 +1,6 @@
 import express from 'express'
 import { authenticate, authorize, authorizeTeamPage } from '../middlewares/auth.js'
+import { logActivity } from '../middlewares/activityLogger.js'
 import {
   applyForFinancialAid,
   getMyApplications,
@@ -18,7 +19,7 @@ router.route('/my').get(authenticate, authorize('student'), getMyApplications)
 // ─── Admin routes ──────────────────────────────────────────────────────────────
 router.route('/').get(authenticate, authorizeTeamPage('financial-aid'), getAllApplications)
 router.route('/bulk').delete(authenticate, authorizeTeamPage('financial-aid'), bulkDeleteApplications)
-router.route('/:id/status').patch(authenticate, authorizeTeamPage('financial-aid'), updateApplicationStatus)
+router.route('/:id/status').patch(authenticate, authorizeTeamPage('financial-aid'), logActivity('update', 'financial-aid', (req) => ({ resourceId: req.params.id, details: `Status → ${req.body.status ?? ''}` })), updateApplicationStatus)
 router.route('/:id').delete(authenticate, authorizeTeamPage('financial-aid'), deleteApplication)
 
 export default router

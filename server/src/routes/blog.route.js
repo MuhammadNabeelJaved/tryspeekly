@@ -1,5 +1,6 @@
 import express from 'express'
 import { authenticate } from '../middlewares/auth.js'
+import { logActivity } from '../middlewares/activityLogger.js'
 import { ForbiddenError } from '../utils/apiErrors.js'
 import { uploadProfileImage, handleMulterError } from '../middlewares/multer.js'
 import {
@@ -45,9 +46,9 @@ router.route('/:slug/comments')
 router.route('/:slug').get(getBlog)
 
 // ─── Teacher/Admin/Blog-team routes ───────────────────────────────────────────
-router.route('/').post(authenticate, authorizeBlog, createBlog)
-router.route('/:id').patch(authenticate, authorizeBlog, updateBlog)
+router.route('/').post(authenticate, authorizeBlog, logActivity('create', 'blog', (req, body) => ({ resourceId: body.data?._id, resourceName: body.data?.title ?? req.body.title ?? '', details: 'Created blog post' })), createBlog)
+router.route('/:id').patch(authenticate, authorizeBlog, logActivity('update', 'blog', (req, body) => ({ resourceId: req.params.id, resourceName: body.data?.title ?? '', details: 'Updated blog post' })), updateBlog)
 router.route('/:id/cover').patch(authenticate, authorizeBlog, uploadProfileImage, handleMulterError, updateBlogCover)
-router.route('/:id').delete(authenticate, authorizeBlog, deleteBlog)
+router.route('/:id').delete(authenticate, authorizeBlog, logActivity('delete', 'blog', (req) => ({ resourceId: req.params.id, details: 'Deleted blog post' })), deleteBlog)
 
 export default router

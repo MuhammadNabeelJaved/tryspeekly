@@ -1,5 +1,6 @@
 import express from 'express'
 import { authenticate, authorizeTeamPage } from '../middlewares/auth.js'
+import { logActivity } from '../middlewares/activityLogger.js'
 import {
   submitContact,
   getAllContacts,
@@ -20,9 +21,9 @@ router.route('/').post(submitContact)
 router.route('/').get(authenticate, authorizeTeamPage('contacts'), getAllContacts)
 router.route('/admin').post(authenticate, authorizeTeamPage('contacts'), createContact)
 router.route('/:id').get(authenticate, authorizeTeamPage('contacts'), getContact)
-router.route('/:id').patch(authenticate, authorizeTeamPage('contacts'), updateContact)
+router.route('/:id').patch(authenticate, authorizeTeamPage('contacts'), logActivity('update', 'contact', (req) => ({ resourceId: req.params.id, details: `Status → ${req.body.status ?? ''}` })), updateContact)
 router.route('/:id/read').patch(authenticate, authorizeTeamPage('contacts'), markContactRead)
 router.route('/bulk').delete(authenticate, authorizeTeamPage('contacts'), bulkDeleteContacts)
-router.route('/:id').delete(authenticate, authorizeTeamPage('contacts'), deleteContact)
+router.route('/:id').delete(authenticate, authorizeTeamPage('contacts'), logActivity('delete', 'contact', (req) => ({ resourceId: req.params.id, details: 'Contact deleted' })), deleteContact)
 
 export default router
