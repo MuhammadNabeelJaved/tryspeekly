@@ -279,7 +279,7 @@ Proprietary — all rights reserved. Not licensed for redistribution.
 ## 📬 Support
 
 - Open an issue on GitHub
-- Email: graphicsanimation786@gmail.com
+- Email: muhammadnabeeljavede@gmail.com
 
 ---
 
