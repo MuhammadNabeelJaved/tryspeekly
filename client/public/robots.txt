@@ -1,0 +1,18 @@
+# robots.txt — TODO: replace https://www.example.com with the real production domain
+User-agent: *
+Allow: /
+
+# Private / authenticated areas — keep out of the index
+Disallow: /admin/
+Disallow: /dashboard/
+Disallow: /instructor/
+Disallow: /team/
+Disallow: /login
+Disallow: /signup
+Disallow: /verify-email
+Disallow: /forgot-password
+Disallow: /unsubscribe
+Disallow: /certificate/
+
+# Static sitemap (public marketing/content pages)
+Sitemap: https://www.example.com/sitemap.xml
