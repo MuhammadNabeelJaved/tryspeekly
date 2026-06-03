@@ -124,7 +124,6 @@ function PublicLayout() {
       </main>
       <Footer />
       <ScrollToTop />
-      <AIChatWidget />
     </div>
   )
 }
@@ -247,6 +246,7 @@ function App() {
           />
           <ScrollHandler />
           <RoleChangeHandler />
+          <AIChatWidget />
           <Suspense fallback={<Loader fullScreen />}>
             <Routes>
               <Route

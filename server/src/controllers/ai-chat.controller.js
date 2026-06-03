@@ -1,10 +1,9 @@
 import Anthropic from '@anthropic-ai/sdk'
 
 import asyncHandler from '../utils/asyncHandler.js'
-import Enrollment from '../models/enrollment.model.js'
-import Certificate from '../models/certificate.model.js'
 import { getKnowledgeSnapshot } from '../services/ai-knowledge.service.js'
 import { getInstantAnswer } from '../services/ai-instant-answers.js'
+import { buildPersonalContext } from '../services/ai-personal-context.service.js'
 
 const apiKey = process.env.ANTHROPIC_API_KEY
 const client = apiKey ? new Anthropic({ apiKey }) : null
@@ -12,48 +11,19 @@ const client = apiKey ? new Anthropic({ apiKey }) : null
 const FALLBACK_REPLY =
   "I'm having a little trouble right now. Please try again in a moment, or contact us at hello@englishlms.com."
 
-// Only fetch a user's private data when they actually ask about their own account.
-const PERSONAL_RE = /\b(my|mine|enrol|enroll|enrolled|enrolment|enrollment|progress|certificate|certificates|refund|dashboard)\b/i
-
 const SYSTEM_INSTRUCTIONS = `You are the AI assistant for EnglishPro, an online English learning platform.
 
 Rules:
 - Answer ONLY using the platform knowledge provided below, and only about EnglishPro and learning English.
 - If the user asks anything off-topic or unrelated to EnglishPro or English learning, politely decline and steer them back. Example: "I can only help with EnglishPro courses, enrolment, and English learning. Is there something along those lines I can help with?"
 - Never invent prices, dates, or course details that are not in the knowledge. If you don't know, suggest contacting support.
-- If an account summary is provided, use it to answer the user's personal questions.
+- If an "ACCOUNT" section is provided, the user is signed in — use it to answer their personal/dashboard questions accurately (their own enrolments, courses, stats, etc., depending on their role). Only discuss the account shown; never reveal other users' private data.
+- If NO account section is provided, the user is a guest. Answer public information normally, but if they ask about personal or account data, kindly tell them to sign in or create an account first ([Sign Up](/signup), [Log In](/login)).
 - Be friendly and concise — 2 to 4 sentences unless more detail is clearly needed.
 
 Formatting (important):
 - Reply in clean Markdown. Use **bold** for key terms, and use bullet (-) or numbered lists for steps or multiple items instead of cramming them into one sentence.
 - Whenever you mention a platform page, write it as a Markdown link with a short label and the real internal path, e.g. [Browse Courses](/courses), [Sign Up](/signup), [Financial Aid](/financial-aid), [Read the Blog](/blog), [Meet Instructors](/instructors), [Contact Us](/contact), [My Dashboard](/dashboard). Never write a raw URL without a label.`
-
-// ─── Personal context ────────────────────────────────────────────────────────────
-
-const buildPersonalContext = async (userId) => {
-  const [enrollments, certs] = await Promise.all([
-    Enrollment.find({ student: userId }).populate('course', 'title').select('progress isActive course').lean(),
-    Certificate.find({ student: userId }).populate('course', 'title').select('certificateId status course').lean(),
-  ])
-
-  if (!enrollments.length && !certs.length) {
-    return 'Account summary: this signed-in user has no enrolments or certificates yet.'
-  }
-
-  const lines = ['Account summary for the signed-in user:']
-  for (const e of enrollments) {
-    const title = e.course?.title || 'a removed course'
-    const p = e.progress || {}
-    lines.push(
-      `- Enrolled in "${title}" — ${p.sessionsAttended ?? 0}/${p.totalSessions ?? '?'} sessions attended, ` +
-      `status: ${e.isActive ? 'active' : 'pending/inactive'}.`
-    )
-  }
-  for (const cert of certs) {
-    lines.push(`- Certificate ${cert.certificateId} for "${cert.course?.title || 'a course'}" — ${cert.status}.`)
-  }
-  return lines.join('\n')
-}
 
 // ─── chat ─────────────────────────────────────────────────────────────────────────
 
@@ -84,11 +54,12 @@ export const chat = asyncHandler(async (req, res) => {
     return res.json({ success: true, reply: FALLBACK_REPLY })
   }
 
-  // 3) Optional personal context (signed-in users asking about their own account).
+  // 3) Role-aware personal context — always included for signed-in users so the bot can
+  //    answer their dashboard questions; guests get none (public answers only).
   let personalBlock = null
-  if (req.user && PERSONAL_RE.test(latestUser)) {
+  if (req.user) {
     try {
-      personalBlock = await buildPersonalContext(req.user.id)
+      personalBlock = await buildPersonalContext(req.user)
     } catch (err) {
       console.warn('[ai-chat] personal context failed:', err.message)
     }
@@ -104,7 +75,7 @@ export const chat = asyncHandler(async (req, res) => {
     },
   ]
   if (personalBlock) {
-    system.push({ type: 'text', text: `--- USER ACCOUNT ---\n${personalBlock}` })
+    system.push({ type: 'text', text: `--- ACCOUNT ---\n${personalBlock}` })
   }
 
   try {
