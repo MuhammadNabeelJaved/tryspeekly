@@ -1,302 +1,285 @@
-# English Learning Platform
+# EnglishPro — English Learning Platform
 
-A modern, full-stack Learning Management System (LMS) designed for English language education. This platform connects students with instructors, offering comprehensive course management, real-time communication, and progress tracking capabilities.
+A modern, full-stack **Learning Management System (LMS)** for English-language education. It connects students, instructors, and administrators with course management, payments, real-time messaging, certificates, an AI assistant, and rich growth tooling (referrals, coupons, offers, newsletters).
 
-## Features
+> **Monorepo:** a `client/` (React + TypeScript) and a `server/` (Node.js + Express, **JavaScript ES Modules**). The two run as independent apps.
 
-### For Students
-- 📚 Browse and enroll in English courses
-- 📊 Track learning progress and achievements
-- 🎓 Earn certificates upon course completion
-- 💳 Secure payment processing
-- 💬 Direct messaging with instructors
-- 🔔 Real-time notifications
-- 🎯 Financial aid application support
+---
 
-### For Instructors
-- 📖 Create and manage courses with rich curriculum
-- 👥 Student management and progress tracking
-- 📝 Assignment creation and grading
-- 📹 Live class scheduling and management
-- 💬 Student messaging system
-- 📊 Analytics and reporting
-- 🎯 Course pricing and enrollment control
+## ✨ Features
 
-### For Administrators
-- 👤 User management (students & instructors)
-- 📚 Course oversight and approval
-- 💰 Payment and financial aid management
-- 📄 CMS for platform content
-- 📊 System-wide analytics
-- ⚙️ Platform settings and configuration
-- 🛠️ Support ticket management
+### For Students (`/dashboard/*`)
+- 📚 Browse and enrol in courses; submit payment proof for approval
+- 📊 Track session attendance and progress
+- 🎓 Earn certificates on course completion (with shareable credential URL)
+- 💬 Real-time messaging with instructors (Socket.io)
+- 🔔 Live notifications
+- 🎯 Apply for financial aid; redeem coupons, offers & referral rewards
 
-## Tech Stack
+### For Instructors / Teachers (`/instructor/*`)
+- 📖 Create and manage courses, syllabus, and materials
+- 👥 Manage enrolled students and track attendance
+- 📝 Create and grade assignments
+- 📹 Schedule and run live classes
+- 💬 Message students; view earnings/salary
 
-### Frontend
-- **React 19** - UI library
-- **TypeScript** - Type safety
-- **Vite** - Build tool and dev server
-- **Tailwind CSS 4** - Utility-first styling
-- **React Router 7** - Client-side routing
-- **Framer Motion** - Animations
-- **React Hook Form** - Form handling
-- **Phosphor Icons** - Icon library
-- **Vitest** - Unit testing
+### For Administrators (`/admin/*`)
+- 👤 User management (students, instructors, team members)
+- 📚 Course approval workflow and oversight
+- 💰 Payments, financial aid, salaries & payouts
+- 🎁 Referrals, coupons & promotional offers
+- 📣 Newsletter campaigns and contact/support inboxes
+- 📄 CMS, SEO, FAQs, announcements & site settings
+- 📊 Platform-wide analytics and activity logs
+- 🌍 Geo-access controls (country blocking)
 
-### Backend
-- **Node.js 18+** - Runtime environment
-- **Express.js** - Web framework
-- **TypeScript** - Type safety
-- **MongoDB** - Database
-- **Mongoose** - ODM
-- **Socket.io** - Real-time communication
-- **JWT** - Authentication
-- **bcryptjs** - Password hashing
-- **Winston** - Logging
-- **Jest** - Unit & integration testing
-- **Cloudinary** - File uploads
-- **Resend** - Email service
+### Team Members (`/team/*`)
+- 🔐 Permission-scoped staff access to specific admin sections
+
+### 🤖 AI Assistant (all users)
+- A floating chatbot that answers from **live database knowledge** (courses, instructors, FAQs, blog, site settings) and refreshes automatically as data changes
+- **Role-aware**: signed-in users get answers about their own dashboard data; guests get public info and are invited to sign in
+- Politely declines off-topic questions; renders Markdown with clickable in-app navigation
+- **Cost-efficient**: greetings/FAQ answered without an API call, prompt caching, and per-IP rate limiting on the paid endpoint
+- Powered by **Anthropic Claude (Haiku)**
+
+---
+
+## 🧰 Tech Stack
+
+### Frontend (`client/`)
+- **React 19** + **TypeScript** (strict)
+- **Vite 8** (rolldown) — build & dev server, with vendor code-splitting
+- **Tailwind CSS 4** — styling
+- **React Router 7** — routing (lazy-loaded routes)
+- **Framer Motion** — animations
+- **React Hook Form** — forms
+- **Phosphor Icons** — icons
+- **Socket.io-client** — real-time
+- **Vitest** + React Testing Library — tests
+
+### Backend (`server/`)
+- **Node.js** + **Express 5** — **JavaScript (ES Modules)**, not TypeScript
+- **MongoDB** + **Mongoose** — database & ODM
+- **Socket.io** — real-time notifications & messaging
+- **JWT** (access + refresh) + **bcryptjs** — auth & password hashing
+- **Joi** — request validation
+- **Cloudinary** (via Multer) — image/document uploads
+- **Resend** — transactional & campaign email
+- **Anthropic SDK** — AI assistant
 
 ### Security & Middleware
-- **Helmet** - Security headers
-- **CORS** - Cross-origin resource sharing
-- **Rate Limiting** - DDoS protection
-- **Express Validator** - Input validation
-- **Mongo Sanitize** - NoSQL injection prevention
-- **IP Whitelist** - Admin route protection
+- **Helmet** — security headers
+- **CORS** with credentials
+- **express-rate-limit** — global limiter + tighter per-IP limit on the AI endpoint
+- **compression** + **morgan** — gzip & request logging
+- JWT secret strength is validated at boot (refuses weak/default secrets in production)
 
-## Prerequisites
+---
 
-- Node.js >= 18.0.0
-- MongoDB (local or Atlas)
-- npm or yarn
-- Git
+## ✅ Prerequisites
+- **Node.js >= 18**
+- **MongoDB** (local or Atlas)
+- **npm**
+- A **Cloudinary**, **Resend**, and **Anthropic** account for full functionality
 
-## Installation
+---
 
-### 1. Clone the repository
+## 🚀 Getting Started
+
+### 1. Clone
 ```bash
 git clone https://github.com/MuhammadNabeelJaved/english-learning-platform.git
 cd english-learning-platform
 ```
 
 ### 2. Install dependencies
-
-#### Frontend
 ```bash
-cd client
-npm install
+cd client && npm install
+cd ../server && npm install
 ```
 
-#### Backend
-```bash
-cd server
-npm install
-```
+### 3. Environment configuration
 
-### 3. Environment Configuration
-
-#### Frontend (.env)
-Create `client/.env`:
+**`client/.env`**
 ```env
-VITE_API_URL=http://localhost:5000/api
+VITE_API_URL=http://localhost:5000
+VITE_SOCKET_URL=http://localhost:5000
 ```
 
-#### Backend (.env)
-Create `server/.env`:
+**`server/.env`**
 ```env
-# Server
 NODE_ENV=development
 PORT=5000
 CLIENT_URL=http://localhost:5173
 
-# Database
-MONGODB_URI=mongodb://localhost:27017/english-learning-platform
+# Database (MongoDB local or Atlas)
+MONGO_URI=mongodb://localhost:27017
+DB_NAME=english
 
-# JWT
-JWT_ACCESS_SECRET=your-access-secret-key-here
-JWT_REFRESH_SECRET=your-refresh-secret-key-here
-JWT_ACCESS_EXPIRY=15m
-JWT_REFRESH_EXPIRY=7d
+# Auth — use strong, unique 32+ char random secrets (required in production)
+JWT_ACCESS_SECRET=replace-with-a-long-random-secret
+JWT_REFRESH_SECRET=replace-with-a-long-random-secret
+JWT_ACCESS_EXPIRES_IN=30m
+JWT_REFRESH_EXPIRES_IN=7d
+BCRYPT_ROUNDS=10
 
-# Email (Resend)
-RESEND_API_KEY=your-resend-api-key
-
-# File Upload (Cloudinary)
+# Cloudinary (file uploads)
 CLOUDINARY_CLOUD_NAME=your-cloud-name
 CLOUDINARY_API_KEY=your-api-key
 CLOUDINARY_API_SECRET=your-api-secret
 
-# Admin Seeding
-ADMIN_EMAIL=admin@example.com
-ADMIN_PASSWORD=your-admin-password
+# Email (Resend)
+RESEND_API_KEY=your-resend-api-key
+RESEND_FROM_EMAIL=EnglishPro <hello@yourdomain.com>
 
-# Security
-ADMIN_IP_WHITELIST=127.0.0.1,::1
+# AI Assistant (Anthropic) — optional; bot falls back gracefully if unset
+ANTHROPIC_API_KEY=your-anthropic-api-key
 ```
 
-### 4. Seed Admin User
+> Generate a strong secret: `node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"`
+
+### 4. Run (development)
 ```bash
-cd server
-npm run seed:admin
+# Terminal 1 — backend  → http://localhost:5000
+cd server && npm run dev
+
+# Terminal 2 — frontend → http://localhost:5173
+cd client && npm run dev
 ```
 
-## Running the Project
-
-### Development Mode
-
-#### Terminal 1 - Backend
-```bash
-cd server
-npm run dev
-```
-Server runs on [http://localhost:5000](http://localhost:5000)
-
-#### Terminal 2 - Frontend
+### 5. Production build (frontend)
 ```bash
 cd client
-npm run dev
-```
-Client runs on [http://localhost:5173](http://localhost:5173)
-
-### Production Build
-
-#### Backend
-```bash
-cd server
-npm run build
-npm start
-```
-
-#### Frontend
-```bash
-cd client
-npm run build
+npm run build      # tsc -b && vite build
 npm run preview
 ```
+The backend runs the same in production: `cd server && npm start` (`NODE_ENV=production`).
 
-## Project Structure
+---
+
+## 📜 Scripts
+
+### Client
+| Script | Description |
+|---|---|
+| `npm run dev` | Start Vite dev server |
+| `npm run build` | Typecheck (`tsc -b`) + production build |
+| `npm run preview` | Preview the production build |
+| `npm run lint` | ESLint |
+| `npm test` | Run Vitest |
+
+### Server
+| Script | Description |
+|---|---|
+| `npm run dev` | Start with nodemon (hot reload) |
+| `npm start` | Start the server (`node index.js`) |
+| `npm run check` | Import-graph sanity check (catches syntax/import errors) |
+
+---
+
+## 🗂️ Project Structure
 
 ```
 english-learning-platform/
-├── client/                 # Frontend React application
-│   ├── src/
-│   │   ├── components/    # Reusable UI components
-│   │   ├── pages/         # Route pages
-│   │   │   ├── admin/     # Admin dashboard pages
-│   │   │   ├── instructor/# Instructor dashboard pages
-│   │   │   └── student/   # Student dashboard pages
-│   │   ├── App.tsx        # Main app component
-│   │   └── main.tsx       # Entry point
-│   ├── public/            # Static assets
-│   └── package.json
+├── client/                       # React + TypeScript frontend (port 5173)
+│   └── src/
+│       ├── App.tsx               # Router, lazy routes, error boundary
+│       ├── components/           # Shared UI (incl. AIChatWidget)
+│       ├── context/              # AuthContext, SocketContext, GeoContext
+│       ├── lib/ · config/ · services/   # axios client, env, API services
+│       └── pages/
+│           ├── admin/            # Admin dashboard
+│           ├── instructor/       # Instructor dashboard
+│           ├── student/          # Student dashboard
+│           └── team/             # Team-member dashboard
 │
-├── server/                # Backend Node.js application
-│   ├── src/
-│   │   ├── config/       # Configuration files
-│   │   ├── controllers/  # Route controllers
-│   │   ├── middleware/   # Express middleware
-│   │   ├── models/       # Mongoose models
-│   │   ├── routes/       # API routes
-│   │   ├── services/     # Business logic
-│   │   ├── utils/        # Utility functions
-│   │   ├── scripts/      # Seed scripts
-│   │   └── server.ts     # Entry point
-│   ├── tests/            # Test files
-│   │   ├── integration/  # API integration tests
-│   │   └── unit/         # Unit tests
-│   ├── logs/             # Winston logs
-│   └── package.json
+├── server/                       # Express backend (port 5000) — ESM JavaScript
+│   ├── index.js                  # HTTP server + Socket.io entry point
+│   ├── app.js                    # Express app, middleware, route mounting
+│   └── src/
+│       ├── database/             # MongoDB connection
+│       ├── middlewares/          # auth (JWT), multer (uploads), geo
+│       ├── models/               # Mongoose models
+│       ├── controllers/          # One controller per resource
+│       ├── routes/               # Routes mounted at /api/v1/<resource>
+│       ├── services/             # Business logic (AI knowledge, personal context, …)
+│       └── utils/                # apiResponse, apiErrors, asyncHandler, cloudinary, email
 │
-├── docs/                 # Documentation
-├── .claude/              # Claude Code configuration
-├── CLAUDE.md             # Project instructions
-└── README.md             # This file
+├── docs/                         # Specs & implementation plans
+├── CLAUDE.md                     # Project conventions
+└── README.md
 ```
 
-## Testing
+---
 
-### Frontend Tests
-```bash
-cd client
-npm test              # Run tests
-npm run test:watch    # Watch mode
+## 🔌 API Overview
+
+All routes are versioned under **`/api/v1/`** and return a consistent envelope:
+```json
+{ "success": true, "message": "...", "data": { } }
+{ "success": false, "message": "Human-readable error" }
 ```
 
-### Backend Tests
-```bash
-cd server
-npm test              # Run all tests with coverage
-npm run test:watch    # Watch mode
-```
+| Area | Example |
+|---|---|
+| Health | `GET /api/health` |
+| Auth | `POST /api/v1/users/register`, `POST /api/v1/users/login`, `POST /api/v1/users/refresh-token` |
+| Courses | `GET /api/v1/courses`, `POST /api/v1/courses` |
+| Enrolments | `POST /api/v1/enrollments`, `GET /api/v1/enrollments/my` |
+| Payments | `POST /api/v1/payments`, `GET /api/v1/payments/my` |
+| AI chat | `POST /api/v1/ai-chat`, `GET`/`DELETE /api/v1/ai-chat/session` |
 
-## API Documentation
+Resources also include: `blogs`, `certificates`, `financial-aid`, `assignments`, `live-classes`, `messages`, `reviews`, `referrals`, `coupons`, `offers`, `newsletter`, `team`, `support`, `notifications`, `faqs`, `announcements`, `site-settings`, `stats`, `seo`, `salaries`, `activity-logs`.
 
-The API follows RESTful conventions. Key endpoints:
+Conventions are documented in `.claude/rules/api-conventions.md`.
 
-- `POST /api/auth/register` - User registration
-- `POST /api/auth/login` - User login
-- `POST /api/auth/refresh` - Refresh access token
-- `GET /api/courses` - List courses
-- `POST /api/courses` - Create course (instructor)
-- `GET /api/users/profile` - Get user profile
-- `POST /api/enrollments` - Enroll in course
+---
 
-Full API documentation available in `docs/api-conventions.md`.
+## 🔐 Authentication & Roles
 
-## Scripts
+- JWT access + refresh tokens (sent via `Authorization: Bearer` header and httpOnly cookies)
+- Protected routes use `authenticate`; role gating via `authorize(role)` / `authorizeTeamPage(...)`
 
-### Client Scripts
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
-- `npm run lint` - Lint code
-- `npm test` - Run tests
+| Role | Prefix | Scope |
+|---|---|---|
+| `admin` | `/admin/*` | Full platform management |
+| `teacher` | `/instructor/*` | Course creation & student management |
+| `student` | `/dashboard/*` | Courses, assignments, certificates |
+| `team_member` | `/team/*` | Permission-scoped staff access |
 
-### Server Scripts
-- `npm run dev` - Start development server with hot reload
-- `npm run build` - Compile TypeScript
-- `npm start` - Start production server
-- `npm test` - Run tests with coverage
-- `npm run test:watch` - Run tests in watch mode
-- `npm run lint` - Lint code
-- `npm run format` - Format code with Prettier
-- `npm run seed:admin` - Seed admin user
+---
 
-## Contributing
+## 🧪 Testing
+- **Client:** Vitest + React Testing Library — `cd client && npm test`
+- **Server:** no automated test harness yet. Verify changes with `npm run check` (import-graph compile check). If tests are added, the convention is Jest + Supertest.
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feat/amazing-feature`)
-3. Commit your changes (`git commit -m 'feat: add amazing feature'`)
-4. Push to the branch (`git push origin feat/amazing-feature`)
-5. Open a Pull Request
+---
 
-### Commit Convention
-Follow conventional commits:
-- `feat:` - New features
-- `fix:` - Bug fixes
-- `docs:` - Documentation changes
-- `test:` - Test additions/changes
-- `refactor:` - Code refactoring
-- `style:` - Formatting changes
-- `chore:` - Maintenance tasks
+## ⚡ Performance Notes
+- Routes are lazy-loaded (`React.lazy` + `Suspense`)
+- Vite `manualChunks` split React, Framer Motion, and the Markdown renderer into separate, long-cacheable chunks
+- Heavy libraries (PDF/canvas export, rich-text editor) load on demand only
+- The AI chatbot's Markdown renderer is lazy-loaded so it stays off first paint
 
-## License
+---
 
-This project is licensed under the UNLICENSED license - see the LICENSE file for details.
+## 🤝 Contributing
 
-## Support
+1. Branch from `main`: `feat/<name>` or `fix/<name>`
+2. Commit using **Conventional Commits** (`feat:`, `fix:`, `docs:`, `refactor:`, `chore:`, `perf:`, `test:`)
+3. Open a Pull Request (squash-merge to keep history clean)
 
-For issues and questions:
+---
+
+## 📄 License
+
+Proprietary — all rights reserved. Not licensed for redistribution.
+
+## 📬 Support
+
 - Open an issue on GitHub
 - Email: graphicsanimation786@gmail.com
-
-## Acknowledgments
-
-- Built with modern web technologies
-- Designed for scalability and maintainability
-- Security-first approach with comprehensive testing
 
 ---
 
