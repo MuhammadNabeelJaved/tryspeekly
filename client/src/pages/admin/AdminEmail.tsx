@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import {
-  Envelope, ToggleLeft, ToggleRight, PencilSimple, ArrowCounterClockwise,
+  Envelope, ToggleLeft, ToggleRight, ArrowCounterClockwise,
   CheckCircle, XCircle, Clock, MagnifyingGlass, Trash, PaperPlaneTilt,
   CaretDown, CaretUp,
 } from '@phosphor-icons/react'
@@ -392,7 +392,7 @@ function LogsTab() {
   const [total, setTotal] = useState(0)
   const [totalPages, setTotalPages] = useState(1)
   const [statusFilter, setStatusFilter] = useState('')
-  const [typeFilter, setTypeFilter] = useState('')
+  const [typeFilter] = useState('')
   const [search, setSearch] = useState('')
   const [clearing, setClearing] = useState(false)
   const [confirmModal, setConfirmModal] = useState<{ title: string; message: string; onConfirm: () => void } | null>(null)

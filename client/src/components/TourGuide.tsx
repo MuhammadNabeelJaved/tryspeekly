@@ -77,7 +77,7 @@ const ARROW_ZERO_BORDERS: Record<TooltipPlacement, React.CSSProperties> = {
   center: {},
 }
 
-export default function TourGuide({ steps, tourKey, autoStart = false, onRestartRef, onFinish }: Props) {
+export default function TourGuide({ steps, autoStart = false, onRestartRef, onFinish }: Props) {
   const [active, setActive]       = useState(false)
   const [step, setStep]           = useState(0)
   const [rect, setRect]           = useState<DOMRect | null>(null)

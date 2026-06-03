@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react'
 import {
   MagnifyingGlass, Globe, Robot, ShareNetwork, TwitterLogo, Code,
   MapTrifold, GearSix, Plus, Trash, CheckCircle, Warning, XCircle,
-  Eye, FloppyDisk, ArrowCounterClockwise, PencilSimple, Link, Tag,
+  FloppyDisk, ArrowCounterClockwise, PencilSimple, Link, Tag,
   ChartBar, Funnel,
 } from '@phosphor-icons/react'
 import { seoService, type SeoPage } from '../../services/seo.service'
@@ -206,7 +206,6 @@ export default function AdminSEO() {
     (p.pageName.toLowerCase().includes(search.toLowerCase()) ||
      p.pageSlug.toLowerCase().includes(search.toLowerCase()))
   )
-  const globalPage = pages.find(p => p.pageSlug === '__global__')
 
   const score = form && form.pageSlug !== '__global__' ? seoScore(form) : null
 

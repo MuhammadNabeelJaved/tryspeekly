@@ -1,7 +1,6 @@
 import { axiosClient } from '../lib/axiosClient';
 
 import type {
-  Review,
   SubmitReviewDto,
   UpdateReviewDto,
   AdminUpdateReviewStatusDto,

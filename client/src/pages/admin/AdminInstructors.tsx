@@ -221,7 +221,6 @@ export default function AdminInstructors({ store }: { store: AdminStore }) {
     setIsBulkDeleting(false)
   }
 
-  const AVATAR_GRADIENTS = ['from-violet-500 to-purple-600', 'from-blue-500 to-blue-700', 'from-emerald-500 to-emerald-700', 'from-pink-500 to-rose-600']
 
   return (
     <div className="p-4 sm:p-6 max-w-full">

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   MagnifyingGlass, Eye, FunnelSimple, Handshake, X, SpinnerGap,
-  BookOpen, CheckCircle, CalendarBlank, User, Clock, XCircle, Trash,
+  BookOpen, CheckCircle, User, XCircle, Trash,
 } from '@phosphor-icons/react'
 import ConfirmModal from '@/components/ConfirmModal'
 import toast from 'react-hot-toast'

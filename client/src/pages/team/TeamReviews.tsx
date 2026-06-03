@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Star, PencilSimple, X, ArrowsClockwise, CheckCircle,
-  Clock, XCircle, ChatText, Sparkle,
+  Star, PencilSimple, X, ArrowsClockwise,
+  ChatText, Sparkle,
 } from '@phosphor-icons/react'
 import toast from 'react-hot-toast'
-import { useAuth } from '@/context/AuthContext'
 import { reviewsService } from '@/services/reviews.service'
 import MyReviewsSection from '@/components/MyReviewsSection'
 import UserAvatar from '@/components/UserAvatar'
@@ -43,20 +42,6 @@ function Stars({ rating, interactive = false, value = 0, onChange }: {
   )
 }
 
-function StatusBadge({ status }: { status: Review['status'] }) {
-  const map = {
-    pending:  { label: 'Pending Approval', cls: 'bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400', Icon: Clock },
-    approved: { label: 'Approved',         cls: 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400', Icon: CheckCircle },
-    rejected: { label: 'Rejected',         cls: 'bg-red-100 dark:bg-red-950/40 text-red-600 dark:text-red-400', Icon: XCircle },
-  }
-  const { label, cls, Icon } = map[status]
-  return (
-    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${cls}`}>
-      <Icon size={10} weight="fill" />
-      {label}
-    </span>
-  )
-}
 
 // ─── Write/Edit Review Modal ──────────────────────────────────────────────────
 
@@ -187,9 +172,9 @@ function ReviewCard({ review }: { review: Review }) {
       </p>
 
       <div className="flex items-center gap-3 pt-2 border-t border-slate-50 dark:border-neutral-800">
-        <UserAvatar src={review.author.profileImage} name={review.author.name} size="sm" />
+        <UserAvatar src={review.author?.profileImage} name={review.author?.name} size="sm" />
         <div className="min-w-0">
-          <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{review.author.name}</p>
+          <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{review.author?.name}</p>
           <p className="text-[10px] text-violet-600 dark:text-violet-400 font-semibold">
             {review.jobTitle || (review.author as { jobTitle?: string }).jobTitle || 'Team Member'}
           </p>
@@ -207,7 +192,6 @@ function ReviewCard({ review }: { review: Review }) {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function TeamReviews() {
-  const { user } = useAuth()
   const [reviews, setReviews]       = useState<Review[]>([])
   const [myReviews, setMyReviews]   = useState<Review[]>([])
   const [myReview, setMyReview]     = useState<Review | null>(null)

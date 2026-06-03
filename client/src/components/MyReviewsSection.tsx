@@ -6,7 +6,6 @@ import {
 } from '@phosphor-icons/react'
 import toast from 'react-hot-toast'
 import { reviewsService } from '@/services/reviews.service'
-import UserAvatar from '@/components/UserAvatar'
 import type { Review } from '@/types/api'
 
 // ─── Stars ────────────────────────────────────────────────────────────────────

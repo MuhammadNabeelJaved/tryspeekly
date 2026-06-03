@@ -24,7 +24,7 @@ interface InstructorOverviewProps {
 export default function InstructorOverview({ onNavigate }: InstructorOverviewProps) {
   const { user } = useAuth()
   const [searchTerm, setSearchTerm] = useState('')
-  const [earnings, setEarnings] = useState(0)
+  const [earnings] = useState(0)
   const [courses, setCourses] = useState<CourseItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false)

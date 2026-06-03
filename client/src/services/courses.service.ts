@@ -1,5 +1,5 @@
 import { axiosClient } from '../lib/axiosClient';
-import type { Course, CreateCourseDto, UpdateCourseDto, CourseListResponse, CourseSingleResponse, ApiResponse, CourseMaterial, SyllabusTopic } from '../types/api';
+import type { CreateCourseDto, UpdateCourseDto, CourseListResponse, CourseSingleResponse, ApiResponse, CourseMaterial, SyllabusTopic } from '../types/api';
 
 export const coursesService = {
   async getAllCourses(params?: {

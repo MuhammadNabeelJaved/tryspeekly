@@ -1,10 +1,10 @@
-import { useState, useEffect, useRef, Suspense, lazy, useCallback, useMemo } from 'react'
+import { useState, useEffect, useRef, Suspense, lazy, useMemo } from 'react'
 import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom'
 import {
-  ChartBar, Users, BookOpen, Chalkboard, CreditCard, Handshake,
+  Users, BookOpen, Chalkboard, CreditCard, Handshake,
   Money, Certificate, Gift, Chats, ChatCircleDots, EnvelopeSimple,
-  Star, Bell, PencilSimple, Globe, GearSix, SignOut, List, X, ChatTeardropText,
-  SquaresFour, UserCircle, MagnifyingGlass, Sparkle, ChatText, Newspaper,
+  Star, Bell, PencilSimple, Globe, SignOut, List, X, ChatTeardropText,
+  SquaresFour, UserCircle, Sparkle, ChatText, Newspaper,
 } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '@/context/AuthContext'
@@ -32,7 +32,6 @@ import toast from 'react-hot-toast'
 // TeamNotification is imported from team.service
 
 // ─── Lazy-load the same admin page components ─────────────────────────────────
-const AdminOverview      = lazy(() => import('./admin/AdminOverview'))
 const AdminStudents      = lazy(() => import('./admin/AdminStudents'))
 const AdminInstructors   = lazy(() => import('./admin/AdminInstructors'))
 const AdminCourses       = lazy(() => import('./admin/AdminCourses'))

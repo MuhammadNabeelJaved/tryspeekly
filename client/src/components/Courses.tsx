@@ -8,7 +8,6 @@ import {
 } from '@phosphor-icons/react'
 import { useState, useEffect, useRef } from 'react'
 import { coursesService } from '../services/courses.service'
-import type { Course } from '../types/api'
 import { useGeo } from '../context/GeoContext'
 import { offersService } from '../services/offers.service'
 import type { Offer } from '../services/offers.service'
@@ -184,38 +183,6 @@ const FEATURES = [
   },
 ]
 
-const INSTRUCTORS = [
-  {
-    name: 'Sarah Johnson',
-    role: 'IELTS Expert & Trainer',
-    experience: '8 Years',
-    students: '1,200+',
-    rating: 4.9,
-    specialty: 'IELTS Prep',
-    image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=400&auto=format&fit=crop',
-    color: 'violet'
-  },
-  {
-    name: 'Mark Williams',
-    role: 'Business English Coach',
-    experience: '12 Years',
-    students: '890+',
-    rating: 4.8,
-    specialty: 'Business English',
-    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=400&auto=format&fit=crop',
-    color: 'blue'
-  },
-  {
-    name: 'Emily Chen',
-    role: 'General English Specialist',
-    experience: '6 Years',
-    students: '2,100+',
-    rating: 5.0,
-    specialty: 'General English',
-    image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=400&auto=format&fit=crop',
-    color: 'emerald'
-  },
-]
 
 const LEARNING_PATHS = [
   {

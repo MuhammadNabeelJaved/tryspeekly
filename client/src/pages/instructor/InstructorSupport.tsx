@@ -38,7 +38,7 @@ export default function InstructorSupport() {
           if (support) {
             setSupportUserId(support.user._id)
             // Fetch support conversation messages
-            const msgsRes = await messagesService.getConversation(support.user._id)
+            const msgsRes = await messagesService.getMessagesWith(support.user._id)
             if (msgsRes.success && msgsRes.data.length > 0) {
               setMessages(msgsRes.data.map((m: any) => ({
                 id: m._id,

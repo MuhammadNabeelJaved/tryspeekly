@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   MagnifyingGlass, X, UserCircle, CheckCircle, Warning,
   ArrowsClockwise, Student, ChalkboardTeacher, UserGear, Crown,
-  FunnelSimple, ProhibitInset, Trash, LockOpen, WarningOctagon, MonitorPlay,
+  FunnelSimple, ProhibitInset, Trash, LockOpen, MonitorPlay,
 } from '@phosphor-icons/react'
 import toast from 'react-hot-toast'
 import { axiosClient } from '@/lib/axiosClient'

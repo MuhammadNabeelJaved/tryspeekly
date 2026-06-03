@@ -5,8 +5,8 @@ import toast from 'react-hot-toast'
 import {
   Star, Users, Clock, GraduationCap, CheckCircle,
   PlayCircle, Certificate, FileText, CaretDown,
-  ArrowLeft, ArrowRight, Sparkle,
-  ChartBar, Tag, Chats, CaretLeft, CaretRight, ThumbsUp, PencilSimple,
+  ArrowLeft, Sparkle,
+  ChartBar, Tag, Chats, PencilSimple,
   Calendar, VideoCamera, UsersThree, ChalkboardTeacher, Laptop,
 } from '@phosphor-icons/react'
 import { coursesService } from '../services/courses.service'
@@ -118,7 +118,6 @@ const COURSE = {
   ]
 }
 
-const REVIEWS_PER_PAGE = 3
 
 export default function CourseDetailsPage() {
   const { id } = useParams()
@@ -127,7 +126,6 @@ export default function CourseDetailsPage() {
   const { currency } = useGeo()
   const [openModule, setOpenModule] = useState<number | null>(0)
   const [showMobileNav, setShowMobileNav] = useState(false)
-  const [currentReviewPage, setCurrentReviewPage] = useState(1)
   const [apiCourse, setApiCourse] = useState<any>(null)
   const [courseReviews, setCourseReviews] = useState<Review[]>([])
   const [isLoadingReviews, setIsLoadingReviews] = useState(false)
@@ -273,11 +271,6 @@ export default function CourseDetailsPage() {
     return Math.max(0, base - couponResult.discountAmount)
   })()
 
-  const totalReviewPages = Math.ceil(activeCourse.reviewsList.length / REVIEWS_PER_PAGE)
-  const currentReviews = activeCourse.reviewsList.slice(
-    (currentReviewPage - 1) * REVIEWS_PER_PAGE,
-    currentReviewPage * REVIEWS_PER_PAGE
-  )
 
   const sortedCourseReviews = courseReviews.filter(r => r.author != null).sort((a, b) => {
     if (reviewSort === 'oldest') return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
@@ -286,13 +279,6 @@ export default function CourseDetailsPage() {
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   })
 
-  const scrollToReviews = () => {
-    const el = document.getElementById('reviews-section')
-    if (el) {
-      const y = el.getBoundingClientRect().top + window.scrollY - 100
-      window.scrollTo({ top: y, behavior: 'smooth' })
-    }
-  }
 
   const handleEnroll = async () => {
     if (!isAuthenticated) {
@@ -320,10 +306,6 @@ export default function CourseDetailsPage() {
     }
   };
 
-  const handlePageChange = (page: number) => {
-    setCurrentReviewPage(page)
-    scrollToReviews()
-  }
 
   // Scroll to top on mount
   useEffect(() => {
@@ -739,20 +721,20 @@ export default function CourseDetailsPage() {
                           className="bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-3xl p-6 sm:p-8 shadow-sm hover:shadow-md hover:border-violet-200 dark:hover:border-violet-900/50 transition-all"
                         >
                           <div className="flex flex-col sm:flex-row gap-5 items-start">
-                            {review.author.profileImage ? (
+                            {review.author?.profileImage ? (
                               <img
-                                src={review.author.profileImage}
-                                alt={review.author.name}
+                                src={review.author?.profileImage}
+                                alt={review.author?.name}
                                 className="w-14 h-14 rounded-full object-cover border border-slate-100 dark:border-neutral-800"
                               />
                             ) : (
                               <div className="w-14 h-14 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center font-bold text-violet-600 dark:text-violet-400 text-xl shrink-0">
-                                {review.author.name.charAt(0).toUpperCase()}
+                                {(review.author?.name || '?').charAt(0).toUpperCase()}
                               </div>
                             )}
                             <div className="flex-1">
                               <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-                                <h4 className="font-bold text-slate-900 dark:text-white text-lg">{review.author.name}</h4>
+                                <h4 className="font-bold text-slate-900 dark:text-white text-lg">{review.author?.name}</h4>
                                 <span className="text-xs text-slate-500 dark:text-neutral-400 font-medium">
                                   {new Date(review.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
                                 </span>

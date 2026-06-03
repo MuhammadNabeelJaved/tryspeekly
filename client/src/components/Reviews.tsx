@@ -61,16 +61,16 @@ function ReviewDetailModal({ review, onClose }: { review: Review; onClose: () =>
 
             <div className="flex items-center gap-4 pt-4 border-t border-gray-100 dark:border-neutral-800">
               <UserAvatar
-                src={review.author.profileImage}
-                name={review.author.name}
+                src={review.author?.profileImage}
+                name={review.author?.name}
                 size="sm"
               />
               <div>
                 <h4 className="font-bold text-gray-900 dark:text-white text-sm">
-                  {review.author.name}
+                  {review.author?.name}
                 </h4>
                 <p className="text-gray-500 dark:text-gray-400 text-xs capitalize">
-                  {review.author.role}
+                  {review.author?.role}
                 </p>
               </div>
               <p className="ml-auto text-xs text-gray-400 dark:text-neutral-500">
@@ -317,17 +317,17 @@ export default function Reviews() {
 
                   <div className="flex items-center gap-4 mt-auto pt-4 border-t border-gray-100 dark:border-neutral-800">
                     <UserAvatar
-                      src={review.author.profileImage}
-                      name={review.author.name}
+                      src={review.author?.profileImage}
+                      name={review.author?.name}
                       size="sm"
                       className="grayscale hover:grayscale-0 transition-all duration-300"
                     />
                     <div>
                       <h4 className="font-bold text-gray-900 dark:text-white text-sm">
-                        {review.author.name}
+                        {review.author?.name}
                       </h4>
                       <p className="text-gray-500 dark:text-gray-400 text-xs capitalize">
-                        {review.author.role}
+                        {review.author?.role}
                       </p>
                     </div>
                   </div>

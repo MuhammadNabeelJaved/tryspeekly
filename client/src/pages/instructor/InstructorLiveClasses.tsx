@@ -23,14 +23,6 @@ type InstructorCourse = {
   totalSessions?: number
 }
 
-type ActiveLiveClass = {
-  _id: string
-  courseId: string
-  courseTitle: string
-  meetingLink: string
-  classNumber: number
-  createdAt: string
-}
 
 type CompletedClass = {
   _id: string
@@ -80,7 +72,7 @@ export default function InstructorLiveClasses() {
   const [liveUrlInput, setLiveUrlInput] = useState('')
   const [liveUrlError, setLiveUrlError] = useState('')
   const [currentLiveClassId, setCurrentLiveClassId] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
+  const [, setIsLoading] = useState(false)
 
   // Schedule State
   const [scheduleModalCourse, setScheduleModalCourse] = useState<InstructorCourse | null>(null)

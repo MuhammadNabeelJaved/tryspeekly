@@ -306,7 +306,7 @@ export default function StudentDashboardPage() {
             </div>
             <button
               data-tour="student-take-tour"
-              onClick={() => { restartTourRef.current?.(); setTourSeen(true) }}
+              onClick={() => { restartTourRef.current?.() }}
               className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-semibold text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-950/30 transition-all mb-1"
             >
               <span className="relative inline-flex items-center justify-center">

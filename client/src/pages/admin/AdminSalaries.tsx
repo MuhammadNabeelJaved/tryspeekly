@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Plus, PencilSimple, Trash, X, Check, Money, SpinnerGap,
-  MagnifyingGlass, CaretRight, CalendarBlank, Warning, PaperPlaneTilt,
+  MagnifyingGlass, CaretRight, CalendarBlank, PaperPlaneTilt,
 } from '@phosphor-icons/react'
 import toast from 'react-hot-toast'
 import { axiosClient } from '@/lib/axiosClient'

@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { Camera, FloppyDisk, Lock, Eye, EyeSlash, ArrowsClockwise, UserCircle } from '@phosphor-icons/react'
+import { Camera, FloppyDisk, Lock, Eye, EyeSlash, ArrowsClockwise } from '@phosphor-icons/react'
 import toast from 'react-hot-toast'
 import { useAuth } from '@/context/AuthContext'
 import { usersService } from '@/services/users.service'

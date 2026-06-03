@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   ChatCircleDots, MagnifyingGlass, ArrowLeft, PaperPlaneRight, Check,
-  ClipboardText, Clock, CheckCircle, Warning, PencilSimple, Trash, Plus,
+  ClipboardText, CheckCircle, Warning, PencilSimple, Trash, Plus,
   BookOpen, SpinnerGap,
 } from '@phosphor-icons/react'
 import { supportService } from '@/services/support.service'

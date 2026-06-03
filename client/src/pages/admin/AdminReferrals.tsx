@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Tag, Gift, Users, Wallet, Plus, Trash, ToggleLeft, ToggleRight, Copy, Check, X, Percent, PencilSimple, ChartBar, CalendarBlank } from '@phosphor-icons/react'
+import { Tag, Gift, Users, Wallet, Plus, Trash, ToggleLeft, ToggleRight, X, Percent, PencilSimple, ChartBar, CalendarBlank } from '@phosphor-icons/react'
 import toast from 'react-hot-toast'
 import ConfirmModal from '@/components/ConfirmModal'
 import { couponsService } from '@/services/coupons.service'

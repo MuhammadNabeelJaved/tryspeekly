@@ -12,7 +12,7 @@ export default function InstructorSettings() {
   const { user, setUser } = useAuth()
   const [activeTab, setActiveTab] = useState('profile')
   const [settingsSearch, setSettingsSearch] = useState('')
-  const [saving, setSaving] = useState(false)
+  const [, setSaving] = useState(false)
   const [uploadingImage, setUploadingImage] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -53,7 +53,7 @@ export default function InstructorSettings() {
   const defaultName = user?.name || ''
   const defaultEmail = user?.email || ''
 
-  const { register, handleSubmit, reset: resetForm } = useForm({
+  const { register, handleSubmit } = useForm({
     defaultValues: {
       name: defaultName,
       email: defaultEmail,
