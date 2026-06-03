@@ -40,10 +40,10 @@ export const chat = asyncHandler(async (req, res) => {
   }))
   const latestUser = [...recent].reverse().find((m) => m.role === 'user')?.content || ''
 
-  const { text: knowledge, faqs } = await getKnowledgeSnapshot()
+  const { text: knowledge } = await getKnowledgeSnapshot()
 
-  // 1) Zero-API instant layer.
-  const instant = getInstantAnswer(latestUser, faqs)
+  // 1) Zero-API instant layer (greetings/thanks only).
+  const instant = getInstantAnswer(latestUser)
   if (instant) {
     return res.json({ success: true, reply: instant })
   }
