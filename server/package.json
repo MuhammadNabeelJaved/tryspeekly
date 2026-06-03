@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "nodemon index.js",
     "start": "node index.js",
-    "check": "node -e \"import('./app')\""
+    "check": "node -e \"import('./app.js')\""
   },
   "keywords": [],
   "author": "",

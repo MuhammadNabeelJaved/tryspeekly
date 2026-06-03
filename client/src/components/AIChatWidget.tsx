@@ -13,6 +13,12 @@ const WELCOME: Message = {
   content: "Hi! I'm the EnglishPro AI Assistant 👋 Ask me anything about our courses, enrollment, or learning English!",
 }
 
+const STARTERS = [
+  'What courses do you offer?',
+  'How do I enrol?',
+  'Do you offer financial aid?',
+]
+
 export default function AIChatWidget() {
   const [open, setOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([WELCOME])
@@ -31,8 +37,8 @@ export default function AIChatWidget() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, loading])
 
-  const send = async () => {
-    const text = input.trim()
+  const send = async (override?: string) => {
+    const text = (override ?? input).trim()
     if (!text || loading) return
 
     const userMsg: Message = { role: 'user', content: text }
@@ -116,6 +122,20 @@ export default function AIChatWidget() {
                 </div>
               ))}
 
+              {messages.length === 1 && !loading && (
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {STARTERS.map((q) => (
+                    <button
+                      key={q}
+                      onClick={() => send(q)}
+                      className="text-xs px-3 py-1.5 rounded-full border border-violet-200 dark:border-violet-800 text-violet-700 dark:text-violet-300 hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-colors"
+                    >
+                      {q}
+                    </button>
+                  ))}
+                </div>
+              )}
+
               {/* Typing indicator */}
               {loading && (
                 <div className="flex justify-start items-center gap-2">
@@ -149,7 +169,7 @@ export default function AIChatWidget() {
                 className="flex-1 text-sm px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 transition-all disabled:opacity-60"
               />
               <button
-                onClick={send}
+                onClick={() => send()}
                 disabled={!input.trim() || loading}
                 className="w-9 h-9 rounded-xl bg-violet-600 hover:bg-violet-700 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center text-white transition-colors flex-shrink-0"
               >
