@@ -1,8 +1,8 @@
 import express from 'express'
 import rateLimit from 'express-rate-limit'
 
-import { chat } from '../controllers/ai-chat.controller.js'
-import { optionalAuthenticate } from '../middlewares/auth.js'
+import { chat, getSession, deleteSession } from '../controllers/ai-chat.controller.js'
+import { optionalAuthenticate, authenticate } from '../middlewares/auth.js'
 
 const router = express.Router()
 
@@ -15,5 +15,8 @@ const chatLimiter = rateLimit({
 })
 
 router.route('/').post(chatLimiter, optionalAuthenticate, chat)
+
+// Saved conversation for signed-in users (load on open, clear on delete).
+router.route('/session').get(authenticate, getSession).delete(authenticate, deleteSession)
 
 export default router

@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, PaperPlaneRight, Sparkle, ArrowsCounterClockwise, CaretRight } from '@phosphor-icons/react'
+import { X, PaperPlaneRight, Sparkle, Trash, CaretRight } from '@phosphor-icons/react'
 import { axiosClient } from '@/lib/axiosClient'
+import { useAuth } from '@/context/AuthContext'
 import ChatMessage from '@/components/ChatMessage'
 
 interface Message {
@@ -14,6 +15,10 @@ const WELCOME: Message = {
   role: 'assistant',
   content: "Hi! I'm the EnglishPro AI Assistant 👋 Ask me anything about our courses, enrollment, or learning English!",
 }
+
+// Guests persist their chat here; signed-in users persist server-side.
+const STORAGE_KEY = 'ep_chat_history'
+const MAX_STORED = 50
 
 const STARTERS = [
   'What courses do you offer?',
@@ -28,7 +33,9 @@ export default function AIChatWidget() {
   const [loading, setLoading] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const loadedRef = useRef(false)
   const navigate = useNavigate()
+  const { isAuthenticated } = useAuth()
 
   const go = (path: string) => {
     setOpen(false)
@@ -40,6 +47,36 @@ export default function AIChatWidget() {
       setTimeout(() => inputRef.current?.focus(), 200)
     }
   }, [open])
+
+  // Restore the saved conversation the first time the widget is opened:
+  // signed-in users from the server, guests from localStorage.
+  useEffect(() => {
+    if (!open || loadedRef.current) return
+    loadedRef.current = true
+    ;(async () => {
+      try {
+        if (isAuthenticated) {
+          const res = await axiosClient.get<{ data: { messages: Message[] } }>('/ai-chat/session')
+          const hist = res.data?.data?.messages ?? []
+          if (hist.length) setMessages([WELCOME, ...hist])
+        } else {
+          const raw = localStorage.getItem(STORAGE_KEY)
+          const hist = raw ? (JSON.parse(raw) as Message[]) : []
+          if (Array.isArray(hist) && hist.length) setMessages([WELCOME, ...hist])
+        }
+      } catch {
+        /* ignore restore errors — start fresh */
+      }
+    })()
+  }, [open, isAuthenticated])
+
+  // Persist guests' conversation to localStorage on every change (signed-in users
+  // are saved server-side by the chat endpoint).
+  useEffect(() => {
+    if (isAuthenticated) return
+    const hist = messages.slice(1) // drop the welcome message
+    if (hist.length) localStorage.setItem(STORAGE_KEY, JSON.stringify(hist.slice(-MAX_STORED)))
+  }, [messages, isAuthenticated])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -71,7 +108,18 @@ export default function AIChatWidget() {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() }
   }
 
-  const reset = () => setMessages([WELCOME])
+  // Delete the saved conversation (server for signed-in users, localStorage for guests)
+  // and start a fresh chat.
+  const clearChat = async () => {
+    try {
+      if (isAuthenticated) await axiosClient.delete('/ai-chat/session')
+      else localStorage.removeItem(STORAGE_KEY)
+    } catch {
+      /* ignore — still reset the visible chat */
+    }
+    setMessages([WELCOME])
+    setInput('')
+  }
 
   return (
     <>
@@ -97,11 +145,11 @@ export default function AIChatWidget() {
                 <p className="text-violet-200 text-[11px]">Powered by AI · Usually replies instantly</p>
               </div>
               <button
-                onClick={reset}
-                title="New conversation"
+                onClick={clearChat}
+                title="Delete chat history"
                 className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
               >
-                <ArrowsCounterClockwise size={14} />
+                <Trash size={14} />
               </button>
               <button
                 onClick={() => setOpen(false)}

@@ -1,9 +1,12 @@
 import Anthropic from '@anthropic-ai/sdk'
 
 import asyncHandler from '../utils/asyncHandler.js'
+import ChatSession from '../models/chat-session.model.js'
 import { getKnowledgeSnapshot } from '../services/ai-knowledge.service.js'
 import { getInstantAnswer } from '../services/ai-instant-answers.js'
 import { buildPersonalContext } from '../services/ai-personal-context.service.js'
+
+const MAX_STORED_MESSAGES = 50
 
 const apiKey = process.env.ANTHROPIC_API_KEY
 const client = apiKey ? new Anthropic({ apiKey }) : null
@@ -25,48 +28,34 @@ Formatting (important):
 - Reply in clean Markdown. Use **bold** for key terms, and use bullet (-) or numbered lists for steps or multiple items instead of cramming them into one sentence.
 - Whenever you mention a platform page, write it as a Markdown link with a short label and the real internal path, e.g. [Browse Courses](/courses), [Sign Up](/signup), [Financial Aid](/financial-aid), [Read the Blog](/blog), [Meet Instructors](/instructors), [Contact Us](/contact), [My Dashboard](/dashboard). Never write a raw URL without a label.`
 
-// ─── chat ─────────────────────────────────────────────────────────────────────────
+// ─── reply generation ──────────────────────────────────────────────────────────
 
-export const chat = asyncHandler(async (req, res) => {
-  const { messages } = req.body
-
-  if (!Array.isArray(messages) || messages.length === 0) {
-    return res.status(400).json({ success: false, message: 'Messages array is required' })
-  }
-
-  const recent = messages.slice(-8).map((m) => ({
-    role: m.role === 'user' ? 'user' : 'assistant',
-    content: String(m.content).slice(0, 1000),
-  }))
-  const latestUser = [...recent].reverse().find((m) => m.role === 'user')?.content || ''
-
-  const { text: knowledge } = await getKnowledgeSnapshot()
-
+const generateReply = async (recent, latestUser, user) => {
   // 1) Zero-API instant layer (greetings/thanks only).
   const instant = getInstantAnswer(latestUser)
-  if (instant) {
-    return res.json({ success: true, reply: instant })
-  }
+  if (instant) return instant
 
   // 2) No API key configured → graceful fallback (never crash).
   if (!client) {
     console.warn('[ai-chat] ANTHROPIC_API_KEY not set — returning fallback reply')
-    return res.json({ success: true, reply: FALLBACK_REPLY })
+    return FALLBACK_REPLY
   }
 
-  // 3) Role-aware personal context — always included for signed-in users so the bot can
+  const { text: knowledge } = await getKnowledgeSnapshot()
+
+  // 3) Role-aware personal context — included for signed-in users so the bot can
   //    answer their dashboard questions; guests get none (public answers only).
   let personalBlock = null
-  if (req.user) {
+  if (user) {
     try {
-      personalBlock = await buildPersonalContext(req.user)
+      personalBlock = await buildPersonalContext(user)
     } catch (err) {
       console.warn('[ai-chat] personal context failed:', err.message)
     }
   }
 
-  // 4) LLM call. Stable knowledge goes in a cached system block; personal block stays uncached
-  //    so the cached prefix doesn't change per user.
+  // 4) LLM call. Stable knowledge goes in a cached system block; personal block stays
+  //    uncached so the cached prefix doesn't change per user.
   const system = [
     {
       type: 'text',
@@ -85,10 +74,68 @@ export const chat = asyncHandler(async (req, res) => {
       system,
       messages: recent,
     })
-    const reply = response.content[0]?.text ?? FALLBACK_REPLY
-    res.json({ success: true, reply })
+    return response.content[0]?.text ?? FALLBACK_REPLY
   } catch (err) {
     console.error('[ai-chat] Anthropic error:', err.message)
-    res.json({ success: true, reply: FALLBACK_REPLY })
+    return FALLBACK_REPLY
   }
+}
+
+// Persist the full conversation for signed-in users (guests are stored client-side).
+const persistSession = async (userId, messages, reply) => {
+  const full = [
+    ...messages.map((m) => ({
+      role: m.role === 'user' ? 'user' : 'assistant',
+      content: String(m.content).slice(0, 2000),
+    })),
+    { role: 'assistant', content: reply },
+  ].slice(-MAX_STORED_MESSAGES)
+
+  await ChatSession.findOneAndUpdate(
+    { user: userId },
+    { $set: { messages: full } },
+    { upsert: true }
+  )
+}
+
+// ─── chat ─────────────────────────────────────────────────────────────────────────
+
+export const chat = asyncHandler(async (req, res) => {
+  const { messages } = req.body
+
+  if (!Array.isArray(messages) || messages.length === 0) {
+    return res.status(400).json({ success: false, message: 'Messages array is required' })
+  }
+
+  const recent = messages.slice(-8).map((m) => ({
+    role: m.role === 'user' ? 'user' : 'assistant',
+    content: String(m.content).slice(0, 1000),
+  }))
+  const latestUser = [...recent].reverse().find((m) => m.role === 'user')?.content || ''
+
+  const reply = await generateReply(recent, latestUser, req.user)
+
+  if (req.user) {
+    try {
+      await persistSession(req.user.id, messages, reply)
+    } catch (err) {
+      console.warn('[ai-chat] session persist failed:', err.message)
+    }
+  }
+
+  res.json({ success: true, reply })
+})
+
+// ─── session history (authenticated users) ──────────────────────────────────────
+
+// GET /api/v1/ai-chat/session — return the signed-in user's saved conversation.
+export const getSession = asyncHandler(async (req, res) => {
+  const session = await ChatSession.findOne({ user: req.user.id }).lean()
+  res.json({ success: true, data: { messages: session?.messages ?? [] } })
+})
+
+// DELETE /api/v1/ai-chat/session — clear the signed-in user's saved conversation.
+export const deleteSession = asyncHandler(async (req, res) => {
+  await ChatSession.deleteOne({ user: req.user.id })
+  res.json({ success: true, message: 'Chat history cleared' })
 })
