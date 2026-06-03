@@ -4,6 +4,7 @@ import {
   MagnifyingGlass, X, UserCircle, CheckCircle, Warning,
   ArrowsClockwise, Student, ChalkboardTeacher, UserGear, Crown,
   FunnelSimple, ProhibitInset, Trash, LockOpen, MonitorPlay,
+  type Icon as IconType,
 } from '@phosphor-icons/react'
 import toast from 'react-hot-toast'
 import { axiosClient } from '@/lib/axiosClient'
@@ -30,7 +31,7 @@ interface PlatformUser {
 
 // ─── Role helpers ─────────────────────────────────────────────────────────────
 
-const ROLES: { value: Role; label: string; color: string; Icon: React.FC<{ size?: number; weight?: string }> }[] = [
+const ROLES: { value: Role; label: string; color: string; Icon: IconType }[] = [
   { value: 'student',     label: 'Student',     color: 'bg-blue-100 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400',            Icon: Student },
   { value: 'teacher',     label: 'Teacher',     color: 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400', Icon: ChalkboardTeacher },
   { value: 'team_member', label: 'Team Member', color: 'bg-violet-100 dark:bg-violet-950/40 text-violet-700 dark:text-violet-400',    Icon: UserGear },
@@ -62,7 +63,7 @@ interface ConfirmModalProps {
 function ConfirmModal({ user, variant, onClose, onConfirm }: ConfirmModalProps) {
   const [loading, setLoading] = useState(false)
 
-  const META: Record<ConfirmVariant, { title: string; body: string; btnLabel: string; btnCls: string; Icon: React.FC<{ size?: number; weight?: string; className?: string }> }> = {
+  const META: Record<ConfirmVariant, { title: string; body: string; btnLabel: string; btnCls: string; Icon: IconType }> = {
     delete: {
       title:    'Delete Account',
       body:     `This will permanently delete ${user.name}'s account. They will not be able to log in and their email cannot be reused. This action cannot be undone.`,

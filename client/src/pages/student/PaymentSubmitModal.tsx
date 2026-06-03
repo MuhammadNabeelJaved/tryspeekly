@@ -164,6 +164,7 @@ interface Props {
   offerDiscountedPrice?: number | null
   offerLabel?: string
   couponDiscountApplied?: number
+  hasSavedDiscount?: boolean
   isOpen: boolean
   onClose: () => void
   onSuccess: () => void

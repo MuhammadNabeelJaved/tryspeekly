@@ -621,7 +621,7 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
                   </button>
                 ) : (
                   <>
-                    {course.status === 'published' && (
+                    {course.status === 'active' && (
                       <>
                         <button
                           onClick={() => toggleFeatured(course.id)}

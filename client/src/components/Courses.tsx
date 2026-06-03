@@ -74,7 +74,7 @@ export interface CourseCard {
 // Fallback hardcoded courses when API is unavailable
 export const FALLBACK_COURSES: CourseCard[] = [
   {
-    id: 1,
+    id: '1',
     title: 'General English Mastery',
     category: 'General English',
     description: 'Master the fundamentals of English grammar, vocabulary, and daily conversation.',
@@ -87,7 +87,7 @@ export const FALLBACK_COURSES: CourseCard[] = [
     popular: true
   },
   {
-    id: 2,
+    id: '2',
     title: 'IELTS Academic Success',
     category: 'IELTS Prep',
     description: 'Get ready for the IELTS exam with intensive practice in all four modules.',
@@ -100,7 +100,7 @@ export const FALLBACK_COURSES: CourseCard[] = [
     popular: true
   },
   {
-    id: 3,
+    id: '3',
     title: 'Business Communication',
     category: 'Business English',
     description: 'Enhance your professional career with advanced business English skills.',
@@ -113,7 +113,7 @@ export const FALLBACK_COURSES: CourseCard[] = [
     popular: false
   },
   {
-    id: 4,
+    id: '4',
     title: 'English for Young Learners',
     category: 'Kids & Teens',
     description: 'Fun and interactive English lessons designed specifically for children.',
@@ -126,7 +126,7 @@ export const FALLBACK_COURSES: CourseCard[] = [
     popular: false
   },
   {
-    id: 5,
+    id: '5',
     title: 'Advanced Speaking Skills',
     category: 'Speaking',
     description: 'Focus on pronunciation, fluency, and natural expression in various contexts.',
@@ -139,7 +139,7 @@ export const FALLBACK_COURSES: CourseCard[] = [
     popular: true
   },
   {
-    id: 6,
+    id: '6',
     title: 'Grammar & Writing Clinic',
     category: 'General English',
     description: 'Perfect your written English and understand complex grammar structures.',

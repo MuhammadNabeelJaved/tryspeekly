@@ -30,7 +30,7 @@ export default function RichTextEditor({ value, onChange, minHeight = '300px' }:
     if (value === '') {
       editor.commands.clearContent()
     } else if (editor.getHTML() !== value) {
-      editor.commands.setContent(value, false)
+      editor.commands.setContent(value)
     }
   }, [value, editor])
 

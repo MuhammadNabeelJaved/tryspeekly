@@ -154,13 +154,13 @@ export default function InstructorLiveClasses() {
 
           // Build scheduled classes map keyed by courseId
           const scheduledMap: Record<string, ScheduledClass> = {}
-          scheduledLiveClasses.forEach((lc: { _id: string; course?: { _id: string } | null; scheduledAt: string }) => {
+          scheduledLiveClasses.forEach((lc) => {
             // Skip live classes whose course was deleted (null after populate).
             if (!lc.course) return
             scheduledMap[String(lc.course._id)] = {
               _id: lc._id,
               courseId: String(lc.course._id),
-              scheduledAt: lc.scheduledAt,
+              scheduledAt: lc.scheduledAt ?? '',
             }
           })
           setScheduledClasses(scheduledMap)

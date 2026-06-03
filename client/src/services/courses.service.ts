@@ -74,7 +74,7 @@ export const coursesService = {
     return response.data;
   },
 
-  async reviewCourse(id: string, action: 'approve' | 'reject', reason?: string, pricing?: { price: number; priceUSD?: number; currency: 'PKR' | 'USD' }): Promise<CourseSingleResponse> {
+  async reviewCourse(id: string, action: 'approve' | 'reject', reason?: string, pricing?: { price: number; priceUSD?: number; currency: 'PKR' | 'USD'; pricingType?: 'monthly' | 'full_course' | 'per_session' }): Promise<CourseSingleResponse> {
     const response = await axiosClient.patch<CourseSingleResponse>(`/courses/${id}/review`, { action, reason, ...pricing });
     return response.data;
   },

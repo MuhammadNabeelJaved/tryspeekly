@@ -654,6 +654,7 @@ export default function StudentCourseDetails() {
       <InstructorChatModal
         isOpen={chatModalOpen}
         onClose={() => setChatModalOpen(false)}
+        instructorId={enrollment.teacher?._id ?? ''}
         instructorName={instructorName}
         courseTitle={course.title}
       />

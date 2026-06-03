@@ -53,7 +53,7 @@ export default function NewsletterEditor({ value, onChange, height = 420 }: Prop
       <JoditEditor
         ref={editor}
         value={value}
-        config={config}
+        config={config as never}
         onBlur={onChange}
       />
     </div>

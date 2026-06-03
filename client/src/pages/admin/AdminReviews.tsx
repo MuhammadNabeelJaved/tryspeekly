@@ -153,7 +153,7 @@ function TypeBadge({ type }: { type: Review['type'] }) {
   )
 }
 
-function RoleBadge({ role }: { role: 'student' | 'teacher' | 'admin' }) {
+function RoleBadge({ role }: { role: 'student' | 'teacher' | 'admin' | 'team_member' }) {
   const map: Record<string, string> = {
     student: 'bg-sky-100 dark:bg-sky-950/40 text-sky-700 dark:text-sky-400',
     teacher: 'bg-orange-100 dark:bg-orange-950/40 text-orange-700 dark:text-orange-400',

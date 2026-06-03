@@ -40,8 +40,8 @@ export default function AdminPaymentCreateModal({ isOpen, onClose, onSuccess }: 
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
 
-  const studentTimer = useRef<ReturnType<typeof setTimeout>>()
-  const courseTimer = useRef<ReturnType<typeof setTimeout>>()
+  const studentTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const courseTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
   useEffect(() => {
     if (!studentSearch.trim()) { setStudentResults([]); return }

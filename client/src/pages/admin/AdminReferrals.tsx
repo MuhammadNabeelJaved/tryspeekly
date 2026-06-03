@@ -601,7 +601,7 @@ function CreateCouponModal({ courses, onClose, onSuccess }: { courses: any[]; on
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-xs font-bold text-slate-500 dark:text-neutral-400 uppercase tracking-wide mb-1 block">Type</label>
-              <select value={form.discountType} onChange={e => setForm(f => ({ ...f, discountType: e.target.value }))}
+              <select value={form.discountType} onChange={e => setForm(f => ({ ...f, discountType: e.target.value as 'fixed' | 'percentage' }))}
                 className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white">
                 <option value="percentage">Percentage (%)</option>
                 <option value="fixed">Fixed Amount</option>
@@ -616,7 +616,7 @@ function CreateCouponModal({ courses, onClose, onSuccess }: { courses: any[]; on
           </div>
           <div>
             <label className="text-xs font-bold text-slate-500 dark:text-neutral-400 uppercase tracking-wide mb-1 block">Scope</label>
-            <select value={form.scope} onChange={e => setForm(f => ({ ...f, scope: e.target.value }))}
+            <select value={form.scope} onChange={e => setForm(f => ({ ...f, scope: e.target.value as 'course' | 'platform' }))}
               className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white">
               <option value="platform">Platform-wide (any course)</option>
               <option value="course">Specific course</option>
@@ -677,7 +677,7 @@ function SettingsTab() {
   async function handleSave() {
     setSaving(true)
     try {
-      await referralsService.updateReferralSettings(settings)
+      await referralsService.updateReferralSettings({ ...settings, refereeDiscountType: settings.refereeDiscountType as 'fixed' | 'percentage', referrerRewardType: settings.referrerRewardType as 'fixed' | 'percentage' })
       toast.success('Referral settings saved')
     } catch { toast.error('Failed to save settings') } finally { setSaving(false) }
   }
@@ -1108,7 +1108,7 @@ function OffersTab() {
     try {
       const res = await offersService.getAdminOffers()
       if (res.success) setOffers(res.data)
-      else toast.error(res.message || 'Failed to load offers')
+      else toast.error('Failed to load offers')
     } catch {
       toast.error('Failed to load offers')
     } finally { setLoading(false) }
@@ -1441,7 +1441,7 @@ function OfferModal({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-xs font-bold text-slate-500 dark:text-neutral-400 uppercase tracking-wide mb-1 block">Type</label>
-              <select value={form.discountType} onChange={e => setForm(f => ({ ...f, discountType: e.target.value }))}
+              <select value={form.discountType} onChange={e => setForm(f => ({ ...f, discountType: e.target.value as 'fixed' | 'percentage' }))}
                 className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white">
                 <option value="percentage">Percentage (%)</option>
                 <option value="fixed">Fixed (PKR)</option>
@@ -1456,7 +1456,7 @@ function OfferModal({
           </div>
           <div>
             <label className="text-xs font-bold text-slate-500 dark:text-neutral-400 uppercase tracking-wide mb-1 block">Scope</label>
-            <select value={form.scope} onChange={e => setForm(f => ({ ...f, scope: e.target.value }))}
+            <select value={form.scope} onChange={e => setForm(f => ({ ...f, scope: e.target.value as 'course' | 'platform' }))}
               className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white">
               <option value="platform">All Courses (Platform-wide)</option>
               <option value="course">Specific Course</option>

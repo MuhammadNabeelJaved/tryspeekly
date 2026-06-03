@@ -152,6 +152,7 @@ export interface CreateCourseDto {
   type: 'group' | 'one-to-one' | 'hybrid';
   level: 'beginner' | 'intermediate' | 'advanced';
   focus: 'speaking' | 'grammar' | 'ielts' | 'business' | 'general';
+  thumbnail?: string;
   totalSessions: number;
   sessionDuration: number;
   recurringSchedule?: { day: string; time: string }[];
