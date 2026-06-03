@@ -13,6 +13,12 @@ const WELCOME: Message = {
   content: "Hi! I'm the EnglishPro AI Assistant 👋 Ask me anything about our courses, enrollment, or learning English!",
 }
 
+const STARTERS = [
+  'What courses do you offer?',
+  'How do I enrol?',
+  'Do you offer financial aid?',
+]
+
 export default function AIChatWidget() {
   const [open, setOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([WELCOME])
@@ -31,8 +37,8 @@ export default function AIChatWidget() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, loading])
 
-  const send = async () => {
-    const text = input.trim()
+  const send = async (override?: string) => {
+    const text = (override ?? input).trim()
     if (!text || loading) return
 
     const userMsg: Message = { role: 'user', content: text }
@@ -115,6 +121,20 @@ export default function AIChatWidget() {
                   </div>
                 </div>
               ))}
+
+              {messages.length === 1 && !loading && (
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {STARTERS.map((q) => (
+                    <button
+                      key={q}
+                      onClick={() => send(q)}
+                      className="text-xs px-3 py-1.5 rounded-full border border-violet-200 dark:border-violet-800 text-violet-700 dark:text-violet-300 hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-colors"
+                    >
+                      {q}
+                    </button>
+                  ))}
+                </div>
+              )}
 
               {/* Typing indicator */}
               {loading && (
