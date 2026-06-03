@@ -16,6 +16,26 @@ import { dispatchCampaign } from './src/utils/newsletter-sender.js'
 // Override DNS to use Google Public DNS for MongoDB Atlas SRV record lookup
 dns.setServers(['8.8.8.8', '8.8.4.4'])
 
+// ─── Security: validate JWT secrets at boot ─────────────────────────────────────
+// Forging a token requires knowing the signing secret, so a missing, short, or
+// placeholder secret is a full auth-bypass risk. Refuse to start in production;
+// warn loudly in development.
+const DEFAULT_JWT_SECRETS = new Set([
+  'your-super-secret-access-key-change-in-production',
+  'your-super-secret-refresh-key-change-in-production',
+])
+const isWeakSecret = (s) => !s || s.length < 32 || DEFAULT_JWT_SECRETS.has(s)
+if (isWeakSecret(process.env.JWT_ACCESS_SECRET) || isWeakSecret(process.env.JWT_REFRESH_SECRET)) {
+  const message =
+    'JWT_ACCESS_SECRET / JWT_REFRESH_SECRET are missing, too short, or still the default ' +
+    'placeholder. Set strong, unique secrets (32+ random characters) in your environment.'
+  if (process.env.NODE_ENV === 'production') {
+    console.error(`✗ Refusing to start: ${message}`)
+    process.exit(1)
+  }
+  console.warn(`⚠ Security warning: ${message}`)
+}
+
 const PORT = process.env.PORT || 5000
 
 const httpServer = createServer(app)
