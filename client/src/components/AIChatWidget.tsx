@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, PaperPlaneRight, Sparkle, ArrowsCounterClockwise, CaretRight } from '@phosphor-icons/react'
 import { axiosClient } from '@/lib/axiosClient'
+import ChatMessage from '@/components/ChatMessage'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -26,6 +28,12 @@ export default function AIChatWidget() {
   const [loading, setLoading] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const navigate = useNavigate()
+
+  const go = (path: string) => {
+    setOpen(false)
+    navigate(path)
+  }
 
   useEffect(() => {
     if (open) {
@@ -117,7 +125,9 @@ export default function AIChatWidget() {
                       ? 'bg-violet-600 text-white rounded-tr-sm'
                       : 'bg-slate-100 dark:bg-neutral-800 text-slate-800 dark:text-neutral-200 rounded-tl-sm'
                   }`}>
-                    {msg.content}
+                    {msg.role === 'assistant'
+                      ? <ChatMessage content={msg.content} onNavigate={go} />
+                      : msg.content}
                   </div>
                 </div>
               ))}
