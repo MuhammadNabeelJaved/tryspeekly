@@ -38,5 +38,5 @@ export const pingIndexNow = async (urls) => {
 export const pingBlog = (slug) => {
   if (!slug) return
   const base = siteBase()
-  pingIndexNow([`${base}/blog/${slug}`, `${base}/blog`])
+  pingIndexNow([`${base}/blog/slug/${slug}`, `${base}/blog`])
 }
