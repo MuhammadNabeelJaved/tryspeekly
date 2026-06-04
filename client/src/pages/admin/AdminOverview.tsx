@@ -154,12 +154,13 @@ export default function AdminOverview({ onNavigate }: { onNavigate: (v: AdminVie
             />
           ) : (
             <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white text-xl font-bold border-2 border-violet-500 shadow-lg">
-              Admin
+              {(user?.name || 'Admin').split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()}
             </div>
           )}
           <div>
-            <h2 className="text-2xl font-black text-slate-900 dark:text-white">
-              {getGreeting(now.getHours())}, Admin 👋
+            <h2 className="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2 flex-wrap">
+              <span>{getGreeting(now.getHours())}, {user?.name?.split(' ')[0] || 'Admin'} 👋</span>
+              <span className="text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-md bg-violet-100 text-violet-700 dark:bg-violet-950/50 dark:text-violet-300">Admin</span>
             </h2>
             <p className="text-sm text-slate-400 dark:text-neutral-500 mt-0.5">
               {now.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
