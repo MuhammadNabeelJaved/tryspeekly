@@ -34,6 +34,8 @@ const fixBrand = (s) =>
         .replace(/englishpro/gi, 'tryspeekly')
         .replace(/(?<!Try)Speekly Academy/g, 'TrySpeekly')
         .replace(/(?<!Try)Speekly/g, 'TrySpeekly')
+        // Email header logo monogram: leftover "E" (EnglishPro initial) → "T" (TrySpeekly)
+        .replace(/Georgia,serif">E<\/span>/g, 'Georgia,serif">T</span>')
 
 async function run() {
   await connectDB()
