@@ -27,12 +27,17 @@ const toDescription = (raw = '', max = 200) => {
   return text.length > max ? `${text.slice(0, max - 1).trimEnd()}…` : text
 }
 
-// Replace an existing <meta>'s content, or insert the tag before </head> if absent.
+// Replace an existing <meta>'s content, or insert the tag if absent. The insertion
+// anchor falls back through </head> → </title> → <html> so it works even on minified
+// HTML where optional tags like </head> may be stripped.
 const setMeta = (html, attr, key, value) => {
   const re = new RegExp(`(<meta\\s+${attr}=["']${key}["']\\s+content=["'])[^"']*(["'])`, 'i')
   const safe = escapeHtml(value)
   if (re.test(html)) return html.replace(re, `$1${safe}$2`)
-  return html.replace('</head>', `    <meta ${attr}="${key}" content="${safe}" />\n  </head>`)
+  const tag = `<meta ${attr}="${key}" content="${safe}" />`
+  if (html.includes('</head>')) return html.replace('</head>', `    ${tag}\n  </head>`)
+  if (/<\/title>/i.test(html)) return html.replace(/<\/title>/i, `</title>${tag}`)
+  return html.replace(/<html[^>]*>/i, (m) => `${m}${tag}`)
 }
 
 const setTitle = (html, value) =>
@@ -42,13 +47,15 @@ const setTitle = (html, value) =>
 export default async function handler(req, res) {
   const slug = (req.query.slug || '').toString().trim()
   const apiUrl = (process.env.VITE_API_URL || process.env.API_URL || '').replace(/\/+$/, '')
-  const host = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : SITE_URL
+  // Fetch the canonical, unminified index.html (the per-deployment VERCEL_URL can
+  // return a processed/minified variant without our <head> meta tags).
+  const base = (process.env.PUBLIC_SITE_URL || SITE_URL).replace(/\/+$/, '')
 
   // Always start from the real built index.html so hashed asset paths stay correct
   // and the React app boots normally for human visitors.
   let html
   try {
-    const r = await fetch(`${host}/index.html`)
+    const r = await fetch(`${base}/index.html`)
     html = await r.text()
   } catch {
     res.setHeader('Location', `/index.html`)
