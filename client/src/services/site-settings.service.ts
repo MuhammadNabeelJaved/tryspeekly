@@ -35,13 +35,15 @@ export const siteSettingsService = {
   },
 
   async getFeaturedCourses(): Promise<Course[]> {
-    const response = await axiosClient.get<{ success: boolean; data: Course[] }>('/site-settings/featured-courses');
-    return response.data.data;
+    const response = await axiosClient.get('/site-settings/featured-courses');
+    const body = response.data;
+    return Array.isArray(body) ? body : (body?.data ?? []);
   },
 
   async getFeaturedBlogs(): Promise<Blog[]> {
-    const response = await axiosClient.get<{ success: boolean; data: Blog[] }>('/site-settings/featured-blogs');
-    return response.data.data;
+    const response = await axiosClient.get('/site-settings/featured-blogs');
+    const body = response.data;
+    return Array.isArray(body) ? body : (body?.data ?? []);
   },
 
   async getBlockedCountries(): Promise<string[]> {

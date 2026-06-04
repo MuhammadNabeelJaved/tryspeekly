@@ -79,7 +79,7 @@ export default function HomeCourses() {
           // keep default skeleton count
         }
         const data = await siteSettingsService.getFeaturedCourses()
-        setCourses(data)
+        setCourses(Array.isArray(data) ? data : [])
       } catch {
         setCourses([])
       } finally {
