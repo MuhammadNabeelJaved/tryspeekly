@@ -295,11 +295,11 @@ export const INITIAL_SETTINGS: AdminSettings = {
     workingHours: 'Mon–Sat · 9 AM – 6 PM PKT',
   },
   social: {
-    facebook: 'https://facebook.com/englishpro',
-    instagram: 'https://instagram.com/englishpro',
-    twitter: 'https://twitter.com/englishpro',
-    linkedin: 'https://linkedin.com/company/englishpro',
-    youtube: 'https://youtube.com/@englishpro',
+    facebook: 'https://facebook.com/tryspeekly',
+    instagram: 'https://instagram.com/tryspeekly',
+    twitter: 'https://twitter.com/tryspeekly',
+    linkedin: 'https://linkedin.com/company/tryspeekly',
+    youtube: 'https://youtube.com/@tryspeekly',
   },
   seo: {
     metaTitle: 'TrySpeekly — Professional English Courses Online',
