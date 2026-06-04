@@ -98,7 +98,9 @@ export default function Reviews() {
     reviewsService
       .getPublicReviews()
       .then((res) => {
-        if (!cancelled) setReviews(res.data)
+        // Guard against an unexpected response shape so the homepage never
+        // crashes on `reviews.length` (renders the empty state instead).
+        if (!cancelled) setReviews(Array.isArray(res?.data) ? res.data : [])
       })
       .catch(() => {
         if (!cancelled) setReviews([])
