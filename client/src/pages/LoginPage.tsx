@@ -4,10 +4,8 @@ import { motion } from 'framer-motion'
 import { useAuth } from '../context/AuthContext'
 import FormInput from '../components/auth/FormInput'
 import LoadingButton from '../components/auth/LoadingButton'
-import SocialLoginButtons from '../components/auth/SocialLoginButtons'
 import { isValidEmail } from '../utils/validation'
 import { extractApiError } from '../utils/apiError'
-import toast from 'react-hot-toast'
 
 const cardVariants = {
   hidden: { opacity: 0, y: 32 },
@@ -60,10 +58,6 @@ export default function LoginPage() {
     }
   }
 
-  const handleSocialLogin = (_provider: 'google' | 'github') => {
-    toast('Social login coming soon — use email & password for now.', { icon: 'ℹ️' })
-  }
-
   return (
     <div className="relative min-h-[100dvh] bg-gradient-to-br from-violet-50 via-white to-slate-100 dark:from-neutral-950 dark:via-neutral-900 dark:to-neutral-950 flex items-center justify-center px-4 py-10">
       {/* Background blobs */}
@@ -87,13 +81,7 @@ export default function LoginPage() {
             </p>
           </div>
 
-          <SocialLoginButtons
-            onGoogleClick={() => handleSocialLogin('google')}
-            onGithubClick={() => handleSocialLogin('github')}
-            isLoading={isLoading}
-          />
-
-          <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <FormInput
               label="Email address"
               type="email"
