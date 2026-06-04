@@ -103,9 +103,9 @@ export const getPublicSeo = asyncHandler(async (req, res) => {
 })
 
 // ─── Sitemap & robots.txt (public, for search engines) ────────────────────────
-// TODO: set SITE_URL in the server environment to the real production domain.
-// CLIENT_URL is localhost in dev, so it must NOT be used as the sitemap host.
-const SITE_URL = process.env.SITE_URL || 'https://www.example.com'
+// SITE_URL is the canonical production host. CLIENT_URL is localhost in dev, so
+// it must NOT be used as the sitemap host.
+const SITE_URL = process.env.SITE_URL || 'https://tryspeekly.com'
 
 // GET /sitemap.xml
 export const getSitemap = asyncHandler(async (req, res) => {

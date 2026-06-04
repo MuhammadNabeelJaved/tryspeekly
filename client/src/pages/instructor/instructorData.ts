@@ -1,7 +1,7 @@
 export const MOCK_INSTRUCTOR = {
   id: 'inst1',
   name: 'Sarah Johnson',
-  email: 'sarah.j@englishpro.com',
+  email: 'sarah.j@tryspeekly.com',
   avatar: 'SJ',
   role: 'Senior IELTS Instructor',
   rating: 4.9,

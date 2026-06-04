@@ -7,6 +7,7 @@ import {
 } from '@phosphor-icons/react'
 import { paymentsService } from '@/services/payments.service'
 import type { PaymentMethod } from '@/types/api'
+import { config } from '@/config/env'
 
 // ─── Logos ─────────────────────────────────────────────────────────────────────
 
@@ -56,8 +57,8 @@ type MethodInfo = {
   receiptEmail: string
 }
 
-const WHATSAPP = 'https://wa.me/923086925545'
-const RECEIPT_EMAIL = 'payments@englishpro.com'
+const WHATSAPP = `https://wa.me/${config.contactWhatsapp}`
+const RECEIPT_EMAIL = config.paymentsEmail
 
 const LOCAL_METHODS: MethodInfo[] = [
   {
@@ -483,7 +484,7 @@ export default function PaymentSubmitModal({
                   <p className="text-sm text-slate-600 dark:text-neutral-400 mb-4">{selectedMethod.description}</p>
                   <div className="space-y-2.5 mb-4">
                     {[
-                      { label: 'Account Title', value: 'EnglishPro Academy' },
+                      { label: 'Account Title', value: 'Speekly Academy' },
                       { label: 'Account / IBAN', value: 'PK36 MEZN 0001 2345 0100 6543' },
                       { label: 'Bank Name', value: 'Meezan Bank Ltd.' },
                       { label: 'Reference', value: `Your Full Name / Course ID: ${courseId.slice(-8)}` },

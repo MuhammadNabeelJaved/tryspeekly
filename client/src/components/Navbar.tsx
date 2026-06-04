@@ -105,7 +105,7 @@ export default function Navbar({ offers = [] }: { offers?: Offer[] }) {
               whileHover={{ color: "#7c3aed" }}
               transition={{ duration: 0.2 }}
             >
-              EnglishPro
+              Speekly
             </motion.span>
           </MotionLink>
 

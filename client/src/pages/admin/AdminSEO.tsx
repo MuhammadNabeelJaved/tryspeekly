@@ -48,7 +48,7 @@ function CharCount({ value, min, max }: { value: string; min: number; max: numbe
 function GooglePreview({ title, description, url }: { title: string; description: string; url: string }) {
   const displayTitle = title || 'Page Title'
   const displayDesc = description || 'Meta description will appear here. Keep it between 150-160 characters for best results.'
-  const displayUrl = url || 'https://yourwebsite.com/page'
+  const displayUrl = url || 'https://tryspeekly.com/page'
   return (
     <div className="bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-700 rounded-xl p-4 font-sans">
       <p className="text-xs text-slate-500 dark:text-neutral-400 mb-2 font-semibold uppercase tracking-wider">Google Search Preview</p>
@@ -407,7 +407,7 @@ export default function AdminSEO() {
                       <input
                         value={form.canonicalUrl || ''}
                         onChange={e => set('canonicalUrl', e.target.value)}
-                        placeholder="https://yourwebsite.com/page (leave blank for default)"
+                        placeholder="https://tryspeekly.com/page (leave blank for default)"
                         className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 rounded-lg focus:outline-none focus:border-violet-500 text-slate-900 dark:text-white"
                       />
                     </div>
@@ -610,8 +610,8 @@ export default function AdminSEO() {
                           {
                             label: 'Organization', schema: JSON.stringify({
                               '@context': 'https://schema.org', '@type': 'Organization',
-                              name: 'EnglishPro', url: 'https://yourwebsite.com',
-                              logo: 'https://yourwebsite.com/logo.png',
+                              name: 'Speekly', url: 'https://tryspeekly.com',
+                              logo: 'https://tryspeekly.com/logo.png',
                               contactPoint: { '@type': 'ContactPoint', telephone: '+1-000-000-0000', contactType: 'customer service' }
                             }, null, 2)
                           },
@@ -619,7 +619,7 @@ export default function AdminSEO() {
                             label: 'Course', schema: JSON.stringify({
                               '@context': 'https://schema.org', '@type': 'Course',
                               name: 'English Course Name', description: 'Course description',
-                              provider: { '@type': 'Organization', name: 'EnglishPro' }
+                              provider: { '@type': 'Organization', name: 'Speekly' }
                             }, null, 2)
                           },
                           {
@@ -634,8 +634,8 @@ export default function AdminSEO() {
                           {
                             label: 'Website', schema: JSON.stringify({
                               '@context': 'https://schema.org', '@type': 'WebSite',
-                              name: 'EnglishPro', url: 'https://yourwebsite.com',
-                              potentialAction: { '@type': 'SearchAction', target: 'https://yourwebsite.com/search?q={search_term_string}', 'query-input': 'required name=search_term_string' }
+                              name: 'Speekly', url: 'https://tryspeekly.com',
+                              potentialAction: { '@type': 'SearchAction', target: 'https://tryspeekly.com/search?q={search_term_string}', 'query-input': 'required name=search_term_string' }
                             }, null, 2)
                           },
                         ].map(t => (
@@ -708,13 +708,13 @@ export default function AdminSEO() {
                         <div>
                           <label className="text-xs font-semibold text-slate-600 dark:text-neutral-300 block mb-1">Title Suffix</label>
                           <input value={form.global?.titleSuffix || ''} onChange={e => set('global.titleSuffix', e.target.value)}
-                            placeholder=" | EnglishPro (added to every page title)"
+                            placeholder=" | Speekly (added to every page title)"
                             className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 rounded-lg focus:outline-none focus:border-violet-500 text-slate-900 dark:text-white" />
                         </div>
                         <div>
                           <label className="text-xs font-semibold text-slate-600 dark:text-neutral-300 block mb-1">Default OG Image URL</label>
                           <input value={form.global?.defaultOgImage || ''} onChange={e => set('global.defaultOgImage', e.target.value)}
-                            placeholder="https://yourwebsite.com/og-default.jpg (1200×630)"
+                            placeholder="https://tryspeekly.com/og-default.jpg (1200×630)"
                             className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 rounded-lg focus:outline-none focus:border-violet-500 text-slate-900 dark:text-white" />
                         </div>
                       </div>
@@ -751,7 +751,7 @@ export default function AdminSEO() {
                       className="w-full px-3 py-2.5 text-xs font-mono bg-slate-50 dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 rounded-lg focus:outline-none focus:border-violet-500 text-slate-900 dark:text-white resize-none"
                       spellCheck={false}
                     />
-                    <button onClick={() => set('global.robotsTxt', 'User-agent: *\nAllow: /\n\nDisallow: /dashboard/\nDisallow: /admin/\nDisallow: /instructor/\n\nSitemap: https://yourwebsite.com/sitemap.xml')}
+                    <button onClick={() => set('global.robotsTxt', 'User-agent: *\nAllow: /\n\nDisallow: /dashboard/\nDisallow: /admin/\nDisallow: /instructor/\n\nSitemap: https://tryspeekly.com/sitemap.xml')}
                       className="mt-2 px-3 py-1.5 text-xs font-semibold bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-300 rounded-lg hover:bg-slate-200 dark:hover:bg-neutral-700 transition-colors">
                       Reset to Default
                     </button>

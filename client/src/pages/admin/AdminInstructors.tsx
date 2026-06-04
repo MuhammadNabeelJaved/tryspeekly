@@ -404,7 +404,7 @@ export default function AdminInstructors({ store }: { store: AdminStore }) {
               </div>
               <div className="p-6 grid grid-cols-2 gap-4">
                 <Field label="Full Name"><Input register={register} name="name" placeholder="Dr. Sarah Johnson" /></Field>
-                <Field label="Email"><Input register={register} name="email" type="email" placeholder="sarah@englishpro.com" /></Field>
+                <Field label="Email"><Input register={register} name="email" type="email" placeholder="sarah@tryspeekly.com" /></Field>
                 <Field label="Phone"><Input register={register} name="phone" placeholder="+92 300 0000000" /></Field>
                 <Field label="Country"><Input register={register} name="country" placeholder="Pakistan" /></Field>
                 <Field label="Specialization"><Input register={register} name="specialization" placeholder="Business English & IELTS" /></Field>

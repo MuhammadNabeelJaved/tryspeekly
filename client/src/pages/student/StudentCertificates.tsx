@@ -59,7 +59,7 @@ export default function StudentCertificates() {
     const url = new URL('https://www.linkedin.com/profile/add')
     url.searchParams.append('startTask', 'CERTIFICATION_NAME')
     url.searchParams.append('name', cert.course?.title ?? '')
-    url.searchParams.append('organizationName', 'EnglishPro Academy')
+    url.searchParams.append('organizationName', 'Speekly Academy')
     url.searchParams.append('issueYear', new Date(cert.issueDate).getFullYear().toString())
     url.searchParams.append('issueMonth', (new Date(cert.issueDate).getMonth() + 1).toString())
     url.searchParams.append('certId', cert.certificateId)
@@ -72,7 +72,7 @@ export default function StudentCertificates() {
       <div className="space-y-6">
         <div>
           <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-1">My Certificates</h2>
-          <p className="text-sm text-slate-500 dark:text-neutral-400">View, download, and share your official EnglishPro Academy certificates.</p>
+          <p className="text-sm text-slate-500 dark:text-neutral-400">View, download, and share your official Speekly Academy certificates.</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[1, 2].map((n) => (
@@ -87,7 +87,7 @@ export default function StudentCertificates() {
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-1">My Certificates</h2>
-        <p className="text-sm text-slate-500 dark:text-neutral-400">View, download, and share your official EnglishPro Academy certificates.</p>
+        <p className="text-sm text-slate-500 dark:text-neutral-400">View, download, and share your official Speekly Academy certificates.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-20">

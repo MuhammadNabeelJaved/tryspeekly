@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { ShieldCheck, LockKey, UserFocus, Database, EnvelopeSimple, Info, ArrowLeft } from '@phosphor-icons/react'
+import { config } from '../config/env'
 
 export default function PrivacyPolicyPage() {
   // Scroll to top on mount
@@ -108,7 +109,7 @@ export default function PrivacyPolicyPage() {
                   <p className="m-0 font-medium"><strong>TL;DR:</strong> We only collect data necessary to provide you with the best English learning experience. We never sell your personal information to third parties.</p>
                 </div>
                 <p>
-                  Welcome to EnglishPro. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website or use our learning platform. Please read this privacy policy carefully. If you do not agree with the terms of this privacy policy, please do not access the site.
+                  Welcome to Speekly. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website or use our learning platform. Please read this privacy policy carefully. If you do not agree with the terms of this privacy policy, please do not access the site.
                 </p>
                 <p>
                   We reserve the right to make changes to this Privacy Policy at any time and for any reason. We will alert you about any changes by updating the "Last Updated" date of this Privacy Policy.
@@ -189,10 +190,9 @@ export default function PrivacyPolicyPage() {
                 </h2>
                 <p>If you have questions or comments about this Privacy Policy, please contact us at:</p>
                 <div className="bg-slate-50 dark:bg-neutral-950 p-6 rounded-2xl mt-6 border border-slate-100 dark:border-neutral-800">
-                  <p className="m-0 font-bold text-slate-900 dark:text-white">EnglishPro Education</p>
-                  <p className="m-0 mt-2">123 Education Street</p>
-                  <p className="m-0">New York, NY 10001</p>
-                  <p className="m-0 mt-2 text-violet-600 dark:text-violet-400 font-semibold">privacy@englishlms.com</p>
+                  <p className="m-0 font-bold text-slate-900 dark:text-white">{config.siteName} Education</p>
+                  {config.contactAddress && <p className="m-0 mt-2">{config.contactAddress}</p>}
+                  <p className="m-0 mt-2 text-violet-600 dark:text-violet-400 font-semibold">{config.privacyEmail}</p>
                 </div>
               </div>
 

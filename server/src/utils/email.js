@@ -74,7 +74,7 @@ export const sendEmail = async ({ type, to, toName = '', variables = {}, metadat
     }
 
     // 3. Send via Resend
-    const fromEmail = process.env.RESEND_FROM_EMAIL || 'EnglishPro <onboarding@resend.dev>'
+    const fromEmail = process.env.RESEND_FROM_EMAIL || 'Speekly <onboarding@resend.dev>'
     const result = await resend.emails.send({ from: fromEmail, to, subject, html })
 
     await EmailLog.create({

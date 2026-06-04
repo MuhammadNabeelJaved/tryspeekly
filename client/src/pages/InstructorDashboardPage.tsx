@@ -260,7 +260,7 @@ export default function InstructorDashboardPage() {
               </svg>
             </div>
             <div>
-              <p className="text-sm font-black text-slate-900 dark:text-white leading-none">EnglishPro</p>
+              <p className="text-sm font-black text-slate-900 dark:text-white leading-none">Speekly</p>
               <p className="text-[10px] text-violet-600 dark:text-violet-400 font-semibold mt-0.5">Instructor Portal</p>
             </div>
             <button onClick={() => setSidebarOpen(false)} className="ml-auto lg:hidden text-slate-400 hover:text-slate-600 dark:hover:text-neutral-200">
@@ -291,7 +291,7 @@ export default function InstructorDashboardPage() {
               <UserAvatar src={user?.profileImage} name={user?.name} size="md" />
               <div className="min-w-0">
                 <p className="text-sm font-black text-slate-900 dark:text-white leading-none truncate">{user?.name || 'Instructor'}</p>
-                <p className="text-[10px] text-slate-400 dark:text-neutral-400 mt-0.5 truncate">{user?.email || 'teacher@englishpro.com'}</p>
+                <p className="text-[10px] text-slate-400 dark:text-neutral-400 mt-0.5 truncate">{user?.email || 'teacher@tryspeekly.com'}</p>
               </div>
             </div>
             <button

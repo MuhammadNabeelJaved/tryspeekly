@@ -6,6 +6,7 @@ import {
 } from '@phosphor-icons/react'
 import { supportService } from '@/services/support.service'
 import type { SupportTicket } from '@/types/api'
+import { config } from '@/config/env'
 
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime()
@@ -311,9 +312,9 @@ export default function StudentSupport() {
             <EnvelopeSimple size={20} className="text-violet-600" /> Direct Email
           </h3>
           <p className="text-sm text-slate-500 dark:text-neutral-400 mb-3">Prefer email? Reach us directly.</p>
-          <a href="mailto:support@englishpro.com"
+          <a href={`mailto:${config.supportEmail}`}
             className="block text-center w-full bg-slate-50 hover:bg-slate-100 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-slate-700 dark:text-white px-4 py-2 rounded-xl text-sm font-bold transition-colors">
-            support@englishpro.com
+            {config.supportEmail}
           </a>
         </div>
 

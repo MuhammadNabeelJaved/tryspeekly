@@ -172,14 +172,14 @@ export default function AdminSettings({ store }: { store: AdminStore }) {
       {/* ── SITE IDENTITY ── */}
       <SectionCard title="Site Identity" icon={<Globe size={16} />}>
         <div className="col-span-full">
-          <Field label="Site Name"><Input register={register} name="site.name" placeholder="EnglishPro Academy" /></Field>
+          <Field label="Site Name"><Input register={register} name="site.name" placeholder="Speekly Academy" /></Field>
         </div>
-        <Field label="Logo Text" hint="Text shown in the navbar logo"><Input register={register} name="site.logoText" placeholder="EnglishPro" /></Field>
+        <Field label="Logo Text" hint="Text shown in the navbar logo"><Input register={register} name="site.logoText" placeholder="Speekly" /></Field>
         <div className="col-span-full">
           <Field label="Site Tagline"><Input register={register} name="site.tagline" placeholder="Master English. Change Your Life." /></Field>
         </div>
         <div className="col-span-full">
-          <Field label="Footer Copyright Text"><Input register={register} name="site.footerCopyright" placeholder="© 2026 EnglishPro Academy." /></Field>
+          <Field label="Footer Copyright Text"><Input register={register} name="site.footerCopyright" placeholder="© 2026 Speekly Academy." /></Field>
         </div>
         <div className="col-span-full">
           <Field label="Footer Description" hint="Short text shown under the logo in the footer (max 400 chars)">
@@ -191,7 +191,7 @@ export default function AdminSettings({ store }: { store: AdminStore }) {
       {/* ── CONTACT INFO ── */}
       <SectionCard title="Contact Information" icon={<Phone size={16} />}>
         <Field label="Phone Number"><Input register={register} name="contact.phone" placeholder="+92 300 0000000" /></Field>
-        <Field label="Email Address"><Input register={register} name="contact.email" type="email" placeholder="hello@englishpro.com" /></Field>
+        <Field label="Email Address"><Input register={register} name="contact.email" type="email" placeholder="hello@tryspeekly.com" /></Field>
         <Field label="WhatsApp Number"><Input register={register} name="contact.whatsapp" placeholder="+92 300 0000000" /></Field>
         <Field label="Working Hours"><Input register={register} name="contact.workingHours" placeholder="Mon–Sat · 9 AM – 6 PM PKT" /></Field>
         <div className="col-span-full">
@@ -216,7 +216,7 @@ export default function AdminSettings({ store }: { store: AdminStore }) {
       <SectionCard title="SEO & Meta Tags" icon={<MagnifyingGlass size={16} />}>
         <div className="col-span-full">
           <Field label="Meta Title" hint="Appears in browser tab and search results (50–60 chars recommended)">
-            <Input register={register} name="seo.metaTitle" placeholder="EnglishPro Academy — Professional English Courses Online" />
+            <Input register={register} name="seo.metaTitle" placeholder="Speekly Academy — Professional English Courses Online" />
           </Field>
           <p className={`text-[10px] mt-1 ${metaTitle.length > 60 ? 'text-red-400' : 'text-slate-400 dark:text-neutral-600'}`}>{metaTitle.length}/60 characters</p>
         </div>
@@ -284,7 +284,7 @@ export default function AdminSettings({ store }: { store: AdminStore }) {
         <div className="p-5 space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Admin Name"><Input register={register} name="admin.name" placeholder="Admin" /></Field>
-            <Field label="Admin Email"><Input register={register} name="admin.email" type="email" placeholder="admin@englishpro.com" /></Field>
+            <Field label="Admin Email"><Input register={register} name="admin.email" type="email" placeholder="admin@tryspeekly.com" /></Field>
           </div>
 
           <div className="border-t border-slate-100 dark:border-neutral-800 pt-4">
