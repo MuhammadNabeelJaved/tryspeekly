@@ -2,6 +2,7 @@ import asyncHandler from '../utils/asyncHandler.js'
 import Blog from '../models/blog.model.js'
 import BlogComment from '../models/blog-comment.model.js'
 import { uploadSiteBanner, deleteFile, extractPublicId } from '../utils/cloudinary.js'
+import { pingBlog } from '../utils/indexnow.js'
 
 // GET /api/v1/blogs — public
 export const getAllBlogs = asyncHandler(async (req, res) => {
@@ -193,6 +194,7 @@ export const createBlog = asyncHandler(async (req, res) => {
       req.body.slug = req.body.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + Date.now()
     }
     const blog = await Blog.create({ ...req.body, author: req.user.id })
+    if (blog.status === 'published') pingBlog(blog.slug)
     res.status(201).json({ success: true, message: 'Blog created successfully', data: blog })
   } catch (error) {
     res.status(400).json({ success: false, error: { message: error.message } })
@@ -211,6 +213,7 @@ export const updateBlog = asyncHandler(async (req, res) => {
     Object.assign(blog, req.body)
     await blog.save()
 
+    if (blog.status === 'published') pingBlog(blog.slug)
     res.json({ success: true, message: 'Blog updated successfully', data: blog })
   } catch (error) {
     res.status(400).json({ success: false, error: { message: error.message } })
