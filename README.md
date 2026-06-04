@@ -1,4 +1,4 @@
-# Speekly — English Learning Platform
+# TrySpeekly — English Learning Platform
 
 A modern, full-stack **Learning Management System (LMS)** for English-language education. It connects students, instructors, and administrators with course management, payments, real-time messaging, certificates, an AI assistant, and rich growth tooling (referrals, coupons, offers, newsletters).
 
@@ -108,7 +108,7 @@ VITE_SOCKET_URL=http://localhost:5000
 
 # Site / brand + public contact details (single source of truth)
 VITE_SITE_URL=https://tryspeekly.com
-VITE_SITE_NAME=Speekly
+VITE_SITE_NAME=TrySpeekly
 VITE_CONTACT_EMAIL=hello@tryspeekly.com
 VITE_SUPPORT_EMAIL=support@tryspeekly.com
 VITE_PRIVACY_EMAIL=privacy@tryspeekly.com
@@ -127,7 +127,7 @@ CLIENT_URL=http://localhost:5173
 
 # Site / brand + public contact details (single source of truth)
 SITE_URL=https://tryspeekly.com
-SITE_NAME=Speekly
+SITE_NAME=TrySpeekly
 CONTACT_EMAIL=hello@tryspeekly.com
 SUPPORT_EMAIL=support@tryspeekly.com
 PRIVACY_EMAIL=privacy@tryspeekly.com
@@ -153,7 +153,7 @@ CLOUDINARY_API_SECRET=your-api-secret
 
 # Email (Resend) — add & verify tryspeekly.com in Resend first
 RESEND_API_KEY=your-resend-api-key
-RESEND_FROM_EMAIL=Speekly <hello@tryspeekly.com>
+RESEND_FROM_EMAIL=TrySpeekly <hello@tryspeekly.com>
 
 # AI Assistant (Anthropic) — optional; bot falls back gracefully if unset
 ANTHROPIC_API_KEY=your-anthropic-api-key

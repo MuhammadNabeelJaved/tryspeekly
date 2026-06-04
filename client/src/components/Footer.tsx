@@ -118,7 +118,7 @@ export default function Footer() {
                   <path d="M3 9l6 3 6-3" stroke="white" strokeWidth="1.5" strokeLinejoin="round"/>
                 </svg>
               </div>
-              <span className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Speekly</span>
+              <span className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">TrySpeekly</span>
             </Link>
 
             <p className="text-sm text-slate-600 dark:text-neutral-400 leading-relaxed mb-8 max-w-[28ch]">
@@ -217,7 +217,7 @@ export default function Footer() {
         {/* Bottom bar */}
         <div className="border-t border-slate-200 dark:border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-sm text-slate-500 dark:text-neutral-600 font-medium">
-            &copy; {new Date().getFullYear()} Speekly. All rights reserved.
+            &copy; {new Date().getFullYear()} TrySpeekly. All rights reserved.
           </p>
           <div className="flex gap-6">
             <Link to="/privacy" className="text-sm text-slate-500 dark:text-neutral-600 hover:text-violet-600 dark:hover:text-violet-400 transition-colors font-medium">Privacy Policy</Link>

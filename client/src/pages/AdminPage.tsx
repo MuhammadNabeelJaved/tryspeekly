@@ -305,7 +305,7 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
               <Lock size={26} weight="fill" className="text-white" />
             </div>
             <h1 className="text-xl font-black text-slate-900 dark:text-white">Admin Portal</h1>
-            <p className="text-sm text-slate-400 dark:text-neutral-500 mt-1">Speekly Academy</p>
+            <p className="text-sm text-slate-400 dark:text-neutral-500 mt-1">TrySpeekly</p>
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -582,7 +582,7 @@ export default function AdminPage() {
               </svg>
             </div>
             <div>
-              <p className="text-sm font-black text-slate-900 dark:text-white leading-none">Speekly</p>
+              <p className="text-sm font-black text-slate-900 dark:text-white leading-none">TrySpeekly</p>
               <p className="text-[10px] text-violet-600 dark:text-violet-400 font-semibold mt-0.5">Admin Dashboard</p>
             </div>
             <button onClick={() => setSidebarOpen(false)} className="ml-auto lg:hidden text-slate-400 hover:text-slate-600 dark:hover:text-neutral-200">
@@ -678,7 +678,7 @@ export default function AdminPage() {
 
           <div className="flex-1 min-w-0">
             <h1 className="text-base font-black text-slate-900 dark:text-white truncate">{activeLabel}</h1>
-            <p className="text-[11px] text-slate-400 dark:text-neutral-600 hidden sm:block">Speekly Admin · {new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
+            <p className="text-[11px] text-slate-400 dark:text-neutral-600 hidden sm:block">TrySpeekly Admin · {new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
           </div>
 
           <div className="flex items-center gap-2">

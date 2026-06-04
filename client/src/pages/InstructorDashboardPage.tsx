@@ -260,7 +260,7 @@ export default function InstructorDashboardPage() {
               </svg>
             </div>
             <div>
-              <p className="text-sm font-black text-slate-900 dark:text-white leading-none">Speekly</p>
+              <p className="text-sm font-black text-slate-900 dark:text-white leading-none">TrySpeekly</p>
               <p className="text-[10px] text-violet-600 dark:text-violet-400 font-semibold mt-0.5">Instructor Portal</p>
             </div>
             <button onClick={() => setSidebarOpen(false)} className="ml-auto lg:hidden text-slate-400 hover:text-slate-600 dark:hover:text-neutral-200">

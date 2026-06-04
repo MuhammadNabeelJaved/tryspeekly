@@ -17,7 +17,7 @@ interface Message {
 
 const WELCOME: Message = {
   role: 'assistant',
-  content: "Hi! I'm the Speekly AI Assistant 👋 Ask me anything about our courses, enrollment, or learning English!",
+  content: "Hi! I'm the TrySpeekly AI Assistant 👋 Ask me anything about our courses, enrollment, or learning English!",
 }
 
 // Guests persist their chat here; signed-in users persist server-side.
@@ -145,7 +145,7 @@ export default function AIChatWidget() {
                 <Sparkle size={16} weight="fill" className="text-white" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-white font-bold text-sm">Speekly Assistant</p>
+                <p className="text-white font-bold text-sm">TrySpeekly Assistant</p>
                 <p className="text-violet-200 text-[11px]">Powered by AI · Usually replies instantly</p>
               </div>
               <button

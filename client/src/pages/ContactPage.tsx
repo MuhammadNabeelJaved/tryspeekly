@@ -60,7 +60,7 @@ export default function ContactPage() {
 
   return (
     <div className="relative min-h-[100dvh] pt-[120px] lg:pt-[140px] pb-16 lg:pb-24 bg-white dark:bg-neutral-950 overflow-hidden transition-colors duration-300">
-      <SEOMeta slug="contact" fallbackTitle="Contact Us — Speekly Academy" fallbackDescription="Get in touch with Speekly Academy. Questions about courses, enrollment, or support." />
+      <SEOMeta slug="contact" fallbackTitle="Contact Us — TrySpeekly" fallbackDescription="Get in touch with TrySpeekly. Questions about courses, enrollment, or support." />
 
       {/* Ambient background glows */}
       <div className="absolute inset-0 pointer-events-none">

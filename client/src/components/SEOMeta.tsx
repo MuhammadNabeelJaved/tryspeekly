@@ -11,7 +11,7 @@ interface Props {
  * React 19 natively hoists <title>, <meta>, and <link> rendered anywhere in the
  * tree up to <head> — no helmet library required.
  */
-export default function SEOMeta({ slug, fallbackTitle = 'Speekly Academy', fallbackDescription = '' }: Props) {
+export default function SEOMeta({ slug, fallbackTitle = 'TrySpeekly', fallbackDescription = '' }: Props) {
   const seo = useSEO(slug)
   if (!seo) return null
 

@@ -4,7 +4,7 @@ export const config = {
 
   // ── Site / Brand ──────────────────────────────────────────────────────────
   siteUrl: import.meta.env.VITE_SITE_URL || 'https://tryspeekly.com',
-  siteName: import.meta.env.VITE_SITE_NAME || 'Speekly',
+  siteName: import.meta.env.VITE_SITE_NAME || 'TrySpeekly',
 
   // ── Public contact details (single source of truth — set in .env) ──────────
   contactEmail: import.meta.env.VITE_CONTACT_EMAIL || 'hello@tryspeekly.com',

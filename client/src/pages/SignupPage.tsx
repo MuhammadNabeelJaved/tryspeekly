@@ -114,7 +114,7 @@ export default function SignupPage() {
           <div className="mb-5">
             <h1 className="text-2xl font-black text-slate-900 dark:text-white">Create your account</h1>
             <p className="mt-1 text-sm text-slate-500 dark:text-neutral-400">
-              Join Speekly and unlock live classes, progress tracking, and expert support.
+              Join TrySpeekly and unlock live classes, progress tracking, and expert support.
             </p>
           </div>
 

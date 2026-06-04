@@ -484,7 +484,7 @@ export default function PaymentSubmitModal({
                   <p className="text-sm text-slate-600 dark:text-neutral-400 mb-4">{selectedMethod.description}</p>
                   <div className="space-y-2.5 mb-4">
                     {[
-                      { label: 'Account Title', value: 'Speekly Academy' },
+                      { label: 'Account Title', value: 'TrySpeekly' },
                       { label: 'Account / IBAN', value: 'PK36 MEZN 0001 2345 0100 6543' },
                       { label: 'Bank Name', value: 'Meezan Bank Ltd.' },
                       { label: 'Reference', value: `Your Full Name / Course ID: ${courseId.slice(-8)}` },

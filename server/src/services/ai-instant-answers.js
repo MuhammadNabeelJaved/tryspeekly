@@ -8,9 +8,9 @@ const GREETING_RE = /^(hi+|hey+|hello|hlo|yo|salam|asalam|aoa|assalam|good (morn
 const THANKS_RE = /\b(thanks|thank you|thankyou|shukria|shukriya)\b/i
 
 const GREETING_REPLY =
-  "Hi! 👋 I'm the Speekly assistant. Ask me about our courses, pricing, enrolment, financial aid, or learning English."
+  "Hi! 👋 I'm the TrySpeekly assistant. Ask me about our courses, pricing, enrolment, financial aid, or learning English."
 const THANKS_REPLY =
-  "You're welcome! 😊 Is there anything else about Speekly I can help with?"
+  "You're welcome! 😊 Is there anything else about TrySpeekly I can help with?"
 
 export const getInstantAnswer = (userMessage) => {
   const msg = String(userMessage || '').trim()

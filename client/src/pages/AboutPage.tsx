@@ -26,7 +26,7 @@ export default function AboutPage() {
       animate="animate"
       className="bg-slate-50 dark:bg-neutral-950 min-h-screen pt-[72px] lg:pt-[80px]"
     >
-      <SEOMeta slug="about" fallbackTitle="About Us — Speekly Academy" fallbackDescription="Learn about Speekly Academy, our mission, and our team of expert English instructors." />
+      <SEOMeta slug="about" fallbackTitle="About Us — TrySpeekly" fallbackDescription="Learn about TrySpeekly, our mission, and our team of expert English instructors." />
       {/* ─── HERO SECTION ───────────────────────────────────────── */}
       <section className="relative overflow-hidden bg-white dark:bg-neutral-900 py-16 lg:py-24">
         {/* Dot grid */}
@@ -39,7 +39,7 @@ export default function AboutPage() {
             <motion.div variants={sectionVariants}>
               <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-violet-200 bg-violet-50 text-violet-700 text-sm font-semibold mb-6">
                 <Users size={16} weight="fill" />
-                About Speekly
+                About TrySpeekly
               </span>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-slate-900 dark:text-white leading-[1.1] tracking-tight mb-6">
                 Empowering the world to speak with{' '}
@@ -146,7 +146,7 @@ export default function AboutPage() {
               <h2 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-6">Our Story</h2>
               <div className="space-y-6 text-slate-500 dark:text-neutral-400 text-lg leading-relaxed">
                 <p>
-                  Speekly started in 2018 with a simple idea: learning English shouldn't be boring, rigid, or restricted to traditional classrooms. 
+                  TrySpeekly started in 2018 with a simple idea: learning English shouldn't be boring, rigid, or restricted to traditional classrooms. 
                 </p>
                 <p>
                   Our founders, a group of passionate educators and tech enthusiasts, realized that the best way to learn a language is through active conversation, personalized feedback, and engaging content.

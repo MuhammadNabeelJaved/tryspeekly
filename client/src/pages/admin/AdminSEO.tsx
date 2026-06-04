@@ -610,7 +610,7 @@ export default function AdminSEO() {
                           {
                             label: 'Organization', schema: JSON.stringify({
                               '@context': 'https://schema.org', '@type': 'Organization',
-                              name: 'Speekly', url: 'https://tryspeekly.com',
+                              name: 'TrySpeekly', url: 'https://tryspeekly.com',
                               logo: 'https://tryspeekly.com/logo.png',
                               contactPoint: { '@type': 'ContactPoint', telephone: '+1-000-000-0000', contactType: 'customer service' }
                             }, null, 2)
@@ -619,7 +619,7 @@ export default function AdminSEO() {
                             label: 'Course', schema: JSON.stringify({
                               '@context': 'https://schema.org', '@type': 'Course',
                               name: 'English Course Name', description: 'Course description',
-                              provider: { '@type': 'Organization', name: 'Speekly' }
+                              provider: { '@type': 'Organization', name: 'TrySpeekly' }
                             }, null, 2)
                           },
                           {
@@ -634,7 +634,7 @@ export default function AdminSEO() {
                           {
                             label: 'Website', schema: JSON.stringify({
                               '@context': 'https://schema.org', '@type': 'WebSite',
-                              name: 'Speekly', url: 'https://tryspeekly.com',
+                              name: 'TrySpeekly', url: 'https://tryspeekly.com',
                               potentialAction: { '@type': 'SearchAction', target: 'https://tryspeekly.com/search?q={search_term_string}', 'query-input': 'required name=search_term_string' }
                             }, null, 2)
                           },
@@ -708,7 +708,7 @@ export default function AdminSEO() {
                         <div>
                           <label className="text-xs font-semibold text-slate-600 dark:text-neutral-300 block mb-1">Title Suffix</label>
                           <input value={form.global?.titleSuffix || ''} onChange={e => set('global.titleSuffix', e.target.value)}
-                            placeholder=" | Speekly (added to every page title)"
+                            placeholder=" | TrySpeekly (added to every page title)"
                             className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 rounded-lg focus:outline-none focus:border-violet-500 text-slate-900 dark:text-white" />
                         </div>
                         <div>

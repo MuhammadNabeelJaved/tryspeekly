@@ -600,7 +600,7 @@ export default function PaymentsPage() {
                       {/* Account info */}
                       <div className="space-y-3 mb-5">
                         {[
-                          { label: 'Account Title', value: selectedAdmin?.accountTitle || 'Speekly Academy' },
+                          { label: 'Account Title', value: selectedAdmin?.accountTitle || 'TrySpeekly' },
                           { label: 'Account / IBAN', value: selectedAdmin?.accountIban || 'PK36 MEZN 0001 2345 0100 6543' },
                           { label: 'Bank Name', value: selectedAdmin?.bankName || 'Meezan Bank Ltd.' },
                           { label: 'Reference', value: selectedAdmin?.reference || 'Your Full Name' },

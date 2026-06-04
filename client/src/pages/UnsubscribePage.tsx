@@ -32,7 +32,7 @@ export default function UnsubscribePage() {
             </div>
             <h1 className="text-xl font-bold text-slate-900 dark:text-white mb-2">You've been unsubscribed</h1>
             <p className="text-sm text-slate-500 dark:text-neutral-400 mb-6">
-              You will no longer receive newsletter emails from Speekly.
+              You will no longer receive newsletter emails from TrySpeekly.
             </p>
             <Link
               to="/"

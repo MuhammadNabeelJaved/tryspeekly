@@ -173,15 +173,15 @@ export const INITIAL_PAYMENTS_SETUP: PaymentsPageSetup = {
   tabs: { localLabel: 'Local Payments', intlLabel: 'International' },
   sectionLabels: { local: 'Pakistani Payment Methods', intl: 'International Payment Methods' },
   methods: [
-    { id: 'pm1', tab: 'local', name: 'Easypaisa', tagline: "Pakistan's #1 Mobile Wallet", description: 'Pay instantly using your Easypaisa mobile account or app. No bank account required.', features: ['Instant transfer', 'Available 24/7', 'No transaction fee', 'Easy app payment'], logoKey: 'easypaisa', logoUrl: '', fallbackBg: '#1BA462', accentColor: '#1BA462', recommended: true, processingTime: 'Instant', buttonText: 'Pay with Easypaisa', accountTitle: 'Speekly Academy', accountIban: '0315-1234567', bankName: 'Easypaisa Mobile Account', reference: 'Your Full Name', whatsappLink: 'https://wa.me/923086925545', receiptEmail: 'payments@tryspeekly.com' },
-    { id: 'pm2', tab: 'local', name: 'JazzCash', tagline: "Pakistan's Trusted Mobile Banking", description: 'Pay seamlessly through your JazzCash wallet, mobile account, or debit card.', features: ['Instant confirmation', 'Mobile number payment', 'Debit card support', 'Secure & encrypted'], logoKey: 'jazzcash', logoUrl: '', fallbackBg: '#CC1F00', accentColor: '#CC1F00', recommended: false, processingTime: 'Instant', buttonText: 'Pay with JazzCash', accountTitle: 'Speekly Academy', accountIban: '0321-9876543', bankName: 'JazzCash Mobile Account', reference: 'Your Full Name', whatsappLink: 'https://wa.me/923086925545', receiptEmail: 'payments@tryspeekly.com' },
-    { id: 'pm3', tab: 'local', name: 'SadaPay', tagline: 'Simple. Modern. Pakistani.', description: 'Transfer directly from your SadaPay IBAN account to ours in seconds.', features: ['IBAN transfer', 'Real-time confirmation', 'Zero fees', 'App & web support'], logoKey: 'sadapay', logoUrl: '', fallbackBg: '#161616', accentColor: '#7C3AED', recommended: false, processingTime: 'Instant', buttonText: 'Pay with SadaPay', accountTitle: 'Speekly Academy', accountIban: 'PK36 SADP 0001 2345 0100 6543', bankName: 'SadaPay', reference: 'Your Full Name', whatsappLink: 'https://wa.me/923086925545', receiptEmail: 'payments@tryspeekly.com' },
-    { id: 'pm4', tab: 'local', name: 'NayaPay', tagline: "Pakistan's Digital Wallet", description: 'Pay via NayaPay e-money account using your registered phone number or IBAN.', features: ['IBAN & phone transfer', 'Instant settlement', 'No hidden charges', 'SBP regulated'], logoKey: 'nayapay', logoUrl: '', fallbackBg: '#5F4FBD', accentColor: '#5F4FBD', recommended: false, processingTime: 'Instant', buttonText: 'Pay with NayaPay', accountTitle: 'Speekly Academy', accountIban: 'PK36 NAYA 0001 2345 0100 6543', bankName: 'NayaPay', reference: 'Your Full Name', whatsappLink: 'https://wa.me/923086925545', receiptEmail: 'payments@tryspeekly.com' },
-    { id: 'pm5', tab: 'local', name: 'NSave', tagline: "Pakistan's Smart Savings App", description: 'Use your NSave balance or linked account to pay your course fee securely.', features: ['Wallet payment', 'Easy transfer', 'Instant receipt', 'Bank-grade security'], logoKey: 'nsave', logoUrl: '', fallbackBg: '#00A896', accentColor: '#00A896', recommended: false, processingTime: 'Instant', buttonText: 'Pay with NSave', accountTitle: 'Speekly Academy', accountIban: 'PK36 NSAV 0001 2345 0100 6543', bankName: 'NSave', reference: 'Your Full Name', whatsappLink: 'https://wa.me/923086925545', receiptEmail: 'payments@tryspeekly.com' },
-    { id: 'pm6', tab: 'local', name: 'Local Bank Transfer', tagline: 'All Pakistani Banks Accepted', description: 'Transfer from any Pakistani bank — HBL, MCB, UBL, Meezan, Allied, etc. — via IBFT.', features: ['All banks supported', 'IBFT / online banking', '1-3 hour clearance', 'Receipt confirmation'], logoKey: 'bank-local', logoUrl: '', fallbackBg: '#334155', accentColor: '#334155', recommended: false, processingTime: '1–3 hours', buttonText: 'Pay via Bank', accountTitle: 'Speekly Academy', accountIban: 'PK36 MEZN 0001 2345 0100 6543', bankName: 'Meezan Bank Ltd.', reference: 'Your Full Name', whatsappLink: 'https://wa.me/923086925545', receiptEmail: 'payments@tryspeekly.com' },
-    { id: 'pm7', tab: 'international', name: 'SadaPay', tagline: 'Receive from Abroad', description: "Send payment from any country using SadaPay's international receiving IBAN.", features: ['International IBAN', 'SWIFT-compatible', 'Real-time alerts', 'Regulated by SBP'], logoKey: 'sadapay', logoUrl: '', fallbackBg: '#161616', accentColor: '#7C3AED', recommended: true, processingTime: '1–2 business days', buttonText: 'Pay via SadaPay', accountTitle: 'Speekly Academy', accountIban: 'PK36 SADP 0001 2345 0100 6543', bankName: 'SadaPay International', reference: 'Your Full Name', whatsappLink: 'https://wa.me/923086925545', receiptEmail: 'payments@tryspeekly.com' },
-    { id: 'pm8', tab: 'international', name: 'NayaPay', tagline: 'Global Transfers Welcome', description: "Receive international remittances through NayaPay's global transfer partnerships.", features: ['Global remittance', 'Partner networks', 'Secure & compliant', 'Easy notification'], logoKey: 'nayapay', logoUrl: '', fallbackBg: '#5F4FBD', accentColor: '#5F4FBD', recommended: false, processingTime: '1–3 business days', buttonText: 'Pay via NayaPay', accountTitle: 'Speekly Academy', accountIban: 'PK36 NAYA 0001 2345 0100 6543', bankName: 'NayaPay International', reference: 'Your Full Name', whatsappLink: 'https://wa.me/923086925545', receiptEmail: 'payments@tryspeekly.com' },
-    { id: 'pm9', tab: 'international', name: 'International Bank Transfer', tagline: 'SWIFT / Wire Transfer', description: 'Send via SWIFT from any bank worldwide. Accepted from UK, US, UAE, Canada, Australia.', features: ['SWIFT / IBAN', 'All currencies', 'All countries', 'Fully secure'], logoKey: 'bank-intl', logoUrl: '', fallbackBg: '#1E40AF', accentColor: '#1E40AF', recommended: false, processingTime: '2–5 business days', buttonText: 'Pay via Bank', accountTitle: 'Speekly Academy', accountIban: 'PK36 MEZN 0001 2345 0100 6543', bankName: 'Meezan Bank Ltd. (SWIFT: MEZNPKKA)', reference: 'Your Full Name + Course Name', whatsappLink: 'https://wa.me/923086925545', receiptEmail: 'payments@tryspeekly.com' },
+    { id: 'pm1', tab: 'local', name: 'Easypaisa', tagline: "Pakistan's #1 Mobile Wallet", description: 'Pay instantly using your Easypaisa mobile account or app. No bank account required.', features: ['Instant transfer', 'Available 24/7', 'No transaction fee', 'Easy app payment'], logoKey: 'easypaisa', logoUrl: '', fallbackBg: '#1BA462', accentColor: '#1BA462', recommended: true, processingTime: 'Instant', buttonText: 'Pay with Easypaisa', accountTitle: 'TrySpeekly', accountIban: '0315-1234567', bankName: 'Easypaisa Mobile Account', reference: 'Your Full Name', whatsappLink: 'https://wa.me/923086925545', receiptEmail: 'payments@tryspeekly.com' },
+    { id: 'pm2', tab: 'local', name: 'JazzCash', tagline: "Pakistan's Trusted Mobile Banking", description: 'Pay seamlessly through your JazzCash wallet, mobile account, or debit card.', features: ['Instant confirmation', 'Mobile number payment', 'Debit card support', 'Secure & encrypted'], logoKey: 'jazzcash', logoUrl: '', fallbackBg: '#CC1F00', accentColor: '#CC1F00', recommended: false, processingTime: 'Instant', buttonText: 'Pay with JazzCash', accountTitle: 'TrySpeekly', accountIban: '0321-9876543', bankName: 'JazzCash Mobile Account', reference: 'Your Full Name', whatsappLink: 'https://wa.me/923086925545', receiptEmail: 'payments@tryspeekly.com' },
+    { id: 'pm3', tab: 'local', name: 'SadaPay', tagline: 'Simple. Modern. Pakistani.', description: 'Transfer directly from your SadaPay IBAN account to ours in seconds.', features: ['IBAN transfer', 'Real-time confirmation', 'Zero fees', 'App & web support'], logoKey: 'sadapay', logoUrl: '', fallbackBg: '#161616', accentColor: '#7C3AED', recommended: false, processingTime: 'Instant', buttonText: 'Pay with SadaPay', accountTitle: 'TrySpeekly', accountIban: 'PK36 SADP 0001 2345 0100 6543', bankName: 'SadaPay', reference: 'Your Full Name', whatsappLink: 'https://wa.me/923086925545', receiptEmail: 'payments@tryspeekly.com' },
+    { id: 'pm4', tab: 'local', name: 'NayaPay', tagline: "Pakistan's Digital Wallet", description: 'Pay via NayaPay e-money account using your registered phone number or IBAN.', features: ['IBAN & phone transfer', 'Instant settlement', 'No hidden charges', 'SBP regulated'], logoKey: 'nayapay', logoUrl: '', fallbackBg: '#5F4FBD', accentColor: '#5F4FBD', recommended: false, processingTime: 'Instant', buttonText: 'Pay with NayaPay', accountTitle: 'TrySpeekly', accountIban: 'PK36 NAYA 0001 2345 0100 6543', bankName: 'NayaPay', reference: 'Your Full Name', whatsappLink: 'https://wa.me/923086925545', receiptEmail: 'payments@tryspeekly.com' },
+    { id: 'pm5', tab: 'local', name: 'NSave', tagline: "Pakistan's Smart Savings App", description: 'Use your NSave balance or linked account to pay your course fee securely.', features: ['Wallet payment', 'Easy transfer', 'Instant receipt', 'Bank-grade security'], logoKey: 'nsave', logoUrl: '', fallbackBg: '#00A896', accentColor: '#00A896', recommended: false, processingTime: 'Instant', buttonText: 'Pay with NSave', accountTitle: 'TrySpeekly', accountIban: 'PK36 NSAV 0001 2345 0100 6543', bankName: 'NSave', reference: 'Your Full Name', whatsappLink: 'https://wa.me/923086925545', receiptEmail: 'payments@tryspeekly.com' },
+    { id: 'pm6', tab: 'local', name: 'Local Bank Transfer', tagline: 'All Pakistani Banks Accepted', description: 'Transfer from any Pakistani bank — HBL, MCB, UBL, Meezan, Allied, etc. — via IBFT.', features: ['All banks supported', 'IBFT / online banking', '1-3 hour clearance', 'Receipt confirmation'], logoKey: 'bank-local', logoUrl: '', fallbackBg: '#334155', accentColor: '#334155', recommended: false, processingTime: '1–3 hours', buttonText: 'Pay via Bank', accountTitle: 'TrySpeekly', accountIban: 'PK36 MEZN 0001 2345 0100 6543', bankName: 'Meezan Bank Ltd.', reference: 'Your Full Name', whatsappLink: 'https://wa.me/923086925545', receiptEmail: 'payments@tryspeekly.com' },
+    { id: 'pm7', tab: 'international', name: 'SadaPay', tagline: 'Receive from Abroad', description: "Send payment from any country using SadaPay's international receiving IBAN.", features: ['International IBAN', 'SWIFT-compatible', 'Real-time alerts', 'Regulated by SBP'], logoKey: 'sadapay', logoUrl: '', fallbackBg: '#161616', accentColor: '#7C3AED', recommended: true, processingTime: '1–2 business days', buttonText: 'Pay via SadaPay', accountTitle: 'TrySpeekly', accountIban: 'PK36 SADP 0001 2345 0100 6543', bankName: 'SadaPay International', reference: 'Your Full Name', whatsappLink: 'https://wa.me/923086925545', receiptEmail: 'payments@tryspeekly.com' },
+    { id: 'pm8', tab: 'international', name: 'NayaPay', tagline: 'Global Transfers Welcome', description: "Receive international remittances through NayaPay's global transfer partnerships.", features: ['Global remittance', 'Partner networks', 'Secure & compliant', 'Easy notification'], logoKey: 'nayapay', logoUrl: '', fallbackBg: '#5F4FBD', accentColor: '#5F4FBD', recommended: false, processingTime: '1–3 business days', buttonText: 'Pay via NayaPay', accountTitle: 'TrySpeekly', accountIban: 'PK36 NAYA 0001 2345 0100 6543', bankName: 'NayaPay International', reference: 'Your Full Name', whatsappLink: 'https://wa.me/923086925545', receiptEmail: 'payments@tryspeekly.com' },
+    { id: 'pm9', tab: 'international', name: 'International Bank Transfer', tagline: 'SWIFT / Wire Transfer', description: 'Send via SWIFT from any bank worldwide. Accepted from UK, US, UAE, Canada, Australia.', features: ['SWIFT / IBAN', 'All currencies', 'All countries', 'Fully secure'], logoKey: 'bank-intl', logoUrl: '', fallbackBg: '#1E40AF', accentColor: '#1E40AF', recommended: false, processingTime: '2–5 business days', buttonText: 'Pay via Bank', accountTitle: 'TrySpeekly', accountIban: 'PK36 MEZN 0001 2345 0100 6543', bankName: 'Meezan Bank Ltd. (SWIFT: MEZNPKKA)', reference: 'Your Full Name + Course Name', whatsappLink: 'https://wa.me/923086925545', receiptEmail: 'payments@tryspeekly.com' },
   ],
   stepsSection: { badge: 'How It Works', title: '4 Simple Steps to Enroll', subtitle: 'From payment to your first class in under 30 minutes.' },
   steps: [
@@ -281,10 +281,10 @@ export interface AdminSettings {
 
 export const INITIAL_SETTINGS: AdminSettings = {
   site: {
-    name: 'Speekly Academy',
+    name: 'TrySpeekly',
     tagline: 'Master English. Change Your Life.',
-    logoText: 'Speekly',
-    footerCopyright: '© 2026 Speekly Academy. All rights reserved.',
+    logoText: 'TrySpeekly',
+    footerCopyright: '© 2026 TrySpeekly. All rights reserved.',
     footerDescription: 'Empowering learners worldwide to achieve English fluency through interactive courses, expert instruction, and personalized learning experiences.',
   },
   contact: {
@@ -302,7 +302,7 @@ export const INITIAL_SETTINGS: AdminSettings = {
     youtube: 'https://youtube.com/@englishpro',
   },
   seo: {
-    metaTitle: 'Speekly Academy — Professional English Courses Online',
+    metaTitle: 'TrySpeekly — Professional English Courses Online',
     metaDescription: 'Join 2,000+ learners. Expert-led English courses for Pakistani students and international learners. Easypaisa, JazzCash, SadaPay payments accepted.',
     keywords: 'english courses, IELTS preparation, spoken english, business english, pakistan',
   },
@@ -360,7 +360,7 @@ export const INITIAL_CMS_PAGES: CMSPage[] = [
         id: 'home-features',
         label: 'Features Section',
         fields: [
-          { key: 'badge', label: 'Section Badge', type: 'text', value: 'Why Speekly?' },
+          { key: 'badge', label: 'Section Badge', type: 'text', value: 'Why TrySpeekly?' },
           { key: 'title', label: 'Section Title', type: 'text', value: 'Everything You Need to Master English' },
           { key: 'subtitle', label: 'Section Subtitle', type: 'textarea', value: 'We combine expert teaching, flexible scheduling, and proven methods to get you speaking English with confidence.' },
           {
@@ -374,7 +374,7 @@ export const INITIAL_CMS_PAGES: CMSPage[] = [
               { title: 'Live Online Classes', description: 'Interactive Zoom sessions — no pre-recorded content. Real-time feedback.' },
               { title: 'Small Batches', description: 'Maximum 15 students per batch for personalised attention and faster progress.' },
               { title: 'Flexible Schedule', description: 'Morning, evening, and weekend batches to fit your lifestyle.' },
-              { title: 'Certificate on Completion', description: 'Receive an Speekly verified certificate to share on LinkedIn.' },
+              { title: 'Certificate on Completion', description: 'Receive an TrySpeekly verified certificate to share on LinkedIn.' },
               { title: 'Lifetime Community Access', description: 'Join our private alumni community for ongoing practice and networking.' },
             ],
           } as CMSRepeaterField,
@@ -419,7 +419,7 @@ export const INITIAL_CMS_PAGES: CMSPage[] = [
               { key: 'text', label: 'Testimonial Text', type: 'textarea' },
             ],
             rows: [
-              { name: 'Ahmed Ali', role: 'IT Professional, Karachi', country: 'Pakistan', rating: '5', text: 'Speekly completely transformed my communication skills. I got promoted within 3 months of completing the Business English course!' },
+              { name: 'Ahmed Ali', role: 'IT Professional, Karachi', country: 'Pakistan', rating: '5', text: 'TrySpeekly completely transformed my communication skills. I got promoted within 3 months of completing the Business English course!' },
               { name: 'Sara Khan', role: 'University Student, Lahore', country: 'Pakistan', rating: '5', text: 'The IELTS prep course gave me the structured practice I needed. I scored 7.5 band on my first attempt!' },
               { name: 'Omar Farooq', role: 'Software Engineer', country: 'United Kingdom', rating: '5', text: 'Being in London, I needed to sharpen my professional English. The online format was perfect — flexible and high quality.' },
             ],
@@ -452,7 +452,7 @@ export const INITIAL_CMS_PAGES: CMSPage[] = [
         fields: [
           { key: 'badge', label: 'Badge Text', type: 'text', value: 'About Us' },
           { key: 'title', label: 'Page Title', type: 'text', value: 'We Believe Every Learner Deserves World-Class English Education' },
-          { key: 'subtitle', label: 'Subtitle', type: 'textarea', value: 'Founded in 2020, Speekly Academy has helped over 2,000 students from 50+ countries achieve English fluency.' },
+          { key: 'subtitle', label: 'Subtitle', type: 'textarea', value: 'Founded in 2020, TrySpeekly has helped over 2,000 students from 50+ countries achieve English fluency.' },
           { key: 'foundedYear', label: 'Founded Year', type: 'text', value: '2020' },
           { key: 'location', label: 'Location', type: 'text', value: 'Karachi, Pakistan (Online-first)' },
         ] as CMSField[],
@@ -664,7 +664,7 @@ export const INITIAL_CMS_PAGES: CMSPage[] = [
               { key: 'answer', label: 'Answer', type: 'textarea' },
             ],
             rows: [
-              { question: 'Are classes fully online?', answer: 'Yes! All Speekly classes are conducted live via Zoom. You can join from anywhere in the world.' },
+              { question: 'Are classes fully online?', answer: 'Yes! All TrySpeekly classes are conducted live via Zoom. You can join from anywhere in the world.' },
               { question: 'How many students are in each class?', answer: 'We keep batches small — maximum 15 students — to ensure personalised attention from your instructor.' },
               { question: 'Can I try a class before enrolling?', answer: 'Absolutely. We offer a free trial class for all new students. Contact us to schedule yours.' },
               { question: 'What happens if I miss a class?', answer: 'All sessions are recorded. Enrolled students get lifetime access to their class recordings.' },
@@ -695,7 +695,7 @@ export const INITIAL_CMS_PAGES: CMSPage[] = [
         id: 'payments-account',
         label: 'Payment Account Details',
         fields: [
-          { key: 'accountTitle', label: 'Account Title', type: 'text', value: 'Speekly Academy' },
+          { key: 'accountTitle', label: 'Account Title', type: 'text', value: 'TrySpeekly' },
           { key: 'accountIban', label: 'Account / IBAN', type: 'text', value: 'PK36 MEZN 0001 2345 0100 6543' },
           { key: 'bankName', label: 'Bank Name', type: 'text', value: 'Meezan Bank Ltd.' },
           { key: 'whatsapp', label: 'WhatsApp for Receipts', type: 'text', value: '+92 308 692 5545' },
@@ -782,7 +782,7 @@ export const INITIAL_CMS_PAGES: CMSPage[] = [
         fields: [
           { key: 'title', label: 'Page Title', type: 'text', value: 'Privacy Policy' },
           { key: 'lastUpdated', label: 'Last Updated Date', type: 'text', value: 'May 2, 2026' },
-          { key: 'intro', label: 'Introduction', type: 'textarea', value: 'This Privacy Policy describes how Speekly Academy collects, uses, and protects your personal information when you use our website and services.' },
+          { key: 'intro', label: 'Introduction', type: 'textarea', value: 'This Privacy Policy describes how TrySpeekly collects, uses, and protects your personal information when you use our website and services.' },
         ] as CMSField[],
       },
       {
@@ -821,7 +821,7 @@ export const INITIAL_CMS_PAGES: CMSPage[] = [
         fields: [
           { key: 'title', label: 'Page Title', type: 'text', value: 'Terms of Service' },
           { key: 'lastUpdated', label: 'Last Updated Date', type: 'text', value: 'May 2, 2026' },
-          { key: 'intro', label: 'Introduction', type: 'textarea', value: 'By enrolling in any Speekly Academy course or using our website, you agree to these Terms of Service. Please read them carefully.' },
+          { key: 'intro', label: 'Introduction', type: 'textarea', value: 'By enrolling in any TrySpeekly course or using our website, you agree to these Terms of Service. Please read them carefully.' },
         ] as CMSField[],
       },
       {
@@ -839,8 +839,8 @@ export const INITIAL_CMS_PAGES: CMSPage[] = [
               { title: 'Course Access', content: 'Enrolled students receive access to their course materials, live classes, and recordings for the duration of their enrollment period. Access may be revoked for violations of our Code of Conduct.' },
               { title: 'Payment Terms', content: 'All fees must be paid in full before the course begins unless a payment plan has been explicitly agreed upon. Fees are non-refundable after the refund period (see Refund Policy).' },
               { title: 'Code of Conduct', content: 'Students are expected to behave respectfully in all classes and communications. Harassment, disruption, or sharing of course materials without permission will result in immediate removal without refund.' },
-              { title: 'Intellectual Property', content: 'All course content, materials, and recordings are the intellectual property of Speekly Academy. Students may not share, reproduce, or distribute course content without written permission.' },
-              { title: 'Limitation of Liability', content: 'Speekly Academy is not liable for any indirect, incidental, or consequential damages arising from the use of our services. Our maximum liability is limited to the course fee paid.' },
+              { title: 'Intellectual Property', content: 'All course content, materials, and recordings are the intellectual property of TrySpeekly. Students may not share, reproduce, or distribute course content without written permission.' },
+              { title: 'Limitation of Liability', content: 'TrySpeekly is not liable for any indirect, incidental, or consequential damages arising from the use of our services. Our maximum liability is limited to the course fee paid.' },
             ],
           } as CMSRepeaterField,
         ],
@@ -860,7 +860,7 @@ export const INITIAL_CMS_PAGES: CMSPage[] = [
         fields: [
           { key: 'title', label: 'Page Title', type: 'text', value: 'Cookie Policy' },
           { key: 'lastUpdated', label: 'Last Updated Date', type: 'text', value: 'May 2, 2026' },
-          { key: 'intro', label: 'Introduction', type: 'textarea', value: 'This Cookie Policy explains how Speekly Academy uses cookies and similar tracking technologies when you visit our website.' },
+          { key: 'intro', label: 'Introduction', type: 'textarea', value: 'This Cookie Policy explains how TrySpeekly uses cookies and similar tracking technologies when you visit our website.' },
         ] as CMSField[],
       },
       {

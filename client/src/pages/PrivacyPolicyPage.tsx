@@ -109,7 +109,7 @@ export default function PrivacyPolicyPage() {
                   <p className="m-0 font-medium"><strong>TL;DR:</strong> We only collect data necessary to provide you with the best English learning experience. We never sell your personal information to third parties.</p>
                 </div>
                 <p>
-                  Welcome to Speekly. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website or use our learning platform. Please read this privacy policy carefully. If you do not agree with the terms of this privacy policy, please do not access the site.
+                  Welcome to TrySpeekly. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website or use our learning platform. Please read this privacy policy carefully. If you do not agree with the terms of this privacy policy, please do not access the site.
                 </p>
                 <p>
                   We reserve the right to make changes to this Privacy Policy at any time and for any reason. We will alert you about any changes by updating the "Last Updated" date of this Privacy Policy.

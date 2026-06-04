@@ -172,14 +172,14 @@ export default function AdminSettings({ store }: { store: AdminStore }) {
       {/* ── SITE IDENTITY ── */}
       <SectionCard title="Site Identity" icon={<Globe size={16} />}>
         <div className="col-span-full">
-          <Field label="Site Name"><Input register={register} name="site.name" placeholder="Speekly Academy" /></Field>
+          <Field label="Site Name"><Input register={register} name="site.name" placeholder="TrySpeekly" /></Field>
         </div>
-        <Field label="Logo Text" hint="Text shown in the navbar logo"><Input register={register} name="site.logoText" placeholder="Speekly" /></Field>
+        <Field label="Logo Text" hint="Text shown in the navbar logo"><Input register={register} name="site.logoText" placeholder="TrySpeekly" /></Field>
         <div className="col-span-full">
           <Field label="Site Tagline"><Input register={register} name="site.tagline" placeholder="Master English. Change Your Life." /></Field>
         </div>
         <div className="col-span-full">
-          <Field label="Footer Copyright Text"><Input register={register} name="site.footerCopyright" placeholder="© 2026 Speekly Academy." /></Field>
+          <Field label="Footer Copyright Text"><Input register={register} name="site.footerCopyright" placeholder="© 2026 TrySpeekly." /></Field>
         </div>
         <div className="col-span-full">
           <Field label="Footer Description" hint="Short text shown under the logo in the footer (max 400 chars)">
@@ -216,7 +216,7 @@ export default function AdminSettings({ store }: { store: AdminStore }) {
       <SectionCard title="SEO & Meta Tags" icon={<MagnifyingGlass size={16} />}>
         <div className="col-span-full">
           <Field label="Meta Title" hint="Appears in browser tab and search results (50–60 chars recommended)">
-            <Input register={register} name="seo.metaTitle" placeholder="Speekly Academy — Professional English Courses Online" />
+            <Input register={register} name="seo.metaTitle" placeholder="TrySpeekly — Professional English Courses Online" />
           </Field>
           <p className={`text-[10px] mt-1 ${metaTitle.length > 60 ? 'text-red-400' : 'text-slate-400 dark:text-neutral-600'}`}>{metaTitle.length}/60 characters</p>
         </div>

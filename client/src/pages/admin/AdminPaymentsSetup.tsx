@@ -38,7 +38,7 @@ const EMPTY_METHOD: PaymentMethodAdmin = {
   id: '', tab: 'local', name: '', tagline: '', description: '',
   features: ['', '', '', ''], logoKey: 'easypaisa', logoUrl: '',
   fallbackBg: '#6366f1', accentColor: '#6366f1', recommended: false,
-  processingTime: 'Instant', buttonText: '', accountTitle: 'Speekly Academy',
+  processingTime: 'Instant', buttonText: '', accountTitle: 'TrySpeekly',
   accountIban: '', bankName: '', reference: 'Your Full Name',
   whatsappLink: 'https://wa.me/923086925545', receiptEmail: 'payments@tryspeekly.com',
 }
@@ -259,7 +259,7 @@ function MethodModal({ method, onSave, onClose }: {
           {tab === 'account' && (
             <div className="space-y-4">
               <p className="text-xs text-slate-400 dark:text-neutral-600">These details appear in the right-side panel when a student selects this payment method.</p>
-              <Inp label="Account Title" value={form.accountTitle} onChange={f('accountTitle')} placeholder="Speekly Academy" />
+              <Inp label="Account Title" value={form.accountTitle} onChange={f('accountTitle')} placeholder="TrySpeekly" />
               <Inp label="Account Number / IBAN" value={form.accountIban} onChange={f('accountIban')} placeholder="PK36 MEZN 0001 2345 0100 6543" />
               <Inp label="Bank / App Name" value={form.bankName} onChange={f('bankName')} placeholder="Meezan Bank Ltd." />
               <Inp label="Reference Field Label" value={form.reference} onChange={f('reference')} placeholder="Your Full Name" hint="What to include as payment reference/narration" />

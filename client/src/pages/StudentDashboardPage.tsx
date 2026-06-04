@@ -49,7 +49,7 @@ const STUDENT_SEARCH_ITEMS: SearchItem[] = [
 
 const STUDENT_TOUR_STEPS: TourStep[] = [
   {
-    title: 'Welcome to Speekly!',
+    title: 'Welcome to TrySpeekly!',
     content: 'This quick tour shows you how to use your student dashboard. Click Next to explore, or Skip to close.',
   },
   {
@@ -80,7 +80,7 @@ const STUDENT_TOUR_STEPS: TourStep[] = [
   {
     target: 'student-nav-referrals',
     title: 'Referrals',
-    content: 'Refer friends to Speekly using your unique link. Earn wallet credits when they enroll, and request a payout once your balance is ready.',
+    content: 'Refer friends to TrySpeekly using your unique link. Earn wallet credits when they enroll, and request a payout once your balance is ready.',
   },
   {
     target: 'student-nav-messages',
@@ -262,7 +262,7 @@ export default function StudentDashboardPage() {
               </svg>
             </div>
             <div>
-              <p className="text-sm font-black text-slate-900 dark:text-white leading-none">Speekly</p>
+              <p className="text-sm font-black text-slate-900 dark:text-white leading-none">TrySpeekly</p>
               <p className="text-[10px] text-violet-600 dark:text-violet-400 font-semibold mt-0.5">Student Portal</p>
             </div>
             <button onClick={() => setSidebarOpen(false)} className="ml-auto lg:hidden text-slate-400 hover:text-slate-600 dark:hover:text-neutral-200">

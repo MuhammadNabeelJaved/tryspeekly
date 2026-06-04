@@ -76,7 +76,7 @@ export default function CertificateViewPage() {
     const url = new URL('https://www.linkedin.com/profile/add')
     url.searchParams.append('startTask', 'CERTIFICATION_NAME')
     url.searchParams.append('name', cert.course?.title ?? '')
-    url.searchParams.append('organizationName', 'Speekly Academy')
+    url.searchParams.append('organizationName', 'TrySpeekly')
     url.searchParams.append('issueYear', new Date(cert.issueDate).getFullYear().toString())
     url.searchParams.append('issueMonth', (new Date(cert.issueDate).getMonth() + 1).toString())
     url.searchParams.append('certId', cert.certificateId)
