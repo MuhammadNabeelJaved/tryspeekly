@@ -7,8 +7,11 @@ const wrap = (content, preheader = '') => `<!DOCTYPE html>
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="color-scheme" content="light">
   <title>TrySpeekly</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&display=swap');
+  </style>
 </head>
-<body style="margin:0;padding:0;background-color:#eef2f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing:antialiased">
+<body style="margin:0;padding:0;background-color:#eef2f7;font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing:antialiased">
   ${preheader ? `<div style="display:none;max-height:0;overflow:hidden;font-size:1px;color:#eef2f7;line-height:1px">${preheader} ${'&zwnj;&nbsp;'.repeat(60)}</div>` : ''}
   <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background-color:#eef2f7">
     <tr>
@@ -21,7 +24,7 @@ const wrap = (content, preheader = '') => `<!DOCTYPE html>
               <table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 auto">
                 <tr>
                   <td style="background:rgba(255,255,255,0.18);border-radius:12px;width:42px;height:42px;text-align:center;vertical-align:middle">
-                    <span style="font-size:22px;font-weight:900;color:#fff;line-height:42px;display:block;font-family:Georgia,serif">T</span>
+                    <span style="font-size:22px;font-weight:900;color:#fff;line-height:42px;display:block;font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif">T</span>
                   </td>
                   <td style="padding-left:12px;vertical-align:middle">
                     <span style="font-size:22px;font-weight:900;color:#fff;letter-spacing:-0.5px;display:block">TrySpeekly</span>
