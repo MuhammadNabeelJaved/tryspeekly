@@ -6,9 +6,12 @@ const wrap = (content, preheader = '') => `<!DOCTYPE html>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="color-scheme" content="light">
-  <title>EnglishPro</title>
+  <title>TrySpeekly</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&display=swap');
+  </style>
 </head>
-<body style="margin:0;padding:0;background-color:#eef2f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing:antialiased">
+<body style="margin:0;padding:0;background-color:#eef2f7;font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing:antialiased">
   ${preheader ? `<div style="display:none;max-height:0;overflow:hidden;font-size:1px;color:#eef2f7;line-height:1px">${preheader} ${'&zwnj;&nbsp;'.repeat(60)}</div>` : ''}
   <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background-color:#eef2f7">
     <tr>
@@ -20,11 +23,8 @@ const wrap = (content, preheader = '') => `<!DOCTYPE html>
             <td style="background:linear-gradient(135deg,#6d28d9 0%,#7c3aed 50%,#4c1d95 100%);border-radius:20px 20px 0 0;padding:32px 40px;text-align:center">
               <table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 auto">
                 <tr>
-                  <td style="background:rgba(255,255,255,0.18);border-radius:12px;width:42px;height:42px;text-align:center;vertical-align:middle">
-                    <span style="font-size:22px;font-weight:900;color:#fff;line-height:42px;display:block;font-family:Georgia,serif">E</span>
-                  </td>
-                  <td style="padding-left:12px;vertical-align:middle">
-                    <span style="font-size:22px;font-weight:900;color:#fff;letter-spacing:-0.5px;display:block">EnglishPro</span>
+                  <td style="vertical-align:middle">
+                    <span style="font-size:24px;font-weight:900;color:#fff;letter-spacing:-0.5px;display:block">TrySpeekly</span>
                   </td>
                 </tr>
               </table>
@@ -42,7 +42,7 @@ const wrap = (content, preheader = '') => `<!DOCTYPE html>
           <!-- Footer -->
           <tr>
             <td style="background:#f8fafc;border-top:1px solid #e2e8f0;border-radius:0 0 20px 20px;padding:24px 40px;text-align:center">
-              <p style="margin:0 0 4px;font-size:12px;color:#94a3b8;line-height:1.7">© ${new Date().getFullYear()} EnglishPro · All rights reserved</p>
+              <p style="margin:0 0 4px;font-size:12px;color:#94a3b8;line-height:1.7">© ${new Date().getFullYear()} TrySpeekly · All rights reserved</p>
               <p style="margin:0;font-size:12px;color:#cbd5e1;line-height:1.7">This is an automated message — please do not reply.</p>
             </td>
           </tr>
@@ -171,27 +171,27 @@ export const DEFAULT_TEMPLATES = [
   {
     type: 'otp_verification',
     name: 'Email Verification OTP',
-    subject: 'Verify Your Email — EnglishPro',
+    subject: 'Verify Your Email — TrySpeekly',
     variables: ['name', 'otp'],
     htmlBody: wrap(`
       ${iconCircle('✉️', '#ecfdf5')}
       ${h1('Verify your email address')}
-      ${para('Hi <strong>{{name}}</strong>, welcome to EnglishPro! To get started, please enter the 6-digit verification code below. The code expires in <strong>24 hours</strong>.')}
+      ${para('Hi <strong>{{name}}</strong>, welcome to TrySpeekly! To get started, please enter the 6-digit verification code below. The code expires in <strong>24 hours</strong>.')}
       ${otpBox('{{otp}}', '#059669')}
       ${divider()}
-      ${note('If you didn\'t create an EnglishPro account, you can safely ignore this email. No action is needed.')}
-    `, 'Your EnglishPro verification code is ready'),
+      ${note('If you didn\'t create an TrySpeekly account, you can safely ignore this email. No action is needed.')}
+    `, 'Your TrySpeekly verification code is ready'),
   },
 
   {
     type: 'otp_forgot_password',
     name: 'Forgot Password OTP',
-    subject: 'Reset Your Password — EnglishPro',
+    subject: 'Reset Your Password — TrySpeekly',
     variables: ['name', 'otp'],
     htmlBody: wrap(`
       ${iconCircle('🔐', '#faf5ff')}
       ${h1('Reset your password')}
-      ${para('Hi <strong>{{name}}</strong>, we received a request to reset your EnglishPro password. Use the code below — it expires in <strong>15 minutes</strong>.')}
+      ${para('Hi <strong>{{name}}</strong>, we received a request to reset your TrySpeekly password. Use the code below — it expires in <strong>15 minutes</strong>.')}
       ${otpBox('{{otp}}', '#7c3aed')}
       ${alertBox('This code is valid for 15 minutes only. Do not share it with anyone.', 'warning')}
       ${note('If you didn\'t request a password reset, please ignore this email. Your account is safe.')}
@@ -201,12 +201,12 @@ export const DEFAULT_TEMPLATES = [
   {
     type: 'account_verified_welcome',
     name: 'Welcome After Verification',
-    subject: 'Welcome to EnglishPro! Your account is verified',
+    subject: 'Welcome to TrySpeekly! Your account is verified',
     variables: ['name', 'role', 'dashboardUrl'],
     htmlBody: wrap(`
       ${iconCircle('🎉', '#ecfdf5')}
       ${badge('Account Verified', 'success')}
-      ${h1('Welcome to EnglishPro!')}
+      ${h1('Welcome to TrySpeekly!')}
       ${para('Hi <strong>{{name}}</strong>, your email address has been successfully verified. You\'re all set to begin your English learning journey!')}
       ${infoTable(
         infoRow('Account Status', '✓ Verified &amp; Active') +
@@ -215,14 +215,14 @@ export const DEFAULT_TEMPLATES = [
       ${para('Your dashboard gives you access to courses, assignments, progress tracking, and much more.')}
       ${btn('Go to My Dashboard', '{{dashboardUrl}}')}
       ${note('Have a question? Contact our support team — we\'re happy to help.')}
-    `, 'Your EnglishPro account is now active and ready'),
+    `, 'Your TrySpeekly account is now active and ready'),
   },
 
   // ── Contact ───────────────────────────────────────────────────────────────
   {
     type: 'contact_form_submitted',
     name: 'Contact Form Confirmation',
-    subject: 'We received your message — EnglishPro',
+    subject: 'We received your message — TrySpeekly',
     variables: ['name', 'subject', 'message'],
     htmlBody: wrap(`
       ${iconCircle('💬', '#eff6ff')}
@@ -235,14 +235,14 @@ export const DEFAULT_TEMPLATES = [
       )}
       ${divider()}
       ${note('Please do not submit duplicate requests — we have your message on file and will respond shortly.')}
-    `, 'Thanks for contacting EnglishPro — we\'ll be in touch soon'),
+    `, 'Thanks for contacting TrySpeekly — we\'ll be in touch soon'),
   },
 
   // ── Enrollments ───────────────────────────────────────────────────────────
   {
     type: 'enrollment_confirmed',
     name: 'Enrollment Confirmation (Student)',
-    subject: 'You\'re enrolled in {{courseName}} — EnglishPro',
+    subject: 'You\'re enrolled in {{courseName}} — TrySpeekly',
     variables: ['studentName', 'courseName', 'teacherName', 'courseLevel', 'courseType'],
     htmlBody: wrap(`
       ${iconCircle('📚', '#faf5ff')}
@@ -284,7 +284,7 @@ export const DEFAULT_TEMPLATES = [
   {
     type: 'payment_submitted',
     name: 'Payment Submitted (Student)',
-    subject: 'Payment proof received for {{courseName}} — EnglishPro',
+    subject: 'Payment proof received for {{courseName}} — TrySpeekly',
     variables: ['studentName', 'courseName', 'amount', 'currency', 'method'],
     htmlBody: wrap(`
       ${iconCircle('🧾', '#fffbeb')}
@@ -345,7 +345,7 @@ export const DEFAULT_TEMPLATES = [
   {
     type: 'payment_resubmitted',
     name: 'Payment Resubmitted (Student)',
-    subject: 'Resubmitted payment received for {{courseName}} — EnglishPro',
+    subject: 'Resubmitted payment received for {{courseName}} — TrySpeekly',
     variables: ['studentName', 'courseName', 'amount', 'currency', 'method'],
     htmlBody: wrap(`
       ${iconCircle('🔄', '#fffbeb')}
@@ -366,7 +366,7 @@ export const DEFAULT_TEMPLATES = [
   {
     type: 'financial_aid_applied',
     name: 'Financial Aid Application Submitted',
-    subject: 'Financial Aid Application Received — EnglishPro',
+    subject: 'Financial Aid Application Received — TrySpeekly',
     variables: ['studentName', 'courseName'],
     htmlBody: wrap(`
       ${iconCircle('🤝', '#fffbeb')}
@@ -385,7 +385,7 @@ export const DEFAULT_TEMPLATES = [
   {
     type: 'financial_aid_approved',
     name: 'Financial Aid Approved',
-    subject: 'Financial Aid Approved! — EnglishPro',
+    subject: 'Financial Aid Approved! — TrySpeekly',
     variables: ['studentName', 'courseName', 'notes', 'dashboardUrl'],
     htmlBody: wrap(`
       ${iconCircle('🎉', '#ecfdf5')}
@@ -404,7 +404,7 @@ export const DEFAULT_TEMPLATES = [
   {
     type: 'financial_aid_rejected',
     name: 'Financial Aid Rejected',
-    subject: 'Financial Aid Application Update — EnglishPro',
+    subject: 'Financial Aid Application Update — TrySpeekly',
     variables: ['studentName', 'courseName', 'notes'],
     htmlBody: wrap(`
       ${iconCircle('📋', '#fff1f2')}
@@ -425,7 +425,7 @@ export const DEFAULT_TEMPLATES = [
   {
     type: 'course_created_pending',
     name: 'Course Created (Pending Review)',
-    subject: 'Your course is under review — EnglishPro',
+    subject: 'Your course is under review — TrySpeekly',
     variables: ['teacherName', 'courseName'],
     htmlBody: wrap(`
       ${iconCircle('🕐', '#fffbeb')}
@@ -444,26 +444,26 @@ export const DEFAULT_TEMPLATES = [
   {
     type: 'course_approved',
     name: 'Course Approved',
-    subject: 'Your course is approved and live! — EnglishPro',
+    subject: 'Your course is approved and live! — TrySpeekly',
     variables: ['teacherName', 'courseName', 'dashboardUrl'],
     htmlBody: wrap(`
       ${iconCircle('🚀', '#ecfdf5')}
       ${badge('Published', 'success')}
       ${h1('Course Approved & Live!')}
-      ${para('Hi <strong>{{teacherName}}</strong>, congratulations! Your course has been reviewed, approved, and is now live on EnglishPro for students to discover and enroll.')}
+      ${para('Hi <strong>{{teacherName}}</strong>, congratulations! Your course has been reviewed, approved, and is now live on TrySpeekly for students to discover and enroll.')}
       ${infoTable(
         infoRow('Course', '{{courseName}}') +
         infoRow('Status', '✓ Published & Live')
       )}
       ${btn('View My Course', '{{dashboardUrl}}', '#059669')}
       ${note('Share your course with your network to attract more students!')}
-    `, 'Your course is approved and now live on EnglishPro'),
+    `, 'Your course is approved and now live on TrySpeekly'),
   },
 
   {
     type: 'course_rejected',
     name: 'Course Rejected',
-    subject: 'Your course needs revision — EnglishPro',
+    subject: 'Your course needs revision — TrySpeekly',
     variables: ['teacherName', 'courseName', 'reason', 'dashboardUrl'],
     htmlBody: wrap(`
       ${iconCircle('✏️', '#fff1f2')}
@@ -484,7 +484,7 @@ export const DEFAULT_TEMPLATES = [
   {
     type: 'live_class_started_teacher',
     name: 'Live Class Started (Teacher)',
-    subject: 'Your live class is now active — EnglishPro',
+    subject: 'Your live class is now active — TrySpeekly',
     variables: ['teacherName', 'courseName', 'meetingLink', 'classNumber'],
     htmlBody: wrap(`
       ${iconCircle('🔴', '#fff1f2')}
@@ -524,7 +524,7 @@ export const DEFAULT_TEMPLATES = [
   {
     type: 'assignment_created',
     name: 'New Assignment (Student)',
-    subject: 'New assignment posted for {{courseName}} — EnglishPro',
+    subject: 'New assignment posted for {{courseName}} — TrySpeekly',
     variables: ['studentName', 'courseName', 'assignmentTitle', 'dueDate', 'description', 'dashboardUrl'],
     htmlBody: wrap(`
       ${iconCircle('📝', '#eff6ff')}
@@ -546,7 +546,7 @@ export const DEFAULT_TEMPLATES = [
   {
     type: 'salary_processed',
     name: 'Salary Processed (Teacher)',
-    subject: 'Salary Payment Processed — EnglishPro',
+    subject: 'Salary Payment Processed — TrySpeekly',
     variables: ['teacherName', 'amount', 'currency', 'period', 'paymentMethod', 'notes'],
     htmlBody: wrap(`
       ${iconCircle('💰', '#ecfdf5')}
@@ -566,7 +566,7 @@ export const DEFAULT_TEMPLATES = [
   {
     type: 'salary_requested',
     name: 'Salary Request Submitted (Teacher)',
-    subject: 'Salary Request Received — EnglishPro',
+    subject: 'Salary Request Received — TrySpeekly',
     variables: ['teacherName', 'amount', 'period'],
     htmlBody: wrap(`
       ${iconCircle('📤', '#fffbeb')}
@@ -586,7 +586,7 @@ export const DEFAULT_TEMPLATES = [
   {
     type: 'review_submitted',
     name: 'Review Submitted (User)',
-    subject: 'Your review has been submitted — EnglishPro',
+    subject: 'Your review has been submitted — TrySpeekly',
     variables: ['reviewerName', 'reviewType', 'courseName', 'rating'],
     htmlBody: wrap(`
       ${iconCircle('⭐', '#fffbeb')}
@@ -598,14 +598,14 @@ export const DEFAULT_TEMPLATES = [
         infoRow('Course', '{{courseName}}') +
         infoRow('Your Rating', '{{rating}} / 5 ⭐')
       )}
-      ${note('Reviews are typically approved within 24 hours. Thank you for helping the EnglishPro community!')}
+      ${note('Reviews are typically approved within 24 hours. Thank you for helping the TrySpeekly community!')}
     `, 'Your review is being reviewed by our team'),
   },
 
   {
     type: 'review_approved',
     name: 'Review Approved (User)',
-    subject: 'Your review is now live — EnglishPro',
+    subject: 'Your review is now live — TrySpeekly',
     variables: ['reviewerName', 'reviewType', 'courseName'],
     htmlBody: wrap(`
       ${iconCircle('✅', '#ecfdf5')}
@@ -617,21 +617,21 @@ export const DEFAULT_TEMPLATES = [
         infoRow('Course', '{{courseName}}') +
         infoRow('Status', '✓ Published')
       )}
-      ${note('Thank you for contributing valuable feedback to the EnglishPro community. Your review helps other students make informed decisions.')}
-    `, 'Your review is now live on EnglishPro'),
+      ${note('Thank you for contributing valuable feedback to the TrySpeekly community. Your review helps other students make informed decisions.')}
+    `, 'Your review is now live on TrySpeekly'),
   },
 
   // ── Team Member ───────────────────────────────────────────────────────────
   {
     type: 'team_member_welcome',
     name: 'Team Member Welcome',
-    subject: 'Welcome to the EnglishPro Team',
+    subject: 'Welcome to the TrySpeekly Team',
     variables: ['name', 'email', 'jobTitle', 'loginUrl'],
     htmlBody: wrap(`
       ${iconCircle('👋', '#eff6ff')}
       ${badge('Team Member Account', 'info')}
-      ${h1('Welcome to the EnglishPro Team!')}
-      ${para('Hi <strong>{{name}}</strong>, your team member account has been created for EnglishPro Academy. We\'re excited to have you on board!')}
+      ${h1('Welcome to the TrySpeekly Team!')}
+      ${para('Hi <strong>{{name}}</strong>, your team member account has been created for TrySpeekly. We\'re excited to have you on board!')}
       ${infoTable(
         infoRow('Full Name', '{{name}}') +
         infoRow('Email', '{{email}}') +
@@ -640,7 +640,7 @@ export const DEFAULT_TEMPLATES = [
       ${alertBox('Please log in and change your password after your first login to keep your account secure.', 'info')}
       ${btn('Log In to Your Account', '{{loginUrl}}')}
       ${note('Contact your admin if you have any questions or need assistance getting started.')}
-    `, 'Your EnglishPro team account is ready'),
+    `, 'Your TrySpeekly team account is ready'),
   },
 
   // ── Offers ────────────────────────────────────────────────────────────────
@@ -705,13 +705,13 @@ export const DEFAULT_TEMPLATES = [
         infoRow('Status', '✓ Approved')
       )}
       ${btn('View My Wallet', '{{dashboardUrl}}', '#059669')}
-      ${note('Thank you for spreading the word about EnglishPro. Keep sharing your referral link to earn more rewards!')}
+      ${note('Thank you for spreading the word about TrySpeekly. Keep sharing your referral link to earn more rewards!')}
     `, 'Your referral payout has been approved'),
   },
   {
     type: 'payout_rejected',
     name: 'Payout Rejected (Student)',
-    subject: 'Update on your payout request — EnglishPro',
+    subject: 'Update on your payout request — TrySpeekly',
     variables: ['studentName', 'amount', 'currency', 'reason', 'dashboardUrl'],
     htmlBody: wrap(`
       ${iconCircle('📋', '#fef2f2')}
@@ -732,7 +732,7 @@ export const DEFAULT_TEMPLATES = [
   {
     type: 'support_reply',
     name: 'Support Ticket Reply (Student)',
-    subject: 'New reply to your support ticket — EnglishPro',
+    subject: 'New reply to your support ticket — TrySpeekly',
     variables: ['studentName', 'subject', 'replyPreview', 'dashboardUrl'],
     htmlBody: wrap(`
       ${iconCircle('💬', '#eff6ff')}

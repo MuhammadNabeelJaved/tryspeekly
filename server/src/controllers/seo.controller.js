@@ -8,13 +8,16 @@ const DEFAULT_PAGES = [
   { pageSlug: 'home',          pageName: 'Home',           pageUrl: '/',               isPublic: true  },
   { pageSlug: 'courses',       pageName: 'Courses',        pageUrl: '/courses',        isPublic: true  },
   { pageSlug: 'about',         pageName: 'About',          pageUrl: '/about',          isPublic: true  },
+  { pageSlug: 'instructors',   pageName: 'Instructors',    pageUrl: '/instructors',    isPublic: true  },
   { pageSlug: 'contact',       pageName: 'Contact',        pageUrl: '/contact',        isPublic: true  },
   { pageSlug: 'blog',          pageName: 'Blog',           pageUrl: '/blog',           isPublic: true  },
   { pageSlug: 'login',         pageName: 'Login',          pageUrl: '/login',          isPublic: false },
-  { pageSlug: 'register',      pageName: 'Register',       pageUrl: '/register',       isPublic: false },
+  { pageSlug: 'register',      pageName: 'Register',       pageUrl: '/signup',         isPublic: false },
   { pageSlug: 'financial-aid', pageName: 'Financial Aid',  pageUrl: '/financial-aid',  isPublic: true  },
+  { pageSlug: 'payments',      pageName: 'Payments',       pageUrl: '/payments',       isPublic: true  },
   { pageSlug: 'privacy',       pageName: 'Privacy Policy', pageUrl: '/privacy',        isPublic: true  },
   { pageSlug: 'terms',         pageName: 'Terms of Service',pageUrl: '/terms',         isPublic: true  },
+  { pageSlug: 'cookies',       pageName: 'Cookie Policy',  pageUrl: '/cookies',        isPublic: true  },
 ]
 
 // Ensure all default pages exist in DB
@@ -100,10 +103,14 @@ export const getPublicSeo = asyncHandler(async (req, res) => {
 })
 
 // ─── Sitemap & robots.txt (public, for search engines) ────────────────────────
-const SITE_URL = process.env.CLIENT_URL || 'https://yourdomain.com'
+// SITE_URL is the canonical production host. CLIENT_URL is localhost in dev, so
+// it must NOT be used as the sitemap host.
+const SITE_URL = process.env.SITE_URL || 'https://tryspeekly.com'
 
 // GET /sitemap.xml
 export const getSitemap = asyncHandler(async (req, res) => {
+  await seedDefaults()
+
   const { default: Blog } = await import('../models/blog.model.js')
   const { default: Course } = await import('../models/course.model.js')
 
@@ -129,7 +136,7 @@ export const getSitemap = asyncHandler(async (req, res) => {
   for (const b of blogs) {
     urls.push(`
   <url>
-    <loc>${SITE_URL}/blog/${b.slug}</loc>
+    <loc>${SITE_URL}/blog/slug/${b.slug}</loc>
     <lastmod>${new Date(b.updatedAt).toISOString().slice(0, 10)}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>

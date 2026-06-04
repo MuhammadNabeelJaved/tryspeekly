@@ -1,4 +1,4 @@
-# EnglishPro — English Learning Platform
+# TrySpeekly — English Learning Platform
 
 A modern, full-stack **Learning Management System (LMS)** for English-language education. It connects students, instructors, and administrators with course management, payments, real-time messaging, certificates, an AI assistant, and rich growth tooling (referrals, coupons, offers, newsletters).
 
@@ -101,17 +101,39 @@ cd ../server && npm install
 
 ### 3. Environment configuration
 
-**`client/.env`**
+**`client/.env`** (see `client/.env.example`)
 ```env
 VITE_API_URL=http://localhost:5000
 VITE_SOCKET_URL=http://localhost:5000
+
+# Site / brand + public contact details (single source of truth)
+VITE_SITE_URL=https://tryspeekly.com
+VITE_SITE_NAME=TrySpeekly
+VITE_CONTACT_EMAIL=hello@tryspeekly.com
+VITE_SUPPORT_EMAIL=support@tryspeekly.com
+VITE_PRIVACY_EMAIL=privacy@tryspeekly.com
+VITE_PAYMENTS_EMAIL=payments@tryspeekly.com
+VITE_CONTACT_PHONE=+92 308 692 5545
+VITE_CONTACT_WHATSAPP=923086925545
+VITE_CONTACT_ADDRESS=
 ```
 
 **`server/.env`**
 ```env
 NODE_ENV=development
 PORT=5000
+# Production: set to the deployed frontend origin, e.g. https://tryspeekly.com
 CLIENT_URL=http://localhost:5173
+
+# Site / brand + public contact details (single source of truth)
+SITE_URL=https://tryspeekly.com
+SITE_NAME=TrySpeekly
+CONTACT_EMAIL=hello@tryspeekly.com
+SUPPORT_EMAIL=support@tryspeekly.com
+PRIVACY_EMAIL=privacy@tryspeekly.com
+PAYMENTS_EMAIL=payments@tryspeekly.com
+CONTACT_PHONE=+92 308 692 5545
+CONTACT_WHATSAPP=923086925545
 
 # Database (MongoDB local or Atlas)
 MONGO_URI=mongodb://localhost:27017
@@ -129,9 +151,9 @@ CLOUDINARY_CLOUD_NAME=your-cloud-name
 CLOUDINARY_API_KEY=your-api-key
 CLOUDINARY_API_SECRET=your-api-secret
 
-# Email (Resend)
+# Email (Resend) — add & verify tryspeekly.com in Resend first
 RESEND_API_KEY=your-resend-api-key
-RESEND_FROM_EMAIL=EnglishPro <hello@yourdomain.com>
+RESEND_FROM_EMAIL=TrySpeekly <hello@tryspeekly.com>
 
 # AI Assistant (Anthropic) — optional; bot falls back gracefully if unset
 ANTHROPIC_API_KEY=your-anthropic-api-key

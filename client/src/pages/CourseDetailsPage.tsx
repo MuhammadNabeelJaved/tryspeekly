@@ -326,7 +326,7 @@ export default function CourseDetailsPage() {
 
   return (
     <div className="bg-slate-50 dark:bg-neutral-950 min-h-screen pt-[72px] lg:pt-[80px] pb-24 lg:pb-0 selection:bg-violet-200 dark:selection:bg-violet-900/50">
-      <SEOMeta slug="course-detail" fallbackTitle="Course Details — EnglishPro Academy" fallbackDescription="Explore course details, syllabus, instructor, and reviews." />
+      <SEOMeta slug="course-detail" fallbackTitle="Course Details — TrySpeekly" fallbackDescription="Explore course details, syllabus, instructor, and reviews." />
 
       {/* ─── CREATIVE HERO HEADER ──────────────────────────────── */}
       <div className="relative bg-slate-900 dark:bg-black text-white pt-12 pb-24 lg:pt-16 lg:pb-32 overflow-hidden border-b border-white/5">

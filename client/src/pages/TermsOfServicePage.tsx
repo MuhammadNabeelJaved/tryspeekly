@@ -44,7 +44,7 @@ export default function TermsOfServicePage() {
               Terms of Service
             </h1>
             <p className="text-lg text-slate-500 dark:text-neutral-400 leading-relaxed font-light">
-              These terms govern your use of EnglishPro. By accessing our platform, you agree to abide by these rules and guidelines.
+              These terms govern your use of TrySpeekly. By accessing our platform, you agree to abide by these rules and guidelines.
             </p>
             <div className="mt-8 flex items-center justify-center gap-2 text-sm font-medium text-slate-500 dark:text-neutral-400">
               <span className="w-2 h-2 rounded-full bg-violet-600 dark:bg-violet-500"></span>
@@ -104,10 +104,10 @@ export default function TermsOfServicePage() {
                   1. Agreement to Terms
                 </h2>
                 <div className="bg-violet-50 dark:bg-violet-900/10 border-l-4 border-violet-500 p-6 rounded-r-xl mb-6 text-slate-700 dark:text-neutral-200">
-                  <p className="m-0 font-medium"><strong>TL;DR:</strong> By using our website, you agree to these rules. If you don't agree, please do not use EnglishPro.</p>
+                  <p className="m-0 font-medium"><strong>TL;DR:</strong> By using our website, you agree to these rules. If you don't agree, please do not use TrySpeekly.</p>
                 </div>
                 <p>
-                  These Terms of Service constitute a legally binding agreement made between you and EnglishPro, concerning your access to and use of our website as well as any other media form or application related to it.
+                  These Terms of Service constitute a legally binding agreement made between you and TrySpeekly, concerning your access to and use of our website as well as any other media form or application related to it.
                 </p>
               </div>
 

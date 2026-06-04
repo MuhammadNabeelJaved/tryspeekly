@@ -85,7 +85,7 @@ export default function BlogPage() {
 
   return (
     <div className="bg-slate-50 dark:bg-neutral-950 min-h-screen pt-[72px] lg:pt-[80px] selection:bg-violet-200 dark:selection:bg-violet-900/50">
-      <SEOMeta slug="blog" fallbackTitle="Blog — EnglishPro Academy" fallbackDescription="Study tips, grammar guides, IELTS prep, and course announcements from EnglishPro Academy." />
+      <SEOMeta slug="blog" fallbackTitle="Blog — TrySpeekly" fallbackDescription="Study tips, grammar guides, IELTS prep, and course announcements from TrySpeekly." />
 
       {/* ─── HERO SECTION ───────────────────────────────────────── */}
       <section className="relative overflow-hidden bg-white dark:bg-neutral-900 py-16 lg:py-24 border-b border-slate-100 dark:border-neutral-800">
@@ -100,7 +100,7 @@ export default function BlogPage() {
               className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-violet-200 bg-violet-50 text-violet-700 text-sm font-semibold mb-6"
             >
               <Article size={16} weight="fill" />
-              EnglishPro Blog
+              TrySpeekly Blog
             </motion.span>
             
             <motion.h1 

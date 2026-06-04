@@ -23,7 +23,7 @@ const buildHtml = (htmlBody, token) => {
   return `${htmlBody}
 <div style="margin-top:32px;padding-top:20px;border-top:1px solid #e2e8f0;text-align:center">
   <p style="margin:0;font-size:12px;color:#94a3b8">
-    You received this because you subscribed to EnglishPro newsletters. &nbsp;
+    You received this because you subscribed to TrySpeekly newsletters. &nbsp;
     <a href="${url}" style="color:#7c3aed;text-decoration:underline">Unsubscribe</a>
   </p>
 </div>`
@@ -32,9 +32,9 @@ const buildHtml = (htmlBody, token) => {
 // ─── Welcome Email ────────────────────────────────────────────────────────────
 export const sendNewsletterWelcome = async ({ to, token }) => {
   const resend = getResend()
-  const from = process.env.RESEND_FROM_EMAIL || 'EnglishPro <onboarding@resend.dev>'
+  const from = process.env.RESEND_FROM_EMAIL || 'TrySpeekly <onboarding@resend.dev>'
   const unsubscribeUrl = `${process.env.CLIENT_URL || 'http://localhost:5173'}/unsubscribe?token=${token}`
-  const subject = 'Welcome to EnglishPro Newsletter! 🎉'
+  const subject = 'Welcome to TrySpeekly Newsletter! 🎉'
 
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -45,7 +45,7 @@ export const sendNewsletterWelcome = async ({ to, token }) => {
       <table cellpadding="0" cellspacing="0" style="width:100%;max-width:580px">
         <tr>
           <td style="background:linear-gradient(135deg,#6d28d9,#7c3aed,#4c1d95);border-radius:20px 20px 0 0;padding:32px 40px;text-align:center">
-            <p style="margin:0;font-size:24px;font-weight:900;color:#fff">EnglishPro</p>
+            <p style="margin:0;font-size:24px;font-weight:900;color:#fff">TrySpeekly</p>
             <p style="margin:8px 0 0;font-size:11px;color:rgba(255,255,255,0.6);letter-spacing:2px;text-transform:uppercase">Newsletter</p>
           </td>
         </tr>
@@ -53,7 +53,7 @@ export const sendNewsletterWelcome = async ({ to, token }) => {
           <td style="background:#fff;padding:40px">
             <h1 style="margin:0 0 16px;font-size:24px;font-weight:800;color:#1e293b">Welcome aboard! 🎉</h1>
             <p style="margin:0 0 16px;font-size:15px;color:#475569;line-height:1.7">
-              Thank you for subscribing to the <strong>EnglishPro Newsletter</strong>. You're now part of a community of learners working towards English fluency.
+              Thank you for subscribing to the <strong>TrySpeekly Newsletter</strong>. You're now part of a community of learners working towards English fluency.
             </p>
             <p style="margin:0 0 24px;font-size:15px;color:#475569;line-height:1.7">
               Here's what to expect in your inbox:
@@ -63,7 +63,7 @@ export const sendNewsletterWelcome = async ({ to, token }) => {
               <tr><td style="padding:10px 0;border-bottom:1px solid #f1f5f9;color:#475569;font-size:14px">💡 &nbsp;<strong>English tips & tricks</strong> from expert instructors</td></tr>
               <tr><td style="padding:10px 0;color:#475569;font-size:14px">🎁 &nbsp;<strong>Exclusive offers</strong> for subscribers only</td></tr>
             </table>
-            <p style="margin:0;font-size:14px;color:#94a3b8">— The EnglishPro Team</p>
+            <p style="margin:0;font-size:14px;color:#94a3b8">— The TrySpeekly Team</p>
           </td>
         </tr>
         <tr>
@@ -102,7 +102,7 @@ export const dispatchCampaign = async (campaignId) => {
 
   const subscribers = await NewsletterSubscriber.find({ status: 'active' }).lean()
   const resend = getResend()
-  const from = process.env.RESEND_FROM_EMAIL || 'EnglishPro <onboarding@resend.dev>'
+  const from = process.env.RESEND_FROM_EMAIL || 'TrySpeekly <onboarding@resend.dev>'
 
   let totalSent = 0
   let totalSkipped = 0

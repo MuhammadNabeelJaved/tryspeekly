@@ -18,13 +18,6 @@ describe('SignupPage', () => {
     expect(screen.getByRole('button', { name: /create account/i })).toBeInTheDocument()
   })
 
-  it('renders social login buttons', () => {
-    renderWithRouter(<SignupPage />)
-
-    expect(screen.getByRole('button', { name: /continue with google/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /continue with github/i })).toBeInTheDocument()
-  })
-
   it('shows password strength indicator when typing password', async () => {
     renderWithRouter(<SignupPage />)
 

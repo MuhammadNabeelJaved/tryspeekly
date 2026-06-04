@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { X, PaperPlaneRight, Sparkle, Trash, CaretRight } from '@phosphor-icons/react'
 import { axiosClient } from '@/lib/axiosClient'
 import { useAuth } from '@/context/AuthContext'
+import { config } from '@/config/env'
 
 // Lazy-loaded so react-markdown only downloads once the chat is actually used,
 // keeping it off the initial page load.
@@ -16,7 +17,7 @@ interface Message {
 
 const WELCOME: Message = {
   role: 'assistant',
-  content: "Hi! I'm the EnglishPro AI Assistant 👋 Ask me anything about our courses, enrollment, or learning English!",
+  content: "Hi! I'm the TrySpeekly AI Assistant 👋 Ask me anything about our courses, enrollment, or learning English!",
 }
 
 // Guests persist their chat here; signed-in users persist server-side.
@@ -101,7 +102,7 @@ export default function AIChatWidget() {
       })
       setMessages(prev => [...prev, { role: 'assistant', content: res.data.reply }])
     } catch {
-      setMessages(prev => [...prev, { role: 'assistant', content: "Sorry, I'm having trouble connecting. Please try again or contact us at hello@englishlms.com" }])
+      setMessages(prev => [...prev, { role: 'assistant', content: `Sorry, I'm having trouble connecting. Please try again or contact us at ${config.contactEmail}` }])
     } finally {
       setLoading(false)
     }
@@ -144,7 +145,7 @@ export default function AIChatWidget() {
                 <Sparkle size={16} weight="fill" className="text-white" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-white font-bold text-sm">EnglishPro Assistant</p>
+                <p className="text-white font-bold text-sm">TrySpeekly Assistant</p>
                 <p className="text-violet-200 text-[11px]">Powered by AI · Usually replies instantly</p>
               </div>
               <button

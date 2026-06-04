@@ -6,6 +6,7 @@ import { Envelope, Phone, MapPin, PaperPlaneRight, LinkedinLogo, TwitterLogo, Fa
 import { contactService } from '../services/contact.service'
 import { extractApiError } from '../utils/apiError'
 import SEOMeta from '../components/SEOMeta'
+import { config } from '../config/env'
 
 const pageVariants: Variants = {
   initial: { opacity: 0 },
@@ -59,7 +60,7 @@ export default function ContactPage() {
 
   return (
     <div className="relative min-h-[100dvh] pt-[120px] lg:pt-[140px] pb-16 lg:pb-24 bg-white dark:bg-neutral-950 overflow-hidden transition-colors duration-300">
-      <SEOMeta slug="contact" fallbackTitle="Contact Us — EnglishPro Academy" fallbackDescription="Get in touch with EnglishPro Academy. Questions about courses, enrollment, or support." />
+      <SEOMeta slug="contact" fallbackTitle="Contact Us — TrySpeekly" fallbackDescription="Get in touch with TrySpeekly. Questions about courses, enrollment, or support." />
 
       {/* Ambient background glows */}
       <div className="absolute inset-0 pointer-events-none">
@@ -101,8 +102,8 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <p className="text-sm font-medium text-slate-500 dark:text-neutral-400 mb-1">Email Us</p>
-                    <a href="mailto:hello@englishlms.com" className="text-lg font-semibold text-slate-900 dark:text-white hover:text-violet-600 dark:hover:text-violet-400 transition-colors">
-                      hello@englishlms.com
+                    <a href={`mailto:${config.contactEmail}`} className="text-lg font-semibold text-slate-900 dark:text-white hover:text-violet-600 dark:hover:text-violet-400 transition-colors">
+                      {config.contactEmail}
                     </a>
                   </div>
                 </div>
@@ -113,23 +114,25 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <p className="text-sm font-medium text-slate-500 dark:text-neutral-400 mb-1">Call Us</p>
-                    <a href="tel:+923086925545" className="text-lg font-semibold text-slate-900 dark:text-white hover:text-violet-600 dark:hover:text-violet-400 transition-colors">
-                      +92 308 692 5545
+                    <a href={`tel:${config.contactPhone.replace(/\s/g, '')}`} className="text-lg font-semibold text-slate-900 dark:text-white hover:text-violet-600 dark:hover:text-violet-400 transition-colors">
+                      {config.contactPhone}
                     </a>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 rounded-2xl flex items-center justify-center flex-shrink-0">
-                    <MapPin size={24} weight="fill" />
+                {config.contactAddress && (
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 rounded-2xl flex items-center justify-center flex-shrink-0">
+                      <MapPin size={24} weight="fill" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-slate-500 dark:text-neutral-400 mb-1">Visit Us</p>
+                      <p className="text-lg font-semibold text-slate-900 dark:text-white">
+                        {config.contactAddress}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-slate-500 dark:text-neutral-400 mb-1">Visit Us</p>
-                    <p className="text-lg font-semibold text-slate-900 dark:text-white">
-                      123 Education Street<br />New York, NY 10001
-                    </p>
-                  </div>
-                </div>
+                )}
               </div>
 
               {/* Social Links */}

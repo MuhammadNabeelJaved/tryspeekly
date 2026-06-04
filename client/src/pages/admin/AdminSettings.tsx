@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
 import {
@@ -75,6 +75,25 @@ export default function AdminSettings({ store }: { store: AdminStore }) {
   const [passwordError, setPasswordError] = useState('')
   const [showResetConfirm, setShowResetConfirm] = useState(false)
 
+  // Load the live settings from the server so the admin edits the real (DB) values
+  // that the public site (footer, contact page, SEO) actually reads — not stale localStorage.
+  useEffect(() => {
+    let active = true
+    siteSettingsService.get()
+      .then(s => {
+        if (!active) return
+        reset({
+          ...defaultSettings,
+          site: { ...defaultSettings.site, ...(s.site ?? {}) },
+          contact: { ...defaultSettings.contact, ...(s.contact ?? {}) },
+          social: { ...defaultSettings.social, ...(s.social ?? {}) },
+          seo: { ...defaultSettings.seo, ...(s.seo ?? {}) },
+        })
+      })
+      .catch(() => { /* keep localStorage/defaults if the server is unreachable */ })
+    return () => { active = false }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const { user, setUser } = useAuth()
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -111,13 +130,25 @@ export default function AdminSettings({ store }: { store: AdminStore }) {
   async function onSaveAll(data: AdminSettings) {
     localStorage.setItem('admin_settings', JSON.stringify(data))
     try {
-      const { admin: _, ...siteData } = data
-      await siteSettingsService.update(siteData as any)
-    } catch {
-      // localStorage still saved — server sync is best-effort
+      const { admin: _admin, ...siteData } = data
+      const updated = await siteSettingsService.update(siteData as any)
+      // Re-sync the form with what the server actually persisted, so what the admin
+      // sees here matches the live site (footer/contact/SEO read these same values).
+      reset({
+        ...data,
+        site: { ...data.site, ...(updated.site ?? {}) },
+        contact: { ...data.contact, ...(updated.contact ?? {}) },
+        social: { ...data.social, ...(updated.social ?? {}) },
+        seo: { ...data.seo, ...(updated.seo ?? {}) },
+      })
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2500)
+    } catch (err: unknown) {
+      // Surface the real reason instead of falsely showing "Saved!" — without this,
+      // a failed save (permission/validation/server down) looked successful but never
+      // reached the DB, so the public site never changed.
+      toast.error(extractApiError(err, 'Failed to save settings. Changes were not published to the site.'))
     }
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2500)
   }
 
   function handleChangePassword() {
@@ -172,14 +203,14 @@ export default function AdminSettings({ store }: { store: AdminStore }) {
       {/* ── SITE IDENTITY ── */}
       <SectionCard title="Site Identity" icon={<Globe size={16} />}>
         <div className="col-span-full">
-          <Field label="Site Name"><Input register={register} name="site.name" placeholder="EnglishPro Academy" /></Field>
+          <Field label="Site Name"><Input register={register} name="site.name" placeholder="TrySpeekly" /></Field>
         </div>
-        <Field label="Logo Text" hint="Text shown in the navbar logo"><Input register={register} name="site.logoText" placeholder="EnglishPro" /></Field>
+        <Field label="Logo Text" hint="Text shown in the navbar logo"><Input register={register} name="site.logoText" placeholder="TrySpeekly" /></Field>
         <div className="col-span-full">
           <Field label="Site Tagline"><Input register={register} name="site.tagline" placeholder="Master English. Change Your Life." /></Field>
         </div>
         <div className="col-span-full">
-          <Field label="Footer Copyright Text"><Input register={register} name="site.footerCopyright" placeholder="© 2026 EnglishPro Academy." /></Field>
+          <Field label="Footer Copyright Text"><Input register={register} name="site.footerCopyright" placeholder="© 2026 TrySpeekly." /></Field>
         </div>
         <div className="col-span-full">
           <Field label="Footer Description" hint="Short text shown under the logo in the footer (max 400 chars)">
@@ -191,7 +222,7 @@ export default function AdminSettings({ store }: { store: AdminStore }) {
       {/* ── CONTACT INFO ── */}
       <SectionCard title="Contact Information" icon={<Phone size={16} />}>
         <Field label="Phone Number"><Input register={register} name="contact.phone" placeholder="+92 300 0000000" /></Field>
-        <Field label="Email Address"><Input register={register} name="contact.email" type="email" placeholder="hello@englishpro.com" /></Field>
+        <Field label="Email Address"><Input register={register} name="contact.email" type="email" placeholder="hello@tryspeekly.com" /></Field>
         <Field label="WhatsApp Number"><Input register={register} name="contact.whatsapp" placeholder="+92 300 0000000" /></Field>
         <Field label="Working Hours"><Input register={register} name="contact.workingHours" placeholder="Mon–Sat · 9 AM – 6 PM PKT" /></Field>
         <div className="col-span-full">
@@ -216,7 +247,7 @@ export default function AdminSettings({ store }: { store: AdminStore }) {
       <SectionCard title="SEO & Meta Tags" icon={<MagnifyingGlass size={16} />}>
         <div className="col-span-full">
           <Field label="Meta Title" hint="Appears in browser tab and search results (50–60 chars recommended)">
-            <Input register={register} name="seo.metaTitle" placeholder="EnglishPro Academy — Professional English Courses Online" />
+            <Input register={register} name="seo.metaTitle" placeholder="TrySpeekly — Professional English Courses Online" />
           </Field>
           <p className={`text-[10px] mt-1 ${metaTitle.length > 60 ? 'text-red-400' : 'text-slate-400 dark:text-neutral-600'}`}>{metaTitle.length}/60 characters</p>
         </div>
@@ -284,7 +315,7 @@ export default function AdminSettings({ store }: { store: AdminStore }) {
         <div className="p-5 space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Admin Name"><Input register={register} name="admin.name" placeholder="Admin" /></Field>
-            <Field label="Admin Email"><Input register={register} name="admin.email" type="email" placeholder="admin@englishpro.com" /></Field>
+            <Field label="Admin Email"><Input register={register} name="admin.email" type="email" placeholder="admin@tryspeekly.com" /></Field>
           </div>
 
           <div className="border-t border-slate-100 dark:border-neutral-800 pt-4">

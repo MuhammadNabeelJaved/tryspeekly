@@ -194,7 +194,7 @@ export function drawCertificate(canvas: HTMLCanvasElement, data: CertificateData
 
   // ── Header (logo + wordmark, centered) ──
   ctx.font = "800 20px 'DM Sans', sans-serif"
-  const brandW = ctx.measureText('EnglishPro').width
+  const brandW = ctx.measureText('TrySpeekly').width
   const logo = 34
   const gap = 10
   const groupW = logo + gap + brandW
@@ -210,7 +210,7 @@ export function drawCertificate(canvas: HTMLCanvasElement, data: CertificateData
   ctx.textAlign = 'left'
   ctx.fillStyle = DARK
   ctx.font = "800 20px 'DM Sans', sans-serif"
-  ctx.fillText('EnglishPro', gx + logo + gap, gy + 16)
+  ctx.fillText('TrySpeekly', gx + logo + gap, gy + 16)
   ctx.fillStyle = VIOLET
   ctx.font = "700 9px 'DM Sans', sans-serif"
   let ax = gx + logo + gap
@@ -267,7 +267,7 @@ export function drawCertificate(canvas: HTMLCanvasElement, data: CertificateData
 
   // ── Footer ──
   const fy = 606
-  const instructorName = data.instructorName || 'EnglishPro Academy'
+  const instructorName = data.instructorName || 'TrySpeekly'
   const instructorTitle = data.instructorTitle || 'Course Instructor'
 
   // Left column: handwritten signature above the divider, printed name + title below.

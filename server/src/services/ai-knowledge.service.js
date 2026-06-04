@@ -39,7 +39,7 @@ const build = async () => {
     Blog.find({ status: 'published' }).sort({ publishedAt: -1 }).limit(10).select('title excerpt slug').lean(),
   ])
 
-  const name = settings?.site?.name || 'EnglishPro'
+  const name = settings?.site?.name || 'TrySpeekly'
   const lines = [`# ${name} — Platform Knowledge`]
   if (settings?.site?.tagline) lines.push(`Tagline: ${settings.site.tagline}`)
 

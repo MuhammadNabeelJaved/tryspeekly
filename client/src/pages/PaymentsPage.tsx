@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence, type Variants } from 'framer-motion'
 import { siteSettingsService } from '@/services/site-settings.service'
 import type { PaymentMethodAdmin } from '@/pages/admin/adminData'
+import { config } from '@/config/env'
 import {
   ShieldCheck,
   Lock,
@@ -599,7 +600,7 @@ export default function PaymentsPage() {
                       {/* Account info */}
                       <div className="space-y-3 mb-5">
                         {[
-                          { label: 'Account Title', value: selectedAdmin?.accountTitle || 'EnglishPro Academy' },
+                          { label: 'Account Title', value: selectedAdmin?.accountTitle || 'TrySpeekly' },
                           { label: 'Account / IBAN', value: selectedAdmin?.accountIban || 'PK36 MEZN 0001 2345 0100 6543' },
                           { label: 'Bank Name', value: selectedAdmin?.bankName || 'Meezan Bank Ltd.' },
                           { label: 'Reference', value: selectedAdmin?.reference || 'Your Full Name' },
@@ -630,7 +631,7 @@ export default function PaymentsPage() {
                           Send Receipt on WhatsApp
                         </a>
                         <a
-                          href={`mailto:${selectedAdmin?.receiptEmail || 'payments@englishpro.com'}`}
+                          href={`mailto:${selectedAdmin?.receiptEmail || config.paymentsEmail}`}
                           className="flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 rounded-2xl text-sm transition-colors"
                         >
                           <CreditCard size={15} weight="fill" />
@@ -819,7 +820,7 @@ export default function PaymentsPage() {
           {/* Note */}
           <p className="text-center text-xs text-slate-400 dark:text-neutral-600 mt-6 max-w-xl mx-auto leading-relaxed">
             These policies are subject to change. Any updates will be communicated to enrolled students at least 7 days in advance.
-            For questions, contact <a href="mailto:payments@englishpro.com" className="text-violet-500 hover:underline">payments@englishpro.com</a>
+            For questions, contact <a href={`mailto:${config.paymentsEmail}`} className="text-violet-500 hover:underline">{config.paymentsEmail}</a>
           </p>
         </motion.section>
 

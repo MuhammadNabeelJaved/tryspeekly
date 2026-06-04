@@ -6,7 +6,7 @@ dns.setServers(['8.8.8.8', '8.8.4.4'])
 import connectDB from '../src/database/db.js'
 import User from '../src/models/user.model.js'
 
-const INSTRUCTOR_EMAIL = 'instructor@englishpro.com'
+const INSTRUCTOR_EMAIL = 'instructor@tryspeekly.com'
 const INSTRUCTOR_PASSWORD = 'Instructor@123'
 const INSTRUCTOR_PHONE = '03001234567'
 const INSTRUCTOR_NAME = 'Sarah Johnson'

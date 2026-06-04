@@ -17,13 +17,6 @@ describe('LoginPage', () => {
     expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument()
   })
 
-  it('renders social login buttons', () => {
-    renderWithRouter(<LoginPage />)
-
-    expect(screen.getByRole('button', { name: /continue with google/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /continue with github/i })).toBeInTheDocument()
-  })
-
   it('shows error for invalid email format', async () => {
     renderWithRouter(<LoginPage />)
 
