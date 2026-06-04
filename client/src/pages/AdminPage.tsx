@@ -624,8 +624,11 @@ export default function AdminPage() {
             <div className="flex items-center gap-3 bg-slate-50 dark:bg-neutral-800 rounded-2xl px-3 py-2.5 mb-3">
               <UserAvatar src={user?.profileImage} name={user?.name || 'Admin'} size="md" />
               <div className="min-w-0">
-                <p className="text-sm font-black text-slate-900 dark:text-white leading-none">Admin</p>
-                <p className="text-[10px] text-slate-400 dark:text-neutral-600 mt-0.5 truncate">admin@tryspeekly.com</p>
+                <div className="flex items-center gap-1.5">
+                  <p className="text-sm font-black text-slate-900 dark:text-white leading-none truncate">{user?.name || 'Admin'}</p>
+                  <span className="shrink-0 text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-md bg-violet-100 text-violet-700 dark:bg-violet-950/50 dark:text-violet-300">Admin</span>
+                </div>
+                <p className="text-[10px] text-slate-400 dark:text-neutral-600 mt-1 truncate">{user?.email || 'admin@tryspeekly.com'}</p>
               </div>
             </div>
             <button
@@ -765,8 +768,14 @@ export default function AdminPage() {
               </AnimatePresence>
             </div>
 
-            {/* Avatar */}
-            <UserAvatar src={user?.profileImage} name={user?.name || 'Admin'} size="sm" />
+            {/* Profile: name + role tag + avatar */}
+            <div className="flex items-center gap-2.5">
+              <div className="hidden sm:flex flex-col items-end leading-tight">
+                <span className="text-sm font-bold text-slate-900 dark:text-white truncate max-w-[160px]">{user?.name || 'Admin'}</span>
+                <span className="mt-0.5 text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-md bg-violet-100 text-violet-700 dark:bg-violet-950/50 dark:text-violet-300">Admin</span>
+              </div>
+              <UserAvatar src={user?.profileImage} name={user?.name || 'Admin'} size="sm" />
+            </div>
           </div>
         </header>
 
