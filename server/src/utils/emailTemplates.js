@@ -23,11 +23,8 @@ const wrap = (content, preheader = '') => `<!DOCTYPE html>
             <td style="background:linear-gradient(135deg,#6d28d9 0%,#7c3aed 50%,#4c1d95 100%);border-radius:20px 20px 0 0;padding:32px 40px;text-align:center">
               <table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 auto">
                 <tr>
-                  <td style="background:rgba(255,255,255,0.18);border-radius:12px;width:42px;height:42px;text-align:center;vertical-align:middle">
-                    <span style="font-size:22px;font-weight:900;color:#fff;line-height:42px;display:block;font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif">T</span>
-                  </td>
-                  <td style="padding-left:12px;vertical-align:middle">
-                    <span style="font-size:22px;font-weight:900;color:#fff;letter-spacing:-0.5px;display:block">TrySpeekly</span>
+                  <td style="vertical-align:middle">
+                    <span style="font-size:24px;font-weight:900;color:#fff;letter-spacing:-0.5px;display:block">TrySpeekly</span>
                   </td>
                 </tr>
               </table>
