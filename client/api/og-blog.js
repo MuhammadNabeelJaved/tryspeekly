@@ -96,6 +96,9 @@ export default async function handler(req, res) {
     html = setMeta(html, 'name', 'twitter:title', title)
     html = setMeta(html, 'name', 'twitter:description', desc)
     html = setMeta(html, 'name', 'twitter:image', image)
+    // Drop the homepage's fixed 1200x630 hints — blog cover dimensions are unknown,
+    // so let crawlers read the real image size instead of a wrong claim.
+    html = html.replace(/\s*<meta property="og:image:(?:width|height)"[^>]*>/gi, '')
   }
 
   res.setHeader('Content-Type', 'text/html; charset=utf-8')
