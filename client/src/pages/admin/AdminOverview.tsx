@@ -159,7 +159,7 @@ export default function AdminOverview({ onNavigate }: { onNavigate: (v: AdminVie
           )}
           <div>
             <h2 className="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2 flex-wrap">
-              <span>{getGreeting(now.getHours())}, {user?.name?.split(' ')[0] || 'Admin'} 👋</span>
+              <span>{getGreeting(now.getHours())}, {user?.name || 'Admin'} 👋</span>
               <span className="text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-md bg-violet-100 text-violet-700 dark:bg-violet-950/50 dark:text-violet-300">Admin</span>
             </h2>
             <p className="text-sm text-slate-400 dark:text-neutral-500 mt-0.5">
