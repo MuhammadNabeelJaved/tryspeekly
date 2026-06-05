@@ -6,6 +6,7 @@ import Enrollment from '../models/enrollment.model.js'
 import User from '../models/user.model.js'
 import { createAndEmitNotification } from '../utils/notify.js'
 import { sendEmail } from '../utils/email.js'
+import { uploadReviewAuthorImage } from '../utils/cloudinary.js'
 import Course from '../models/course.model.js'
 import {
   BadRequestError,
@@ -37,6 +38,29 @@ export const statusSchema = Joi.object({
   adminNote: Joi.string().trim().max(500).allow(''),
 })
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+/**
+ * Merge a review's custom display overrides (authorName / authorImage) into its
+ * populated `author` object so consumers render the override transparently.
+ * Returns a plain object. Accepts a Mongoose doc or a lean object.
+ */
+function withAuthorOverride(reviewDoc) {
+  const r = typeof reviewDoc?.toObject === 'function' ? reviewDoc.toObject() : reviewDoc
+  // authorRole is always set on admin-created reviews, so it marks a custom review.
+  if (r && (r.authorName || r.authorImage || r.authorRole)) {
+    r.author = {
+      ...(r.author || {}),
+      ...(r.authorName ? { name: r.authorName } : {}),
+      ...(r.authorRole ? { role: r.authorRole } : {}),
+      // When no custom image was set, drop the admin's real avatar so the client
+      // renders a name-based initial fallback instead.
+      profileImage: r.authorImage || undefined,
+    }
+  }
+  return r
+}
+
 // ─── Public ────────────────────────────────────────────────────────────────────
 
 export const getPublicReviews = asyncHandler(async (req, res) => {
@@ -44,7 +68,7 @@ export const getPublicReviews = asyncHandler(async (req, res) => {
     .populate('author', 'name profileImage role')
     .sort({ updatedAt: -1 })
 
-  res.json({ success: true, data: reviews })
+  res.json({ success: true, data: reviews.map(withAuthorOverride) })
 })
 
 export const getCourseReviews = asyncHandler(async (req, res) => {
@@ -64,7 +88,7 @@ export const getCourseReviews = asyncHandler(async (req, res) => {
 
   res.json({
     success: true,
-    data: reviews,
+    data: reviews.map(withAuthorOverride),
     pagination: {
       page: Number(page),
       limit: Number(limit),
@@ -235,7 +259,7 @@ export const getAdminReviews = asyncHandler(async (req, res) => {
 
   res.json({
     success: true,
-    data: reviews,
+    data: reviews.map(withAuthorOverride),
     pagination: {
       page: Number(page),
       limit: Number(limit),
@@ -315,6 +339,12 @@ const adminCreateSchema = Joi.object({
   content: Joi.string().trim().min(10).max(1000).required(),
   status: Joi.string().valid('pending', 'approved').default('approved'),
   featuredOnHome: Joi.boolean().default(false),
+  // Optional display overrides. authorImage may be a pasted URL; an uploaded
+  // file (req.file) takes priority over it when both are provided.
+  authorName: Joi.string().trim().max(100).allow('').optional(),
+  authorImage: Joi.string().trim().uri().allow('').optional(),
+  // Display role for the review; defaults to student.
+  authorRole: Joi.string().valid('student', 'teacher', 'admin').default('student'),
 })
 
 // ─── Team member: get all approved team reviews ───────────────────────────────
@@ -335,7 +365,7 @@ export const getTeamReviews = asyncHandler(async (req, res) => {
 
   res.json({
     success: true,
-    data: reviews,
+    data: reviews.map(withAuthorOverride),
     pagination: { page: Number(page), limit: Number(limit), total, totalPages: Math.ceil(total / Number(limit)) },
   })
 })
@@ -344,7 +374,14 @@ export const adminCreateReview = asyncHandler(async (req, res) => {
   const { error, value } = adminCreateSchema.validate(req.body)
   if (error) throw new BadRequestError(error.details[0].message)
 
-  const { type, courseId, rating, content, status, featuredOnHome } = value
+  const { type, courseId, rating, content, status, featuredOnHome, authorName, authorImage, authorRole } = value
+
+  // Resolve the optional custom avatar: an uploaded file wins over a pasted URL.
+  let resolvedImage = authorImage?.trim() || undefined
+  if (req.file) {
+    const uploaded = await uploadReviewAuthorImage(req.file.buffer)
+    resolvedImage = uploaded.secure_url
+  }
 
   let review
   try {
@@ -356,6 +393,9 @@ export const adminCreateReview = asyncHandler(async (req, res) => {
       content,
       status,
       featuredOnHome: status === 'approved' ? featuredOnHome : false,
+      authorName: authorName?.trim() || undefined,
+      authorImage: resolvedImage,
+      authorRole,
     })
   } catch (err) {
     if (err.code === 11000) throw new ConflictError('A review from this account for this target already exists')
@@ -365,5 +405,5 @@ export const adminCreateReview = asyncHandler(async (req, res) => {
   await review.populate('author', 'name profileImage role email')
   if (type === 'course') await review.populate('course', 'title')
 
-  res.status(201).json({ success: true, message: 'Review created', data: review })
+  res.status(201).json({ success: true, message: 'Review created', data: withAuthorOverride(review) })
 })

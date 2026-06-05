@@ -60,6 +60,23 @@ const reviewSchema = new Schema(
       type: String,
       trim: true,
     },
+    // Optional display overrides for admin-created reviews. When set, these take
+    // precedence over the populated author's name / profileImage when rendering.
+    authorName: {
+      type: String,
+      trim: true,
+      maxlength: [100, 'Author name cannot exceed 100 characters'],
+    },
+    authorImage: {
+      type: String,
+      trim: true,
+    },
+    // Display role for admin-created reviews (student / teacher / admin).
+    // Only set on admin-created reviews; real reviews derive role from the user.
+    authorRole: {
+      type: String,
+      enum: ['student', 'teacher', 'admin'],
+    },
     isDeleted: {
       type: Boolean,
       default: false,

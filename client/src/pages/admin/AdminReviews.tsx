@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import ConfirmModal from '@/components/ConfirmModal'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -9,10 +9,12 @@ import {
   MagnifyingGlass,
   ChatText,
   Plus,
+  UploadSimple,
 } from '@phosphor-icons/react'
 import toast from 'react-hot-toast'
 import { reviewsService } from '@/services/reviews.service'
 import { coursesService } from '@/services/courses.service'
+import { avatarGradient } from '@/utils/avatarColor'
 import type { Review } from '@/types/api'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -318,6 +320,41 @@ export default function AdminReviews() {
   const [createFeatured, setCreateFeatured] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
 
+  // Optional custom author (role + name + profile picture) overrides
+  const [createAuthorRole, setCreateAuthorRole] = useState<'student' | 'teacher' | 'admin'>('student')
+  const [createAuthorName, setCreateAuthorName] = useState('')
+  const [createAuthorImageUrl, setCreateAuthorImageUrl] = useState('')
+  const [createAuthorImageFile, setCreateAuthorImageFile] = useState<File | null>(null)
+  const [createAuthorFilePreview, setCreateAuthorFilePreview] = useState('')
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const authorPreview = createAuthorFilePreview || createAuthorImageUrl.trim()
+
+  function handleAuthorFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.size > 5 * 1024 * 1024) { toast.error('Image must be under 5MB'); return }
+    if (createAuthorFilePreview) URL.revokeObjectURL(createAuthorFilePreview)
+    setCreateAuthorImageFile(file)
+    setCreateAuthorImageUrl('')
+    setCreateAuthorFilePreview(URL.createObjectURL(file))
+  }
+
+  function handleAuthorUrlChange(url: string) {
+    if (createAuthorFilePreview) URL.revokeObjectURL(createAuthorFilePreview)
+    setCreateAuthorFilePreview('')
+    setCreateAuthorImageFile(null)
+    setCreateAuthorImageUrl(url)
+  }
+
+  function clearAuthorImage() {
+    if (createAuthorFilePreview) URL.revokeObjectURL(createAuthorFilePreview)
+    setCreateAuthorFilePreview('')
+    setCreateAuthorImageFile(null)
+    setCreateAuthorImageUrl('')
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
   const totalPages = Math.max(1, Math.ceil(total / LIMIT))
 
   // ─── Fetch ───────────────────────────────────────────────────────────────────
@@ -373,6 +410,10 @@ export default function AdminReviews() {
         content: createContent.trim(),
         status: createStatus,
         featuredOnHome: createStatus === 'approved' ? createFeatured : false,
+        authorName: createAuthorName.trim() || undefined,
+        authorImage: createAuthorImageUrl.trim() || undefined,
+        authorImageFile: createAuthorImageFile,
+        authorRole: createAuthorRole,
       })
       toast.success('Review created')
       setIsCreateOpen(false)
@@ -382,6 +423,9 @@ export default function AdminReviews() {
       setCreateContent('')
       setCreateStatus('approved')
       setCreateFeatured(false)
+      setCreateAuthorRole('student')
+      setCreateAuthorName('')
+      clearAuthorImage()
       fetchReviews()
     } catch {
       toast.error('Failed to create review')
@@ -629,17 +673,22 @@ export default function AdminReviews() {
                       {/* Author */}
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2.5">
-                          <div className={AUTHOR_AVATAR_CLS}>
-                            {review.author?.profileImage ? (
+                          {review.author?.profileImage ? (
+                            <div className={AUTHOR_AVATAR_CLS}>
                               <img
                                 src={review.author.profileImage}
                                 alt={review.author.name}
                                 className="w-full h-full object-cover rounded-lg"
                               />
-                            ) : (
-                              authorInitials(review.author?.name ?? 'Deleted User')
-                            )}
-                          </div>
+                            </div>
+                          ) : (
+                            <div
+                              className={AUTHOR_AVATAR_CLS}
+                              style={{ background: avatarGradient(review.author?.name ?? 'Deleted User') }}
+                            >
+                              {authorInitials(review.author?.name ?? 'Deleted User')}
+                            </div>
+                          )}
                           <div>
                             <p className="font-semibold text-slate-900 dark:text-white text-xs">
                               {review.author?.name ?? 'Deleted User'}
@@ -923,9 +972,9 @@ export default function AdminReviews() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white dark:bg-neutral-900 w-full max-w-lg rounded-2xl shadow-2xl border border-slate-100 dark:border-neutral-800 overflow-hidden"
+              className="bg-white dark:bg-neutral-900 w-full max-w-lg rounded-2xl shadow-2xl border border-slate-100 dark:border-neutral-800 overflow-hidden flex flex-col max-h-[90vh]"
             >
-              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-neutral-800">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-neutral-800 shrink-0">
                 <h3 className="text-base font-bold text-slate-900 dark:text-white">Add Review</h3>
                 <button
                   onClick={() => setIsCreateOpen(false)}
@@ -935,7 +984,7 @@ export default function AdminReviews() {
                 </button>
               </div>
 
-              <form className="p-6 space-y-4" onSubmit={handleAdminCreate}>
+              <form className="p-6 space-y-4 overflow-y-auto min-h-0 flex-1" onSubmit={handleAdminCreate}>
                 {/* Type */}
                 <div>
                   <label className="block text-xs font-semibold text-slate-500 dark:text-neutral-400 uppercase tracking-wide mb-2">
@@ -1017,6 +1066,122 @@ export default function AdminReviews() {
                     className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-sm text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors resize-none"
                   />
                   <p className="text-[10px] text-slate-400 dark:text-neutral-500 text-right mt-1">{createContent.length}/1000</p>
+                </div>
+
+                {/* Reviewer Role */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 dark:text-neutral-400 uppercase tracking-wide mb-2">
+                    Reviewer Role
+                  </label>
+                  <div className="flex gap-2">
+                    {(['student', 'teacher', 'admin'] as const).map(rl => (
+                      <button
+                        key={rl}
+                        type="button"
+                        onClick={() => setCreateAuthorRole(rl)}
+                        className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-all capitalize ${
+                          createAuthorRole === rl
+                            ? 'bg-violet-600 text-white shadow-sm'
+                            : 'bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-400'
+                        }`}
+                      >
+                        {rl}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-[10px] text-slate-400 dark:text-neutral-500 mt-1.5">
+                    Shown as the reviewer's role on the review card.
+                  </p>
+                </div>
+
+                {/* Custom Author (optional) */}
+                <div className="rounded-xl border border-dashed border-slate-200 dark:border-neutral-700 p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-semibold text-slate-500 dark:text-neutral-400 uppercase tracking-wide">
+                      Custom Author{' '}
+                      <span className="text-slate-300 dark:text-neutral-600 normal-case font-medium">(optional)</span>
+                    </label>
+                    {(authorPreview || createAuthorName) && (
+                      <button
+                        type="button"
+                        onClick={() => { setCreateAuthorName(''); clearAuthorImage() }}
+                        className="text-[10px] font-semibold text-slate-400 hover:text-red-500 transition-colors"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Display name */}
+                  <input
+                    value={createAuthorName}
+                    onChange={e => setCreateAuthorName(e.target.value)}
+                    placeholder="Display name (defaults to your account name)"
+                    maxLength={100}
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-sm text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors"
+                  />
+
+                  {/* Profile picture: upload or URL */}
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={
+                        'w-12 h-12 rounded-xl overflow-hidden flex items-center justify-center shrink-0 ' +
+                        'border border-slate-200 dark:border-neutral-700 text-sm font-bold ' +
+                        (!authorPreview && createAuthorName.trim()
+                          ? 'text-white'
+                          : 'bg-slate-100 dark:bg-neutral-800 text-slate-400 dark:text-neutral-500')
+                      }
+                      style={
+                        !authorPreview && createAuthorName.trim()
+                          ? { background: avatarGradient(createAuthorName) }
+                          : undefined
+                      }
+                    >
+                      {authorPreview ? (
+                        <img src={authorPreview} alt="Author preview" className="w-full h-full object-cover" />
+                      ) : createAuthorName.trim() ? (
+                        authorInitials(createAuthorName)
+                      ) : (
+                        <UploadSimple size={18} />
+                      )}
+                    </div>
+                    <div className="flex-1 space-y-2">
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/jpg,image/webp"
+                        ref={fileInputRef}
+                        onChange={handleAuthorFileChange}
+                        className="hidden"
+                      />
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-300 text-xs font-semibold hover:bg-slate-200 dark:hover:bg-neutral-700 transition-colors"
+                        >
+                          <UploadSimple size={13} weight="bold" /> Upload
+                        </button>
+                        {authorPreview && (
+                          <button
+                            type="button"
+                            onClick={clearAuthorImage}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+                          >
+                            <X size={13} weight="bold" /> Remove
+                          </button>
+                        )}
+                      </div>
+                      <input
+                        value={createAuthorImageUrl}
+                        onChange={e => handleAuthorUrlChange(e.target.value)}
+                        placeholder="…or paste an image URL"
+                        className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-xs text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors"
+                      />
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-slate-400 dark:text-neutral-500">
+                    Leave blank to use your own name and avatar. An uploaded file takes priority over a URL.
+                  </p>
                 </div>
 
                 {/* Status */}

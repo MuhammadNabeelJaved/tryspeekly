@@ -18,6 +18,7 @@ export const FOLDERS = {
   lessonVideo:          'english-platform/lessons/video',
   siteBanner:           'english-platform/site/banners',
   siteLogo:             'english-platform/site/logo',
+  reviewAuthor:         'english-platform/reviews/authors',
 }
 
 // ─── Core upload helper (multer memoryStorage buffer → Cloudinary) ────────────
@@ -41,6 +42,20 @@ export const uploadUserAvatar = (buffer, userId) =>
     folder: FOLDERS.userAvatar,
     public_id: `user_${userId}`,
     overwrite: true,
+    resource_type: 'image',
+    transformation: [
+      { width: 400, height: 400, crop: 'fill', gravity: 'face' },
+      { quality: 'auto', fetch_format: 'auto' },
+    ],
+  })
+
+/**
+ * Upload a custom author avatar for an admin-created review.
+ * Cloudinary auto-generates the public_id so each upload is a distinct asset.
+ */
+export const uploadReviewAuthorImage = (buffer) =>
+  uploadBuffer(buffer, {
+    folder: FOLDERS.reviewAuthor,
     resource_type: 'image',
     transformation: [
       { width: 400, height: 400, crop: 'fill', gravity: 'face' },

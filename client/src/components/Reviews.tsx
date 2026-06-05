@@ -64,6 +64,7 @@ function ReviewDetailModal({ review, onClose }: { review: Review; onClose: () =>
                 src={review.author?.profileImage}
                 name={review.author?.name}
                 size="sm"
+                colorFromName
               />
               <div>
                 <h4 className="font-bold text-gray-900 dark:text-white text-sm">
@@ -322,6 +323,7 @@ export default function Reviews() {
                       src={review.author?.profileImage}
                       name={review.author?.name}
                       size="sm"
+                      colorFromName
                       className="grayscale hover:grayscale-0 transition-all duration-300"
                     />
                     <div>

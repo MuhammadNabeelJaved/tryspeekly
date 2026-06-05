@@ -94,7 +94,25 @@ export const reviewsService = {
   },
 
   async adminCreateReview(data: AdminCreateReviewDto): Promise<ReviewSingleResponse> {
-    const response = await axiosClient.post<ReviewSingleResponse>('/reviews/admin', data);
+    const form = new FormData();
+    form.append('type', data.type);
+    if (data.courseId) form.append('courseId', data.courseId);
+    form.append('rating', String(data.rating));
+    form.append('content', data.content);
+    if (data.status) form.append('status', data.status);
+    if (data.featuredOnHome !== undefined) {
+      form.append('featuredOnHome', String(data.featuredOnHome));
+    }
+    if (data.authorName) form.append('authorName', data.authorName);
+    if (data.authorRole) form.append('authorRole', data.authorRole);
+    // File upload wins on the server; only send a URL when no file is attached.
+    if (data.authorImageFile) {
+      form.append('image', data.authorImageFile);
+    } else if (data.authorImage) {
+      form.append('authorImage', data.authorImage);
+    }
+
+    const response = await axiosClient.post<ReviewSingleResponse>('/reviews/admin', form);
     return response.data;
   },
 

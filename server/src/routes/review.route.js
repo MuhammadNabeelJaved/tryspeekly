@@ -1,6 +1,7 @@
 import express from 'express'
 
 import { authenticate, authorizeTeamPage } from '../middlewares/auth.js'
+import { uploadImageFile, handleMulterError } from '../middlewares/multer.js'
 import { logActivity } from '../middlewares/activityLogger.js'
 import {
   getPublicReviews,
@@ -26,7 +27,7 @@ router.get('/course/:courseId', getCourseReviews)
 
 // ─── Admin (before /:id to avoid shadowing) ──────────────────────────────────
 router.get('/admin', authenticate, authorizeTeamPage('reviews'), getAdminReviews)
-router.post('/admin', authenticate, authorizeTeamPage('reviews'), logActivity('create', 'review', (req, body) => ({ resourceId: body?.data?._id, details: 'Created review' })), adminCreateReview)
+router.post('/admin', authenticate, authorizeTeamPage('reviews'), uploadImageFile, handleMulterError, logActivity('create', 'review', (req, body) => ({ resourceId: body?.data?._id, details: 'Created review' })), adminCreateReview)
 router.patch('/admin/:id/status', authenticate, authorizeTeamPage('reviews'), logActivity('update', 'review', (req) => ({ resourceId: req.params.id, details: `Status → ${req.body.status ?? ''}` })), updateReviewStatus)
 router.patch('/admin/:id/feature', authenticate, authorizeTeamPage('reviews'), logActivity('update', 'review', (req) => ({ resourceId: req.params.id, details: 'Toggled featured on home' })), toggleFeatured)
 router.delete('/admin/:id', authenticate, authorizeTeamPage('reviews'), logActivity('delete', 'review', (req) => ({ resourceId: req.params.id, details: 'Deleted review' })), adminDeleteReview)

@@ -631,6 +631,9 @@ export interface Review {
   status: 'pending' | 'approved' | 'rejected';
   featuredOnHome: boolean;
   adminNote?: string;
+  /** Admin-set display overrides (merged into `author` by the API when present). */
+  authorName?: string;
+  authorImage?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -659,6 +662,14 @@ export interface AdminCreateReviewDto {
   content: string;
   status?: 'pending' | 'approved';
   featuredOnHome?: boolean;
+  /** Optional custom display name shown instead of the admin's own name. */
+  authorName?: string;
+  /** Optional avatar URL (pasted). Ignored if authorImageFile is provided. */
+  authorImage?: string;
+  /** Optional avatar file upload. Takes priority over authorImage. */
+  authorImageFile?: File | null;
+  /** Display role for the review; defaults to student. */
+  authorRole?: 'student' | 'teacher' | 'admin';
 }
 
 export type ReviewListResponse = ApiPaginatedResponse<Review>;
