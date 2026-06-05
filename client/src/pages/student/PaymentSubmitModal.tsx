@@ -6,7 +6,9 @@ import {
   BookOpen,
 } from '@phosphor-icons/react'
 import { paymentsService } from '@/services/payments.service'
+import { siteSettingsService } from '@/services/site-settings.service'
 import type { PaymentMethod } from '@/types/api'
+import type { PaymentMethodAdmin } from '@/pages/admin/adminData'
 import { config } from '@/config/env'
 
 // ─── Logos ─────────────────────────────────────────────────────────────────────
@@ -21,7 +23,7 @@ const LOGOS: Record<string, string> = {
   credit_card: 'https://www.citypng.com/public/uploads/preview/white-credit-card-icon-hd-png-316246372138kgy50h76u.png',
 }
 
-function MethodLogo({ logoKey, fallbackBg, name }: { logoKey: string; fallbackBg: string; name: string }) {
+function MethodLogo({ logoKey, fallbackBg, name, logoUrl }: { logoKey: string; fallbackBg: string; name: string; logoUrl?: string }) {
   if (logoKey === 'bank-local' || logoKey === 'bank-intl') {
     const intl = logoKey === 'bank-intl'
     return (
@@ -31,7 +33,8 @@ function MethodLogo({ logoKey, fallbackBg, name }: { logoKey: string; fallbackBg
       </div>
     )
   }
-  const src = LOGOS[logoKey as keyof typeof LOGOS] ?? ''
+  // Admin "custom" logo (or any method with an explicit URL) wins over built-ins.
+  const src = (logoKey === 'custom' ? logoUrl : LOGOS[logoKey as keyof typeof LOGOS]) || logoUrl || ''
   return (
     <div className="w-full h-full rounded-xl overflow-hidden flex items-center justify-center" style={{ backgroundColor: fallbackBg }}>
       <img src={src} alt={name} className="w-full h-full object-cover" loading="lazy"
@@ -49,12 +52,20 @@ type MethodInfo = {
   description: string
   features: string[]
   logoKey: string
+  logoUrl?: string
+  tab?: 'local' | 'international'
   fallbackBg: string
   accentColor: string
   recommended?: boolean
   processingTime: string
   whatsappLink: string
   receiptEmail: string
+  // Account details + resolved API method — populated for admin-configured methods.
+  accountTitle?: string
+  accountIban?: string
+  bankName?: string
+  reference?: string
+  apiMethod?: PaymentMethod
 }
 
 const WHATSAPP = `https://wa.me/${config.contactWhatsapp}`
@@ -138,8 +149,6 @@ const INTL_METHODS: MethodInfo[] = [
   },
 ]
 
-const ALL_METHODS = [...LOCAL_METHODS, ...INTL_METHODS]
-
 const METHOD_TO_API: Record<string, PaymentMethod> = {
   'easypaisa':     'easypaisa',
   'jazzcash':      'jazzcash',
@@ -151,6 +160,45 @@ const METHOD_TO_API: Record<string, PaymentMethod> = {
   'nayapay-intl':  'nayapay',
   'bank-intl':     'bank_international',
   'paypal':        'bank_international',
+}
+
+// Resolve an admin-configured method to a backend-accepted payment method enum.
+function methodToApi(m: { logoKey: string; tab: string }): PaymentMethod {
+  switch (m.logoKey) {
+    case 'easypaisa': return 'easypaisa'
+    case 'jazzcash':  return 'jazzcash'
+    case 'sadapay':   return 'sadapay'
+    case 'nayapay':   return 'nayapay'
+    case 'bank-intl': return 'bank_international'
+    case 'nsave':
+    case 'bank-local': return 'bank_local'
+    default: return m.tab === 'international' ? 'bank_international' : 'bank_local'
+  }
+}
+
+// Map an admin payments-setup method into the modal's MethodInfo shape.
+function adminToMethodInfo(m: PaymentMethodAdmin): MethodInfo {
+  return {
+    id: m.id,
+    name: m.name,
+    tagline: m.tagline,
+    description: m.description,
+    features: (m.features ?? []).filter(Boolean),
+    logoKey: m.logoKey,
+    logoUrl: m.logoUrl,
+    tab: m.tab,
+    fallbackBg: m.fallbackBg,
+    accentColor: m.accentColor,
+    recommended: m.recommended,
+    processingTime: m.processingTime,
+    whatsappLink: m.whatsappLink || WHATSAPP,
+    receiptEmail: m.receiptEmail || RECEIPT_EMAIL,
+    accountTitle: m.accountTitle,
+    accountIban: m.accountIban,
+    bankName: m.bankName,
+    reference: m.reference,
+    apiMethod: methodToApi(m),
+  }
 }
 
 // ─── Component ─────────────────────────────────────────────────────────────────
@@ -183,6 +231,7 @@ export default function PaymentSubmitModal({
     : ''
 
   const [activeTab, setActiveTab] = useState<'local' | 'international'>('local')
+  const [configMethods, setConfigMethods] = useState<MethodInfo[] | null>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [transactionId, setTransactionId] = useState('')
   const [amount, setAmount] = useState('')
@@ -201,10 +250,32 @@ export default function PaymentSubmitModal({
     }
   }, [isOpen, offerDiscountedPrice])
 
+  // Load admin-configured payment methods whenever the modal opens.
+  useEffect(() => {
+    if (!isOpen) return
+    let cancelled = false
+    siteSettingsService.get()
+      .then(settings => {
+        const cfg = settings.paymentsSetup as { methods?: PaymentMethodAdmin[] } | undefined
+        if (!cancelled && cfg?.methods?.length) {
+          setConfigMethods(cfg.methods.map(adminToMethodInfo))
+        }
+      })
+      .catch(() => { /* fall back to defaults */ })
+    return () => { cancelled = true }
+  }, [isOpen])
+
   if (!isOpen) return null
 
-  const selectedMethod = ALL_METHODS.find(m => m.id === selectedId) ?? null
-  const methodsToDisplay = activeTab === 'local' ? LOCAL_METHODS : INTL_METHODS
+  // When admin has configured methods, show EXACTLY those (a deleted method must
+  // never reappear). Only fall back to built-in defaults when none are configured.
+  const hasConfig = !!configMethods?.length
+  const localList = hasConfig ? configMethods!.filter(m => m.tab === 'local') : LOCAL_METHODS
+  const intlList = hasConfig ? configMethods!.filter(m => m.tab === 'international') : INTL_METHODS
+  const allMethods = [...localList, ...intlList]
+
+  const selectedMethod = allMethods.find(m => m.id === selectedId) ?? null
+  const methodsToDisplay = activeTab === 'local' ? localList : intlList
 
   const reset = () => {
     setActiveTab('local')
@@ -229,7 +300,7 @@ export default function PaymentSubmitModal({
     try {
       await paymentsService.createPayment({
         courseId, teacherId,
-        method: METHOD_TO_API[selectedId] ?? 'bank_local',
+        method: selectedMethod?.apiMethod ?? METHOD_TO_API[selectedId] ?? 'bank_local',
         transactionId: transactionId || undefined,
         amount: Number(amount),
         currency,
@@ -366,6 +437,14 @@ export default function PaymentSubmitModal({
                   </div>
 
                   {/* Method cards */}
+                  {methodsToDisplay.length === 0 && (
+                    <div className="flex flex-col items-center justify-center py-10 text-center bg-slate-50 dark:bg-neutral-800/40 rounded-2xl border border-dashed border-slate-200 dark:border-neutral-700">
+                      <Bank size={30} className="text-slate-300 dark:text-neutral-700 mb-2" />
+                      <p className="text-sm font-semibold text-slate-500 dark:text-neutral-400">
+                        No {activeTab === 'local' ? 'local' : 'international'} payment methods available
+                      </p>
+                    </div>
+                  )}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {methodsToDisplay.map((method, i) => (
                       <motion.div
@@ -389,7 +468,7 @@ export default function PaymentSubmitModal({
                         <div className="p-4 relative">
                           <div className="flex items-center gap-3 mb-3">
                             <div className="w-11 h-11 rounded-xl overflow-hidden flex-shrink-0 shadow-md">
-                              <MethodLogo logoKey={method.logoKey} fallbackBg={method.fallbackBg} name={method.name} />
+                              <MethodLogo logoKey={method.logoKey} fallbackBg={method.fallbackBg} name={method.name} logoUrl={method.logoUrl} />
                             </div>
                             <div className={method.recommended ? 'pr-20' : ''}>
                               <h4 className="text-sm font-bold text-slate-900 dark:text-white leading-tight">{method.name}</h4>
@@ -440,7 +519,7 @@ export default function PaymentSubmitModal({
                   {/* Method header */}
                   <div className="flex items-center gap-3 mb-5">
                     <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 shadow-md">
-                      <MethodLogo logoKey={selectedMethod.logoKey} fallbackBg={selectedMethod.fallbackBg} name={selectedMethod.name} />
+                      <MethodLogo logoKey={selectedMethod.logoKey} fallbackBg={selectedMethod.fallbackBg} name={selectedMethod.name} logoUrl={selectedMethod.logoUrl} />
                     </div>
                     <div>
                       <p className="text-[10px] font-bold uppercase tracking-widest text-violet-600 dark:text-violet-400">Payment Details</p>
@@ -484,10 +563,10 @@ export default function PaymentSubmitModal({
                   <p className="text-sm text-slate-600 dark:text-neutral-400 mb-4">{selectedMethod.description}</p>
                   <div className="space-y-2.5 mb-4">
                     {[
-                      { label: 'Account Title', value: 'TrySpeekly' },
-                      { label: 'Account / IBAN', value: 'PK36 MEZN 0001 2345 0100 6543' },
-                      { label: 'Bank Name', value: 'Meezan Bank Ltd.' },
-                      { label: 'Reference', value: `Your Full Name / Course ID: ${courseId.slice(-8)}` },
+                      { label: 'Account Title', value: selectedMethod.accountTitle || 'TrySpeekly' },
+                      { label: 'Account / IBAN', value: selectedMethod.accountIban || 'PK36 MEZN 0001 2345 0100 6543' },
+                      { label: 'Bank Name', value: selectedMethod.bankName || 'Meezan Bank Ltd.' },
+                      { label: 'Reference', value: `${selectedMethod.reference || 'Your Full Name'} / Course ID: ${courseId.slice(-8)}` },
                     ].map(({ label, value }) => (
                       <div key={label} className="bg-slate-50 dark:bg-neutral-800/60 rounded-xl px-4 py-2.5">
                         <p className="text-[10px] font-semibold text-slate-400 dark:text-neutral-500 uppercase tracking-wide mb-0.5">{label}</p>

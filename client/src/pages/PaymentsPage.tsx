@@ -83,7 +83,8 @@ type PaymentMethod = {
   tagline: string
   description: string
   features: string[]
-  logoKey: keyof typeof LOGOS | 'bank-local' | 'bank-intl'
+  logoKey: keyof typeof LOGOS | 'bank-local' | 'bank-intl' | 'custom' | string
+  logoUrl?: string
   fallbackBg: string
   accentColor: string
   recommended?: boolean
@@ -316,7 +317,11 @@ const FAQS = [
 function MethodLogo({ method }: { method: PaymentMethod }) {
   if (method.logoKey === 'bank-local') return <BankTransferIcon />
   if (method.logoKey === 'bank-intl') return <BankTransferIcon international />
-  const src = LOGOS[method.logoKey as keyof typeof LOGOS]
+  // Custom (admin-uploaded) logo URL wins; otherwise use a built-in logo, and
+  // fall back to any provided URL before showing the generic bank icon.
+  const src =
+    (method.logoKey === 'custom' ? method.logoUrl : LOGOS[method.logoKey as keyof typeof LOGOS]) ||
+    method.logoUrl
   if (!src) return <BankTransferIcon />
   return (
     <PaymentLogo
@@ -349,12 +354,16 @@ export default function PaymentsPage() {
     load()
   }, [])
 
+  // When the admin has saved a payment setup, show EXACTLY those methods (so a
+  // deleted method never reappears). Only fall back to built-in defaults when no
+  // configuration exists at all.
+  const hasConfig = !!paymentConfig?.methods?.length
   const configLocal = paymentConfig?.methods.filter(m => m.tab === 'local') ?? []
   const configIntl = paymentConfig?.methods.filter(m => m.tab === 'international') ?? []
-  const localMethods: PaymentMethod[] = configLocal.length
+  const localMethods: PaymentMethod[] = hasConfig
     ? configLocal.map(m => ({ ...m, logoKey: m.logoKey as PaymentMethod['logoKey'] }))
     : LOCAL_METHODS
-  const intlMethods: PaymentMethod[] = configIntl.length
+  const intlMethods: PaymentMethod[] = hasConfig
     ? configIntl.map(m => ({ ...m, logoKey: m.logoKey as PaymentMethod['logoKey'] }))
     : INTL_METHODS
   const methods = activeTab === 'local' ? localMethods : intlMethods
@@ -474,6 +483,17 @@ export default function PaymentsPage() {
 
               {/* ── LEFT: Methods grid ── */}
               <div className={`w-full transition-all duration-300 ${selected ? 'lg:w-[58%]' : 'lg:w-full'}`}>
+                {methods.length === 0 && (
+                  <div className="flex flex-col items-center justify-center py-16 text-center bg-white dark:bg-neutral-900 rounded-[24px] border border-dashed border-slate-200 dark:border-neutral-800">
+                    <CreditCard size={36} className="text-slate-300 dark:text-neutral-700 mb-3" />
+                    <p className="text-sm font-semibold text-slate-500 dark:text-neutral-400">
+                      No {activeTab === 'local' ? 'local' : 'international'} payment methods available
+                    </p>
+                    <p className="text-xs text-slate-400 dark:text-neutral-600 mt-1">
+                      Please check back soon or contact support.
+                    </p>
+                  </div>
+                )}
                 <div className={`grid gap-5 ${selected ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'}`}>
                   {methods.map((method, i) => {
                     const isSelected = selectedMethod === method.id
