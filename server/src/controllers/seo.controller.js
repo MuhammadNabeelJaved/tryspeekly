@@ -32,16 +32,16 @@ async function seedDefaults() {
 // ─── GET all pages (list) ─────────────────────────────────────────────────────
 export const getAllPages = asyncHandler(async (req, res) => {
   await seedDefaults()
-  const pages = await Seo.find().sort({ pageSlug: 1 }).select(
-    'pageSlug pageName pageUrl isPublic metaTitle metaDescription metaKeywords og twitter robots sitemap lastModified'
-  )
+  const pages = await Seo.find().sort({ pageSlug: 1 })
+    .select('pageSlug pageName pageUrl isPublic metaTitle metaDescription metaKeywords og twitter robots sitemap lastModified updatedAt updatedBy')
+    .populate('updatedBy', 'name profileImage jobTitle')
   res.json({ success: true, data: pages })
 })
 
 // ─── GET single page ──────────────────────────────────────────────────────────
 export const getPage = asyncHandler(async (req, res) => {
   const { slug } = req.params
-  let page = await Seo.findOne({ pageSlug: slug })
+  let page = await Seo.findOne({ pageSlug: slug }).populate('updatedBy', 'name profileImage jobTitle')
   if (!page) {
     const def = DEFAULT_PAGES.find(p => p.pageSlug === slug)
     if (!def) throw new NotFoundError('SEO page not found')
@@ -61,11 +61,13 @@ export const upsertPage = asyncHandler(async (req, res) => {
     catch { throw new BadRequestError('Schema markup must be valid JSON-LD') }
   }
 
+  // updatedBy is derived from the JWT — never trust a client-supplied value.
+  const { updatedBy: _ignore, ...safeBody } = body
   const page = await Seo.findOneAndUpdate(
     { pageSlug: slug },
-    { ...body, pageSlug: slug, lastModified: new Date() },
+    { ...safeBody, pageSlug: slug, lastModified: new Date(), updatedBy: req.user.id },
     { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true }
-  )
+  ).populate('updatedBy', 'name profileImage jobTitle')
   res.json({ success: true, message: 'SEO settings saved', data: page })
 })
 

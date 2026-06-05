@@ -24,6 +24,7 @@ export interface SeoPage {
   global: SeoGlobal
   lastModified: string
   updatedAt: string
+  updatedBy?: { _id: string; name: string; profileImage?: string; jobTitle?: string } | null
 }
 
 const BASE = '/seo'

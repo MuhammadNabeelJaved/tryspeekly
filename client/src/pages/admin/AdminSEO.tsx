@@ -304,6 +304,13 @@ export default function AdminSEO() {
                     </>
                   )}
                 </div>
+                {form.updatedBy && (
+                  <p className="text-[11px] text-slate-400 dark:text-neutral-500 mt-1">
+                    Last edited by{' '}
+                    <span className="font-semibold text-slate-500 dark:text-neutral-400">{form.updatedBy.name}</span>
+                    {form.lastModified && ` · ${new Date(form.lastModified).toLocaleString()}`}
+                  </p>
+                )}
               </div>
               <div className="flex gap-2">
                 {isDirty && (

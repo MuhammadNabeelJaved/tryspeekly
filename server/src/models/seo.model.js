@@ -74,6 +74,9 @@ const seoSchema = new Schema(
     },
 
     lastModified: { type: Date, default: Date.now },
+    // Who last saved this page's SEO — single source of truth for "last editor"
+    // (the ActivityLog keeps the full history, but only for team_member edits).
+    updatedBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },
   },
   { timestamps: true, versionKey: false }
 )
