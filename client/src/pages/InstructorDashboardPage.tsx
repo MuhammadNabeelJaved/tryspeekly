@@ -252,13 +252,7 @@ export default function InstructorDashboardPage() {
         >
           {/* Brand */}
           <div className="flex items-center gap-3 px-5 h-[64px] border-b border-slate-100 dark:border-neutral-800 flex-shrink-0">
-            <div className="w-8 h-8 bg-violet-600 rounded-lg flex items-center justify-center shadow-[0_4px_12px_rgba(124,58,237,0.35)]">
-              <svg width="16" height="16" viewBox="0 0 18 18" fill="none" aria-hidden="true">
-                <path d="M3 6l6-3 6 3-6 3-6-3z" stroke="white" strokeWidth="1.5" strokeLinejoin="round"/>
-                <path d="M3 12l6 3 6-3" stroke="white" strokeWidth="1.5" strokeLinejoin="round"/>
-                <path d="M3 9l6 3 6-3" stroke="white" strokeWidth="1.5" strokeLinejoin="round"/>
-              </svg>
-            </div>
+            <img src="/logo-mark.svg" alt="" aria-hidden="true" className="w-8 h-8" />
             <div>
               <p className="text-sm font-black text-slate-900 dark:text-white leading-none">TrySpeekly</p>
               <p className="text-[10px] text-violet-600 dark:text-violet-400 font-semibold mt-0.5">Instructor Portal</p>

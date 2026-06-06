@@ -203,10 +203,26 @@ export function drawCertificate(canvas: HTMLCanvasElement, data: CertificateData
   ctx.fillStyle = VIOLET
   roundRectPath(ctx, gx, gy, logo, logo, 9)
   ctx.fill()
+  // speech-bubble mark (matches brand icon)
+  const bw = 20
+  const bh = 13
+  const bx = gx + (logo - bw) / 2
+  const by = gy + (logo - bh) / 2 - 1.5
   ctx.fillStyle = '#ffffff'
-  ctx.textAlign = 'center'
-  ctx.font = "900 19px Georgia, serif"
-  ctx.fillText('E', gx + logo / 2, gy + logo / 2 + 7)
+  roundRectPath(ctx, bx, by, bw, bh, 4.5)
+  ctx.fill()
+  ctx.beginPath()
+  ctx.moveTo(bx + 3.5, by + bh - 1)
+  ctx.lineTo(bx + 1, by + bh + 5)
+  ctx.lineTo(bx + 10, by + bh - 1)
+  ctx.closePath()
+  ctx.fill()
+  ctx.fillStyle = VIOLET
+  for (const dx of [-3.4, 3.4]) {
+    ctx.beginPath()
+    ctx.arc(bx + bw / 2 + dx, by + bh / 2, 1.7, 0, Math.PI * 2)
+    ctx.fill()
+  }
   ctx.textAlign = 'left'
   ctx.fillStyle = DARK
   ctx.font = "800 20px 'DM Sans', sans-serif"

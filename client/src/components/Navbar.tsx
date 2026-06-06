@@ -83,30 +83,13 @@ export default function Navbar({ offers = [] }: { offers?: Offer[] }) {
             whileTap={{ scale: 0.97 }}
             transition={{ type: "spring", stiffness: 400, damping: 17 }}
           >
-            <motion.div
-              className="w-9 h-9 bg-violet-600 rounded-lg flex items-center justify-center shadow-[0_4px_12px_rgba(124,58,237,0.35)]"
-              whileHover={{
-                rotate: [0, -5, 5, 0],
-                scale: 1.1
-              }}
-              transition={{
-                rotate: { duration: 0.5, ease: "easeInOut" },
-                scale: { duration: 0.2 }
-              }}
-            >
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
-                <path d="M3 6l6-3 6 3-6 3-6-3z" stroke="white" strokeWidth="1.5" strokeLinejoin="round"/>
-                <path d="M3 12l6 3 6-3" stroke="white" strokeWidth="1.5" strokeLinejoin="round"/>
-                <path d="M3 9l6 3 6-3" stroke="white" strokeWidth="1.5" strokeLinejoin="round"/>
-              </svg>
-            </motion.div>
-            <motion.span
-              className="text-xl font-bold text-slate-900 dark:text-white tracking-tight transition-colors"
-              whileHover={{ color: "#7c3aed" }}
-              transition={{ duration: 0.2 }}
-            >
-              TrySpeekly
-            </motion.span>
+            <img
+              src="/logo.svg"
+              alt="TrySpeekly"
+              width={311}
+              height={65}
+              className="h-8 lg:h-9 w-auto"
+            />
           </MotionLink>
 
           {/* Desktop Nav */}
