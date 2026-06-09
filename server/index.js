@@ -6,6 +6,7 @@ import jwt from 'jsonwebtoken'
 import app from './app.js'
 import connectDB from './src/database/db.js'
 import { setIO, emitToUser } from './src/utils/socket.js'
+import { corsOriginCheck } from './src/utils/allowedOrigins.js'
 import Enrollment from './src/models/enrollment.model.js'
 import Message from './src/models/message.model.js'
 import TeamChat from './src/models/team-chat.model.js'
@@ -42,7 +43,7 @@ const httpServer = createServer(app)
 
 export const io = new Server(httpServer, {
   cors: {
-    origin: process.env.CLIENT_URL || /^http:\/\/localhost:\d+$/,
+    origin: corsOriginCheck,
     credentials: true,
   },
 })

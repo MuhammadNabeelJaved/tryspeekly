@@ -7,6 +7,7 @@ import cookieParser from 'cookie-parser'
 import rateLimit from 'express-rate-limit'
 import { errorHandler } from './src/utils/apiErrors.js'
 import { geoBlockMiddleware } from './src/middlewares/geo.middleware.js'
+import { corsOriginCheck } from './src/utils/allowedOrigins.js'
 
 const app = express()
 
@@ -14,11 +15,8 @@ app.use(helmet({
     crossOriginResourcePolicy: { policy: 'cross-origin' }
 }))
 
-const corsOrigin = process.env.CLIENT_URL
-    || /^http:\/\/localhost:\d+$/
-
 app.use(cors({
-    origin: corsOrigin,
+    origin: corsOriginCheck,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
