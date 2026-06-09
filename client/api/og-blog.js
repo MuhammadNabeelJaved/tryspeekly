@@ -4,7 +4,7 @@
 
 const SITE_URL = 'https://tryspeekly.com'
 const SITE_NAME = 'TrySpeekly'
-const DEFAULT_IMAGE = `${SITE_URL}/og-image.png`
+const DEFAULT_IMAGE = `${SITE_URL}/og-image.png?v=2`
 const DEFAULT_DESC =
   'Master English with expert instructors. IELTS prep, Business English, and General English courses with certificates.'
 
