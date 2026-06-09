@@ -4,6 +4,7 @@ import { ForbiddenError } from '../utils/apiErrors.js'
 import { uploadProfileImage, handleMulterError } from '../middlewares/multer.js'
 import {
     createUser,
+    adminCreateUser,
     verifyEmail,
     resendVerification,
     loginUser,
@@ -63,7 +64,9 @@ router.route('/profile/image')
 router.route('/change-password').post(authenticate, changePassword)
 
 // ─── Admin only routes ─────────────────────────────────────────────────────────
-router.route('/').get(authenticate, authorizeTeamPage('students', 'instructors'), getAllUsers)
+router.route('/')
+    .get(authenticate, authorizeTeamPage('students', 'instructors'), getAllUsers)
+    .post(authenticate, authorize('admin'), adminCreateUser)
 router.route('/bulk').delete(authenticate, authorize('admin'), bulkDeleteUsers)
 router.route('/:id/role').patch(authenticate, authorize('admin'), changeUserRole)
 router.route('/:id/block').patch(authenticate, authorize('admin'), blockUser)

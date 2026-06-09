@@ -1,10 +1,12 @@
 import asyncHandler from '../utils/asyncHandler.js'
+import crypto from 'crypto'
 import mongoose from 'mongoose'
 import jwt from 'jsonwebtoken'
 import User from '../models/user.model.js'
 import Course from '../models/course.model.js'
 import Enrollment from '../models/enrollment.model.js'
 import { uploadUserAvatar, deleteFile, extractPublicId } from '../utils/cloudinary.js'
+import { hardDeleteUserAndRelatedData } from '../utils/dataCleanup.js'
 import { sendForgotPasswordOtp, sendVerificationOtp, sendEmail } from '../utils/email.js'
 import { emitToUser } from '../utils/socket.js'
 
@@ -80,6 +82,50 @@ export const createUser = asyncHandler(async (req, res) => {
     await sendVerificationOtp({ to: email, otp, name })
 
     res.status(201).json({ success: true, message: 'Registration successful. Check your email for the OTP.' })
+  } catch (error) {
+    res.status(400).json({ success: false, error: { message: error.message } })
+  }
+})
+
+// POST /api/v1/users  (admin only — manually create a student/user)
+// Only name & email are required; everything else is optional. A random
+// password is generated and the account is marked verified, so the person can
+// sign in later via "forgot password" to set their own password.
+export const adminCreateUser = asyncHandler(async (req, res) => {
+  try {
+    const { name, email, phone, country, city, role } = req.body
+
+    if (!name || !email) {
+      return res.status(400).json({ success: false, error: { message: 'Name and email are required' } })
+    }
+
+    const normalizedEmail = String(email).trim().toLowerCase()
+
+    // Bypass the pre-find middleware to catch soft-deleted accounts too
+    const existingUser = await User.collection.findOne({ email: normalizedEmail })
+    if (existingUser) {
+      if (existingUser.isDeleted) {
+        await User.collection.deleteOne({ _id: existingUser._id })
+      } else {
+        return res.status(409).json({ success: false, error: { message: 'Email already in use' } })
+      }
+    }
+
+    const user = new User({
+      name,
+      email: normalizedEmail,
+      password: crypto.randomBytes(24).toString('hex'), // random; user resets to set their own
+      phone: phone || undefined,
+      country: country || undefined,
+      city: city || undefined,
+      role: role === 'teacher' || role === 'admin' || role === 'team_member' ? role : 'student',
+      isVerified: true,
+      isOnboardingDone: true,
+    })
+
+    await user.save()
+
+    res.status(201).json({ success: true, message: 'User created', data: safeUser(user) })
   } catch (error) {
     res.status(400).json({ success: false, error: { message: error.message } })
   }
@@ -500,6 +546,9 @@ export const deleteUser = asyncHandler(async (req, res) => {
   try {
     const user = await User.findById(req.params.id)
     if (!user) return res.status(404).json({ success: false, error: { message: 'User not found' } })
+    if (user._id.toString() === req.user.id.toString()) {
+      return res.status(403).json({ success: false, error: { message: 'You cannot delete your own account from admin.' } })
+    }
 
     if (user.profileImage) {
       const publicId = extractPublicId(user.profileImage)
@@ -507,14 +556,12 @@ export const deleteUser = asyncHandler(async (req, res) => {
     }
 
     const userId = user._id
-    user.isDeleted = true
-    user.profileImage = undefined
-    await user.save()
+    const counts = await hardDeleteUserAndRelatedData(userId)
 
     // Kick the user out immediately if they are online
     emitToUser(userId, 'user:deleted', { message: 'Your account has been deleted.' })
 
-    res.json({ success: true, message: 'User deleted successfully' })
+    res.json({ success: true, message: 'User permanently deleted successfully', data: { deleted: counts } })
   } catch (error) {
     res.status(400).json({ success: false, error: { message: error.message } })
   }
@@ -645,30 +692,29 @@ export const bulkDeleteUsers = asyncHandler(async (req, res) => {
   const filteredIds = ids.filter(id => id !== adminId)
   const skipped = ids.length - filteredIds.length
 
-  const results = await Promise.allSettled(
-    filteredIds.map(async (id) => {
-      if (!mongoose.isValidObjectId(id)) return false
-      const user = await User.findById(id)
-      if (!user || user.isDeleted) return false
-      if (user.profileImage) {
-        const publicId = extractPublicId(user.profileImage)
-        if (publicId) await deleteFile(publicId, 'image')
-      }
-      const userId = user._id
-      user.isDeleted = true
-      user.profileImage = undefined
-      await user.save()
-      emitToUser(userId, 'user:deleted', { message: 'Your account has been deleted.' })
-      return true
-    })
-  )
+  const aggregateCounts = {}
+  const results = await Promise.allSettled(filteredIds.map(async (id) => {
+    if (!mongoose.isValidObjectId(id)) return false
+    const user = await User.findById(id)
+    if (!user) return false
+    if (user.profileImage) {
+      const publicId = extractPublicId(user.profileImage)
+      if (publicId) await deleteFile(publicId, 'image')
+    }
+    const counts = await hardDeleteUserAndRelatedData(user._id)
+    for (const [key, value] of Object.entries(counts)) {
+      aggregateCounts[key] = (aggregateCounts[key] ?? 0) + value
+    }
+    emitToUser(user._id, 'user:deleted', { message: 'Your account has been deleted.' })
+    return counts.users > 0
+  }))
 
   const deleted = results.filter(r => r.status === 'fulfilled' && r.value === true).length
 
   res.json({
     success: true,
-    message: `${deleted} user${deleted !== 1 ? 's' : ''} deleted`,
-    data: { deleted, skipped },
+    message: `${deleted} user${deleted !== 1 ? 's' : ''} permanently deleted`,
+    data: { deleted, skipped, deletedRecords: aggregateCounts },
   })
 })
 

@@ -40,14 +40,17 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   )
 }
 
-function Input({ register, name, type = 'text', placeholder, valueAsNumber }: { register: any; name: string; type?: string; placeholder?: string; valueAsNumber?: boolean }) {
+function Input({ register, name, type = 'text', placeholder, valueAsNumber, rules, error }: { register: any; name: string; type?: string; placeholder?: string; valueAsNumber?: boolean; rules?: any; error?: string }) {
   return (
-    <input
-      type={type}
-      {...register(name, { valueAsNumber })}
-      placeholder={placeholder}
-      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-neutral-600 outline-none focus:border-violet-500 dark:focus:border-violet-500 transition-colors"
-    />
+    <div>
+      <input
+        type={type}
+        {...register(name, { valueAsNumber, ...rules })}
+        placeholder={placeholder}
+        className={`w-full px-3 py-2 rounded-xl border bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-neutral-600 outline-none transition-colors ${error ? 'border-red-400 focus:border-red-500' : 'border-slate-200 dark:border-neutral-700 focus:border-violet-500 dark:focus:border-violet-500'}`}
+      />
+      {error && <p className="text-[11px] text-red-500 mt-1">{error}</p>}
+    </div>
   )
 }
 
@@ -197,7 +200,7 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
   const [isBulkDeleting, setIsBulkDeleting] = useState(false)
   const [bulkConfirm, setBulkConfirm] = useState(false)
 
-  const { register, handleSubmit, reset } = useForm<Student>({
+  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<Student>({
     defaultValues: EMPTY
   })
 
@@ -240,14 +243,38 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
     }
   }
 
-  function onSave(data: Student) {
+  async function onSave(data: Student) {
     const initials = data.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
     const student = { ...data, avatar: data.avatar || initials }
+
     if (modalType === 'add') {
-      setStudents([...students, student])
-    } else {
-      setStudents(students.map(s => s.id === student.id ? student : s))
+      try {
+        const res = await axiosClient.post('/users', {
+          name: data.name.trim(),
+          email: data.email.trim(),
+          phone: data.phone || undefined,
+          country: data.country || undefined,
+          city: data.city || undefined,
+        })
+        const created = res.data?.data
+        const newStudent: Student = {
+          ...student,
+          id: created?._id ?? student.id,
+          enrolledAt: created?.createdAt?.split('T')[0] ?? student.enrolledAt,
+        }
+        setApiStudents(prev => (prev ? [newStudent, ...prev] : [newStudent]))
+        setStudents([...students, newStudent])
+        toast.success('Student added')
+        setModalType(null)
+      } catch (e: any) {
+        toast.error(e?.response?.data?.error?.message ?? 'Failed to add student')
+      }
+      return
     }
+
+    // Edit — update the visible list (no admin update-by-id endpoint yet)
+    setApiStudents(prev => (prev ? prev.map(s => (s.id === student.id ? student : s)) : null))
+    setStudents(students.map(s => s.id === student.id ? student : s))
     setModalType(null)
   }
 
@@ -502,8 +529,28 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
                 <button type="button" onClick={() => setModalType(null)} className="w-8 h-8 rounded-full bg-slate-100 dark:bg-neutral-800 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors"><X size={15} /></button>
               </div>
               <div className="p-6 grid grid-cols-2 gap-4">
-                <Field label="Full Name"><Input register={register} name="name" placeholder="Ahmed Ali" /></Field>
-                <Field label="Email"><Input register={register} name="email" type="email" placeholder="student@email.com" /></Field>
+                <Field label="Full Name *">
+                  <Input
+                    register={register}
+                    name="name"
+                    placeholder="Ahmed Ali"
+                    rules={{ required: 'Name is required', minLength: { value: 2, message: 'Name must be at least 2 characters' } }}
+                    error={errors.name?.message}
+                  />
+                </Field>
+                <Field label="Email *">
+                  <Input
+                    register={register}
+                    name="email"
+                    type="email"
+                    placeholder="student@email.com"
+                    rules={{
+                      required: 'Email is required',
+                      pattern: { value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: 'Enter a valid email' },
+                    }}
+                    error={errors.email?.message}
+                  />
+                </Field>
                 <Field label="Phone"><Input register={register} name="phone" placeholder="+92 300 0000000" /></Field>
                 <Field label="Country"><Input register={register} name="country" placeholder="Pakistan" /></Field>
                 <Field label="City"><Input register={register} name="city" placeholder="Karachi" /></Field>
@@ -539,8 +586,8 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
               </div>
               <div className="flex gap-3 px-6 pb-6">
                 <button type="button" onClick={() => setModalType(null)} className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-neutral-700 text-sm font-semibold text-slate-600 dark:text-neutral-400 hover:bg-slate-50 dark:hover:bg-neutral-800 transition-colors">Cancel</button>
-                <button type="submit" className="flex-1 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-bold flex items-center justify-center gap-2 shadow-[0_4px_12px_rgba(124,58,237,0.3)] transition-colors">
-                  <Check size={15} weight="bold" />{modalType === 'add' ? 'Add Student' : 'Save Changes'}
+                <button type="submit" disabled={isSubmitting} className="flex-1 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 disabled:opacity-60 text-white text-sm font-bold flex items-center justify-center gap-2 shadow-[0_4px_12px_rgba(124,58,237,0.3)] transition-colors">
+                  <Check size={15} weight="bold" />{isSubmitting ? 'Saving…' : modalType === 'add' ? 'Add Student' : 'Save Changes'}
                 </button>
               </div>
             </motion.form>
