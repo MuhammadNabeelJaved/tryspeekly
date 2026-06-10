@@ -114,11 +114,17 @@ export default function AdminOverview({ onNavigate }: { onNavigate: (v: AdminVie
     },
     {
       label: 'Total Revenue',
-      value: stats ? `₨${(stats.revenue?.PKR ?? 0).toLocaleString()}` : '—',
+      value: stats
+        ? `₨${((stats.revenue?.PKR ?? 0) + (stats.monthlyFeeRevenue?.PKR ?? 0)).toLocaleString()}`
+        : '—',
       sub: stats
         ? [
-            stats.revenue?.USD ? `$${stats.revenue.USD.toLocaleString()} USD` : '',
-            (stats.pendingRevenue?.PKR ?? 0) > 0 ? `₨${(stats.pendingRevenue.PKR).toLocaleString()} pending` : '',
+            (stats.revenue?.USD ?? 0) + (stats.monthlyFeeRevenue?.USD ?? 0) > 0
+              ? `$${((stats.revenue?.USD ?? 0) + (stats.monthlyFeeRevenue?.USD ?? 0)).toLocaleString()} USD`
+              : '',
+            (stats.pendingRevenue?.PKR ?? 0) + (stats.monthlyFeePending?.PKR ?? 0) > 0
+              ? `₨${((stats.pendingRevenue?.PKR ?? 0) + (stats.monthlyFeePending?.PKR ?? 0)).toLocaleString()} pending`
+              : '',
           ].filter(Boolean).join(' · ') || `${stats.approvedPaymentsCount ?? 0} paid`
         : '',
       Icon: CreditCard,
@@ -434,10 +440,10 @@ export default function AdminOverview({ onNavigate }: { onNavigate: (v: AdminVie
 
                   return (
                     <>
-                      {/* PKR */}
+                      {/* PKR enrollment fees */}
                       <div>
                         <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs font-bold text-slate-700 dark:text-neutral-300">PKR Collections</span>
+                          <span className="text-xs font-bold text-slate-700 dark:text-neutral-300">Enrollment Fees (PKR)</span>
                         </div>
                         <div className="grid grid-cols-2 gap-2">
                           <div className="bg-emerald-50 dark:bg-emerald-950/20 rounded-xl p-3">
@@ -447,6 +453,24 @@ export default function AdminOverview({ onNavigate }: { onNavigate: (v: AdminVie
                           <div className="bg-amber-50 dark:bg-amber-950/20 rounded-xl p-3">
                             <p className="text-[10px] font-bold text-amber-600 dark:text-amber-500 uppercase tracking-wide mb-0.5">Pending</p>
                             <p className="text-base font-black text-amber-700 dark:text-amber-400">₨{pkrPending.toLocaleString()}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Monthly fees */}
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs font-bold text-slate-700 dark:text-neutral-300">Monthly Fees (PKR)</span>
+                          <span className="text-[10px] font-bold text-violet-600 dark:text-violet-400">{stats?.monthlyFeePaidCount ?? 0} paid</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="bg-violet-50 dark:bg-violet-950/20 rounded-xl p-3">
+                            <p className="text-[10px] font-bold text-violet-600 dark:text-violet-500 uppercase tracking-wide mb-0.5">Collected</p>
+                            <p className="text-base font-black text-violet-700 dark:text-violet-400">₨{(stats?.monthlyFeeRevenue?.PKR ?? 0).toLocaleString()}</p>
+                          </div>
+                          <div className="bg-amber-50 dark:bg-amber-950/20 rounded-xl p-3">
+                            <p className="text-[10px] font-bold text-amber-600 dark:text-amber-500 uppercase tracking-wide mb-0.5">Pending</p>
+                            <p className="text-base font-black text-amber-700 dark:text-amber-400">₨{(stats?.monthlyFeePending?.PKR ?? 0).toLocaleString()}</p>
                           </div>
                         </div>
                       </div>

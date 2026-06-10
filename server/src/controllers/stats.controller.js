@@ -3,6 +3,7 @@ import User from '../models/user.model.js'
 import Course from '../models/course.model.js'
 import Payment from '../models/payment.model.js'
 import Enrollment from '../models/enrollment.model.js'
+import MonthlyFee from '../models/monthly-fee.model.js'
 import FinancialAid from '../models/financial-aid.model.js'
 import Certificate from '../models/certificate.model.js'
 import Review from '../models/review.model.js'
@@ -30,6 +31,9 @@ export const getAdminStats = asyncHandler(async (req, res) => {
     enrollmentsByCourseAgg,
     pendingRevenueAgg,
     approvedPaymentsCount,
+    monthlyFeeRevenueAgg,
+    monthlyFeePendingAgg,
+    monthlyFeePaidCount,
   ] = await Promise.all([
     User.countDocuments({ role: 'student', isDeleted: { $ne: true } }),
     User.countDocuments({ role: 'teacher', isDeleted: { $ne: true } }),
@@ -76,6 +80,15 @@ export const getAdminStats = asyncHandler(async (req, res) => {
       { $group: { _id: '$currency', total: { $sum: '$amount' } } },
     ]),
     Payment.countDocuments({ status: 'approved' }),
+    MonthlyFee.aggregate([
+      { $match: { status: 'paid' } },
+      { $group: { _id: '$currency', total: { $sum: '$amount' } } },
+    ]),
+    MonthlyFee.aggregate([
+      { $match: { status: { $in: ['pending', 'overdue'] } } },
+      { $group: { _id: '$currency', total: { $sum: '$amount' } } },
+    ]),
+    MonthlyFee.countDocuments({ status: 'paid' }),
   ])
 
   const courseMap = { published: 0, pending: 0, draft: 0, rejected: 0, archived: 0 }
@@ -88,6 +101,12 @@ export const getAdminStats = asyncHandler(async (req, res) => {
 
   const pendingRevenueMap = {}
   pendingRevenueAgg.forEach(({ _id, total }) => { pendingRevenueMap[_id] = total })
+
+  const monthlyFeeRevenueMap = {}
+  monthlyFeeRevenueAgg.forEach(({ _id, total }) => { monthlyFeeRevenueMap[_id] = total })
+
+  const monthlyFeePendingMap = {}
+  monthlyFeePendingAgg.forEach(({ _id, total }) => { monthlyFeePendingMap[_id] = total })
 
   const studentsByCountry = studentsByCountryAgg.map(({ _id, count }) => ({ country: _id, count }))
   const paymentsByMethod = paymentsByMethodAgg.map(({ _id, count }) => ({ method: _id, count }))
@@ -125,6 +144,9 @@ export const getAdminStats = asyncHandler(async (req, res) => {
       enrollmentsByCourse: enrollmentsByCourseAgg,
       pendingRevenue: pendingRevenueMap,
       approvedPaymentsCount,
+      monthlyFeeRevenue: monthlyFeeRevenueMap,
+      monthlyFeePending: monthlyFeePendingMap,
+      monthlyFeePaidCount,
     },
   })
 })
