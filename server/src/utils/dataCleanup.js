@@ -8,6 +8,7 @@ import Enrollment from '../models/enrollment.model.js'
 import FinancialAid from '../models/financial-aid.model.js'
 import LiveClass from '../models/live-class.model.js'
 import Message from '../models/message.model.js'
+import MonthlyFee from '../models/monthly-fee.model.js'
 import Notification from '../models/notification.model.js'
 import Payment from '../models/payment.model.js'
 import PayoutRequest from '../models/payout-request.model.js'
@@ -89,6 +90,7 @@ export const hardDeleteUserAndRelatedData = async (userId) => {
     user,
     enrollments,
     payments,
+    monthlyFees,
     certificates,
     reviews,
     financialAid,
@@ -110,6 +112,7 @@ export const hardDeleteUserAndRelatedData = async (userId) => {
     User.collection.deleteOne({ _id }),
     Enrollment.deleteMany({ $or: [{ student: _id }, { teacher: _id }] }),
     Payment.deleteMany({ $or: [{ student: _id }, { teacher: _id }] }),
+    MonthlyFee.deleteMany({ student: _id }),
     Certificate.deleteMany({ student: _id }),
     Review.collection.deleteMany({ author: _id }),
     FinancialAid.deleteMany({ student: _id }),
@@ -139,6 +142,7 @@ export const hardDeleteUserAndRelatedData = async (userId) => {
     users: count(user),
     enrollments: (courseCounts.enrollments ?? 0) + count(enrollments),
     payments: (courseCounts.payments ?? 0) + count(payments),
+    monthlyFees: count(monthlyFees),
     certificates: (courseCounts.certificates ?? 0) + count(certificates),
     reviews: (courseCounts.reviews ?? 0) + count(reviews),
     financialAid: (courseCounts.financialAid ?? 0) + count(financialAid),
