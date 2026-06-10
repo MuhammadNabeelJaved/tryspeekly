@@ -282,9 +282,9 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
     const initials = data.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
     const student = { ...data, avatar: data.avatar || initials }
 
+    // ── Step 1: Save user profile ─────────────────────────────────────────────
+    let userId = data.id
     try {
-      let userId = data.id
-
       if (modalType === 'add') {
         const res = await axiosClient.post('/users', {
           name: data.name.trim(),
@@ -305,9 +305,14 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
           adminNotes: data.notes,
         })
       }
+    } catch (e: any) {
+      toast.error(e?.response?.data?.error?.message ?? 'Failed to save student profile')
+      return
+    }
 
-      // Persist course / payment / progress / certificate as a real enrollment
-      if (data.courseId) {
+    // ── Step 2: Save enrollment / payment / certificate (optional) ────────────
+    if (data.courseId) {
+      try {
         await enrollmentsService.adminManualEnroll({
           studentId: userId,
           courseId: data.courseId,
@@ -322,20 +327,20 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
           certificateId: data.certificateId || undefined,
           certificateIssueDate: data.certificateIssueDate || undefined,
         })
+      } catch (e: any) {
+        toast.error(e?.response?.data?.error?.message ?? 'Profile saved but enrollment details could not be saved')
       }
-
-      if (modalType === 'add') {
-        setStudents([...students, { ...student, id: userId }])
-        toast.success('Student added')
-      } else {
-        setStudents(students.map(s => (s.id === student.id ? student : s)))
-        toast.success('Student updated')
-      }
-      setModalType(null)
-      await fetchData()
-    } catch (e: any) {
-      toast.error(e?.response?.data?.error?.message ?? 'Failed to save student')
     }
+
+    if (modalType === 'add') {
+      setStudents([...students, { ...student, id: userId }])
+      toast.success('Student added')
+    } else {
+      setStudents(students.map(s => (s.id === student.id ? student : s)))
+      toast.success('Student updated')
+    }
+    setModalType(null)
+    await fetchData()
   }
 
   async function handleDelete(id: string) {
