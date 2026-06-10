@@ -107,7 +107,7 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
         const [usersRes, enrollRes, coursesRes] = await Promise.allSettled([
           axiosClient.get('/users', { params: { role: 'student', limit: 200 } }),
           enrollmentsService.getAllEnrollments({ limit: 1000 }),
-          coursesService.getAllCourses({ limit: 200 }),
+          coursesService.getAdminCourses({ limit: 200 }),
         ])
 
         if (usersRes.status === 'fulfilled') {
