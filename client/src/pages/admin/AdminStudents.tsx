@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import ConfirmModal from '../../components/ConfirmModal'
 import { useForm } from 'react-hook-form'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, MagnifyingGlass, PencilSimple, Trash, X, Check, Eye, FunnelSimple, Handshake, Certificate } from '@phosphor-icons/react'
+import { Plus, MagnifyingGlass, PencilSimple, Trash, X, Check, Eye, FunnelSimple, Handshake, Certificate, Wallet } from '@phosphor-icons/react'
 import toast from 'react-hot-toast'
 import type { AdminStore } from '../AdminPage'
 import type { Student } from './adminData'
@@ -11,6 +11,7 @@ import { enrollmentsService } from '../../services/enrollments.service'
 import { coursesService } from '../../services/courses.service'
 import UserAvatar from '../../components/UserAvatar'
 import { useAuth } from '@/context/AuthContext'
+import MonthlyFeesModal from './MonthlyFeesModal'
 
 const EMPTY: Student = {
   id: '', name: '', email: '', phone: '', country: '', city: '',
@@ -222,6 +223,8 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
   const [bulkConfirm, setBulkConfirm] = useState(false)
   // Separate ref for the student being edited so we don't rely on unregistered form field
   const editingStudentIdRef = React.useRef<string>('')
+
+  const [monthlyFeesStudent, setMonthlyFeesStudent] = useState<{ id: string; name: string; email: string } | null>(null)
 
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<Student>({
     defaultValues: EMPTY
@@ -577,6 +580,7 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
                       <button onClick={() => openView(s)} className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-neutral-800 hover:bg-violet-100 dark:hover:bg-violet-950/40 text-slate-500 hover:text-violet-600 dark:hover:text-violet-400 flex items-center justify-center transition-colors" title="View"><Eye size={13} /></button>
                       {isAdmin && <button onClick={() => openEdit(s)} className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-neutral-800 hover:bg-amber-100 dark:hover:bg-amber-950/40 text-slate-500 hover:text-amber-600 dark:hover:text-amber-400 flex items-center justify-center transition-colors" title="Edit"><PencilSimple size={13} /></button>}
                       {isAdmin && <button onClick={() => handleIssueCertificate(s)} className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-neutral-800 hover:bg-green-100 dark:hover:bg-green-950/40 text-slate-500 hover:text-green-600 dark:hover:text-green-400 flex items-center justify-center transition-colors" title="Issue Certificate"><Certificate size={13} /></button>}
+                      {isAdmin && <button onClick={() => setMonthlyFeesStudent({ id: s.id, name: s.name, email: s.email })} className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-neutral-800 hover:bg-violet-100 dark:hover:bg-violet-950/40 text-slate-500 hover:text-violet-600 dark:hover:text-violet-400 flex items-center justify-center transition-colors" title="Monthly Fees"><Wallet size={13} /></button>}
                       {isAdmin && <button onClick={() => setDeleteId(s.id)} className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-neutral-800 hover:bg-red-100 dark:hover:bg-red-950/40 text-slate-500 hover:text-red-600 dark:hover:text-red-400 flex items-center justify-center transition-colors" title="Delete"><Trash size={13} /></button>}
                     </div>
                   </td>
@@ -876,6 +880,22 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
               {isBulkDeleting ? 'Deleting…' : `Delete ${selectedIds.size}`}
             </button>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* MONTHLY FEES MODAL */}
+      <AnimatePresence>
+        {monthlyFeesStudent && (
+          <MonthlyFeesModal
+            student={monthlyFeesStudent}
+            enrollments={(enrollmentDetailsMap[monthlyFeesStudent.id] ?? []).map(d => ({
+              enrollmentId: d.enrollmentId,
+              courseTitle: d.courseTitle,
+              courseLevel: d.courseLevel,
+              paymentCurrency: d.paymentCurrency,
+            }))}
+            onClose={() => setMonthlyFeesStudent(null)}
+          />
         )}
       </AnimatePresence>
 

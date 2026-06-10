@@ -1,10 +1,14 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { CreditCard, CheckCircle, WarningCircle, XCircle, MagnifyingGlass, FunnelSimple, Plus, Image, LockSimple, WhatsappLogo, Gift, Trash, Warning } from '@phosphor-icons/react'
+import { CreditCard, CheckCircle, WarningCircle, XCircle, MagnifyingGlass, FunnelSimple, Plus, Image, LockSimple, WhatsappLogo, Gift, Trash, Warning, CalendarBlank } from '@phosphor-icons/react'
 import { paymentsService } from '@/services/payments.service'
-import type { Payment, UnpaidEnrollment, PaymentMethod } from '@/types/api'
+import { monthlyFeeService } from '@/services/monthly-fee.service'
+import type { Payment, UnpaidEnrollment, PaymentMethod, MonthlyFee } from '@/types/api'
 import AdminPaymentCreateModal from './AdminPaymentCreateModal'
 import toast from 'react-hot-toast'
+
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+const MF_METHODS: Record<string,string> = { easypaisa:'Easypaisa', jazzcash:'JazzCash', nayapay:'NayaPay', sadapay:'SadaPay', zindigi:'Zindigi', bank_local:'Bank (Local)', bank_international:'Bank (Intl)' }
 
 type ActionState = { paymentId: string; type: 'approve' | 'reject'; note: string } | null
 
@@ -33,7 +37,11 @@ export default function AdminPaymentsView() {
   const [unpaidEnrollments, setUnpaidEnrollments] = useState<UnpaidEnrollment[]>([])
   const [loading, setLoading] = useState(true)
   const [unpaidLoading, setUnpaidLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<'payments' | 'unpaid'>('unpaid')
+  const [activeTab, setActiveTab] = useState<'payments' | 'unpaid' | 'monthly-fees'>('unpaid')
+  const [monthlyFees, setMonthlyFees] = useState<MonthlyFee[]>([])
+  const [mfLoading, setMfLoading] = useState(false)
+  const [mfFilters, setMfFilters] = useState({ status: 'All', year: String(new Date().getFullYear()), month: 'All' })
+  const [mfSearch, setMfSearch] = useState('')
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState('All')
   const [filterMethod, setFilterMethod] = useState('All')
@@ -67,7 +75,16 @@ export default function AdminPaymentsView() {
       .finally(() => setUnpaidLoading(false))
   }, [])
 
+  const fetchMonthlyFees = useCallback(() => {
+    setMfLoading(true)
+    monthlyFeeService.getFees({ limit: 500 })
+      .then(res => setMonthlyFees(res.data))
+      .catch(() => {})
+      .finally(() => setMfLoading(false))
+  }, [])
+
   useEffect(() => { fetchPayments(); fetchUnpaid() }, [fetchPayments, fetchUnpaid])
+  useEffect(() => { if (activeTab === 'monthly-fees') fetchMonthlyFees() }, [activeTab, fetchMonthlyFees])
 
   const handleDirectApproveConfirm = async () => {
     if (!directApprove) return
@@ -227,6 +244,16 @@ export default function AdminPaymentsView() {
           Payment Records
           {payments.filter(p => p.status === 'pending').length > 0 && (
             <span className="bg-amber-400 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full min-w-[18px] text-center">{payments.filter(p => p.status === 'pending').length}</span>
+          )}
+        </button>
+        <button
+          onClick={() => setActiveTab('monthly-fees')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${activeTab === 'monthly-fees' ? 'bg-white dark:bg-neutral-900 text-violet-600 dark:text-violet-400 shadow-sm' : 'text-slate-500 dark:text-neutral-400 hover:text-slate-700 dark:hover:text-neutral-200'}`}
+        >
+          <CalendarBlank size={15} />
+          Monthly Fees
+          {monthlyFees.filter(f => f.status === 'overdue').length > 0 && (
+            <span className="bg-red-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full min-w-[18px] text-center">{monthlyFees.filter(f => f.status === 'overdue').length}</span>
           )}
         </button>
       </div>
@@ -607,6 +634,97 @@ export default function AdminPaymentsView() {
         </div>
       </div>
       </>}
+
+      {/* ── Monthly Fees tab ── */}
+      {activeTab === 'monthly-fees' && (() => {
+        const mfFiltered = monthlyFees.filter(f => {
+          const q = mfSearch.toLowerCase()
+          const student = typeof f.student === 'object' ? f.student : null
+          const course  = typeof f.course  === 'object' ? f.course  : null
+          const matchQ = !q || (student?.name ?? '').toLowerCase().includes(q) || (student?.email ?? '').toLowerCase().includes(q) || (course?.title ?? '').toLowerCase().includes(q)
+          const matchS = mfFilters.status === 'All' || f.status === mfFilters.status
+          const matchY = !mfFilters.year || f.year === Number(mfFilters.year)
+          const matchM = mfFilters.month === 'All' || f.month === Number(mfFilters.month)
+          return matchQ && matchS && matchY && matchM
+        })
+        const mfPaidTotal    = mfFiltered.filter(f => f.status === 'paid').reduce((s, f) => s + f.amount, 0)
+        const mfPendingTotal = mfFiltered.filter(f => f.status === 'pending').reduce((s, f) => s + f.amount, 0)
+        const mfOverdueTotal = mfFiltered.filter(f => f.status === 'overdue').reduce((s, f) => s + f.amount, 0)
+        return (
+          <>
+            <div className="grid grid-cols-3 gap-3 mb-5">
+              {[
+                { label: 'Paid',    value: mfPaidTotal,    color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-100 dark:border-emerald-900/30' },
+                { label: 'Pending', value: mfPendingTotal, color: 'text-amber-600 dark:text-amber-400',    bg: 'bg-amber-50 dark:bg-amber-950/20 border-amber-100 dark:border-amber-900/30'     },
+                { label: 'Overdue', value: mfOverdueTotal, color: 'text-red-600 dark:text-red-400',        bg: 'bg-red-50 dark:bg-red-950/20 border-red-100 dark:border-red-900/30'             },
+              ].map(c => (
+                <div key={c.label} className={`rounded-2xl border p-4 ${c.bg}`}>
+                  <p className="text-[10px] font-bold text-slate-400 dark:text-neutral-500 uppercase tracking-wide">{c.label}</p>
+                  <p className={`text-xl font-black mt-1 ${c.color}`}>₨{c.value.toLocaleString()}</p>
+                </div>
+              ))}
+            </div>
+            <div className="flex flex-wrap gap-2 mb-4">
+              <div className="relative flex-1 min-w-[180px]">
+                <MagnifyingGlass size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input value={mfSearch} onChange={e => setMfSearch(e.target.value)} placeholder="Search student or course…"
+                  className="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-sm text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-neutral-600 outline-none focus:border-violet-500 transition-colors" />
+              </div>
+              <select value={mfFilters.status} onChange={e => setMfFilters(p => ({ ...p, status: e.target.value }))}
+                className="px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-sm text-slate-700 dark:text-neutral-300 outline-none focus:border-violet-500">
+                {['All','paid','pending','overdue'].map(v => <option key={v}>{v}</option>)}
+              </select>
+              <select value={mfFilters.year} onChange={e => setMfFilters(p => ({ ...p, year: e.target.value }))}
+                className="px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-sm text-slate-700 dark:text-neutral-300 outline-none focus:border-violet-500">
+                {[2024,2025,2026,2027].map(y => <option key={y} value={y}>{y}</option>)}
+              </select>
+              <select value={mfFilters.month} onChange={e => setMfFilters(p => ({ ...p, month: e.target.value }))}
+                className="px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-sm text-slate-700 dark:text-neutral-300 outline-none focus:border-violet-500">
+                <option value="All">All Months</option>
+                {MONTHS.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}
+              </select>
+            </div>
+            <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-100 dark:border-neutral-800 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm min-w-[700px]">
+                  <thead>
+                    <tr className="border-b border-slate-100 dark:border-neutral-800 bg-slate-50 dark:bg-neutral-800/50">
+                      {['Student','Course','Month','Amount','Method','Status','Due Date','Paid Date'].map(h => (
+                        <th key={h} className="text-left px-4 py-3 text-[10px] font-bold text-slate-400 dark:text-neutral-500 uppercase tracking-wide whitespace-nowrap">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50 dark:divide-neutral-800">
+                    {mfLoading && <tr><td colSpan={8} className="text-center py-10 text-slate-400 dark:text-neutral-600 text-sm">Loading…</td></tr>}
+                    {!mfLoading && mfFiltered.length === 0 && <tr><td colSpan={8} className="text-center py-10 text-slate-400 dark:text-neutral-600 text-sm">No monthly fee records found</td></tr>}
+                    {mfFiltered.map(f => {
+                      const student = typeof f.student === 'object' ? f.student : null
+                      const course  = typeof f.course  === 'object' ? f.course  : null
+                      return (
+                        <tr key={f._id} className="hover:bg-slate-50 dark:hover:bg-neutral-800/40 transition-colors">
+                          <td className="px-4 py-3">
+                            <p className="text-xs font-semibold text-slate-900 dark:text-white">{student?.name ?? '—'}</p>
+                            <p className="text-[10px] text-slate-400 dark:text-neutral-600 truncate max-w-[130px]">{student?.email ?? ''}</p>
+                          </td>
+                          <td className="px-4 py-3 text-xs text-slate-600 dark:text-neutral-300 max-w-[140px] truncate">{course?.title ?? '—'}</td>
+                          <td className="px-4 py-3 text-xs font-semibold text-slate-900 dark:text-white whitespace-nowrap">{MONTHS[f.month - 1]} {f.year}</td>
+                          <td className="px-4 py-3 text-xs font-black text-slate-900 dark:text-white whitespace-nowrap">₨{f.amount.toLocaleString()}</td>
+                          <td className="px-4 py-3 text-xs text-slate-500 dark:text-neutral-400">{f.method ? (MF_METHODS[f.method] ?? f.method) : '—'}</td>
+                          <td className="px-4 py-3">
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold capitalize ${f.status === 'paid' ? 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400' : f.status === 'overdue' ? 'bg-red-100 dark:bg-red-950/40 text-red-600 dark:text-red-400' : 'bg-amber-100 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400'}`}>{f.status}</span>
+                          </td>
+                          <td className="px-4 py-3 text-[10px] text-slate-400 dark:text-neutral-600 whitespace-nowrap">{f.dueDate ? new Date(f.dueDate).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' }) : '—'}</td>
+                          <td className="px-4 py-3 text-[10px] text-slate-400 dark:text-neutral-600 whitespace-nowrap">{f.paidDate ? new Date(f.paidDate).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' }) : '—'}</td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>
+        )
+      })()}
 
       <AdminPaymentCreateModal
         isOpen={createModalOpen}

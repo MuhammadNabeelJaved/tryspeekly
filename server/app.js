@@ -81,6 +81,7 @@ import emailRoutes from './src/routes/email.route.js'
 import teamRoutes from './src/routes/team.route.js'
 import newsletterRoutes from './src/routes/newsletter.route.js'
 import activityLogRoutes from './src/routes/activity-log.route.js'
+import monthlyFeeRoutes from './src/routes/monthly-fee.route.js'
 import { getSitemap, getRobotsTxt } from './src/controllers/seo.controller.js'
 import { seedEmailDefaults } from './src/utils/email.js'
 
@@ -114,6 +115,7 @@ app.use('/api/v1/email', emailRoutes)
 app.use('/api/v1/team', teamRoutes)
 app.use('/api/v1/newsletter', newsletterRoutes)
 app.use('/api/v1/activity-logs', activityLogRoutes)
+app.use('/api/v1/monthly-fees', monthlyFeeRoutes)
 
 // Root-level SEO endpoints for search engine crawlers
 app.get('/sitemap.xml', getSitemap)

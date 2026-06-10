@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { Receipt, CheckCircle, Clock, XCircle, Image, LockSimple, ArrowClockwise, Warning, Gift } from '@phosphor-icons/react'
+import { Receipt, CheckCircle, Clock, XCircle, Image, LockSimple, ArrowClockwise, Warning, Gift, CalendarBlank } from '@phosphor-icons/react'
 import { paymentsService } from '@/services/payments.service'
 import { enrollmentsService } from '@/services/enrollments.service'
-import type { Payment, Enrollment } from '@/types/api'
+import { monthlyFeeService } from '@/services/monthly-fee.service'
+import type { Payment, Enrollment, MonthlyFee } from '@/types/api'
 import PaymentSubmitModal from '@/pages/student/PaymentSubmitModal'
 
 const METHOD_LABELS: Record<string, string> = {
@@ -18,6 +19,7 @@ const METHOD_LABELS: Record<string, string> = {
 export default function StudentPayments() {
   const [payments, setPayments] = useState<Payment[]>([])
   const [enrollments, setEnrollments] = useState<Enrollment[]>([])
+  const [monthlyFees, setMonthlyFees] = useState<MonthlyFee[]>([])
   const [loading, setLoading] = useState(true)
   const [submitModal, setSubmitModal] = useState<{
     courseId: string
@@ -35,11 +37,12 @@ export default function StudentPayments() {
     Promise.all([
       paymentsService.getMyPayments(),
       enrollmentsService.getMyEnrollments(),
+      monthlyFeeService.getMyFees(),
     ])
-      .then(([paymentsRes, enrollmentsRes]) => {
-        // Drop records whose course was deleted (populate returns null) to avoid crashes
+      .then(([paymentsRes, enrollmentsRes, feesRes]) => {
         if (paymentsRes.success) setPayments(paymentsRes.data.filter(p => p.course != null))
         if (enrollmentsRes.success) setEnrollments(enrollmentsRes.data.filter(e => e.course != null))
+        if (feesRes.success) setMonthlyFees(feesRes.data)
       })
       .catch(() => {})
       .finally(() => setLoading(false))
@@ -242,6 +245,83 @@ export default function StudentPayments() {
           </table>
         </div>
       </div>
+
+      {/* Monthly Fees Section */}
+      {monthlyFees.length > 0 && (() => {
+        const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+        const MF_METHODS: Record<string,string> = { easypaisa:'Easypaisa', jazzcash:'JazzCash', nayapay:'NayaPay', sadapay:'SadaPay', zindigi:'Zindigi', bank_local:'Bank (Local)', bank_international:'Bank (Intl)' }
+        const totalPaid    = monthlyFees.filter(f => f.status === 'paid').reduce((s, f) => s + f.amount, 0)
+        const totalPending = monthlyFees.filter(f => f.status === 'pending').reduce((s, f) => s + f.amount, 0)
+        const totalOverdue = monthlyFees.filter(f => f.status === 'overdue').reduce((s, f) => s + f.amount, 0)
+        const currency = monthlyFees[0]?.currency === 'USD' ? '$' : '₨'
+        // group by course
+        const byCourse: Record<string, { title: string; fees: MonthlyFee[] }> = {}
+        monthlyFees.forEach(f => {
+          const course = typeof f.course === 'object' ? f.course : null
+          const cid    = typeof f.course === 'object' ? f.course._id : String(f.course)
+          if (!byCourse[cid]) byCourse[cid] = { title: course?.title ?? 'Course', fees: [] }
+          byCourse[cid].fees.push(f)
+        })
+        return (
+          <div>
+            <div className="flex items-center gap-2 mb-4">
+              <CalendarBlank size={16} weight="fill" className="text-violet-500" />
+              <h3 className="text-lg font-black text-slate-900 dark:text-white">Monthly Fees</h3>
+            </div>
+            <div className="grid grid-cols-3 gap-3 mb-5">
+              {[
+                { label: 'Paid',    value: totalPaid,    color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-100 dark:border-emerald-900/30' },
+                { label: 'Pending', value: totalPending, color: 'text-amber-600 dark:text-amber-400',    bg: 'bg-amber-50 dark:bg-amber-950/20 border-amber-100 dark:border-amber-900/30'     },
+                { label: 'Overdue', value: totalOverdue, color: 'text-red-600 dark:text-red-400',        bg: 'bg-red-50 dark:bg-red-950/20 border-red-100 dark:border-red-900/30'             },
+              ].map(c => (
+                <div key={c.label} className={`rounded-2xl border p-4 ${c.bg}`}>
+                  <p className="text-[10px] font-bold text-slate-400 dark:text-neutral-500 uppercase tracking-wide">{c.label}</p>
+                  <p className={`text-xl font-black mt-1 ${c.color}`}>{currency}{c.value.toLocaleString()}</p>
+                </div>
+              ))}
+            </div>
+            <div className="space-y-4">
+              {Object.values(byCourse).map(({ title, fees }) => (
+                <div key={title} className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200 dark:border-neutral-800 overflow-hidden">
+                  <div className="px-5 py-3 border-b border-slate-100 dark:border-neutral-800 bg-slate-50 dark:bg-neutral-800/50">
+                    <p className="text-sm font-black text-slate-900 dark:text-white">{title}</p>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm min-w-[500px]">
+                      <thead>
+                        <tr className="border-b border-slate-100 dark:border-neutral-800">
+                          {['Month','Amount','Method','Status','Due Date','Paid Date'].map(h => (
+                            <th key={h} className="text-left px-4 py-2.5 text-[10px] font-bold text-slate-400 dark:text-neutral-500 uppercase tracking-wide whitespace-nowrap">{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-50 dark:divide-neutral-800">
+                        {[...fees].sort((a,b) => b.year !== a.year ? b.year - a.year : b.month - a.month).map(f => (
+                          <tr key={f._id} className="hover:bg-slate-50 dark:hover:bg-neutral-800/20 transition-colors">
+                            <td className="px-4 py-3 text-xs font-semibold text-slate-900 dark:text-white whitespace-nowrap">{MONTHS[f.month - 1]} {f.year}</td>
+                            <td className="px-4 py-3 text-xs font-black text-slate-900 dark:text-white">{currency}{f.amount.toLocaleString()}</td>
+                            <td className="px-4 py-3 text-xs text-slate-500 dark:text-neutral-400">{f.method ? (MF_METHODS[f.method] ?? f.method) : '—'}</td>
+                            <td className="px-4 py-3">
+                              <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide ${f.status === 'paid' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400' : f.status === 'overdue' ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400' : 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400'}`}>
+                                {f.status === 'paid' && <CheckCircle size={10} weight="fill" />}
+                                {f.status === 'pending' && <Clock size={10} weight="fill" />}
+                                {f.status === 'overdue' && <XCircle size={10} weight="fill" />}
+                                {f.status}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-[10px] text-slate-400 dark:text-neutral-600 whitespace-nowrap">{f.dueDate ? new Date(f.dueDate).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' }) : '—'}</td>
+                            <td className="px-4 py-3 text-[10px] text-slate-400 dark:text-neutral-600 whitespace-nowrap">{f.paidDate ? new Date(f.paidDate).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' }) : '—'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+      })()}
 
       {submitModal && (
         <PaymentSubmitModal

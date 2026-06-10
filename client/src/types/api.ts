@@ -23,6 +23,33 @@ export interface ApiErrorResponse {
   fields?: Array<{ field: string; message: string }>;
 }
 
+// ─── Monthly Fee Types ────────────────────────────────────────────────────────
+
+export interface MonthlyFee {
+  _id: string;
+  enrollment: string;
+  student: { _id: string; name: string; email: string } | string;
+  course: { _id: string; title: string } | string;
+  month: number;
+  year: number;
+  amount: number;
+  currency: 'PKR' | 'USD';
+  method?: string;
+  status: 'paid' | 'pending' | 'overdue';
+  dueDate?: string;
+  paidDate?: string;
+  adminNote?: string;
+  recordedBy?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MonthlyFeeListResponse {
+  success: boolean;
+  data: MonthlyFee[];
+  pagination: { page: number; limit: number; total: number; totalPages: number };
+}
+
 // ─── User Types ──────────────────────────────────────────────────────────────
 
 export interface User {
