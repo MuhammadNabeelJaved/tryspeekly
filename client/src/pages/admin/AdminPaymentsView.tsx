@@ -83,7 +83,7 @@ export default function AdminPaymentsView() {
       .finally(() => setMfLoading(false))
   }, [])
 
-  useEffect(() => { fetchPayments(); fetchUnpaid() }, [fetchPayments, fetchUnpaid])
+  useEffect(() => { fetchPayments(); fetchUnpaid(); fetchMonthlyFees() }, [fetchPayments, fetchUnpaid, fetchMonthlyFees])
   useEffect(() => { if (activeTab === 'monthly-fees') fetchMonthlyFees() }, [activeTab, fetchMonthlyFees])
 
   const handleDirectApproveConfirm = async () => {
@@ -181,11 +181,13 @@ export default function AdminPaymentsView() {
   const allFilteredIds = filtered.map(p => p._id)
   const allSelected = allFilteredIds.length > 0 && allFilteredIds.every(id => selectedIds.has(id))
 
-  const totalPKR = payments.filter(p => p.status === 'approved' && p.currency === 'PKR').reduce((a, p) => a + p.amount, 0)
-  const totalUSD = payments.filter(p => p.status === 'approved' && p.currency === 'USD').reduce((a, p) => a + p.amount, 0)
-  const paidCount = payments.filter(p => p.status === 'approved').length
-  const pendingCount = payments.filter(p => p.status === 'pending').length
-  const failedCount = payments.filter(p => p.status === 'rejected').length
+  const mfPaidPKR = monthlyFees.filter(f => f.status === 'paid' && f.currency === 'PKR').reduce((a, f) => a + f.amount, 0)
+  const mfPaidUSD = monthlyFees.filter(f => f.status === 'paid' && f.currency === 'USD').reduce((a, f) => a + f.amount, 0)
+  const totalPKR = payments.filter(p => p.status === 'approved' && p.currency === 'PKR').reduce((a, p) => a + p.amount, 0) + mfPaidPKR
+  const totalUSD = payments.filter(p => p.status === 'approved' && p.currency === 'USD').reduce((a, p) => a + p.amount, 0) + mfPaidUSD
+  const paidCount = payments.filter(p => p.status === 'approved').length + monthlyFees.filter(f => f.status === 'paid').length
+  const pendingCount = payments.filter(p => p.status === 'pending').length + monthlyFees.filter(f => f.status === 'pending').length
+  const failedCount = payments.filter(p => p.status === 'rejected').length + monthlyFees.filter(f => f.status === 'overdue').length
 
   const handleActionConfirm = async () => {
     if (!action) return
