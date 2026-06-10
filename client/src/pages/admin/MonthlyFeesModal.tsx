@@ -69,7 +69,7 @@ export default function MonthlyFeesModal({ student, enrollments, onClose }: Prop
 
   const [form, setForm] = useState({ ...EMPTY_FORM })
   const [gen,  setGen]  = useState({ ...EMPTY_GEN })
-  const [editForm, setEditForm] = useState<Partial<MonthlyFee & { amount: string }>>({})
+  const [editForm, setEditForm] = useState<Record<string, any>>({})
 
   const loadFees = useCallback(async () => {
     setLoading(true)
