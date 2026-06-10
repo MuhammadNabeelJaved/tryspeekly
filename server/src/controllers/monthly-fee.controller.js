@@ -1,6 +1,7 @@
 import asyncHandler from '../utils/asyncHandler.js'
 import MonthlyFee from '../models/monthly-fee.model.js'
 import Enrollment from '../models/enrollment.model.js'
+import { emitToUser } from '../utils/socket.js'
 
 const POPULATE_OPTS = [
   { path: 'student', select: 'name email' },
@@ -36,6 +37,7 @@ export const addFee = asyncHandler(async (req, res) => {
     })
 
     const populated = await MonthlyFee.findById(fee._id).populate(POPULATE_OPTS)
+    emitToUser(enrollment.student, 'monthly_fee_update', {})
     res.status(201).json({ success: true, message: 'Fee recorded', data: populated })
   } catch (error) {
     if (error.code === 11000) {
@@ -86,6 +88,7 @@ export const generateFees = asyncHandler(async (req, res) => {
       if (m > 12) { m = 1; y++ }
     }
 
+    if (created.length > 0) emitToUser(enrollment.student, 'monthly_fee_update', {})
     res.status(201).json({
       success: true,
       message: `Generated ${created.length} fee record(s)${skipped.length ? `, skipped ${skipped.length} (already existed)` : ''}`,
@@ -137,6 +140,7 @@ export const updateFee = asyncHandler(async (req, res) => {
 
     await fee.save()
     const populated = await MonthlyFee.findById(fee._id).populate(POPULATE_OPTS)
+    emitToUser(fee.student, 'monthly_fee_update', {})
     res.json({ success: true, message: 'Fee updated', data: populated })
   } catch (error) {
     res.status(400).json({ success: false, error: { message: error.message } })
@@ -148,6 +152,7 @@ export const deleteFee = asyncHandler(async (req, res) => {
   try {
     const fee = await MonthlyFee.findByIdAndDelete(req.params.id)
     if (!fee) return res.status(404).json({ success: false, error: { message: 'Fee record not found' } })
+    emitToUser(fee.student, 'monthly_fee_update', {})
     res.json({ success: true, message: 'Fee record deleted' })
   } catch (error) {
     res.status(400).json({ success: false, error: { message: error.message } })

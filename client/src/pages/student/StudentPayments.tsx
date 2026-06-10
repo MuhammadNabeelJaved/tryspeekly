@@ -5,6 +5,7 @@ import { enrollmentsService } from '@/services/enrollments.service'
 import { monthlyFeeService } from '@/services/monthly-fee.service'
 import type { Payment, Enrollment, MonthlyFee } from '@/types/api'
 import PaymentSubmitModal from '@/pages/student/PaymentSubmitModal'
+import { useSocket } from '@/context/SocketContext'
 
 const METHOD_LABELS: Record<string, string> = {
   jazzcash: 'JazzCash',
@@ -17,6 +18,7 @@ const METHOD_LABELS: Record<string, string> = {
 }
 
 export default function StudentPayments() {
+  const { socket } = useSocket()
   const [payments, setPayments] = useState<Payment[]>([])
   const [enrollments, setEnrollments] = useState<Enrollment[]>([])
   const [monthlyFees, setMonthlyFees] = useState<MonthlyFee[]>([])
@@ -49,6 +51,18 @@ export default function StudentPayments() {
   }, [])
 
   useEffect(() => { fetchData() }, [fetchData])
+
+  const refreshMonthlyFees = useCallback(() => {
+    monthlyFeeService.getMyFees().then(res => {
+      if (res.success) setMonthlyFees(res.data)
+    }).catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    if (!socket) return
+    socket.on('monthly_fee_update', refreshMonthlyFees)
+    return () => { socket.off('monthly_fee_update', refreshMonthlyFees) }
+  }, [socket, refreshMonthlyFees])
 
   const unpaidEnrollments = enrollments.filter(e => !e.payment && !e.isActive && !e.financialAid)
 
