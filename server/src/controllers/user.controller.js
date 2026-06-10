@@ -133,6 +133,20 @@ export const adminCreateUser = asyncHandler(async (req, res) => {
   }
 })
 
+// PATCH /api/v1/users/:id/set-password  (admin only — set a user's password)
+export const adminSetPassword = asyncHandler(async (req, res) => {
+  const { password } = req.body
+  if (!password || password.length < 8)
+    return res.status(400).json({ success: false, message: 'Password must be at least 8 characters' })
+
+  const user = await User.findById(req.params.id).select('+password')
+  if (!user) return res.status(404).json({ success: false, message: 'User not found' })
+
+  user.password = password
+  await user.save()
+  res.json({ success: true, message: 'Password updated successfully' })
+})
+
 // PATCH /api/v1/users/:id  (admin only — update a user's profile details)
 export const adminUpdateUser = asyncHandler(async (req, res) => {
   try {

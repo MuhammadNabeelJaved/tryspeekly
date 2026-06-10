@@ -6,6 +6,7 @@ import {
     createUser,
     adminCreateUser,
     adminUpdateUser,
+    adminSetPassword,
     verifyEmail,
     resendVerification,
     loginUser,
@@ -73,6 +74,7 @@ router.route('/:id/role').patch(authenticate, authorize('admin'), changeUserRole
 router.route('/:id/block').patch(authenticate, authorize('admin'), blockUser)
 router.route('/:id/show-on-home').patch(authenticate, authorize('admin'), toggleShowOnHome)
 router.route('/:id/show-on-courses').patch(authenticate, authorize('admin'), toggleShowOnCoursesPage)
+router.route('/:id/set-password').patch(authenticate, authorize('admin'), adminSetPassword)
 router.route('/:id')
     .get(authenticate, allowTeamMember, getUserById)
     .patch(authenticate, authorize('admin'), adminUpdateUser)
