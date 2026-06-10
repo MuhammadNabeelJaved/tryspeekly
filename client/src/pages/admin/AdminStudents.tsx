@@ -237,7 +237,7 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
   })
 
   function openAdd() {
-    reset({ ...EMPTY, id: `s${Date.now()}`, avatar: '' })
+    reset({ ...EMPTY, id: `s${Date.now()}`, avatar: '', enrolledAt: new Date().toISOString().split('T')[0] })
     setModalType('add')
   }
 
