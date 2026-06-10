@@ -171,6 +171,7 @@ export default function AdminPaymentsView() {
   const allMethods = ['All', ...Array.from(new Set(payments.map(p => p.method))).sort()]
 
   const filtered = payments.filter(p => {
+    if (p.amount === 0 && p.status === 'approved') return false
     const q = search.toLowerCase()
     const mQ = !q || (p.student?.name ?? '').toLowerCase().includes(q) || (p.student?.email ?? '').toLowerCase().includes(q) || p.method.toLowerCase().includes(q)
     const mS = filterStatus === 'All' || p.status === filterStatus
