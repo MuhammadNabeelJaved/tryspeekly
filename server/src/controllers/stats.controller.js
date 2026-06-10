@@ -63,11 +63,6 @@ export const getAdminStats = asyncHandler(async (req, res) => {
       .populate('course', 'title')
       .populate('payment', 'status')
       .lean(),
-    Payment.aggregate([
-      { $match: { status: 'pending' } },
-      { $group: { _id: '$currency', total: { $sum: '$amount' } } },
-    ]),
-    Payment.countDocuments({ status: 'approved' }),
     Enrollment.aggregate([
       { $group: { _id: '$course', count: { $sum: 1 } } },
       { $sort: { count: -1 } },
@@ -76,6 +71,11 @@ export const getAdminStats = asyncHandler(async (req, res) => {
       { $unwind: '$courseData' },
       { $project: { _id: 0, title: '$courseData.title', count: 1 } },
     ]),
+    Payment.aggregate([
+      { $match: { status: 'pending' } },
+      { $group: { _id: '$currency', total: { $sum: '$amount' } } },
+    ]),
+    Payment.countDocuments({ status: 'approved' }),
   ])
 
   const courseMap = { published: 0, pending: 0, draft: 0, rejected: 0, archived: 0 }
