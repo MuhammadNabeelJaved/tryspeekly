@@ -105,10 +105,11 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
 
   async function fetchData() {
       try {
-        const [usersRes, enrollRes, coursesRes] = await Promise.allSettled([
+        const [usersRes, enrollRes, coursesRes, paidFeesRes] = await Promise.allSettled([
           axiosClient.get('/users', { params: { role: 'student', limit: 200 } }),
           enrollmentsService.getAllEnrollments({ limit: 1000 }),
           coursesService.getAdminCourses({ limit: 200 }),
+          axiosClient.get('/monthly-fees', { params: { status: 'paid', limit: 500 } }),
         ])
 
         if (usersRes.status === 'fulfilled') {
@@ -197,6 +198,23 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
           setPaymentSummaryMap(summaryMap)
         }
 
+        if (paidFeesRes.status === 'fulfilled') {
+          const fees: any[] = (paidFeesRes as PromiseFulfilledResult<any>).value.data?.data ?? []
+          if (fees.length > 0) {
+            setPaymentSummaryMap(prev => {
+              const updated: Record<string, PaymentSummary> = { ...prev }
+              fees.forEach((fee: any) => {
+                const sid = (fee.student?._id ?? fee.student)?.toString?.()
+                if (!sid) return
+                if (!updated[sid]) updated[sid] = { totalPaid: 0, pendingTotal: 0, currency: fee.currency ?? 'PKR', methods: [], approvedCount: 0, pendingCount: 0 }
+                else updated[sid] = { ...updated[sid] }
+                updated[sid].totalPaid += fee.amount ?? 0
+              })
+              return updated
+            })
+          }
+        }
+
         if (coursesRes.status === 'fulfilled') {
           const list: any[] = coursesRes.value.data ?? []
           setCourses(list.map((c: any) => ({ _id: c._id, title: c.title ?? '', level: c.level ?? '' })))
@@ -226,9 +244,19 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
 
   const [monthlyFeesStudent, setMonthlyFeesStudent] = useState<{ id: string; name: string; email: string } | null>(null)
 
-  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<Student>({
+  const [mfEnabled, setMfEnabled] = useState(false)
+  const [mfAmount, setMfAmount] = useState('')
+  const [mfCurrency, setMfCurrency] = useState('PKR')
+  const [mfStartMonth, setMfStartMonth] = useState(new Date().getMonth() + 1)
+  const [mfStartYear, setMfStartYear] = useState(new Date().getFullYear())
+  const [mfNumMonths, setMfNumMonths] = useState(3)
+  const [mfMarkFirstPaid, setMfMarkFirstPaid] = useState(false)
+  const [mfFirstPaidDate, setMfFirstPaidDate] = useState(new Date().toISOString().split('T')[0])
+
+  const { register, handleSubmit, reset, watch, formState: { errors, isSubmitting } } = useForm<Student>({
     defaultValues: EMPTY
   })
+  const watchedCourseId = watch('courseId')
 
   const displayStudents = apiStudents ?? students
   const countries = ['All', ...Array.from(new Set(displayStudents.map(s => s.country))).sort()]
@@ -243,6 +271,14 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
 
   function openAdd() {
     reset({ ...EMPTY, id: `s${Date.now()}`, avatar: '', enrolledAt: new Date().toISOString().split('T')[0] })
+    setMfEnabled(false)
+    setMfAmount('')
+    setMfCurrency('PKR')
+    setMfStartMonth(new Date().getMonth() + 1)
+    setMfStartYear(new Date().getFullYear())
+    setMfNumMonths(3)
+    setMfMarkFirstPaid(false)
+    setMfFirstPaidDate(new Date().toISOString().split('T')[0])
     setModalType('add')
   }
 
@@ -317,9 +353,10 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
     }
 
     // ── Step 2: Save enrollment / payment / certificate (optional) ────────────
+    let enrollmentId: string | undefined
     if (data.courseId && userId) {
       try {
-        await enrollmentsService.adminManualEnroll({
+        const enrollResult = await enrollmentsService.adminManualEnroll({
           studentId: userId,
           courseId: data.courseId,
           paymentMethod: data.paymentMethod || undefined,
@@ -333,8 +370,34 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
           certificateId: data.certificateId || undefined,
           certificateIssueDate: data.certificateIssueDate || undefined,
         })
+        enrollmentId = enrollResult.data?.enrollment?._id
       } catch (e: any) {
         toast.error(e?.response?.data?.error?.message ?? 'Profile saved but enrollment details could not be saved')
+      }
+    }
+
+    // ── Step 3: Generate monthly fees (add mode only) ─────────────────────────
+    if (modalType === 'add' && mfEnabled && enrollmentId && mfAmount) {
+      try {
+        const mfRes = await axiosClient.post('/monthly-fees/generate', {
+          enrollmentId,
+          startMonth: mfStartMonth,
+          startYear: mfStartYear,
+          months: mfNumMonths,
+          amount: Number(mfAmount),
+          currency: mfCurrency,
+        })
+        if (mfMarkFirstPaid) {
+          const firstFeeId = mfRes.data?.data?.created?.[0]?._id
+          if (firstFeeId) {
+            await axiosClient.patch(`/monthly-fees/${firstFeeId}`, {
+              status: 'paid',
+              paidDate: mfFirstPaidDate,
+            })
+          }
+        }
+      } catch {
+        toast.error('Profile saved but monthly fees could not be generated')
       }
     }
 
@@ -669,6 +732,100 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
                     <textarea {...register('notes')} rows={2} placeholder="Any notes about the student…" className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-neutral-600 outline-none focus:border-violet-500 transition-colors resize-none" />
                   </Field>
                 </div>
+
+                {/* Monthly Fee Setup — only visible when adding a new student */}
+                {modalType === 'add' && (
+                  <div className="col-span-2 border-t border-slate-100 dark:border-neutral-800 pt-4 mt-2">
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <h4 className="text-sm font-bold text-slate-900 dark:text-white">Monthly Fee Setup</h4>
+                        <p className="text-[11px] text-slate-400 dark:text-neutral-500 mt-0.5">Auto-generate monthly fee records for this student</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setMfEnabled(v => !v)}
+                        className={`relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full transition-colors ${mfEnabled ? 'bg-violet-600' : 'bg-slate-200 dark:bg-neutral-700'}`}
+                      >
+                        <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${mfEnabled ? 'translate-x-[18px]' : 'translate-x-0.5'}`} />
+                      </button>
+                    </div>
+                    {mfEnabled && (
+                      <div className="grid grid-cols-2 gap-4">
+                        {!watchedCourseId && (
+                          <p className="col-span-2 text-[11px] text-amber-500 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/20 rounded-lg px-3 py-2">Select a course above to enable monthly fee generation</p>
+                        )}
+                        <Field label="Monthly Amount">
+                          <div className="flex gap-2">
+                            <select
+                              value={mfCurrency}
+                              onChange={e => setMfCurrency(e.target.value)}
+                              className="px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors"
+                            >
+                              {['PKR', 'USD'].map(c => <option key={c}>{c}</option>)}
+                            </select>
+                            <input
+                              type="number"
+                              value={mfAmount}
+                              onChange={e => setMfAmount(e.target.value)}
+                              placeholder="8000"
+                              className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-neutral-600 outline-none focus:border-violet-500 transition-colors"
+                            />
+                          </div>
+                        </Field>
+                        <Field label="Number of Months">
+                          <input
+                            type="number"
+                            value={mfNumMonths}
+                            onChange={e => setMfNumMonths(Math.max(1, Number(e.target.value)))}
+                            min={1} max={60}
+                            className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors"
+                          />
+                        </Field>
+                        <Field label="Start Month">
+                          <select
+                            value={mfStartMonth}
+                            onChange={e => setMfStartMonth(Number(e.target.value))}
+                            className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors"
+                          >
+                            {['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].map((m, i) => (
+                              <option key={i + 1} value={i + 1}>{m}</option>
+                            ))}
+                          </select>
+                        </Field>
+                        <Field label="Start Year">
+                          <input
+                            type="number"
+                            value={mfStartYear}
+                            onChange={e => setMfStartYear(Number(e.target.value))}
+                            min={2020} max={2040}
+                            className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors"
+                          />
+                        </Field>
+                        <div className="col-span-2">
+                          <label className="flex items-center gap-2.5 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={mfMarkFirstPaid}
+                              onChange={e => setMfMarkFirstPaid(e.target.checked)}
+                              className="w-4 h-4 rounded border-slate-300 dark:border-neutral-600 text-violet-600 focus:ring-violet-500"
+                            />
+                            <span className="text-sm text-slate-700 dark:text-neutral-300">Mark first month as paid (advance payment received)</span>
+                          </label>
+                        </div>
+                        {mfMarkFirstPaid && (
+                          <Field label="Paid Date">
+                            <input
+                              type="date"
+                              value={mfFirstPaidDate}
+                              onChange={e => setMfFirstPaidDate(e.target.value)}
+                              className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors"
+                            />
+                          </Field>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
               <div className="flex gap-3 px-6 pb-6">
                 <button type="button" onClick={() => setModalType(null)} className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-neutral-700 text-sm font-semibold text-slate-600 dark:text-neutral-400 hover:bg-slate-50 dark:hover:bg-neutral-800 transition-colors">Cancel</button>
