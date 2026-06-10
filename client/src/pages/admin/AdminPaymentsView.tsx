@@ -181,6 +181,19 @@ export default function AdminPaymentsView() {
   const allFilteredIds = filtered.map(p => p._id)
   const allSelected = allFilteredIds.length > 0 && allFilteredIds.every(id => selectedIds.has(id))
 
+  const filteredMfPaid = (filterStatus === 'All' || filterStatus === 'approved')
+    ? monthlyFees.filter(f => {
+        if (f.status !== 'paid') return false
+        const q = search.toLowerCase()
+        if (!q) return true
+        const student = typeof f.student === 'object' ? f.student : null
+        const course  = typeof f.course  === 'object' ? f.course  : null
+        return (student?.name ?? '').toLowerCase().includes(q) ||
+               (student?.email ?? '').toLowerCase().includes(q) ||
+               (course?.title ?? '').toLowerCase().includes(q)
+      })
+    : []
+
   const mfPaidPKR = monthlyFees.filter(f => f.status === 'paid' && f.currency === 'PKR').reduce((a, f) => a + f.amount, 0)
   const mfPaidUSD = monthlyFees.filter(f => f.status === 'paid' && f.currency === 'USD').reduce((a, f) => a + f.amount, 0)
   const totalPKR = payments.filter(p => p.status === 'approved' && p.currency === 'PKR').reduce((a, p) => a + p.amount, 0) + mfPaidPKR
@@ -519,7 +532,7 @@ export default function AdminPaymentsView() {
               {loading && (
                 <tr><td colSpan={9} className="text-center py-10 text-slate-400 dark:text-neutral-600 text-sm">Loading…</td></tr>
               )}
-              {!loading && filtered.length === 0 && (
+              {!loading && filtered.length === 0 && filteredMfPaid.length === 0 && (
                 <tr><td colSpan={9} className="text-center py-10 text-slate-400 dark:text-neutral-600 text-sm">No payments found</td></tr>
               )}
               {filtered.map(p => (
@@ -631,6 +644,54 @@ export default function AdminPaymentsView() {
                   </td>
                 </tr>
               ))}
+              {filteredMfPaid.map(f => {
+                const student = typeof f.student === 'object' ? f.student : null
+                const course  = typeof f.course  === 'object' ? f.course  : null
+                return (
+                  <tr key={`mf-${f._id}`} className="hover:bg-violet-50/30 dark:hover:bg-violet-950/10 transition-colors bg-violet-50/10 dark:bg-violet-950/5">
+                    <td className="px-4 py-3">
+                      <input type="checkbox" disabled className="w-4 h-4 rounded accent-violet-500 opacity-30" />
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-400 to-purple-500 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
+                          {(student?.name ?? '?').split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2)}
+                        </div>
+                        <div>
+                          <p className="font-semibold text-slate-900 dark:text-white text-xs">{student?.name ?? '—'}</p>
+                          <p className="text-[10px] text-slate-400 dark:text-neutral-600 truncate max-w-[120px]">{(student as any)?.email ?? '—'}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-xs text-slate-600 dark:text-neutral-300 whitespace-nowrap">{course?.title ?? '—'}</td>
+                    <td className="px-4 py-3 text-xs text-slate-600 dark:text-neutral-300 whitespace-nowrap capitalize">
+                      {f.method ? f.method.replace('_', ' ') : '—'}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <p className="text-xs font-black text-slate-900 dark:text-white">{f.currency} {f.amount.toLocaleString()}</p>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="space-y-1">
+                        <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400">paid</span>
+                        <div className="flex items-center gap-1 text-[10px] font-semibold text-violet-500 dark:text-violet-400">
+                          <CalendarBlank size={10} /> {MONTHS[f.month - 1]} {f.year}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-[10px] text-slate-400 dark:text-neutral-600 whitespace-nowrap">
+                      {f.paidDate
+                        ? new Date(f.paidDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+                        : `${MONTHS[f.month - 1]} ${f.year}`}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="text-slate-300 dark:text-neutral-700 text-xs">—</span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-violet-100 dark:bg-violet-950/40 text-violet-600 dark:text-violet-400 font-bold">Monthly Fee</span>
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>
