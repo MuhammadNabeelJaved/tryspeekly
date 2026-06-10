@@ -69,6 +69,9 @@ Project/
 - Route handlers are thin — business logic lives in controller/service files
 - Never expose stack traces in API responses
 
+## Team Member Access (MANDATORY)
+Every new admin dashboard page or feature MUST also wire up team member access in the same change — **without being asked**. Full rules: `.claude/rules/team-member-access.md`
+
 ## Git Workflow
 - Branch from `main` for features: `feat/<name>`
 - Branch from `main` for fixes: `fix/<name>`
