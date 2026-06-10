@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import ConfirmModal from '../../components/ConfirmModal'
 import { useForm } from 'react-hook-form'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -220,6 +220,8 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [isBulkDeleting, setIsBulkDeleting] = useState(false)
   const [bulkConfirm, setBulkConfirm] = useState(false)
+  // Separate ref for the student being edited so we don't rely on unregistered form field
+  const editingStudentIdRef = React.useRef<string>('')
 
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<Student>({
     defaultValues: EMPTY
@@ -242,7 +244,7 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
   }
 
   function openEdit(s: Student) {
-    // Prefill enrollment fields from the student's first real enrollment
+    editingStudentIdRef.current = s.id
     const d = enrollmentDetailsMap[s.id]?.[0]
     reset({
       ...s,
@@ -283,7 +285,7 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
     const student = { ...data, avatar: data.avatar || initials }
 
     // ── Step 1: Save user profile ─────────────────────────────────────────────
-    let userId = data.id
+    let userId = editingStudentIdRef.current   // safe even for 'add' — overwritten below
     try {
       if (modalType === 'add') {
         const res = await axiosClient.post('/users', {
@@ -296,7 +298,7 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
         })
         userId = res.data?.data?._id ?? userId
       } else {
-        await axiosClient.patch(`/users/${data.id}`, {
+        await axiosClient.patch(`/users/${editingStudentIdRef.current}`, {
           name: data.name.trim(),
           email: data.email.trim(),
           phone: data.phone,
@@ -306,12 +308,13 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
         })
       }
     } catch (e: any) {
-      toast.error(e?.response?.data?.error?.message ?? 'Failed to save student profile')
+      const msg = (e?.response?.data?.error?.message) || (e?.response?.data?.message) || e?.message || 'Failed to save student profile'
+      toast.error(msg)
       return
     }
 
     // ── Step 2: Save enrollment / payment / certificate (optional) ────────────
-    if (data.courseId) {
+    if (data.courseId && userId) {
       try {
         await enrollmentsService.adminManualEnroll({
           studentId: userId,
