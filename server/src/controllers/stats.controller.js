@@ -173,9 +173,10 @@ export const cleanupDeletedData = asyncHandler(async (req, res) => {
   const counts = {}
 
   // 1) Operational records owned by the soft-deleted users
-  const [enr, pay, cert, rev, refRew, refWal, payout, aid, notif, sup] = await Promise.all([
+  const [enr, pay, fee, cert, rev, refRew, refWal, payout, aid, notif, sup] = await Promise.all([
     Enrollment.deleteMany({ student: owned }),
     Payment.deleteMany({ student: owned }),
+    MonthlyFee.deleteMany({ student: owned }),
     Certificate.deleteMany({ student: owned }),
     Review.deleteMany({ author: owned }),
     ReferralReward.deleteMany({ $or: [{ referrer: owned }, { referee: owned }] }),
@@ -187,6 +188,7 @@ export const cleanupDeletedData = asyncHandler(async (req, res) => {
   ])
   counts.enrollments = enr.deletedCount
   counts.payments = pay.deletedCount
+  counts.monthlyFees = fee.deletedCount
   counts.certificates = cert.deletedCount
   counts.reviews = rev.deletedCount
   counts.referralRewards = refRew.deletedCount
@@ -196,14 +198,17 @@ export const cleanupDeletedData = asyncHandler(async (req, res) => {
   counts.notifications = notif.deletedCount
   counts.supportTickets = sup.deletedCount
 
-  // 2) Orphaned enrollments/payments whose student or course no longer exists
+  // 2) Orphaned enrollments/payments/monthly-fees whose student or course no longer exists
   const orphanFilter = { $or: [{ student: { $nin: liveUserIds } }, { course: { $nin: liveCourseIds } }] }
-  const [orphanEnr, orphanPay] = await Promise.all([
+  const studentOrphanFilter = { student: { $nin: liveUserIds } }
+  const [orphanEnr, orphanPay, orphanFee] = await Promise.all([
     Enrollment.deleteMany(orphanFilter),
     Payment.deleteMany(orphanFilter),
+    MonthlyFee.deleteMany(studentOrphanFilter),
   ])
   counts.enrollments += orphanEnr.deletedCount
   counts.payments += orphanPay.deletedCount
+  counts.monthlyFees += orphanFee.deletedCount
 
   // 3) Hard-delete the soft-deleted user accounts themselves
   const removedUsers = await User.collection.deleteMany({ isDeleted: true })
