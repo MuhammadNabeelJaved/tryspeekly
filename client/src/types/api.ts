@@ -583,6 +583,8 @@ export interface AdminStats {
     enrolledAt: string;
   }>;
   enrollmentsByCourse: Array<{ title: string; count: number }>;
+  pendingRevenue: Record<string, number>;
+  approvedPaymentsCount: number;
 }
 
 // ─── Assignment Types ─────────────────────────────────────────────────────────

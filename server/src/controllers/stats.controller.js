@@ -28,6 +28,8 @@ export const getAdminStats = asyncHandler(async (req, res) => {
     paymentsByMethodAgg,
     recentEnrollments,
     enrollmentsByCourseAgg,
+    pendingRevenueAgg,
+    approvedPaymentsCount,
   ] = await Promise.all([
     User.countDocuments({ role: 'student', isDeleted: { $ne: true } }),
     User.countDocuments({ role: 'teacher', isDeleted: { $ne: true } }),
@@ -61,6 +63,11 @@ export const getAdminStats = asyncHandler(async (req, res) => {
       .populate('course', 'title')
       .populate('payment', 'status')
       .lean(),
+    Payment.aggregate([
+      { $match: { status: 'pending' } },
+      { $group: { _id: '$currency', total: { $sum: '$amount' } } },
+    ]),
+    Payment.countDocuments({ status: 'approved' }),
     Enrollment.aggregate([
       { $group: { _id: '$course', count: { $sum: 1 } } },
       { $sort: { count: -1 } },
@@ -78,6 +85,9 @@ export const getAdminStats = asyncHandler(async (req, res) => {
 
   const revenueMap = {}
   revenueAgg.forEach(({ _id, total }) => { revenueMap[_id] = total })
+
+  const pendingRevenueMap = {}
+  pendingRevenueAgg.forEach(({ _id, total }) => { pendingRevenueMap[_id] = total })
 
   const studentsByCountry = studentsByCountryAgg.map(({ _id, count }) => ({ country: _id, count }))
   const paymentsByMethod = paymentsByMethodAgg.map(({ _id, count }) => ({ method: _id, count }))
@@ -113,6 +123,8 @@ export const getAdminStats = asyncHandler(async (req, res) => {
       paymentsByMethod,
       recentEnrollments: recentEnrollmentsMapped,
       enrollmentsByCourse: enrollmentsByCourseAgg,
+      pendingRevenue: pendingRevenueMap,
+      approvedPaymentsCount,
     },
   })
 })

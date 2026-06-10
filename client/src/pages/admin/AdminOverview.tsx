@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
-import { Users, BookOpen, CreditCard, TrendUp, Globe, ChartPieSlice, ArrowRight, Student, Handshake, Broom } from '@phosphor-icons/react'
+import { Users, BookOpen, CreditCard, TrendUp, Globe, ChartPieSlice, ArrowRight, Student, Handshake, Broom, Money } from '@phosphor-icons/react'
 import toast from 'react-hot-toast'
 import type { AdminView } from '@/pages/AdminPage'
 import type { AdminStats, ApiResponse } from '@/types/api'
@@ -113,9 +113,14 @@ export default function AdminOverview({ onNavigate }: { onNavigate: (v: AdminVie
       view: 'instructors' as AdminView,
     },
     {
-      label: 'Revenue (PKR)',
+      label: 'Total Revenue',
       value: stats ? `₨${(stats.revenue?.PKR ?? 0).toLocaleString()}` : '—',
-      sub: `${stats?.failedPayments ?? 0} failed`,
+      sub: stats
+        ? [
+            stats.revenue?.USD ? `$${stats.revenue.USD.toLocaleString()} USD` : '',
+            (stats.pendingRevenue?.PKR ?? 0) > 0 ? `₨${(stats.pendingRevenue.PKR).toLocaleString()} pending` : '',
+          ].filter(Boolean).join(' · ') || `${stats.approvedPaymentsCount ?? 0} paid`
+        : '',
       Icon: CreditCard,
       variant: 'dark' as const,
       color: 'from-amber-500 to-orange-600',
@@ -363,7 +368,7 @@ export default function AdminOverview({ onNavigate }: { onNavigate: (v: AdminVie
       </div>
 
       {/* Third row */}
-      <div className="grid lg:grid-cols-2 gap-4">
+      <div className="grid lg:grid-cols-3 gap-4">
 
         {/* Payment methods */}
         <motion.div {...card} transition={{ delay: 0.3 }} className="bg-white dark:bg-neutral-900 rounded-[20px] border border-slate-100 dark:border-neutral-800 overflow-hidden">
@@ -399,6 +404,117 @@ export default function AdminOverview({ onNavigate }: { onNavigate: (v: AdminVie
                       </div>
                     ))
                   })()
+            }
+          </div>
+        </motion.div>
+
+        {/* Revenue Breakdown */}
+        <motion.div {...card} transition={{ delay: 0.32 }} className="bg-white dark:bg-neutral-900 rounded-[20px] border border-slate-100 dark:border-neutral-800 overflow-hidden">
+          <div className="flex items-center gap-2 px-5 py-4 border-b border-slate-100 dark:border-neutral-800">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700/50">
+              <Money size={13} weight="fill" className="text-amber-600 dark:text-amber-400" />
+              <span className="text-amber-700 dark:text-amber-300 text-xs font-bold tracking-wide uppercase">Revenue Breakdown</span>
+            </div>
+            <button type="button" onClick={() => onNavigate('payments')} className="ml-auto text-xs text-violet-600 dark:text-violet-400 font-semibold hover:underline flex items-center gap-1">
+              View all <ArrowRight size={11} />
+            </button>
+          </div>
+          <div className="p-5 space-y-4">
+            {isLoading
+              ? Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-10 bg-slate-100 dark:bg-neutral-800 rounded-lg animate-pulse" />)
+              : (() => {
+                  const pkrCollected = stats?.revenue?.PKR ?? 0
+                  const pkrPending   = stats?.pendingRevenue?.PKR ?? 0
+                  const usdCollected = stats?.revenue?.USD ?? 0
+                  const usdPending   = stats?.pendingRevenue?.USD ?? 0
+                  const approved     = stats?.approvedPaymentsCount ?? 0
+                  const pending      = stats?.pendingPayments ?? 0
+                  const failed       = stats?.failedPayments ?? 0
+                  const total        = approved + pending + failed || 1
+
+                  return (
+                    <>
+                      {/* PKR */}
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs font-bold text-slate-700 dark:text-neutral-300">PKR Collections</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="bg-emerald-50 dark:bg-emerald-950/20 rounded-xl p-3">
+                            <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-500 uppercase tracking-wide mb-0.5">Collected</p>
+                            <p className="text-base font-black text-emerald-700 dark:text-emerald-400">₨{pkrCollected.toLocaleString()}</p>
+                          </div>
+                          <div className="bg-amber-50 dark:bg-amber-950/20 rounded-xl p-3">
+                            <p className="text-[10px] font-bold text-amber-600 dark:text-amber-500 uppercase tracking-wide mb-0.5">Pending</p>
+                            <p className="text-base font-black text-amber-700 dark:text-amber-400">₨{pkrPending.toLocaleString()}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* USD — only shown if any USD transactions exist */}
+                      {(usdCollected > 0 || usdPending > 0) && (
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs font-bold text-slate-700 dark:text-neutral-300">USD Collections</span>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div className="bg-emerald-50 dark:bg-emerald-950/20 rounded-xl p-3">
+                              <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-500 uppercase tracking-wide mb-0.5">Collected</p>
+                              <p className="text-base font-black text-emerald-700 dark:text-emerald-400">${usdCollected.toLocaleString()}</p>
+                            </div>
+                            <div className="bg-amber-50 dark:bg-amber-950/20 rounded-xl p-3">
+                              <p className="text-[10px] font-bold text-amber-600 dark:text-amber-500 uppercase tracking-wide mb-0.5">Pending</p>
+                              <p className="text-base font-black text-amber-700 dark:text-amber-400">${usdPending.toLocaleString()}</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Payment status bar */}
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs font-bold text-slate-700 dark:text-neutral-300">Payment Status</span>
+                          <span className="text-[10px] text-slate-400 dark:text-neutral-500">{approved + pending + failed} total</span>
+                        </div>
+                        <div className="flex h-2.5 rounded-full overflow-hidden gap-px">
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${(approved / total) * 100}%` }}
+                            transition={{ duration: 0.8, delay: 0.3 }}
+                            className="bg-emerald-500 rounded-l-full"
+                            title={`${approved} approved`}
+                          />
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${(pending / total) * 100}%` }}
+                            transition={{ duration: 0.8, delay: 0.3 }}
+                            className="bg-amber-400"
+                            title={`${pending} pending`}
+                          />
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${(failed / total) * 100}%` }}
+                            transition={{ duration: 0.8, delay: 0.3 }}
+                            className="bg-red-400 rounded-r-full"
+                            title={`${failed} failed`}
+                          />
+                        </div>
+                        <div className="flex items-center gap-3 mt-2">
+                          {[
+                            { label: 'Paid', count: approved, color: 'bg-emerald-500' },
+                            { label: 'Pending', count: pending, color: 'bg-amber-400' },
+                            { label: 'Failed', count: failed, color: 'bg-red-400' },
+                          ].map(({ label, count, color }) => (
+                            <div key={label} className="flex items-center gap-1.5">
+                              <span className={`w-2 h-2 rounded-full ${color} flex-shrink-0`} />
+                              <span className="text-[10px] text-slate-500 dark:text-neutral-400">{label} <strong className="text-slate-700 dark:text-neutral-300">{count}</strong></span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  )
+                })()
             }
           </div>
         </motion.div>
