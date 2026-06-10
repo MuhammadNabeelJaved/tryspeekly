@@ -32,6 +32,24 @@ export const enrollmentsService = {
     return response.data;
   },
 
+  async adminManualEnroll(dto: {
+    studentId: string;
+    courseId: string;
+    paymentMethod?: string;
+    paymentAmount?: number;
+    paymentCurrency?: string;
+    paymentStatus?: 'paid' | 'pending' | 'failed';
+    enrolledAt?: string;
+    sessionsAttended?: number;
+    totalSessions?: number;
+    isActive?: boolean;
+    certificateId?: string;
+    certificateIssueDate?: string;
+  }): Promise<ApiResponse<{ enrollment: Enrollment; certificate: unknown }>> {
+    const response = await axiosClient.post<ApiResponse<{ enrollment: Enrollment; certificate: unknown }>>('/enrollments/admin/manual', dto);
+    return response.data;
+  },
+
   async adminEnrollWithFinancialAid(dto: { financialAidId: string; courseId: string; studentId?: string }): Promise<ApiResponse<Enrollment>> {
     const response = await axiosClient.post<ApiResponse<Enrollment>>('/enrollments/admin/financial-aid', dto);
     return response.data;

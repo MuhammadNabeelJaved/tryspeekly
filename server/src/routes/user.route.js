@@ -5,6 +5,7 @@ import { uploadProfileImage, handleMulterError } from '../middlewares/multer.js'
 import {
     createUser,
     adminCreateUser,
+    adminUpdateUser,
     verifyEmail,
     resendVerification,
     loginUser,
@@ -74,6 +75,7 @@ router.route('/:id/show-on-home').patch(authenticate, authorize('admin'), toggle
 router.route('/:id/show-on-courses').patch(authenticate, authorize('admin'), toggleShowOnCoursesPage)
 router.route('/:id')
     .get(authenticate, allowTeamMember, getUserById)
+    .patch(authenticate, authorize('admin'), adminUpdateUser)
     .delete(authenticate, authorize('admin'), deleteUser)
 
 export default router

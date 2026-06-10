@@ -44,6 +44,7 @@ const safeUser = (user) => ({
   bio: user.bio,
   country: user.country,
   city: user.city,
+  adminNotes: user.adminNotes,
   timezone: user.timezone,
   isVerified: user.isVerified,
   isOnboardingDone: user.isOnboardingDone,
@@ -93,7 +94,7 @@ export const createUser = asyncHandler(async (req, res) => {
 // sign in later via "forgot password" to set their own password.
 export const adminCreateUser = asyncHandler(async (req, res) => {
   try {
-    const { name, email, phone, country, city, role } = req.body
+    const { name, email, phone, country, city, role, adminNotes } = req.body
 
     if (!name || !email) {
       return res.status(400).json({ success: false, error: { message: 'Name and email are required' } })
@@ -118,6 +119,7 @@ export const adminCreateUser = asyncHandler(async (req, res) => {
       phone: phone || undefined,
       country: country || undefined,
       city: city || undefined,
+      adminNotes: adminNotes || undefined,
       role: role === 'teacher' || role === 'admin' || role === 'team_member' ? role : 'student',
       isVerified: true,
       isOnboardingDone: true,
@@ -126,6 +128,38 @@ export const adminCreateUser = asyncHandler(async (req, res) => {
     await user.save()
 
     res.status(201).json({ success: true, message: 'User created', data: safeUser(user) })
+  } catch (error) {
+    res.status(400).json({ success: false, error: { message: error.message } })
+  }
+})
+
+// PATCH /api/v1/users/:id  (admin only — update a user's profile details)
+export const adminUpdateUser = asyncHandler(async (req, res) => {
+  try {
+    const { name, email, phone, country, city, adminNotes } = req.body
+
+    const user = await User.findById(req.params.id)
+    if (!user) return res.status(404).json({ success: false, error: { message: 'User not found' } })
+
+    if (email !== undefined) {
+      const normalizedEmail = String(email).trim().toLowerCase()
+      if (normalizedEmail !== user.email) {
+        const existing = await User.collection.findOne({ email: normalizedEmail, _id: { $ne: user._id } })
+        if (existing) {
+          return res.status(409).json({ success: false, error: { message: 'Email already in use' } })
+        }
+        user.email = normalizedEmail
+      }
+    }
+
+    if (name !== undefined) user.name = name
+    if (phone !== undefined) user.phone = phone
+    if (country !== undefined) user.country = country
+    if (city !== undefined) user.city = city
+    if (adminNotes !== undefined) user.adminNotes = adminNotes
+
+    await user.save()
+    res.json({ success: true, message: 'User updated successfully', data: safeUser(user) })
   } catch (error) {
     res.status(400).json({ success: false, error: { message: error.message } })
   }

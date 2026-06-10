@@ -10,6 +10,7 @@ import {
   getAllEnrollments,
   getUnpaidEnrollments,
   adminEnrollWithFinancialAid,
+  adminManualEnroll,
   getEnrollmentByFinancialAid,
 } from '../controllers/enrollment.controller.js'
 
@@ -25,6 +26,7 @@ router.route('/teacher/my').get(authenticate, authorize('teacher', 'admin'), get
 // ─── Admin routes (also visible to team members with students/courses/instructors pages) ───
 router.route('/').get(authenticate, authorizeTeamPage('students', 'courses', 'instructors'), getAllEnrollments)
 router.route('/admin/unpaid').get(authenticate, authorizeTeamPage('payments'), getUnpaidEnrollments)
+router.route('/admin/manual').post(authenticate, authorize('admin'), logActivity('create', 'enrollment', (req) => ({ details: 'Manually enrolled student from admin students page' })), adminManualEnroll)
 router.route('/admin/financial-aid').post(authenticate, authorizeTeamPage('students', 'courses', 'instructors'), logActivity('create', 'enrollment', (req) => ({ details: 'Enrolled student via financial aid' })), adminEnrollWithFinancialAid)
 router.route('/by-financial-aid/:aidId').get(authenticate, authorizeTeamPage('students', 'courses', 'instructors'), getEnrollmentByFinancialAid)
 

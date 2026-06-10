@@ -8,6 +8,7 @@ import type { AdminStore } from '../AdminPage'
 import type { Student } from './adminData'
 import { axiosClient } from '../../lib/axiosClient'
 import { enrollmentsService } from '../../services/enrollments.service'
+import { coursesService } from '../../services/courses.service'
 import UserAvatar from '../../components/UserAvatar'
 import { useAuth } from '@/context/AuthContext'
 
@@ -16,8 +17,18 @@ const EMPTY: Student = {
   courseId: '', courseName: '', courseLevel: '', paymentMethod: '',
   paymentAmount: 0, paymentCurrency: 'PKR', paymentStatus: 'pending',
   enrolledAt: new Date().toISOString().split('T')[0], status: 'active', notes: '', avatar: '',
-  attendance: 0, certificateId: '', certificateIssueDate: ''
+  attendance: 0, attendedClasses: 0, totalClasses: 0, certificateId: '', certificateIssueDate: ''
 }
+
+const PAYMENT_METHODS = [
+  { value: 'easypaisa', label: 'Easypaisa' },
+  { value: 'jazzcash', label: 'JazzCash' },
+  { value: 'nayapay', label: 'NayaPay' },
+  { value: 'sadapay', label: 'SadaPay' },
+  { value: 'zindigi', label: 'Zindigi' },
+  { value: 'bank_local', label: 'Bank (Local)' },
+  { value: 'bank_international', label: 'Bank (International)' },
+]
 
 function Badge({ value }: { value: string }) {
   const map: Record<string, string> = {
@@ -77,9 +88,10 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
   const [enrollmentCoursesMap, setEnrollmentCoursesMap] = useState<Record<string, string[]>>({})
 
   type EnrollmentDetail = {
+    enrollmentId: string; courseId: string
     courseTitle: string; courseLevel: string; teacherName: string
     paymentMethod: string; paymentAmount: number; paymentCurrency: string
-    paymentStatus: string; enrolledAt: string; isActive: boolean; financialAid: boolean
+    paymentStatus: string; enrolledAt: string; enrolledAtISO: string; isActive: boolean; financialAid: boolean
     sessionsAttended: number; totalSessions: number
   }
   type PaymentSummary = {
@@ -88,13 +100,14 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
   }
   const [enrollmentDetailsMap, setEnrollmentDetailsMap] = useState<Record<string, EnrollmentDetail[]>>({})
   const [paymentSummaryMap, setPaymentSummaryMap] = useState<Record<string, PaymentSummary>>({})
+  const [courses, setCourses] = useState<{ _id: string; title: string; level: string }[]>([])
 
-  useEffect(() => {
-    async function fetchData() {
+  async function fetchData() {
       try {
-        const [usersRes, enrollRes] = await Promise.allSettled([
+        const [usersRes, enrollRes, coursesRes] = await Promise.allSettled([
           axiosClient.get('/users', { params: { role: 'student', limit: 200 } }),
           enrollmentsService.getAllEnrollments({ limit: 1000 }),
+          coursesService.getAllCourses({ limit: 200 }),
         ])
 
         if (usersRes.status === 'fulfilled') {
@@ -109,7 +122,7 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
               email: u.email ?? '',
               phone: u.phone ?? '',
               country: u.country ?? '',
-              city: '',
+              city: u.city ?? '',
               courseId: '',
               courseName: '',
               courseLevel: '',
@@ -119,7 +132,7 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
               paymentStatus: 'paid' as const,
               enrolledAt: u.createdAt?.split('T')[0] ?? '',
               status: 'active' as const,
-              notes: '',
+              notes: u.adminNotes ?? '',
               avatar: (u.name ?? '').split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2),
             }
           })
@@ -150,6 +163,8 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
             }
 
             const detail: EnrollmentDetail = {
+              enrollmentId: e._id ?? '',
+              courseId: e.course?._id ?? '',
               courseTitle: title,
               courseLevel: e.course?.level ?? '',
               teacherName: e.teacher?.name ?? '',
@@ -158,6 +173,7 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
               paymentCurrency: payCurrency,
               paymentStatus: payStatus,
               enrolledAt: e.enrolledAt ? new Date(e.enrolledAt).toLocaleDateString() : '',
+              enrolledAtISO: e.enrolledAt ? String(e.enrolledAt).split('T')[0] : '',
               isActive: e.isActive ?? false,
               financialAid: !!e.financialAid,
               sessionsAttended: e.progress?.sessionsAttended ?? 0,
@@ -179,14 +195,19 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
           setEnrollmentDetailsMap(detailsMap)
           setPaymentSummaryMap(summaryMap)
         }
+
+        if (coursesRes.status === 'fulfilled') {
+          const list: any[] = coursesRes.value.data ?? []
+          setCourses(list.map((c: any) => ({ _id: c._id, title: c.title ?? '', level: c.level ?? '' })))
+        }
       } catch {
         // Fallback to store data
       } finally {
         setLoading(false)
       }
-    }
-    fetchData()
-  }, [])
+  }
+
+  useEffect(() => { fetchData() }, [])
 
   const [search, setSearch] = useState('')
   const [filterCountry, setFilterCountry] = useState('All')
@@ -221,7 +242,20 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
   }
 
   function openEdit(s: Student) {
-    reset(s)
+    // Prefill enrollment fields from the student's first real enrollment
+    const d = enrollmentDetailsMap[s.id]?.[0]
+    reset({
+      ...s,
+      courseId: d?.courseId ?? '',
+      paymentMethod: d?.paymentMethod ?? '',
+      paymentAmount: d?.paymentAmount ?? 0,
+      paymentCurrency: d?.paymentCurrency ?? 'PKR',
+      paymentStatus: d ? (d.paymentStatus === 'approved' ? 'paid' : d.paymentStatus === 'rejected' ? 'failed' : 'pending') : s.paymentStatus,
+      enrolledAt: d?.enrolledAtISO || s.enrolledAt,
+      status: d ? (d.isActive ? 'active' : 'inactive') : s.status,
+      attendedClasses: d?.sessionsAttended ?? 0,
+      totalClasses: d?.totalSessions ?? 0,
+    })
     setModalType('edit')
   }
 
@@ -230,16 +264,17 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
     setModalType('view')
   }
 
-  function handleIssueCertificate(s: Student) {
-    const updated = {
-      ...s,
-      status: 'completed' as const,
-      certificateId: s.certificateId || `EP-${new Date().getFullYear()}-${Math.floor(Math.random() * 10000)}X`,
-      certificateIssueDate: s.certificateIssueDate || new Date().toISOString().split('T')[0]
+  async function handleIssueCertificate(s: Student) {
+    const d = enrollmentDetailsMap[s.id]?.[0]
+    if (!d?.enrollmentId) {
+      toast.error('No enrollment found — enroll the student in a course first')
+      return
     }
-    setStudents(students.map(st => st.id === s.id ? updated : st))
-    if (modalType === 'view' && viewStudent?.id === s.id) {
-      setViewStudent(updated)
+    try {
+      await axiosClient.post('/certificates', { enrollmentId: d.enrollmentId })
+      toast.success('Certificate issued')
+    } catch (e: any) {
+      toast.error(e?.response?.data?.error?.message ?? 'Failed to issue certificate')
     }
   }
 
@@ -247,35 +282,60 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
     const initials = data.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
     const student = { ...data, avatar: data.avatar || initials }
 
-    if (modalType === 'add') {
-      try {
+    try {
+      let userId = data.id
+
+      if (modalType === 'add') {
         const res = await axiosClient.post('/users', {
           name: data.name.trim(),
           email: data.email.trim(),
           phone: data.phone || undefined,
           country: data.country || undefined,
           city: data.city || undefined,
+          adminNotes: data.notes || undefined,
         })
-        const created = res.data?.data
-        const newStudent: Student = {
-          ...student,
-          id: created?._id ?? student.id,
-          enrolledAt: created?.createdAt?.split('T')[0] ?? student.enrolledAt,
-        }
-        setApiStudents(prev => (prev ? [newStudent, ...prev] : [newStudent]))
-        setStudents([...students, newStudent])
-        toast.success('Student added')
-        setModalType(null)
-      } catch (e: any) {
-        toast.error(e?.response?.data?.error?.message ?? 'Failed to add student')
+        userId = res.data?.data?._id ?? userId
+      } else {
+        await axiosClient.patch(`/users/${data.id}`, {
+          name: data.name.trim(),
+          email: data.email.trim(),
+          phone: data.phone,
+          country: data.country,
+          city: data.city,
+          adminNotes: data.notes,
+        })
       }
-      return
-    }
 
-    // Edit — update the visible list (no admin update-by-id endpoint yet)
-    setApiStudents(prev => (prev ? prev.map(s => (s.id === student.id ? student : s)) : null))
-    setStudents(students.map(s => s.id === student.id ? student : s))
-    setModalType(null)
+      // Persist course / payment / progress / certificate as a real enrollment
+      if (data.courseId) {
+        await enrollmentsService.adminManualEnroll({
+          studentId: userId,
+          courseId: data.courseId,
+          paymentMethod: data.paymentMethod || undefined,
+          paymentAmount: Number.isFinite(data.paymentAmount) ? data.paymentAmount : undefined,
+          paymentCurrency: data.paymentCurrency,
+          paymentStatus: data.paymentStatus,
+          enrolledAt: data.enrolledAt || undefined,
+          sessionsAttended: Number.isFinite(data.attendedClasses) ? data.attendedClasses : undefined,
+          totalSessions: Number.isFinite(data.totalClasses) ? data.totalClasses : undefined,
+          isActive: data.status !== 'inactive',
+          certificateId: data.certificateId || undefined,
+          certificateIssueDate: data.certificateIssueDate || undefined,
+        })
+      }
+
+      if (modalType === 'add') {
+        setStudents([...students, { ...student, id: userId }])
+        toast.success('Student added')
+      } else {
+        setStudents(students.map(s => (s.id === student.id ? student : s)))
+        toast.success('Student updated')
+      }
+      setModalType(null)
+      await fetchData()
+    } catch (e: any) {
+      toast.error(e?.response?.data?.error?.message ?? 'Failed to save student')
+    }
   }
 
   async function handleDelete(id: string) {
@@ -554,13 +614,28 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
                 <Field label="Phone"><Input register={register} name="phone" placeholder="+92 300 0000000" /></Field>
                 <Field label="Country"><Input register={register} name="country" placeholder="Pakistan" /></Field>
                 <Field label="City"><Input register={register} name="city" placeholder="Karachi" /></Field>
-                <Field label="Course Name"><Input register={register} name="courseName" placeholder="Business English" /></Field>
-                <Field label="Course Level"><Input register={register} name="courseLevel" placeholder="Intermediate" /></Field>
-                <Field label="Payment Method"><Input register={register} name="paymentMethod" placeholder="Easypaisa" /></Field>
+                <Field label="Course">
+                  <select
+                    {...register('courseId')}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white outline-none focus:border-violet-500 dark:focus:border-violet-500 transition-colors"
+                  >
+                    <option value="">— No course —</option>
+                    {courses.map(c => <option key={c._id} value={c._id}>{c.title}{c.level ? ` (${c.level})` : ''}</option>)}
+                  </select>
+                </Field>
+                <Field label="Payment Method">
+                  <select
+                    {...register('paymentMethod')}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white outline-none focus:border-violet-500 dark:focus:border-violet-500 transition-colors"
+                  >
+                    <option value="">— None —</option>
+                    {PAYMENT_METHODS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+                  </select>
+                </Field>
                 <Field label="Amount">
                   <div className="flex gap-2">
                     <select {...register('paymentCurrency')} className="px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors">
-                      {['PKR', 'USD', 'GBP', 'AED', 'CAD', 'AUD'].map(c => <option key={c}>{c}</option>)}
+                      {['PKR', 'USD'].map(c => <option key={c}>{c}</option>)}
                     </select>
                     <Input register={register} name="paymentAmount" type="number" placeholder="0" valueAsNumber />
                   </div>
@@ -573,7 +648,6 @@ export default function AdminStudents({ store }: { store: AdminStore }) {
                   <div className="grid grid-cols-2 gap-4">
                     <Field label="Attended Classes"><Input register={register} name="attendedClasses" type="number" placeholder="10" valueAsNumber /></Field>
                     <Field label="Total Classes"><Input register={register} name="totalClasses" type="number" placeholder="12" valueAsNumber /></Field>
-                    <Field label="Attendance (%)"><Input register={register} name="attendance" type="number" placeholder="85" valueAsNumber /></Field>
                     <Field label="Certificate ID (Leave empty to auto-generate)"><Input register={register} name="certificateId" placeholder="EP-2026-1234X" /></Field>
                     <Field label="Certificate Issue Date"><Input register={register} name="certificateIssueDate" type="date" /></Field>
                   </div>

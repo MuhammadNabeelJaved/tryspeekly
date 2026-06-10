@@ -82,6 +82,11 @@ const userSchema = new Schema(
       trim: true,
       maxlength: [100, 'City name cannot exceed 100 characters'],
     },
+    adminNotes: {
+      type: String,
+      trim: true,
+      maxlength: [1000, 'Notes cannot exceed 1000 characters'],
+    },
     timezone: {
       type: String,
       trim: true,

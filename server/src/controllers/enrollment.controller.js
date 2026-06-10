@@ -6,6 +6,7 @@ import User from '../models/user.model.js'
 import Coupon from '../models/coupon.model.js'
 import Offer from '../models/offer.model.js'
 import Payment from '../models/payment.model.js'
+import Certificate from '../models/certificate.model.js'
 import { getEffectivePrice } from '../utils/offerUtils.js'
 import { createAndEmitNotification } from '../utils/notify.js'
 import { sendEmail } from '../utils/email.js'
@@ -289,6 +290,110 @@ export const adminEnrollWithFinancialAid = asyncHandler(async (req, res) => {
       .populate('teacher', 'name')
 
     res.status(201).json({ success: true, message: 'Student enrolled successfully with financial aid', data: populated })
+  } catch (error) {
+    res.status(400).json({ success: false, error: { message: error.message } })
+  }
+})
+
+// POST /api/v1/enrollments/admin/manual — admin: manually enroll a student and
+// record offline payment / progress / certificate details. Upserts: if the
+// student is already enrolled in the course, the existing record is updated.
+export const adminManualEnroll = asyncHandler(async (req, res) => {
+  try {
+    const {
+      studentId, courseId,
+      paymentMethod, paymentAmount, paymentCurrency, paymentStatus,
+      enrolledAt, sessionsAttended, totalSessions, isActive,
+      certificateId, certificateIssueDate,
+    } = req.body
+
+    if (!studentId || !courseId) {
+      return res.status(400).json({ success: false, error: { message: 'studentId and courseId are required' } })
+    }
+
+    const student = await User.findById(studentId)
+    if (!student) return res.status(404).json({ success: false, error: { message: 'Student not found' } })
+
+    const course = await Course.findById(courseId)
+    if (!course) return res.status(404).json({ success: false, error: { message: 'Course not found' } })
+
+    // UI payment status → payment model status
+    const STATUS_MAP = { paid: 'approved', pending: 'pending', failed: 'rejected' }
+    const mappedStatus = STATUS_MAP[paymentStatus] ?? 'approved'
+    const active = typeof isActive === 'boolean' ? isActive : mappedStatus === 'approved'
+
+    let enrollment = await Enrollment.findOne({ student: studentId, course: courseId })
+    if (!enrollment) {
+      enrollment = new Enrollment({
+        student: studentId,
+        course: courseId,
+        teacher: course.teacher,
+        progress: { totalSessions: course.totalSessions },
+      })
+    }
+
+    if (enrolledAt) enrollment.enrolledAt = new Date(enrolledAt)
+    if (Number.isFinite(sessionsAttended)) enrollment.progress.sessionsAttended = sessionsAttended
+    if (Number.isFinite(totalSessions) && totalSessions > 0) enrollment.progress.totalSessions = totalSessions
+    enrollment.isActive = active
+
+    if (paymentMethod) {
+      let payment = enrollment.payment ? await Payment.findById(enrollment.payment) : null
+      if (payment) {
+        payment.method = paymentMethod
+        if (Number.isFinite(paymentAmount)) payment.amount = paymentAmount
+        if (paymentCurrency) payment.currency = paymentCurrency
+        payment.status = mappedStatus
+        await payment.save()
+      } else {
+        payment = await Payment.create({
+          student: studentId,
+          course: courseId,
+          teacher: course.teacher,
+          method: paymentMethod,
+          amount: Number.isFinite(paymentAmount) ? paymentAmount : 0,
+          currency: paymentCurrency || 'PKR',
+          status: mappedStatus,
+          adminNote: 'Recorded manually by admin',
+        })
+        enrollment.payment = payment._id
+      }
+    }
+
+    await enrollment.save()
+
+    if (!course.enrolledStudents.some((id) => id.toString() === String(studentId))) {
+      course.enrolledStudents.push(studentId)
+      await course.save()
+    }
+
+    // Optional certificate (created once; skipped if one already exists)
+    let certificate = await Certificate.findOne({ enrollment: enrollment._id })
+    if (!certificate && (certificateId || certificateIssueDate)) {
+      if (certificateId) {
+        const duplicate = await Certificate.findOne({ certificateId })
+        if (duplicate) {
+          return res.status(409).json({ success: false, error: { message: 'Certificate ID is already in use' } })
+        }
+      }
+      certificate = await Certificate.create({
+        enrollment: enrollment._id,
+        student: studentId,
+        course: courseId,
+        certificateId: certificateId || undefined,
+        issueDate: certificateIssueDate ? new Date(certificateIssueDate) : undefined,
+      })
+    }
+
+    const populated = await Enrollment.findById(enrollment._id)
+      .populate('course', 'title level')
+      .populate('payment', 'method amount currency status')
+
+    res.status(201).json({
+      success: true,
+      message: 'Enrollment saved successfully',
+      data: { enrollment: populated, certificate },
+    })
   } catch (error) {
     res.status(400).json({ success: false, error: { message: error.message } })
   }
