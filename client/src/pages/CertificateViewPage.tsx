@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { ArrowLeft, CheckCircle, Certificate, LinkedinLogo, FilePdf, Image as ImageIcon } from '@phosphor-icons/react'
+import { ArrowLeft, CheckCircle, Certificate, LinkedinLogo, FilePdf, Image as ImageIcon, Link as LinkIcon, User, CalendarBlank, IdentificationBadge, BookOpen, ChalkboardTeacher } from '@phosphor-icons/react'
 import { certificatesService } from '@/services/certificates.service'
 import CertificateCanvas from '@/components/CertificateCanvas'
-import { exportCertificateJPG, exportCertificatePDF } from '@/utils/certificateExport'
+import { exportCertificateJPG, exportCertificatePDF, captureAsBase64 } from '@/utils/certificateExport'
 import type { Certificate as CertificateType } from '@/types/api'
 
 export default function CertificateViewPage() {
@@ -12,7 +12,7 @@ export default function CertificateViewPage() {
   const [cert, setCert] = useState<CertificateType | null>(null)
   const [loading, setLoading] = useState(true)
   const [downloading, setDownloading] = useState(false)
-  const certRef = useRef<HTMLCanvasElement>(null)
+  const certRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!id) { setLoading(false); return }
@@ -21,6 +21,21 @@ export default function CertificateViewPage() {
       .catch(() => setCert(null))
       .finally(() => setLoading(false))
   }, [id])
+
+  // Auto-generate and upload OG image for social sharing (runs once after cert loads, silently)
+  useEffect(() => {
+    if (!cert || cert.credentialUrl) return
+    const timer = setTimeout(async () => {
+      if (!certRef.current) return
+      try {
+        const base64 = await captureAsBase64(certRef.current)
+        await certificatesService.saveOgImage(cert.certificateId, base64)
+      } catch {
+        // silent — OG upload failure is non-critical
+      }
+    }, 1500)
+    return () => clearTimeout(timer)
+  }, [cert])
 
   if (loading) {
     return (
@@ -44,14 +59,12 @@ export default function CertificateViewPage() {
   const studentName = cert.student?.name ?? 'Student'
   const teacherName = typeof cert.enrollment !== 'string' ? (cert.enrollment.teacher?.name ?? '—') : '—'
   const verifyUrl = `${window.location.origin}/certificate/${cert.certificateId}`
-  const formattedDate = new Date(cert.issueDate).toLocaleDateString('en-US', {
-    year: 'numeric', month: 'long', day: 'numeric',
-  })
+  const formattedDate = new Date(cert.issueDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
 
   const certData = {
     studentName,
     courseName: cert.course?.title ?? 'Course',
-    date: new Date(cert.issueDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }),
+    date: formattedDate,
     certificateId: cert.certificateId,
     instructorName: teacherName !== '—' ? teacherName : undefined,
     instructorTitle: 'Course Instructor',
@@ -85,110 +98,143 @@ export default function CertificateViewPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col items-center py-10 px-4 sm:px-8 font-sans">
-      <div className="w-full max-w-5xl mb-6 flex justify-between items-center">
-        <Link to="/dashboard/certificates" className="flex items-center gap-2 text-slate-500 hover:text-violet-600 transition-colors font-semibold bg-white px-4 py-2 rounded-lg shadow-sm border border-slate-200">
-          <ArrowLeft size={18} /> Back to Certificates
-        </Link>
-        <div className="flex items-center gap-2 text-green-600 bg-green-50 px-4 py-2 rounded-lg font-bold shadow-sm border border-green-200">
-          <CheckCircle size={20} weight="fill" /> Officially Verified
-        </div>
-      </div>
+    <div className="min-h-screen bg-slate-50 py-8 px-4">
+      <div className="max-w-4xl mx-auto space-y-6">
 
-      <div className="max-w-5xl w-full grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Certificate visual (the real design — also the JPG/PDF capture source) */}
-        <div className="lg:col-span-2">
-          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-4 sm:p-5">
-            <div className="mx-auto rounded-lg overflow-hidden shadow-sm" style={{ width: '100%' }}>
+        {/* Top nav */}
+        <div className="flex items-center justify-between">
+          <Link
+            to="/dashboard/certificates"
+            className="flex items-center gap-2 text-slate-500 hover:text-violet-600 transition-colors font-semibold bg-white px-4 py-2 rounded-xl shadow-sm border border-slate-200 text-sm"
+          >
+            <ArrowLeft size={16} /> Back to Certificates
+          </Link>
+          <div className="flex items-center gap-1.5 text-green-600 bg-green-50 px-4 py-2 rounded-xl font-bold border border-green-200 text-sm shadow-sm">
+            <CheckCircle size={18} weight="fill" /> Officially Verified
+          </div>
+        </div>
+
+        {/* Main certificate card — same style as student dashboard card */}
+        <div className="bg-white rounded-[24px] border border-slate-100 shadow-sm overflow-hidden">
+
+          {/* Card header */}
+          <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+            <div>
+              <h3 className="text-base font-black text-slate-900 leading-tight">
+                {cert.course?.title ?? '—'}
+              </h3>
+              <p className="text-xs text-slate-400 mt-0.5">Issued {formattedDate}</p>
+            </div>
+            <span className="text-[10px] font-bold font-mono bg-slate-100 text-slate-600 px-2 py-1 rounded-lg whitespace-nowrap ml-3">
+              {cert.certificateId}
+            </span>
+          </div>
+
+          {/* Certificate — same bg-slate-50 section as student page */}
+          <div className="p-6 bg-slate-50">
+            <div className="overflow-hidden rounded-lg shadow">
               <CertificateCanvas ref={certRef} data={certData} />
             </div>
           </div>
-          {/* Download actions */}
-          <div className="flex gap-3 mt-4">
+
+          {/* Footer actions — same style as student dashboard card */}
+          <div className="px-6 py-4 border-t border-slate-100 flex items-center gap-2 flex-wrap bg-white">
             <button
               onClick={() => handleDownload('pdf')}
               disabled={downloading}
-              className="flex-1 flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-700 disabled:opacity-60 text-white font-bold py-3 rounded-xl transition-colors shadow-sm"
+              className="flex items-center gap-1.5 px-3 py-2 bg-violet-600 hover:bg-violet-700 disabled:opacity-60 text-white rounded-xl text-xs font-bold transition-colors"
             >
-              <FilePdf size={18} weight="fill" /> Download PDF
+              <FilePdf size={13} /> Download PDF
             </button>
             <button
               onClick={() => handleDownload('jpg')}
               disabled={downloading}
-              className="flex-1 flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 disabled:opacity-60 text-white font-bold py-3 rounded-xl transition-colors shadow-sm"
+              className="flex items-center gap-1.5 px-3 py-2 bg-slate-700 hover:bg-slate-800 disabled:opacity-60 text-white rounded-xl text-xs font-bold transition-colors"
             >
-              <ImageIcon size={18} weight="fill" /> Download JPG
-            </button>
-          </div>
-        </div>
-
-        {/* Details sidebar */}
-        <div className="lg:col-span-1 space-y-6">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="p-5 border-b border-slate-100 bg-slate-50">
-              <h3 className="font-bold text-slate-900">Certificate Details</h3>
-            </div>
-            <div className="p-5 space-y-4 text-sm">
-              <div>
-                <p className="text-xs text-slate-500 font-bold uppercase tracking-wide mb-1">Recipient</p>
-                <p className="font-bold text-slate-900">{studentName}</p>
-              </div>
-              <div>
-                <p className="text-xs text-slate-500 font-bold uppercase tracking-wide mb-1">Issue Date</p>
-                <p className="font-bold text-slate-900">{formattedDate}</p>
-              </div>
-              <div>
-                <p className="text-xs text-slate-500 font-bold uppercase tracking-wide mb-1">Credential ID</p>
-                <p className="font-mono font-bold text-slate-900 bg-slate-100 px-2 py-1 rounded w-fit">{cert.certificateId}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="p-5 border-b border-slate-100 bg-violet-50">
-              <h3 className="font-bold text-slate-900">Course Information</h3>
-            </div>
-            <div className="p-5 space-y-4 text-sm">
-              <div>
-                <p className="text-xs text-slate-500 font-bold uppercase tracking-wide mb-1">Course Name</p>
-                <p className="font-bold text-slate-900 leading-tight">{cert.course?.title ?? '—'}</p>
-              </div>
-              {cert.course?.level && (
-                <div>
-                  <p className="text-xs text-slate-500 font-bold uppercase tracking-wide mb-1">Course Level</p>
-                  <span className="inline-block px-2 py-1 bg-slate-100 text-slate-700 font-bold text-xs rounded-md capitalize">{cert.course?.level}</span>
-                </div>
-              )}
-              <div>
-                <p className="text-xs text-slate-500 font-bold uppercase tracking-wide mb-1">Instructor</p>
-                <p className="font-bold text-slate-900">{teacherName}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
-            <h3 className="font-bold text-slate-900 mb-2">Share this achievement</h3>
-            <p className="text-xs text-slate-500 mb-4">Anyone with this link can view this verified certificate.</p>
-            <input
-              type="text"
-              readOnly
-              value={verifyUrl}
-              className="w-full text-xs p-2 bg-slate-50 border border-slate-200 rounded-lg outline-none mb-3 font-mono text-slate-600"
-            />
-            <button
-              onClick={() => { navigator.clipboard.writeText(verifyUrl); toast.success('Link copied!') }}
-              className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-2 rounded-xl transition-colors text-sm mb-3"
-            >
-              Copy Link
+              <ImageIcon size={13} /> Download JPG
             </button>
             <button
               onClick={handleLinkedInShare}
-              className="w-full flex items-center justify-center gap-2 bg-[#0A66C2] hover:bg-[#004182] text-white font-bold py-2 rounded-xl transition-colors text-sm"
+              className="flex items-center gap-1.5 px-3 py-2 bg-[#0A66C2] hover:bg-[#004182] text-white rounded-xl text-xs font-bold transition-colors"
             >
-              <LinkedinLogo size={18} weight="fill" /> Add to LinkedIn
+              <LinkedinLogo size={13} weight="fill" /> LinkedIn
+            </button>
+            <button
+              onClick={() => { navigator.clipboard.writeText(verifyUrl); toast.success('Link copied!') }}
+              className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-colors"
+            >
+              <LinkIcon size={13} weight="bold" /> Copy Link
             </button>
           </div>
         </div>
+
+        {/* Verification details — secondary card below */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="bg-white rounded-[24px] border border-slate-100 shadow-sm overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100">
+              <h4 className="text-sm font-black text-slate-900">Certificate Details</h4>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-lg bg-violet-50 flex items-center justify-center flex-shrink-0">
+                  <User size={15} className="text-violet-600" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Recipient</p>
+                  <p className="text-sm font-bold text-slate-900">{studentName}</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-lg bg-violet-50 flex items-center justify-center flex-shrink-0">
+                  <CalendarBlank size={15} className="text-violet-600" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Issue Date</p>
+                  <p className="text-sm font-bold text-slate-900">{formattedDate}</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-lg bg-violet-50 flex items-center justify-center flex-shrink-0">
+                  <IdentificationBadge size={15} className="text-violet-600" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Credential ID</p>
+                  <p className="text-sm font-bold font-mono text-slate-900 bg-slate-100 px-2 py-0.5 rounded w-fit">{cert.certificateId}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-[24px] border border-slate-100 shadow-sm overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100">
+              <h4 className="text-sm font-black text-slate-900">Course Information</h4>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-lg bg-violet-50 flex items-center justify-center flex-shrink-0">
+                  <BookOpen size={15} className="text-violet-600" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Course Name</p>
+                  <p className="text-sm font-bold text-slate-900 leading-tight">{cert.course?.title ?? '—'}</p>
+                  {cert.course?.level && (
+                    <span className="inline-block mt-1 px-2 py-0.5 bg-slate-100 text-slate-600 font-bold text-[10px] rounded capitalize">{cert.course.level}</span>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-lg bg-violet-50 flex items-center justify-center flex-shrink-0">
+                  <ChalkboardTeacher size={15} className="text-violet-600" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Instructor</p>
+                  <p className="text-sm font-bold text-slate-900">{teacherName}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   )

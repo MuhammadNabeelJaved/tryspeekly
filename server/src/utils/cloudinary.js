@@ -19,6 +19,7 @@ export const FOLDERS = {
   siteBanner:           'english-platform/site/banners',
   siteLogo:             'english-platform/site/logo',
   reviewAuthor:         'english-platform/reviews/authors',
+  certificateOg:        'english-platform/certificates/og',
 }
 
 // ─── Core upload helper (multer memoryStorage buffer → Cloudinary) ────────────
@@ -131,6 +132,15 @@ export const uploadSiteBanner = (buffer, bannerId) =>
       { width: 1920, height: 600, crop: 'fill' },
       { quality: 'auto', fetch_format: 'auto' },
     ],
+  })
+
+export const uploadCertificateOgImage = (buffer, certificateId) =>
+  uploadBuffer(buffer, {
+    folder: FOLDERS.certificateOg,
+    public_id: `cert_${certificateId}`,
+    overwrite: true,
+    resource_type: 'image',
+    transformation: [{ quality: 'auto', fetch_format: 'auto' }],
   })
 
 export const uploadSiteLogo = (buffer) =>

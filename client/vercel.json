@@ -1,6 +1,7 @@
 {
   "rewrites": [
     { "source": "/blog/slug/:slug", "destination": "/api/og-blog?slug=:slug" },
+    { "source": "/certificate/:id", "destination": "/api/og-certificate?id=:id" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

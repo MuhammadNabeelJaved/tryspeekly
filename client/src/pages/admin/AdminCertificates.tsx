@@ -1,9 +1,10 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Certificate, MagnifyingGlass, Check, X, Eye, Trash, FunnelSimple, Medal, Clock, SpinnerGap } from '@phosphor-icons/react'
+import { Certificate, MagnifyingGlass, Check, X, Eye, Trash, FunnelSimple, Medal, Clock, SpinnerGap, FilePdf, Image as ImageIcon } from '@phosphor-icons/react'
 import { certificatesService } from '@/services/certificates.service'
 import ConfirmModal from '@/components/ConfirmModal'
 import CertificateCanvas from '@/components/CertificateCanvas'
+import { exportCertificateJPG, exportCertificatePDF } from '@/utils/certificateExport'
 import toast from 'react-hot-toast'
 import type { Certificate as CertificateType } from '@/types/api'
 
@@ -12,7 +13,9 @@ export default function AdminCertificates() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState('All')
-  const [modalType, setModalType] = useState<'view' | 'revoke' | null>(null)
+  const [modalType, setModalType] = useState<'view' | 'revoke' | 'preview' | null>(null)
+  const previewRef = useRef<HTMLDivElement>(null)
+  const [previewDownloading, setPreviewDownloading] = useState<'pdf' | 'jpg' | null>(null)
   const [selected, setSelected] = useState<CertificateType | null>(null)
   const [revoking, setRevoking] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
@@ -89,6 +92,13 @@ export default function AdminCertificates() {
           <h2 className="text-lg font-black text-slate-900 dark:text-white">Certificate Management</h2>
           <p className="text-xs text-slate-400 dark:text-neutral-500 mt-0.5">View and manage student certificates</p>
         </div>
+        <button
+          onClick={() => setModalType('preview')}
+          className="flex items-center gap-2 px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-sm font-bold transition-colors shadow-sm self-start sm:self-auto"
+        >
+          <Eye size={16} weight="fill" />
+          View Certificate UI
+        </button>
       </div>
 
       {/* Summary stats */}
@@ -272,6 +282,75 @@ export default function AdminCertificates() {
                   className="text-sm font-bold text-violet-600 hover:text-violet-700">
                   View Public Page
                 </a>
+                <button onClick={() => setModalType(null)}
+                  className="px-4 py-2 bg-slate-100 dark:bg-neutral-800 text-slate-700 dark:text-neutral-300 rounded-xl text-xs font-bold transition-colors">
+                  Close
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* CERTIFICATE UI PREVIEW */}
+      <AnimatePresence>
+        {modalType === 'preview' && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 overflow-y-auto">
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-white dark:bg-neutral-900 rounded-[24px] w-full max-w-4xl border border-slate-100 dark:border-neutral-800 shadow-2xl overflow-hidden my-4">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-neutral-800">
+                <div>
+                  <h3 className="text-base font-black text-slate-900 dark:text-white">Certificate Design Preview</h3>
+                  <p className="text-xs text-slate-400 dark:text-neutral-500 mt-0.5">Live preview — any UI changes reflect here instantly</p>
+                </div>
+                <button onClick={() => setModalType(null)} className="w-8 h-8 rounded-full bg-slate-100 dark:bg-neutral-800 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors">
+                  <X size={15} />
+                </button>
+              </div>
+              <div className="p-6 bg-slate-50 dark:bg-neutral-950">
+                <CertificateCanvas ref={previewRef} data={{
+                  studentName: 'Mubbarah Javed',
+                  courseName: 'IELTS English',
+                  date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }),
+                  certificateId: 'CERT-DEMO-2026',
+                  instructorName: 'Sarah Johnson',
+                  instructorTitle: 'Head of Learning',
+                }} />
+              </div>
+              <div className="px-6 py-4 border-t border-slate-100 dark:border-neutral-800 flex items-center justify-between bg-white dark:bg-neutral-900">
+                <div className="flex items-center gap-2">
+                  <button
+                    disabled={!!previewDownloading}
+                    onClick={async () => {
+                      if (!previewRef.current) return
+                      setPreviewDownloading('pdf')
+                      try {
+                        await exportCertificatePDF(previewRef.current, 'Certificate_Demo.pdf')
+                        toast.success('PDF downloaded!')
+                      } catch { toast.error('PDF download failed') }
+                      finally { setPreviewDownloading(null) }
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-2 bg-violet-600 hover:bg-violet-700 disabled:opacity-60 text-white rounded-xl text-xs font-bold transition-colors"
+                  >
+                    {previewDownloading === 'pdf' ? <SpinnerGap size={13} className="animate-spin" /> : <FilePdf size={13} />}
+                    Download PDF
+                  </button>
+                  <button
+                    disabled={!!previewDownloading}
+                    onClick={async () => {
+                      if (!previewRef.current) return
+                      setPreviewDownloading('jpg')
+                      try {
+                        await exportCertificateJPG(previewRef.current, 'Certificate_Demo.jpg')
+                        toast.success('JPG downloaded!')
+                      } catch { toast.error('JPG download failed') }
+                      finally { setPreviewDownloading(null) }
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-2 bg-slate-700 hover:bg-slate-800 disabled:opacity-60 text-white rounded-xl text-xs font-bold transition-colors"
+                  >
+                    {previewDownloading === 'jpg' ? <SpinnerGap size={13} className="animate-spin" /> : <ImageIcon size={13} />}
+                    Download JPG
+                  </button>
+                </div>
                 <button onClick={() => setModalType(null)}
                   className="px-4 py-2 bg-slate-100 dark:bg-neutral-800 text-slate-700 dark:text-neutral-300 rounded-xl text-xs font-bold transition-colors">
                   Close

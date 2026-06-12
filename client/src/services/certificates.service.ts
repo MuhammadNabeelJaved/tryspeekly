@@ -48,4 +48,11 @@ export const certificatesService = {
     );
     return response.data;
   },
+
+  async saveOgImage(certificateId: string, imageBase64: string): Promise<{ success: boolean; data: { url: string } }> {
+    const response = await axiosClient.patch<{ success: boolean; data: { url: string } }>(
+      `/certificates/verify/${certificateId}/og-image`, { imageBase64 }
+    );
+    return response.data;
+  },
 };

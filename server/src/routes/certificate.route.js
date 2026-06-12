@@ -11,6 +11,7 @@ import {
   verifyCertificate,
   deleteCertificate,
   bulkDeleteCertificates,
+  saveCertificateOgImage,
 } from '../controllers/certificate.controller.js'
 
 const router = express.Router()
@@ -19,6 +20,7 @@ const router = express.Router()
 router.route('/my').get(authenticate, authorize('student'), getMyCertificates)
 router.route('/claim').post(authenticate, authorize('student'), claimCertificate)
 router.route('/verify/:certificateId').get(verifyCertificate)
+router.route('/verify/:certificateId/og-image').patch(saveCertificateOgImage)
 router.route('/').get(authenticate, authorizeTeamPage('certificates'), getAllCertificates)
 router.route('/').post(authenticate, authorize('teacher', 'admin'), issueCertificate)
 router.route('/bulk').delete(authenticate, authorizeTeamPage('certificates'), logActivity('delete', 'certificate', (req) => ({ details: `Bulk-deleted ${req.body?.ids?.length ?? 0} certificates` })), bulkDeleteCertificates)

@@ -4,6 +4,7 @@ import Enrollment from '../models/enrollment.model.js'
 import User from '../models/user.model.js'
 import Course from '../models/course.model.js'
 import { sendEmail } from '../utils/email.js'
+import { uploadCertificateOgImage } from '../utils/cloudinary.js'
 
 // Fire-and-forget: email the student that their certificate is ready.
 async function emailCertificateIssued(cert) {
@@ -216,4 +217,27 @@ export const bulkDeleteCertificates = asyncHandler(async (req, res) => {
     return res.status(400).json({ success: false, error: { message: 'ids must be a non-empty array' } })
   const result = await Certificate.deleteMany({ _id: { $in: ids } })
   res.json({ success: true, message: `${result.deletedCount} certificate${result.deletedCount !== 1 ? 's' : ''} deleted`, data: { deleted: result.deletedCount } })
+})
+
+// PATCH /api/v1/certificates/verify/:certificateId/og-image — public: save OG image for social sharing
+export const saveCertificateOgImage = asyncHandler(async (req, res) => {
+  const { certificateId } = req.params
+  const { imageBase64 } = req.body
+
+  if (!imageBase64) return res.status(400).json({ success: false, message: 'imageBase64 is required' })
+
+  const cert = await Certificate.findOne({ certificateId, status: 'issued' })
+  if (!cert) return res.status(404).json({ success: false, message: 'Certificate not found' })
+
+  // Already uploaded — skip re-upload
+  if (cert.credentialUrl) return res.json({ success: true, data: { url: cert.credentialUrl } })
+
+  const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '')
+  const buffer = Buffer.from(base64Data, 'base64')
+  const result = await uploadCertificateOgImage(buffer, certificateId)
+
+  cert.credentialUrl = result.secure_url
+  await cert.save()
+
+  res.json({ success: true, data: { url: result.secure_url } })
 })
