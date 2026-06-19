@@ -209,6 +209,10 @@ export default function CourseDetailsPage() {
     : apiCourse?.pricingType === 'per_session' ? '/session'
     : ''
 
+  const isUSDStudent = currency !== 'PKR'
+  const fmtCoursePrice = (p: number) =>
+    isUSDStudent ? `$${p}${pricingTypeSuffix}` : `Rs.${p.toLocaleString()}${pricingTypeSuffix}`
+
   // Merge API data into COURSE object for display
   const activeCourse = apiCourse
     ? {
@@ -827,17 +831,17 @@ export default function CourseDetailsPage() {
                     <div className="flex items-end gap-3">
                       <span className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">
                         {couponAdjustedPrice != null
-                          ? `Rs.${couponAdjustedPrice.toLocaleString()}${pricingTypeSuffix}`
+                          ? fmtCoursePrice(couponAdjustedPrice)
                           : priceResult?.hasDiscount
-                            ? `Rs.${priceResult.discountedPrice.toLocaleString()}${pricingTypeSuffix}`
+                            ? fmtCoursePrice(priceResult.discountedPrice)
                             : activeCourse.price}
                       </span>
                       {(couponAdjustedPrice != null || priceResult?.hasDiscount) && (
                         <span className="text-lg text-slate-400 dark:text-neutral-500 line-through mb-1 font-semibold">
                           {priceResult?.hasDiscount && couponAdjustedPrice != null
-                            ? `Rs.${priceResult.discountedPrice.toLocaleString()}${pricingTypeSuffix}`
+                            ? fmtCoursePrice(priceResult.discountedPrice)
                             : priceResult?.hasDiscount
-                              ? `Rs.${priceResult.originalPrice.toLocaleString()}${pricingTypeSuffix}`
+                              ? fmtCoursePrice(priceResult.originalPrice)
                               : activeCourse.price}
                         </span>
                       )}
@@ -1000,18 +1004,18 @@ export default function CourseDetailsPage() {
                 {(couponAdjustedPrice != null || priceResult?.hasDiscount) && (
                   <div className="text-xs text-slate-500 dark:text-neutral-400 font-bold mb-0.5 line-through">
                     {priceResult?.hasDiscount && couponAdjustedPrice != null
-                      ? `Rs.${priceResult.discountedPrice.toLocaleString()}${pricingTypeSuffix}`
+                      ? fmtCoursePrice(priceResult.discountedPrice)
                       : priceResult?.hasDiscount
-                        ? `Rs.${priceResult.originalPrice.toLocaleString()}${pricingTypeSuffix}`
+                        ? fmtCoursePrice(priceResult.originalPrice)
                         : activeCourse.price}
                   </div>
                 )}
                 <div className="flex items-center gap-2">
                   <div className="text-2xl font-black text-slate-900 dark:text-white">
                     {couponAdjustedPrice != null
-                      ? `Rs.${couponAdjustedPrice.toLocaleString()}${pricingTypeSuffix}`
+                      ? fmtCoursePrice(couponAdjustedPrice)
                       : priceResult?.hasDiscount
-                        ? `Rs.${priceResult.discountedPrice.toLocaleString()}${pricingTypeSuffix}`
+                        ? fmtCoursePrice(priceResult.discountedPrice)
                         : activeCourse.price}
                   </div>
                   {priceResult?.hasDiscount && (

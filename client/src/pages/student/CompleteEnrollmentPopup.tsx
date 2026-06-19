@@ -114,18 +114,19 @@ export default function CompleteEnrollmentPopup({ enrollments, onClose, onPaymen
       </div>
 
       {selectedEnrollment && (() => {
-        const originalPrice = selectedEnrollment.course.currency === 'USD' ? (selectedEnrollment.course.priceUSD ?? 0) : (selectedEnrollment.course.price ?? 0)
+        const pkrPrice = selectedEnrollment.course.price ?? 0
+        const usdPrice = selectedEnrollment.course.priceUSD
         const couponDiscount = selectedEnrollment.discountApplied || 0
         const offerDiscount = selectedEnrollment.offerDiscountApplied || 0
         const totalDiscount = couponDiscount + offerDiscount
-        const discountedPrice = totalDiscount > 0 ? Math.max(0, originalPrice - totalDiscount) : undefined
+        const discountedPrice = totalDiscount > 0 ? Math.max(0, pkrPrice - totalDiscount) : undefined
         return (
           <PaymentSubmitModal
             courseId={selectedEnrollment.course._id}
             teacherId={selectedEnrollment.teacher._id}
             courseName={selectedEnrollment.course.title}
-            coursePrice={originalPrice}
-            courseCurrency={selectedEnrollment.course.currency}
+            coursePrice={pkrPrice}
+            coursePriceUSD={usdPrice}
             pricingType={selectedEnrollment.course.pricingType}
             offerDiscountedPrice={discountedPrice}
             offerLabel={offerDiscount > 0 ? 'Offer discount' : undefined}

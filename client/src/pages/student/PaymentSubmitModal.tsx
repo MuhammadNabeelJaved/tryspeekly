@@ -208,6 +208,7 @@ interface Props {
   teacherId: string
   courseName?: string
   coursePrice?: number
+  coursePriceUSD?: number
   courseCurrency?: 'PKR' | 'USD'
   pricingType?: 'monthly' | 'full_course' | 'per_session'
   offerDiscountedPrice?: number | null
@@ -220,7 +221,7 @@ interface Props {
 }
 
 export default function PaymentSubmitModal({
-  courseId, teacherId, courseName, coursePrice, courseCurrency,
+  courseId, teacherId, courseName, coursePrice, coursePriceUSD,
   pricingType,
   offerDiscountedPrice, offerLabel, couponDiscountApplied,
   isOpen, onClose, onSuccess
@@ -242,13 +243,20 @@ export default function PaymentSubmitModal({
   const [success, setSuccess] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
+  // Sync amount and currency whenever the tab or modal open state changes.
   useEffect(() => {
-    if (isOpen && offerDiscountedPrice && offerDiscountedPrice > 0) {
-      setAmount(String(offerDiscountedPrice))
-    } else if (!isOpen) {
-      setAmount('')
+    if (!isOpen) { setAmount(''); return }
+    if (activeTab === 'international' && (coursePriceUSD ?? 0) > 0) {
+      setCurrency('USD')
+      setAmount(String(coursePriceUSD))
+    } else {
+      setCurrency('PKR')
+      const pkrBase = offerDiscountedPrice && offerDiscountedPrice > 0
+        ? offerDiscountedPrice
+        : (coursePrice ?? 0)
+      if (pkrBase > 0) setAmount(String(pkrBase))
     }
-  }, [isOpen, offerDiscountedPrice])
+  }, [activeTab, isOpen, offerDiscountedPrice])
 
   // Load admin-configured payment methods whenever the modal opens.
   useEffect(() => {
@@ -266,6 +274,12 @@ export default function PaymentSubmitModal({
   }, [isOpen])
 
   if (!isOpen) return null
+
+  // Determine whether to show USD or PKR price based on the active payment tab.
+  const showUSD = activeTab === 'international' && (coursePriceUSD ?? 0) > 0
+  const displayPrice = showUSD ? (coursePriceUSD ?? 0) : (coursePrice ?? 0)
+  const fmtPrice = (p: number) =>
+    showUSD ? `$${p}${priceSuffix}` : `Rs.${p.toLocaleString()}${priceSuffix}`
 
   // When admin has configured methods, show EXACTLY those (a deleted method must
   // never reappear). Only fall back to built-in defaults when none are configured.
@@ -399,7 +413,7 @@ export default function PaymentSubmitModal({
                   </div>
 
                   {/* Course info banner */}
-                  {(courseName || coursePrice !== undefined) && (
+                  {(courseName || displayPrice > 0) && (
                     <div className="flex items-center justify-between gap-3 bg-violet-50 dark:bg-violet-950/30 border border-violet-100 dark:border-violet-900 rounded-2xl px-4 py-3 mb-5">
                       <div className="flex items-center gap-2.5 min-w-0">
                         <BookOpen size={16} weight="fill" className="text-violet-600 dark:text-violet-400 flex-shrink-0" />
@@ -407,20 +421,20 @@ export default function PaymentSubmitModal({
                           <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{courseName}</p>
                         )}
                       </div>
-                      {coursePrice !== undefined && coursePrice > 0 && (
+                      {displayPrice > 0 && (
                         <div className="flex-shrink-0 text-right">
-                          {offerDiscountedPrice ? (
+                          {!showUSD && offerDiscountedPrice ? (
                             <div className="flex flex-col items-end gap-0.5">
                               <span className="text-xs text-slate-400 dark:text-neutral-500 line-through">
-                                {courseCurrency === 'USD' ? `$${coursePrice}${priceSuffix}` : `Rs.${coursePrice.toLocaleString()}${priceSuffix}`}
+                                {fmtPrice(displayPrice)}
                               </span>
                               <span className="text-sm font-black text-violet-600 dark:text-violet-400">
-                                {courseCurrency === 'USD' ? `$${offerDiscountedPrice}${priceSuffix}` : `Rs.${offerDiscountedPrice.toLocaleString()}${priceSuffix}`}
+                                {fmtPrice(offerDiscountedPrice)}
                               </span>
                             </div>
                           ) : (
                             <span className="text-sm font-black text-violet-600 dark:text-violet-400">
-                              {courseCurrency === 'USD' ? `$${coursePrice}${priceSuffix}` : `Rs.${coursePrice.toLocaleString()}${priceSuffix}`}
+                              {fmtPrice(displayPrice)}
                             </span>
                           )}
                         </div>
@@ -530,7 +544,7 @@ export default function PaymentSubmitModal({
                   <div className="h-0.5 rounded-full mb-5" style={{ background: `linear-gradient(to right, ${selectedMethod.accentColor}, transparent)` }} />
 
                   {/* Course info */}
-                  {(courseName || coursePrice !== undefined) && (
+                  {(courseName || displayPrice > 0) && (
                     <div className="flex items-center justify-between gap-3 bg-violet-50 dark:bg-violet-950/30 border border-violet-100 dark:border-violet-900 rounded-2xl px-4 py-3 mb-5">
                       <div className="flex items-center gap-2.5 min-w-0">
                         <BookOpen size={16} weight="fill" className="text-violet-600 dark:text-violet-400 flex-shrink-0" />
@@ -538,20 +552,20 @@ export default function PaymentSubmitModal({
                           <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{courseName}</p>
                         )}
                       </div>
-                      {coursePrice !== undefined && coursePrice > 0 && (
+                      {displayPrice > 0 && (
                         <div className="flex-shrink-0 text-right">
-                          {offerDiscountedPrice ? (
+                          {!showUSD && offerDiscountedPrice ? (
                             <div className="flex flex-col items-end gap-0.5">
                               <span className="text-xs text-slate-400 dark:text-neutral-500 line-through">
-                                {courseCurrency === 'USD' ? `$${coursePrice}${priceSuffix}` : `Rs.${coursePrice.toLocaleString()}${priceSuffix}`}
+                                {fmtPrice(displayPrice)}
                               </span>
                               <span className="text-sm font-black text-violet-600 dark:text-violet-400">
-                                {courseCurrency === 'USD' ? `$${offerDiscountedPrice}${priceSuffix}` : `Rs.${offerDiscountedPrice.toLocaleString()}${priceSuffix}`}
+                                {fmtPrice(offerDiscountedPrice)}
                               </span>
                             </div>
                           ) : (
                             <span className="text-sm font-black text-violet-600 dark:text-violet-400">
-                              {courseCurrency === 'USD' ? `$${coursePrice}${priceSuffix}` : `Rs.${coursePrice.toLocaleString()}${priceSuffix}`}
+                              {fmtPrice(displayPrice)}
                             </span>
                           )}
                         </div>
@@ -645,10 +659,10 @@ export default function PaymentSubmitModal({
                           placeholder="0"
                           className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-sm text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors placeholder-slate-300 dark:placeholder-neutral-600"
                         />
-                        {offerLabel && offerDiscountedPrice && (
+                        {!showUSD && offerLabel && offerDiscountedPrice && (
                           <p className="flex items-center gap-1 text-xs text-violet-600 dark:text-violet-400 mt-1 font-semibold">
                             <CheckCircle size={12} weight="fill" />
-                            {offerLabel} applied — pay {courseCurrency === 'USD' ? `$${offerDiscountedPrice}${priceSuffix}` : `Rs.${offerDiscountedPrice.toLocaleString()}${priceSuffix}`}
+                            {offerLabel} applied — pay {fmtPrice(offerDiscountedPrice)}
                           </p>
                         )}
                         {couponDiscountApplied != null && couponDiscountApplied > 0 && (

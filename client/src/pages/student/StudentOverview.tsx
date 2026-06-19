@@ -603,18 +603,19 @@ export default function StudentOverview({ onNavigate }: { onNavigate: (view: Stu
       />
 
       {selectedPayEnrollment && (() => {
-        const originalPrice = selectedPayEnrollment.course.currency === 'USD' ? (selectedPayEnrollment.course.priceUSD ?? 0) : (selectedPayEnrollment.course.price ?? 0)
+        const pkrPrice = selectedPayEnrollment.course.price ?? 0
+        const usdPrice = selectedPayEnrollment.course.priceUSD
         const savedDiscount = (selectedPayEnrollment.discountApplied || 0) + (selectedPayEnrollment.offerDiscountApplied || 0)
         const hasSavedDiscount = savedDiscount > 0
-        const discountedPrice = hasSavedDiscount ? Math.max(0, originalPrice - savedDiscount) : undefined
-        
+        const discountedPrice = hasSavedDiscount ? Math.max(0, pkrPrice - savedDiscount) : undefined
+
         return (
           <PaymentSubmitModal
             courseId={selectedPayEnrollment.course._id}
             teacherId={selectedPayEnrollment.teacher._id}
             courseName={selectedPayEnrollment.course.title}
-            coursePrice={originalPrice}
-            courseCurrency={selectedPayEnrollment.course.currency}
+            coursePrice={pkrPrice}
+            coursePriceUSD={usdPrice}
             pricingType={selectedPayEnrollment.course.pricingType}
             offerDiscountedPrice={discountedPrice}
             offerLabel={hasSavedDiscount ? 'Discount' : undefined}

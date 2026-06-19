@@ -28,6 +28,7 @@ export default function StudentPayments() {
     teacherId: string
     courseName?: string
     coursePrice?: number
+    coursePriceUSD?: number
     courseCurrency?: 'PKR' | 'USD'
     pricingType?: 'monthly' | 'full_course' | 'per_session'
     couponDiscountApplied?: number
@@ -101,7 +102,7 @@ export default function StudentPayments() {
                 </div>
                 <button
                   onClick={() => {
-                    const originalPrice = e.course.currency === 'USD' ? (e.course.priceUSD ?? 0) : (e.course.price ?? 0)
+                    const pkrPrice = e.course.price ?? 0
                     const couponDiscount = e.discountApplied || 0
                     const offerDiscount = e.offerDiscountApplied || 0
                     const totalDiscount = couponDiscount + offerDiscount
@@ -109,11 +110,11 @@ export default function StudentPayments() {
                       courseId: e.course._id,
                       teacherId: e.teacher._id,
                       courseName: e.course.title,
-                      coursePrice: originalPrice,
-                      courseCurrency: e.course.currency,
+                      coursePrice: pkrPrice,
+                      coursePriceUSD: e.course.priceUSD,
                       pricingType: e.course.pricingType,
                       couponDiscountApplied: couponDiscount > 0 ? couponDiscount : undefined,
-                      offerDiscountedPrice: totalDiscount > 0 ? Math.max(0, originalPrice - totalDiscount) : undefined,
+                      offerDiscountedPrice: totalDiscount > 0 ? Math.max(0, pkrPrice - totalDiscount) : undefined,
                     })
                   }}
                   className="flex-shrink-0 px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-bold text-xs transition-colors"
@@ -218,7 +219,7 @@ export default function StudentPayments() {
                         {payment.status === 'rejected' && (
                           <button
                             onClick={() => {
-                              const originalPrice = payment.course.currency === 'USD' ? (payment.course.priceUSD ?? 0) : (payment.course.price ?? 0)
+                              const pkrPrice = payment.course.price ?? 0
                               const couponDiscount = payment.discountApplied || 0
                               const offerDiscount = payment.offerDiscountApplied || 0
                               const totalDiscount = couponDiscount + offerDiscount
@@ -226,11 +227,11 @@ export default function StudentPayments() {
                                 courseId: payment.course._id,
                                 teacherId: payment.teacher._id,
                                 courseName: payment.course.title,
-                                coursePrice: originalPrice,
-                                courseCurrency: payment.course.currency,
+                                coursePrice: pkrPrice,
+                                coursePriceUSD: payment.course.priceUSD,
                                 pricingType: payment.course.pricingType,
                                 couponDiscountApplied: couponDiscount > 0 ? couponDiscount : undefined,
-                                offerDiscountedPrice: totalDiscount > 0 ? Math.max(0, originalPrice - totalDiscount) : undefined,
+                                offerDiscountedPrice: totalDiscount > 0 ? Math.max(0, pkrPrice - totalDiscount) : undefined,
                               })
                             }}
                             className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-700 text-white text-[10px] font-bold transition-colors"
@@ -343,7 +344,7 @@ export default function StudentPayments() {
           teacherId={submitModal.teacherId}
           courseName={submitModal.courseName}
           coursePrice={submitModal.coursePrice}
-          courseCurrency={submitModal.courseCurrency}
+          coursePriceUSD={submitModal.coursePriceUSD}
           pricingType={submitModal.pricingType}
           offerDiscountedPrice={submitModal.offerDiscountedPrice}
           offerLabel={submitModal.offerDiscountedPrice ? 'Offer discount' : undefined}

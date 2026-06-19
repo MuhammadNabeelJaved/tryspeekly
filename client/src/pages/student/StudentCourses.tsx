@@ -250,7 +250,7 @@ export default function StudentCourses() {
   const [myReviews, setMyReviews] = useState<Review[]>([])
   const [activeOffers, setActiveOffers] = useState<Offer[]>([])
   const [chatModal, setChatModal] = useState<{ name: string; courseTitle: string; instructorId: string; profileImage?: string } | null>(null)
-  const [submitModal, setSubmitModal] = useState<{ courseId: string; teacherId: string; courseName?: string; coursePrice?: number; courseCurrency?: 'PKR' | 'USD'; pricingType?: 'monthly' | 'full_course' | 'per_session'; offerDiscountedPrice?: number; offerLabel?: string; hasSavedDiscount?: boolean } | null>(null)
+  const [submitModal, setSubmitModal] = useState<{ courseId: string; teacherId: string; courseName?: string; coursePrice?: number; coursePriceUSD?: number; courseCurrency?: 'PKR' | 'USD'; pricingType?: 'monthly' | 'full_course' | 'per_session'; offerDiscountedPrice?: number; offerLabel?: string; hasSavedDiscount?: boolean } | null>(null)
   const [statusModal, setStatusModal] = useState<{ payment: EnrolledPayment; courseId: string; teacherId: string } | null>(null)
 
   const fetchEnrollments = useCallback(() => {
@@ -283,21 +283,20 @@ export default function StudentCourses() {
   }
 
   const openSubmitModal = (enrollment: Enrollment) => {
-    const originalPrice = enrollment.course.currency === 'USD'
-      ? (enrollment.course.priceUSD ?? 0)
-      : (enrollment.course.price ?? 0)
+    const pkrPrice = enrollment.course.price ?? 0
+    const usdPrice = enrollment.course.priceUSD
 
     const savedDiscount = (enrollment.discountApplied || 0) + (enrollment.offerDiscountApplied || 0)
     let discountedPrice = undefined
     let offerLabel = undefined
-    let hasSavedDiscount = savedDiscount > 0
+    const hasSavedDiscount = savedDiscount > 0
 
     if (hasSavedDiscount) {
-      discountedPrice = Math.max(0, originalPrice - savedDiscount)
+      discountedPrice = Math.max(0, pkrPrice - savedDiscount)
       offerLabel = 'Discount'
     } else {
-      const result = originalPrice > 0
-        ? getDiscountedPrice(enrollment.course._id, originalPrice, activeOffers)
+      const result = pkrPrice > 0
+        ? getDiscountedPrice(enrollment.course._id, pkrPrice, activeOffers)
         : null
       if (result?.hasDiscount) {
         discountedPrice = result.discountedPrice
@@ -309,8 +308,8 @@ export default function StudentCourses() {
       courseId: enrollment.course._id,
       teacherId: enrollment.teacher._id,
       courseName: enrollment.course.title,
-      coursePrice: originalPrice,
-      courseCurrency: enrollment.course.currency,
+      coursePrice: pkrPrice,
+      coursePriceUSD: usdPrice,
       pricingType: enrollment.course.pricingType,
       offerDiscountedPrice: discountedPrice,
       offerLabel: offerLabel,
@@ -428,7 +427,7 @@ export default function StudentCourses() {
           teacherId={submitModal.teacherId}
           courseName={submitModal.courseName}
           coursePrice={submitModal.coursePrice}
-          courseCurrency={submitModal.courseCurrency}
+          coursePriceUSD={submitModal.coursePriceUSD}
           pricingType={submitModal.pricingType}
           offerDiscountedPrice={submitModal.offerDiscountedPrice}
           offerLabel={submitModal.offerLabel}
