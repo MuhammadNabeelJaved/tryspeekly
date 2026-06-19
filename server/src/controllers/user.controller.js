@@ -150,7 +150,7 @@ export const adminSetPassword = asyncHandler(async (req, res) => {
 // PATCH /api/v1/users/:id  (admin only — update a user's profile details)
 export const adminUpdateUser = asyncHandler(async (req, res) => {
   try {
-    const { name, email, phone, country, city, adminNotes } = req.body
+    const { name, email, phone, country, city, adminNotes, bio, socialLinks } = req.body
 
     const user = await User.findById(req.params.id)
     if (!user) return res.status(404).json({ success: false, error: { message: 'User not found' } })
@@ -171,6 +171,14 @@ export const adminUpdateUser = asyncHandler(async (req, res) => {
     if (country !== undefined) user.country = country
     if (city !== undefined) user.city = city
     if (adminNotes !== undefined) user.adminNotes = adminNotes
+    if (bio !== undefined) user.bio = bio
+    if (socialLinks && typeof socialLinks === 'object') {
+      if (!user.socialLinks) user.socialLinks = {}
+      const allowed = ['linkedin', 'twitter', 'instagram', 'youtube', 'facebook']
+      for (const key of allowed) {
+        if (socialLinks[key] !== undefined) user.socialLinks[key] = socialLinks[key]
+      }
+    }
 
     await user.save()
     res.json({ success: true, message: 'User updated successfully', data: safeUser(user) })
@@ -389,7 +397,7 @@ export const getUserById = asyncHandler(async (req, res) => {
 // PATCH /api/v1/users/profile
 export const updateUserProfile = asyncHandler(async (req, res) => {
   try {
-    const { name, phone, bio, country, city, timezone } = req.body
+    const { name, phone, bio, country, city, timezone, socialLinks } = req.body
 
     const user = await User.findById(req.user.id)
     if (!user) return res.status(404).json({ success: false, error: { message: 'User not found' } })
@@ -400,6 +408,13 @@ export const updateUserProfile = asyncHandler(async (req, res) => {
     if (country !== undefined) user.country = country
     if (city !== undefined) user.city = city
     if (timezone !== undefined) user.timezone = timezone
+    if (socialLinks && typeof socialLinks === 'object') {
+      if (!user.socialLinks) user.socialLinks = {}
+      const allowed = ['linkedin', 'twitter', 'instagram', 'youtube', 'facebook']
+      for (const key of allowed) {
+        if (socialLinks[key] !== undefined) user.socialLinks[key] = socialLinks[key]
+      }
+    }
 
     await user.save()
     res.json({ success: true, message: 'Profile updated successfully', data: safeUser(user) })

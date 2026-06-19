@@ -4,7 +4,8 @@ import toast from 'react-hot-toast'
 import {
   Clock, Star, Users, GraduationCap, ArrowRight, MagnifyingGlass,
   BookOpen, Trophy, Lightning, ChatCircle, Globe, Medal,
-  CaretDown, CheckCircle, Funnel, Play, UserCircle
+  CaretDown, CheckCircle, Funnel, Play, UserCircle,
+  LinkedinLogo, TwitterLogo, InstagramLogo, YoutubeLogo, FacebookLogo
 } from '@phosphor-icons/react'
 import { useState, useEffect, useRef } from 'react'
 import { coursesService } from '../services/courses.service'
@@ -939,8 +940,35 @@ export default function Courses() {
                       <p className="text-violet-600 dark:text-violet-400 text-sm font-semibold mb-3">{ins.jobTitle}</p>
                     )}
                     {ins.bio && (
-                      <p className="text-slate-500 dark:text-neutral-400 text-xs leading-relaxed line-clamp-3">{ins.bio}</p>
+                      <p className="text-slate-500 dark:text-neutral-400 text-xs leading-relaxed line-clamp-3 mb-4">{ins.bio}</p>
                     )}
+                    {/* Social links — only render icons that have a URL */}
+                    {ins.socialLinks && (() => {
+                      const links = [
+                        { url: ins.socialLinks.linkedin,  Icon: LinkedinLogo,  label: 'LinkedIn' },
+                        { url: ins.socialLinks.twitter,   Icon: TwitterLogo,   label: 'Twitter' },
+                        { url: ins.socialLinks.instagram, Icon: InstagramLogo, label: 'Instagram' },
+                        { url: ins.socialLinks.youtube,   Icon: YoutubeLogo,   label: 'YouTube' },
+                        { url: ins.socialLinks.facebook,  Icon: FacebookLogo,  label: 'Facebook' },
+                      ].filter(l => l.url)
+                      if (!links.length) return null
+                      return (
+                        <div className="flex items-center gap-2 flex-wrap mt-1">
+                          {links.map(({ url, Icon, label }) => (
+                            <a
+                              key={label}
+                              href={url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              aria-label={label}
+                              className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-neutral-800 hover:bg-violet-100 dark:hover:bg-violet-900/40 flex items-center justify-center text-slate-500 dark:text-neutral-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
+                            >
+                              <Icon size={16} weight="fill" />
+                            </a>
+                          ))}
+                        </div>
+                      )
+                    })()}
                   </div>
                 </motion.div>
               ))}

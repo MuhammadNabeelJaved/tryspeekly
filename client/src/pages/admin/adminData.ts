@@ -78,6 +78,13 @@ export interface Instructor {
   joinedAt: string
   avatar: string
   salary: number
+  socialLinks?: {
+    linkedin?: string
+    twitter?: string
+    instagram?: string
+    youtube?: string
+    facebook?: string
+  }
 }
 
 export interface Course {

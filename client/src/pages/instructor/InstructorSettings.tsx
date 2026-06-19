@@ -57,9 +57,14 @@ export default function InstructorSettings() {
     defaultValues: {
       name: defaultName,
       email: defaultEmail,
-      phone: user?.phone || '+1 (555) 123-4567',
+      phone: user?.phone || '',
       timezone: 'America/New_York',
-      bio: user?.bio || 'I am a certified IELTS examiner with over 10 years of experience teaching English to professionals and students worldwide.',
+      bio: user?.bio || '',
+      linkedin:  user?.socialLinks?.linkedin  || '',
+      twitter:   user?.socialLinks?.twitter   || '',
+      instagram: user?.socialLinks?.instagram || '',
+      youtube:   user?.socialLinks?.youtube   || '',
+      facebook:  user?.socialLinks?.facebook  || '',
     }
   })
 
@@ -72,6 +77,13 @@ export default function InstructorSettings() {
         name: data.name,
         phone: data.phone,
         bio: data.bio,
+        socialLinks: {
+          linkedin:  data.linkedin  || '',
+          twitter:   data.twitter   || '',
+          instagram: data.instagram || '',
+          youtube:   data.youtube   || '',
+          facebook:  data.facebook  || '',
+        },
       })
       toast.success('Settings saved successfully!')
     } catch (err: unknown) {
@@ -238,6 +250,30 @@ export default function InstructorSettings() {
                     placeholder="Write a brief bio about yourself (max 500 characters)"
                   />
                   <p className="text-[10px] text-slate-400 mt-2">Brief description for your profile. URLs are hyperlinked.</p>
+                </div>
+
+                {/* Social Links */}
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-neutral-400 mb-4">Social Links</label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {([
+                      { name: 'linkedin',  label: 'LinkedIn',  placeholder: 'https://linkedin.com/in/yourprofile' },
+                      { name: 'twitter',   label: 'X (Twitter)', placeholder: 'https://x.com/yourhandle' },
+                      { name: 'instagram', label: 'Instagram', placeholder: 'https://instagram.com/yourhandle' },
+                      { name: 'youtube',   label: 'YouTube',   placeholder: 'https://youtube.com/@yourchannel' },
+                      { name: 'facebook',  label: 'Facebook',  placeholder: 'https://facebook.com/yourpage' },
+                    ] as const).map(({ name, label, placeholder }) => (
+                      <div key={name}>
+                        <label className="block text-[11px] font-semibold text-slate-400 dark:text-neutral-500 mb-1">{label}</label>
+                        <input
+                          type="url"
+                          {...register(name)}
+                          placeholder={placeholder}
+                          className="w-full px-4 py-2.5 bg-slate-50 dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 rounded-xl text-sm text-slate-900 dark:text-white focus:outline-none focus:border-violet-500 transition-colors"
+                        />
+                      </div>
+                    ))}
+                  </div>
                 </div>
 
                 <div className="flex justify-end pt-4 border-t border-slate-100 dark:border-neutral-800">

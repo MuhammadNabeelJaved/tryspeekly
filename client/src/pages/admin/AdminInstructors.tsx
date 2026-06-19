@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, PencilSimple, Trash, X, Check, Star, Eye, House } from '@phosphor-icons/react'
+import { Plus, PencilSimple, Trash, X, Check, Star, Eye, House, LinkedinLogo, TwitterLogo, InstagramLogo, YoutubeLogo, FacebookLogo } from '@phosphor-icons/react'
 import toast from 'react-hot-toast'
 import ConfirmModal from '../../components/ConfirmModal'
 import type { AdminStore } from '../AdminPage'
@@ -15,6 +15,7 @@ const EMPTY: Instructor = {
   id: '', name: '', email: '', phone: '', country: '', specialization: '',
   experience: '', courses: [], totalStudents: 0, rating: 5.0, status: 'active',
   bio: '', joinedAt: new Date().toISOString().split('T')[0], avatar: '', salary: 0,
+  socialLinks: { linkedin: '', twitter: '', instagram: '', youtube: '', facebook: '' },
 }
 
 function Badge({ value }: { value: string }) {
@@ -89,6 +90,13 @@ export default function AdminInstructors({ store }: { store: AdminStore }) {
               joinedAt: u.createdAt?.split('T')[0] ?? '',
               avatar: (u.name ?? '').split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2),
               salary: 0,
+              socialLinks: {
+                linkedin:  u.socialLinks?.linkedin  ?? '',
+                twitter:   u.socialLinks?.twitter   ?? '',
+                instagram: u.socialLinks?.instagram ?? '',
+                youtube:   u.socialLinks?.youtube   ?? '',
+                facebook:  u.socialLinks?.facebook  ?? '',
+              },
             }
           })
           setApiInstructors(mapped)
@@ -161,17 +169,30 @@ export default function AdminInstructors({ store }: { store: AdminStore }) {
     setModalType('view')
   }
 
-  function onSave(data: Instructor & { coursesInput: string }) {
+  async function onSave(data: Instructor & { coursesInput: string }) {
     const initials = data.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
     const inst: Instructor = {
       ...data,
       avatar: data.avatar || initials,
       courses: data.coursesInput.split(',').map(c => c.trim()).filter(Boolean),
     }
+    if (modalType === 'edit' && inst.id && !inst.id.startsWith('i')) {
+      try {
+        await axiosClient.patch(`/users/${inst.id}`, {
+          name: inst.name,
+          email: inst.email,
+          phone: inst.phone,
+          country: inst.country,
+          bio: inst.bio,
+          socialLinks: inst.socialLinks,
+        })
+      } catch { /* ignore — local state still updates */ }
+    }
     if (modalType === 'add') {
       setInstructors([...instructors, inst])
     } else {
       setInstructors(instructors.map(i => i.id === inst.id ? inst : i))
+      setApiInstructors(prev => prev ? prev.map(i => i.id === inst.id ? inst : i) : null)
     }
     setModalType(null)
   }
@@ -428,6 +449,21 @@ export default function AdminInstructors({ store }: { store: AdminStore }) {
                     <textarea {...register('bio')} rows={3} placeholder="Short bio about the instructor…" className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-neutral-600 outline-none focus:border-violet-500 transition-colors resize-none" />
                   </Field>
                 </div>
+                {/* Social Links */}
+                <div className="col-span-2 border-t border-slate-100 dark:border-neutral-800 pt-4">
+                  <p className="text-[11px] font-semibold text-slate-500 dark:text-neutral-400 uppercase tracking-wide mb-3">Social Links <span className="normal-case font-normal">(leave blank to hide)</span></p>
+                  <div className="grid grid-cols-2 gap-3">
+                    {([
+                      { name: 'socialLinks.linkedin',  placeholder: 'LinkedIn URL' },
+                      { name: 'socialLinks.twitter',   placeholder: 'X / Twitter URL' },
+                      { name: 'socialLinks.instagram', placeholder: 'Instagram URL' },
+                      { name: 'socialLinks.youtube',   placeholder: 'YouTube URL' },
+                      { name: 'socialLinks.facebook',  placeholder: 'Facebook URL' },
+                    ] as const).map(({ name, placeholder }) => (
+                      <Input key={name} register={register} name={name} placeholder={placeholder} />
+                    ))}
+                  </div>
+                </div>
               </div>
               <div className="flex gap-3 px-6 pb-6">
                 <button type="button" onClick={() => setModalType(null)} className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-neutral-700 text-sm font-semibold text-slate-600 dark:text-neutral-400 hover:bg-slate-50 dark:hover:bg-neutral-800 transition-colors">Cancel</button>
@@ -462,7 +498,27 @@ export default function AdminInstructors({ store }: { store: AdminStore }) {
                     </div>
                   </div>
                 </div>
-                <p className="text-xs text-slate-500 dark:text-neutral-400 mb-4 leading-relaxed">{viewInst.bio}</p>
+                {viewInst.bio && <p className="text-xs text-slate-500 dark:text-neutral-400 mb-3 leading-relaxed">{viewInst.bio}</p>}
+                {viewInst.socialLinks && (() => {
+                  const links = [
+                    { url: viewInst.socialLinks!.linkedin,  Icon: LinkedinLogo,  label: 'LinkedIn' },
+                    { url: viewInst.socialLinks!.twitter,   Icon: TwitterLogo,   label: 'Twitter' },
+                    { url: viewInst.socialLinks!.instagram, Icon: InstagramLogo, label: 'Instagram' },
+                    { url: viewInst.socialLinks!.youtube,   Icon: YoutubeLogo,   label: 'YouTube' },
+                    { url: viewInst.socialLinks!.facebook,  Icon: FacebookLogo,  label: 'Facebook' },
+                  ].filter(l => l.url)
+                  if (!links.length) return null
+                  return (
+                    <div className="flex items-center gap-2 mb-4 flex-wrap">
+                      {links.map(({ url, Icon, label }) => (
+                        <a key={label} href={url} target="_blank" rel="noopener noreferrer" aria-label={label}
+                          className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-neutral-800 hover:bg-violet-100 dark:hover:bg-violet-900/40 flex items-center justify-center text-slate-500 dark:text-neutral-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors">
+                          <Icon size={16} weight="fill" />
+                        </a>
+                      ))}
+                    </div>
+                  )
+                })()}
                 <div className="grid grid-cols-2 gap-2">
                   {[
                     { label: 'Email', value: viewInst.email },

@@ -67,6 +67,13 @@ export interface User {
   /** Alias kept for component compatibility */
   photo?: string;
   bio?: string;
+  socialLinks?: {
+    linkedin?: string;
+    twitter?: string;
+    instagram?: string;
+    youtube?: string;
+    facebook?: string;
+  };
   isVerified?: boolean;
   isOnboardingDone?: boolean;
   jobTitle?: string;
@@ -82,6 +89,13 @@ export interface UpdateProfileDto {
   city?: string;
   timezone?: string;
   bio?: string;
+  socialLinks?: {
+    linkedin?: string;
+    twitter?: string;
+    instagram?: string;
+    youtube?: string;
+    facebook?: string;
+  };
 }
 
 export interface ChangePasswordDto {

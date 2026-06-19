@@ -53,6 +53,13 @@ const userSchema = new Schema(
       trim: true,
       maxlength: [500, 'Bio cannot exceed 500 characters'],
     },
+    socialLinks: {
+      linkedin:  { type: String, trim: true, default: '' },
+      twitter:   { type: String, trim: true, default: '' },
+      instagram: { type: String, trim: true, default: '' },
+      youtube:   { type: String, trim: true, default: '' },
+      facebook:  { type: String, trim: true, default: '' },
+    },
     jobTitle: {
       type: String,
       trim: true,
