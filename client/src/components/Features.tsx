@@ -132,20 +132,18 @@ export default function Features() {
           >
             <span className="inline-flex items-center gap-2 text-violet-600 dark:text-violet-200 text-sm font-semibold mb-5">
               <span className="w-2 h-2 bg-violet-600 dark:bg-violet-400 rounded-full" />
-              Start Your Journey
+              Why TrySpeekly
             </span>
 
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-gray-900 dark:text-white leading-[1.15] tracking-tight mb-5">
-              Ready to Speak English{' '}
+              Excel in English So{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-purple-600 dark:from-violet-500 dark:to-purple-500 drop-shadow-[0_0_8px_rgba(124,58,237,0.2)] dark:drop-shadow-[0_0_10px_rgba(139,92,246,0.35)]">
-                Fluently?
+                Success Follows You.
               </span>
             </h2>
 
             <p className="text-gray-500 dark:text-gray-400 text-[15px] leading-relaxed mb-9 max-w-[46ch]">
-              Join thousands of successful learners who have transformed their English skills.
-              Start your first session today and experience the difference our live trainers
-              can make.
+              Whether your goal is to study abroad, immigrate, advance your career, or simply speak English with confidence — TrySpeekly is the ultimate solution. We provide comprehensive knowledge and pragmatic tips, tricks, and techniques to ace your exam and land in your dream country effortlessly.
             </p>
 
             {/* Animated progress bars */}
@@ -174,12 +172,12 @@ export default function Features() {
 
             {/* CTA */}
             <MotionLink
-              to="/signup"
+              to="/contact"
               whileHover={{ scale: 1.04 }}
               whileTap={{ scale: 0.97 }}
               className="inline-flex items-center gap-2 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-bold text-base px-7 py-3.5 rounded-xl transition-all shadow-[0_8px_24px_rgba(124,58,237,0.35)] hover:shadow-[0_12px_32px_rgba(124,58,237,0.45)]"
             >
-              Start Your Journey
+              Get Free Consultation
               <ArrowRight size={18} weight="bold" />
             </MotionLink>
           </motion.div>

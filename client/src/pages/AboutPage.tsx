@@ -42,13 +42,13 @@ export default function AboutPage() {
                 About TrySpeekly
               </span>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-slate-900 dark:text-white leading-[1.1] tracking-tight mb-6">
-                Empowering the world to speak with{' '}
+                We Turn Your Worries Into{' '}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-purple-600 dark:from-violet-400 dark:to-purple-400">
-                  Confidence
+                  Our Responsibilities.
                 </span>
               </h1>
               <p className="text-lg text-slate-500 dark:text-neutral-400 leading-relaxed mb-8">
-                We believe that language should never be a barrier. Our mission is to provide accessible, high-quality English education that helps individuals achieve their personal and professional dreams.
+                TrySpeekly exists for one purpose: to ensure no hurdle stands between you and your dream study destination. Whether it's IELTS, PTE, TOEFL, OET, or any English exam — we prepare you to win it.
               </p>
               
               <div className="flex items-center gap-6">
@@ -103,17 +103,21 @@ export default function AboutPage() {
       <section className="py-20 lg:py-28">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-16">
-            <h2 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-6">Our Core Values</h2>
+            <span className="inline-flex items-center gap-2 text-violet-600 dark:text-violet-400 text-sm font-semibold mb-4">
+              <span className="w-2 h-2 bg-violet-600 dark:bg-violet-400 rounded-full" />
+              Why TrySpeekly
+            </span>
+            <h2 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-6">The TrySpeekly Promise</h2>
             <p className="text-lg text-slate-500 dark:text-neutral-400">
-              Everything we do is guided by these principles, ensuring you get the best learning experience possible.
+              Wrong choice in tutor can cost you the band score you require. We are not just tutors — we are partners in your journey to abroad.
             </p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
             {[
-              { icon: Target, title: "Excellence", desc: "We strive for excellence in every lesson, delivering curriculum designed by leading linguistic experts." },
-              { icon: Heart, title: "Empathy", desc: "Learning a language is hard. We provide a supportive, judgment-free environment for everyone." },
-              { icon: Globe, title: "Accessibility", desc: "Education is a right, not a privilege. We build tools that make learning accessible to global audiences." }
+              { icon: Target, title: "No AI Copy-Paste Templates", desc: "Millions sit exams with the same commercialised AI templates — and fail. We teach you to sound natural, confident, and impressive on your own." },
+              { icon: Heart, title: "We Don't Move On Until You Get It", desc: "Still confused? We explain it again — in a different way. We never rush through the syllabus just because the clock says class is over." },
+              { icon: Globe, title: "Globally Trusted, Locally Available", desc: "Students across 100+ countries trust TrySpeekly to prepare them for their dream university. And we're available in your timezone, in your language." }
             ].map((val, i) => (
               <motion.div 
                 key={val.title}
@@ -143,23 +147,27 @@ export default function AboutPage() {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
             >
-              <h2 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-6">Our Story</h2>
+              <span className="inline-flex items-center gap-2 text-violet-600 dark:text-violet-400 text-sm font-semibold mb-4">
+                <span className="w-2 h-2 bg-violet-600 dark:bg-violet-400 rounded-full" />
+                Our Mission
+              </span>
+              <h2 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-6">You're Just 1 Call Away From Your Dream Destination</h2>
               <div className="space-y-6 text-slate-500 dark:text-neutral-400 text-lg leading-relaxed">
                 <p>
-                  TrySpeekly started in 2018 with a simple idea: learning English shouldn't be boring, rigid, or restricted to traditional classrooms. 
+                  A single English test is the license to your desired university. TrySpeekly was built to make sure that test is never the thing that stops you.
                 </p>
                 <p>
-                  Our founders, a group of passionate educators and tech enthusiasts, realized that the best way to learn a language is through active conversation, personalized feedback, and engaging content.
+                  We offer personalised 1-on-1 live sessions for IELTS, PTE, TOEFL, OET, LangCert, Cambridge English, Duolingo, SOP Writing, and Interview Preparation. Every session is crafted around your specific weaknesses — not a one-size-fits-all syllabus.
                 </p>
                 <p>
-                  Today, we've grown into a global community of learners and expert instructors. We continually innovate our platform to provide interactive live classes, comprehensive materials, and the support you need to succeed.
+                  Our fee is based on the number of sessions, not months. No time pressure. No rushing. Just real progress, at your pace. And if you miss a class, book a makeup session or rewatch your live lecture recording — anytime, anywhere.
                 </p>
               </div>
               <ul className="mt-8 space-y-4">
                 {[
-                  "Over 5 years of educational excellence",
-                  "Award-winning curriculum design",
-                  "Certified native-level instructors"
+                  "10,000+ students enrolled globally",
+                  "95% success rate in English proficiency exams",
+                  "100+ countries reached with flexible, online sessions"
                 ].map(item => (
                   <li key={item} className="flex items-center gap-3 text-slate-700 dark:text-neutral-300 font-medium">
                     <CheckCircle size={24} weight="fill" className="text-emerald-500 flex-shrink-0" />
@@ -202,10 +210,16 @@ export default function AboutPage() {
             <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-black/10 rounded-full blur-2xl translate-y-1/3 -translate-x-1/3" />
 
             <div className="relative z-10">
-              <h2 className="text-3xl md:text-5xl font-black mb-6 tracking-tight">Ready to join our community?</h2>
-              <p className="text-violet-100 text-lg md:text-xl max-w-2xl mx-auto">
-                Start your journey towards English fluency today with our expert instructors and proven methodology.
+              <h2 className="text-3xl md:text-5xl font-black mb-6 tracking-tight">With TrySpeekly, Your Future is in Good Hands.</h2>
+              <p className="text-violet-100 text-lg md:text-xl max-w-2xl mx-auto mb-8">
+                Don't let a language test stand between you and your dream. Book a free consultation today — no commitments, just a conversation about your goals.
               </p>
+              <button
+                onClick={() => navigate('/contact')}
+                className="inline-flex items-center gap-2 bg-white text-violet-700 font-bold px-8 py-4 rounded-2xl hover:bg-violet-50 transition-colors shadow-lg text-lg"
+              >
+                Book Free Consultation
+              </button>
             </div>
           </motion.div>
         </div>

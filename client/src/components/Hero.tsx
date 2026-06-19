@@ -167,7 +167,7 @@ export default function Hero() {
             <motion.div variants={itemVariants} className="flex items-center gap-3 justify-center">
               <span className="w-6 h-[2px] bg-violet-600 dark:bg-violet-400 rounded-full" />
               <span className="text-violet-600 dark:text-violet-400 text-sm font-bold tracking-wide uppercase">
-                25+ Years of Excellence
+                Your Gateway to Abroad
               </span>
               <span className="w-6 h-[2px] bg-violet-600 dark:bg-violet-400 rounded-full" />
             </motion.div>
@@ -175,21 +175,30 @@ export default function Hero() {
             {/* Headline */}
             <motion.div variants={itemVariants}>
               <h1 className="text-5xl sm:text-6xl xl:text-[68px] font-black text-slate-900 dark:text-white leading-[1.0] tracking-tight">
-                The Smarter Way
+                TrySpeekly Unlocks
                 <br />
-                to Learn{' '}
+                All the Doors{' '}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-purple-600 dark:from-violet-400 dark:to-purple-400">
-                  English.
+                  to Abroad.
                 </span>
               </h1>
+            </motion.div>
+
+            {/* Exam types pill row */}
+            <motion.div variants={itemVariants} className="flex flex-wrap justify-center gap-2">
+              {['IELTS', 'PTE', 'TOEFL', 'OET', 'LangCert', 'Cambridge English', 'Duolingo', 'SOP Writing', 'Interview Prep'].map(tag => (
+                <span key={tag} className="px-3 py-1 rounded-full text-xs font-bold bg-violet-50 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-700/50">
+                  {tag}
+                </span>
+              ))}
             </motion.div>
 
             {/* Subtitle */}
             <motion.p
               variants={itemVariants}
-              className="text-slate-600 dark:text-neutral-300 text-lg leading-relaxed max-w-[480px] mx-auto"
+              className="text-slate-600 dark:text-neutral-300 text-lg leading-relaxed max-w-[500px] mx-auto"
             >
-              Expert-led sessions via Zoom & Google Meet — designed to get you speaking confidently, faster.
+              We ensure no hurdle comes between your dream study destination and you. Our team turns your worries into our responsibilities.
             </motion.p>
 
             {/* CTAs */}
@@ -199,18 +208,18 @@ export default function Hero() {
             >
               <motion.button
                 type="button"
-                onClick={() => navigate('/courses')}
+                onClick={() => navigate('/contact')}
                 whileHover={{ scale: 1.03, boxShadow: '0 16px 40px rgba(124,58,237,0.45)' }}
                 whileTap={{ scale: 0.97 }}
                 className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-violet-600 to-purple-600 text-white font-bold px-8 py-4 rounded-2xl shadow-[0_8px_28px_rgba(124,58,237,0.35)] transition-all"
               >
-                Start Learning
+                Book Free Consultation
                 <ArrowRight size={18} weight="bold" />
               </motion.button>
 
               <motion.button
                 type="button"
-                onClick={() => navigate('/about')}
+                onClick={() => navigate('/courses')}
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
                 className="inline-flex items-center justify-center gap-3 text-slate-700 dark:text-neutral-200 font-semibold px-8 py-4 rounded-2xl border border-slate-200 dark:border-neutral-700 hover:border-violet-300 dark:hover:border-violet-600 bg-white/70 dark:bg-white/5 backdrop-blur-sm transition-all"
@@ -218,7 +227,7 @@ export default function Hero() {
                 <span className="w-8 h-8 rounded-full bg-violet-100 dark:bg-violet-900/50 flex items-center justify-center text-violet-600 dark:text-violet-400">
                   <Play size={13} weight="fill" className="ml-0.5" />
                 </span>
-                Watch Demo
+                Browse Courses
               </motion.button>
             </motion.div>
 

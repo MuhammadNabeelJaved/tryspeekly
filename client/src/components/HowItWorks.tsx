@@ -3,23 +3,23 @@ import { motion, useInView } from 'framer-motion'
 
 const STEPS = [
   {
-    name: 'Assess Your Level',
-    role: 'Take our placement test to determine your current English proficiency and get matched with the right trainer and program.',
+    name: 'Personalised 1-on-1 Live Sessions',
+    role: 'Ever craved to be the sole focus of your trainer\'s attention? Our private sessions are hassle-free and relaxed — no classmates watching, just you and your coach working towards your goal.',
     img: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=400&q=80',
   },
   {
-    name: 'Attend Live Sessions',
-    role: 'Attend scheduled live sessions on Zoom or Google Meet with your trainer — structured, interactive, and tailored to your goals.',
+    name: 'Flexible Timings for Every Lifestyle',
+    role: 'Morning slots for busy homemakers. Evening slots for students. Late-night or early-morning slots for office goers. You study when it suits you — without compromising your daily routine.',
     img: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400&q=80',
   },
   {
-    name: 'Practice & Connect',
-    role: 'Join live conversation sessions, connect with tutors, and practice with peers to achieve real-world fluency.',
+    name: 'Session-Based Fee — No Time Pressure',
+    role: 'We don\'t rush you to cover all sessions within one month. Our fee is based on the number of sessions, not the number of months. Study at your own pace without any fear of a time limit.',
     img: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&q=80',
   },
   {
-    name: 'Track Progress',
-    role: 'Monitor your improvement with detailed analytics, certificates, and celebrate milestones on your learning journey.',
+    name: 'Premium Human-Created Study Materials',
+    role: 'Every note, template, and strategy is carefully crafted by experienced trainers. No copy-paste AI content — only real, natural, and effective preparation materials included in your course.',
     img: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&q=80',
   },
 ]
@@ -46,10 +46,11 @@ export default function HowItWorks() {
         <div className="text-center mb-12 md:mb-14">
           <span className="inline-flex items-center gap-2 text-violet-600 dark:text-violet-200 text-sm font-semibold mb-4">
             <span className="w-2 h-2 bg-violet-600 dark:bg-violet-400 rounded-full" />
-            Learning Process
+            Why TrySpeekly Stands Out
           </span>
           <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-[42px] font-bold text-gray-900 dark:text-white leading-tight tracking-tight">
-            Your Journey to English Fluency in 4 Simple Steps
+            We Are the No.1 Choice of Learners{' '}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-purple-600 dark:from-violet-400 dark:to-purple-400">Globally</span>
           </h2>
         </div>
 

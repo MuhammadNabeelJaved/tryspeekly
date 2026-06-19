@@ -11,32 +11,32 @@ const STEPS = [
     Icon: MagnifyingGlass,
     iconBg: 'bg-violet-50 dark:bg-violet-800/40',
     iconColor: 'text-violet-600 dark:text-violet-200',
-    title: 'Find Your Perfect Course',
-    description: 'Browse our specialized programs in IELTS, Speaking, Business English, and more to find the level that fits your goals.',
+    title: 'No AI Copy-Paste Templates',
+    description: 'Millions sit exams with the same overused, commercialised AI templates — they sound unnatural and backfire. At TrySpeekly, we train you to sound like a natural, confident, impressive speaker.',
   },
   {
     number: '02',
     Icon: Receipt,
     iconBg: 'bg-violet-50 dark:bg-violet-800/40',
     iconColor: 'text-violet-600 dark:text-violet-200',
-    title: 'Seamless Enrollment',
-    description: 'Register and submit your payment screenshot. Our team verifies transaction IDs quickly to give you instant access.',
+    title: 'We Don\'t Move On Until You Get It',
+    description: 'Still confused? We\'ll explain it again — in a different way. If a child cannot learn the way we teach, we must teach the way the child learns. We never rush through the syllabus when the clock says class is over.',
   },
   {
     number: '03',
     Icon: VideoCamera,
     iconBg: 'bg-violet-50 dark:bg-violet-800/40',
     iconColor: 'text-violet-600 dark:text-violet-200',
-    title: 'Live Interactive Sessions',
-    description: 'Attend real-time classes via Zoom or Google Meet links. Engage with expert trainers in dynamic, live learning environments.',
+    title: 'Missed a Class? No Problem.',
+    description: 'Avail a make-up session or revisit your live lecture recording anytime, anywhere. Success needs repetition — so we make sure every session is accessible when you need it most.',
   },
   {
     number: '04',
     Icon: Chats,
     iconBg: 'bg-violet-50 dark:bg-violet-800/40',
     iconColor: 'text-violet-600 dark:text-violet-200',
-    title: 'Direct Teacher Support',
-    description: 'Access private chat channels with your trainers to get personalized feedback, clear doubts, and stay motivated.',
+    title: 'You Choose the Language',
+    description: 'English only? Urdu support? A mix of both? You decide. Pick the language that helps you learn faster and more comfortably — your pace, your preference, your success.',
   },
 ]
 
@@ -58,11 +58,14 @@ export default function Process() {
           >
             <span className="inline-flex items-center gap-2 text-violet-600 dark:text-violet-200 text-sm font-semibold mb-4">
               <span className="w-2 h-2 bg-violet-600 dark:bg-violet-400 rounded-full" />
-              Learning Process
+              What Makes Us Different
             </span>
 
             <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-[42px] font-bold text-gray-900 dark:text-white leading-tight tracking-tight mb-8 md:mb-10">
-              Simple Steps to Master English Fluency
+              A single English test is the license to your desired university.{' '}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-purple-600 dark:from-violet-400 dark:to-purple-400">
+                Your Future is in Good Hands.
+              </span>
             </h2>
 
             {/* Steps */}
@@ -101,12 +104,12 @@ export default function Process() {
             </div>
 
             <MotionLink
-              to="/courses"
+              to="/contact"
               whileHover={{ scale: 1.04 }}
               whileTap={{ scale: 0.97 }}
               className="inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-700 dark:bg-violet-500 dark:hover:bg-violet-600 text-white font-semibold text-[15px] px-6 py-3 rounded-lg transition-colors shadow-[0_4px_16px_rgba(124,58,237,0.3)] dark:shadow-[0_4px_16px_rgba(124,58,237,0.2)] mt-8"
             >
-              Discover More
+              Book Free Consultation
               <ArrowRight size={16} weight="bold" />
             </MotionLink>
           </motion.div>
