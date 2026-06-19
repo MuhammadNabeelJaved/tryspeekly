@@ -255,15 +255,15 @@ export default function CourseDetailsPage() {
           students: '',
           courses: 0,
         },
-        whatYouWillLearn: apiCourse.learningOutcomes ?? [],
-        curriculum: apiCourse.syllabus?.length
-          ? apiCourse.syllabus.map((topic: { week: number; title: string; description?: string }) => ({
+        whatYouWillLearn: ((apiCourse.learningOutcomes ?? []) as string[]),
+        curriculum: (apiCourse.syllabus?.length
+          ? (apiCourse.syllabus as { week: number; title: string; description?: string }[]).map((topic) => ({
               title: `Session ${topic.week}: ${topic.title}`,
               lessons: 1,
               duration: '60 min',
-              items: [{ title: topic.description || topic.title, date: '', time: '', type: 'live', isFree: false }],
+              items: [{ title: topic.description || topic.title, date: '', time: '', type: 'live' as const, isFree: false }],
             }))
-          : [],
+          : []) as typeof COURSE.curriculum,
         reviewsList: [],
       }
     : COURSE
