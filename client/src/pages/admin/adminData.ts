@@ -100,7 +100,7 @@ export interface Course {
   instructorName: string
   totalStudents: number
   maxStudents: number
-  status: 'active' | 'inactive' | 'draft' | 'pending' | 'rejected'
+  status: 'active' | 'inactive' | 'draft' | 'pending' | 'rejected' | 'published' | 'archived'
   description: string
   startDate: string
   schedule: string
