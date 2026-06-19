@@ -239,7 +239,7 @@ export default function HomeCourses() {
                       })()}
                     </div>
 
-                    <p className="text-slate-500 dark:text-neutral-400 text-sm leading-relaxed mb-5 line-clamp-2">
+                    <p className="text-slate-500 dark:text-neutral-400 text-sm leading-relaxed mb-5 line-clamp-4">
                       {course.description}
                     </p>
 

@@ -53,7 +53,7 @@ export default function InstructorSettings() {
   const defaultName = user?.name || ''
   const defaultEmail = user?.email || ''
 
-  const { register, handleSubmit } = useForm({
+  const { register, handleSubmit, watch } = useForm({
     defaultValues: {
       name: defaultName,
       email: defaultEmail,
@@ -62,6 +62,8 @@ export default function InstructorSettings() {
       bio: user?.bio || 'I am a certified IELTS examiner with over 10 years of experience teaching English to professionals and students worldwide.',
     }
   })
+
+  const bioValue = watch('bio') ?? ''
 
   const onSubmit = async (data: any) => {
     setSaving(true)
@@ -222,11 +224,18 @@ export default function InstructorSettings() {
                 </div>
                 
                 <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-neutral-400 mb-2">Professional Bio</label>
-                  <textarea 
-                    {...register('bio')}
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-neutral-400">Professional Bio</label>
+                    <span className={`text-[11px] font-semibold ${bioValue.length > 480 ? 'text-red-500' : 'text-slate-400 dark:text-neutral-500'}`}>
+                      {bioValue.length}/500
+                    </span>
+                  </div>
+                  <textarea
+                    {...register('bio', { maxLength: { value: 500, message: 'Bio cannot exceed 500 characters' } })}
                     rows={4}
+                    maxLength={500}
                     className="w-full px-4 py-3 bg-slate-50 dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 rounded-xl text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:border-violet-500 transition-colors resize-none leading-relaxed"
+                    placeholder="Write a brief bio about yourself (max 500 characters)"
                   />
                   <p className="text-[10px] text-slate-400 mt-2">Brief description for your profile. URLs are hyperlinked.</p>
                 </div>
