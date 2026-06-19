@@ -248,8 +248,8 @@ export default function CourseDetailsPage() {
         instructor: {
           ...COURSE.instructor,
           name: apiCourse.teacher?.name || COURSE.instructor.name,
-          image: apiCourse.teacher?.profileImage || COURSE.instructor.image,
-          bio: apiCourse.teacher?.bio || COURSE.instructor.bio,
+          image: apiCourse.teacher?.profileImage || '',
+          bio: apiCourse.teacher?.bio || '',
           role: '',
           rating: 0,
           students: '',
@@ -597,13 +597,19 @@ export default function CourseDetailsPage() {
                 </h2>
 
                 <div className="flex flex-col sm:flex-row gap-8 items-start relative z-10">
-                  <div className="relative group">
+                  <div className="relative group flex-shrink-0">
                     <div className="absolute -inset-1 bg-gradient-to-r from-violet-600 to-purple-600 rounded-full blur opacity-25 group-hover:opacity-50 transition duration-500"></div>
-                    <img
-                      src={activeCourse.instructor.image}
-                      alt={activeCourse.instructor.name}
-                      className="relative w-36 h-36 rounded-full object-cover border-4 border-white dark:border-neutral-900 shadow-xl"
-                    />
+                    {activeCourse.instructor.image ? (
+                      <img
+                        src={activeCourse.instructor.image}
+                        alt={activeCourse.instructor.name}
+                        className="relative w-36 h-36 rounded-full object-cover border-4 border-white dark:border-neutral-900 shadow-xl"
+                      />
+                    ) : (
+                      <div className="relative w-36 h-36 rounded-full border-4 border-white dark:border-neutral-900 shadow-xl bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center text-violet-600 dark:text-violet-400 text-5xl font-black">
+                        {activeCourse.instructor.name.charAt(0).toUpperCase()}
+                      </div>
+                    )}
                     {activeCourse.instructor.rating > 0 && (
                       <div className="absolute -bottom-2 -right-2 bg-yellow-400 text-yellow-950 text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1 shadow-lg">
                         <Star size={12} weight="fill" /> {activeCourse.instructor.rating}
@@ -638,9 +644,11 @@ export default function CourseDetailsPage() {
                       </div>
                     )}
 
-                    <p className="text-slate-600 dark:text-neutral-400 text-base leading-relaxed italic border-l-4 border-violet-200 dark:border-violet-900/50 pl-4">
-                      "{activeCourse.instructor.bio}"
-                    </p>
+                    {activeCourse.instructor.bio && (
+                      <p className="text-slate-600 dark:text-neutral-400 text-base leading-relaxed italic border-l-4 border-violet-200 dark:border-violet-900/50 pl-4">
+                        "{activeCourse.instructor.bio}"
+                      </p>
+                    )}
                   </div>
                 </div>
               </motion.div>
