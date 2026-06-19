@@ -255,8 +255,15 @@ export default function CourseDetailsPage() {
           students: '',
           courses: 0,
         },
-        whatYouWillLearn: [],
-        curriculum: [],
+        whatYouWillLearn: apiCourse.learningOutcomes ?? [],
+        curriculum: apiCourse.syllabus?.length
+          ? apiCourse.syllabus.map((topic: { week: number; title: string; description?: string }) => ({
+              title: `Session ${topic.week}: ${topic.title}`,
+              lessons: 1,
+              duration: '60 min',
+              items: [{ title: topic.description || topic.title, date: '', time: '', type: 'live', isFree: false }],
+            }))
+          : [],
         reviewsList: [],
       }
     : COURSE
@@ -475,7 +482,7 @@ export default function CourseDetailsPage() {
                       <div className="w-10 h-10 rounded-xl bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center text-violet-600 dark:text-violet-400">
                         <Calendar size={24} weight="fill" />
                       </div>
-                      Live Session Schedule
+                      Course Curriculum
                     </h2>
                     <p className="text-slate-500 dark:text-neutral-400 text-sm font-medium ml-13">
                       {activeCourse.schedule} • {activeCourse.duration}
@@ -555,7 +562,11 @@ export default function CourseDetailsPage() {
                                           Preview
                                         </span>
                                       )}
-                                      <span className="text-xs text-slate-500 dark:text-neutral-400 font-semibold flex items-center gap-1.5"><Calendar size={14}/> {item.date} • {item.time}</span>
+                                      {(item.date || item.time) && (
+                                        <span className="text-xs text-slate-500 dark:text-neutral-400 font-semibold flex items-center gap-1.5">
+                                          <Calendar size={14}/> {[item.date, item.time].filter(Boolean).join(' • ')}
+                                        </span>
+                                      )}
                                     </div>
                                   </div>
                                 ))}

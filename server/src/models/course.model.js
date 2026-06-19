@@ -109,6 +109,7 @@ const courseSchema = new Schema(
     meetLink: { type: String, trim: true },
     materials: [materialSchema],
     syllabus: [syllabusTopicSchema],
+    learningOutcomes: [{ type: String, trim: true }],
     isDeleted: { type: Boolean, default: false },
   },
   { timestamps: true, versionKey: false }
