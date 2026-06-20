@@ -6,8 +6,8 @@ import { useNavigate } from 'react-router-dom'
 // ─── Variants ──────────────────────────────────────────────────────────────────
 
 const containerVariants: Variants = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.11, delayChildren: 0.1 } },
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.11, delayChildren: 0.1 } },
 }
 
 const itemVariants: Variants = {
@@ -59,7 +59,7 @@ function ScrollCard({ card }: { card: Card }) {
   if (card.type === 'image') {
     return (
       <div className="relative h-36 w-56 rounded-2xl overflow-hidden shadow-lg">
-        <img src={card.src} alt={card.label} className="w-full h-full object-cover" />
+        <img src={card.src} alt={card.label} className="w-full h-full object-cover" loading="lazy" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent" />
         <div className="absolute bottom-3 left-3.5 right-3.5">
           <span className="block text-[10px] font-semibold text-white/70 uppercase tracking-wider mb-0.5">
@@ -172,17 +172,15 @@ export default function Hero() {
               <span className="w-6 h-[2px] bg-violet-600 dark:bg-violet-400 rounded-full" />
             </motion.div>
 
-            {/* Headline */}
-            <motion.div variants={itemVariants}>
-              <h1 className="text-5xl sm:text-6xl xl:text-[68px] font-black text-slate-900 dark:text-white leading-[1.0] tracking-tight">
-                TrySpeekly Unlocks
-                <br />
-                All the Doors{' '}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-purple-600 dark:from-violet-400 dark:to-purple-400">
-                  to Abroad.
-                </span>
-              </h1>
-            </motion.div>
+            {/* Headline — rendered immediately (LCP element, no initial hide) */}
+            <h1 className="text-5xl sm:text-6xl xl:text-[68px] font-black text-slate-900 dark:text-white leading-[1.0] tracking-tight">
+              TrySpeekly Unlocks
+              <br />
+              All the Doors{' '}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-purple-600 dark:from-violet-400 dark:to-purple-400">
+                to Abroad.
+              </span>
+            </h1>
 
             {/* Exam types pill row */}
             <motion.div variants={itemVariants} className="flex flex-wrap justify-center gap-2">
@@ -243,6 +241,7 @@ export default function Hero() {
                     src={src}
                     alt=""
                     className="w-9 h-9 rounded-full border-2 border-white dark:border-neutral-950 object-cover"
+                    loading="lazy"
                   />
                 ))}
               </div>

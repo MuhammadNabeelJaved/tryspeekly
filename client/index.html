@@ -24,8 +24,12 @@
     <meta name="twitter:description" content="Master English with expert instructors. IELTS prep, Business English, and General English courses with certificates." />
     <meta name="twitter:image" content="https://tryspeekly.com/og-image.png?v=2" />
     <title>TrySpeekly — Learn English Online</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Fonts are self-hosted; preload the main Latin subset for faster first paint -->
+    <link rel="preload" href="/fonts/dm-sans.woff2" as="font" type="font/woff2" crossorigin />
+    <!-- API server — establish connection before first data fetch -->
+    <link rel="preconnect" href="https://tryspeekly-api.onrender.com" />
+    <!-- Hero images come from Unsplash -->
+    <link rel="preconnect" href="https://images.unsplash.com" crossorigin />
     <style>
       /* Hide Google Translate's injected banner, tooltip, and body offset */
       .goog-te-banner-frame, .skiptranslate { display: none !important; }

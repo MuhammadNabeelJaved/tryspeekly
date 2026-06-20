@@ -49,19 +49,35 @@ export function loadGoogleTranslate(): void {
   if (typeof window === 'undefined') return
   if (document.getElementById('google-translate-script')) return
 
-  window.googleTranslateElementInit = () => {
-    if (!window.google?.translate) return
-    new window.google.translate.TranslateElement(
-      { pageLanguage: 'en', includedLanguages: INCLUDED, autoDisplay: false },
-      'google_translate_element',
-    )
+  const doLoad = () => {
+    if (document.getElementById('google-translate-script')) return
+    window.googleTranslateElementInit = () => {
+      if (!window.google?.translate) return
+      new window.google.translate.TranslateElement(
+        { pageLanguage: 'en', includedLanguages: INCLUDED, autoDisplay: false },
+        'google_translate_element',
+      )
+    }
+    const s = document.createElement('script')
+    s.id = 'google-translate-script'
+    s.src = 'https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit'
+    s.async = true
+    document.body.appendChild(s)
   }
 
-  const s = document.createElement('script')
-  s.id = 'google-translate-script'
-  s.src = 'https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit'
-  s.async = true
-  document.body.appendChild(s)
+  // Defer until first user interaction or 5 s — keeps it off the critical path
+  const EVENTS = ['mousemove', 'keydown', 'touchstart', 'scroll', 'click'] as const
+  let timer: ReturnType<typeof setTimeout>
+  const onInteraction = () => {
+    clearTimeout(timer)
+    EVENTS.forEach(e => document.removeEventListener(e, onInteraction))
+    doLoad()
+  }
+  EVENTS.forEach(e => document.addEventListener(e, onInteraction, { once: true, passive: true }))
+  timer = setTimeout(() => {
+    EVENTS.forEach(e => document.removeEventListener(e, onInteraction))
+    doLoad()
+  }, 5000)
 }
 
 /** Set the googtrans cookie to a value on path=/ and (in prod) the apex domain. */
