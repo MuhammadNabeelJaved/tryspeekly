@@ -161,9 +161,12 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
   const [reviewPricingType, setReviewPricingType] = useState<'monthly' | 'full_course' | 'per_session'>('full_course')
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState('All')
-  const [activeTab, setActiveTab] = useState<'manage' | 'pending'>('manage')
+  const [activeTab, setActiveTab] = useState<'manage' | 'pending' | 'pricing'>('manage')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [isBulkDeleting, setIsBulkDeleting] = useState(false)
+  const [pricingEdits, setPricingEdits] = useState<Record<string, { price: number; priceUSD: number; pricingType: string }>>({})
+  const [savingPriceId, setSavingPriceId] = useState<string | null>(null)
+  const [savingAllPrices, setSavingAllPrices] = useState(false)
 
   const { register, handleSubmit, reset, setValue, watch } = useForm<Course & { featuresInput: string }>({
     defaultValues: { ...EMPTY, featuresInput: '' }
@@ -370,6 +373,51 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
   const totalRevenue = displayCourses.reduce((a, c) => a + c.price * c.totalStudents, 0)
   const pendingCount = displayCourses.filter(c => c.status === 'pending').length
 
+  function getPricingRow(c: Course) {
+    return pricingEdits[c.id] ?? { price: c.price ?? 0, priceUSD: c.priceUSD ?? 0, pricingType: c.pricingType ?? 'full_course' }
+  }
+
+  function setPricingRow(id: string, patch: Partial<{ price: number; priceUSD: number; pricingType: string }>) {
+    setPricingEdits(prev => ({ ...prev, [id]: { ...getPricingRow({ id } as Course), ...patch } }))
+  }
+
+  async function saveCoursePrice(courseId: string) {
+    const row = pricingEdits[courseId]
+    if (!row) return
+    setSavingPriceId(courseId)
+    try {
+      await coursesService.updateCourse(courseId, { price: row.price, priceUSD: row.priceUSD, pricingType: row.pricingType as 'monthly' | 'full_course' | 'per_session' })
+      setCourses(prev => prev.map(c => c.id === courseId ? { ...c, price: row.price, priceUSD: row.priceUSD, pricingType: row.pricingType as Course['pricingType'] } : c))
+      if (apiCourses) setApiCourses(prev => prev ? prev.map(c => c.id === courseId ? { ...c, price: row.price, priceUSD: row.priceUSD, pricingType: row.pricingType as Course['pricingType'] } : c) : prev)
+      setPricingEdits(prev => { const n = { ...prev }; delete n[courseId]; return n })
+      toast.success('Price updated')
+    } catch {
+      toast.error('Failed to update price')
+    } finally {
+      setSavingPriceId(null)
+    }
+  }
+
+  async function saveAllPrices() {
+    const ids = Object.keys(pricingEdits)
+    if (!ids.length) { toast.success('No changes to save'); return }
+    setSavingAllPrices(true)
+    let ok = 0, fail = 0
+    await Promise.all(ids.map(async id => {
+      const row = pricingEdits[id]
+      try {
+        await coursesService.updateCourse(id, { price: row.price, priceUSD: row.priceUSD, pricingType: row.pricingType as 'monthly' | 'full_course' | 'per_session' })
+        setCourses(prev => prev.map(c => c.id === id ? { ...c, price: row.price, priceUSD: row.priceUSD, pricingType: row.pricingType as Course['pricingType'] } : c))
+        if (apiCourses) setApiCourses(prev => prev ? prev.map(c => c.id === id ? { ...c, price: row.price, priceUSD: row.priceUSD, pricingType: row.pricingType as Course['pricingType'] } : c) : prev)
+        ok++
+      } catch { fail++ }
+    }))
+    setPricingEdits({})
+    setSavingAllPrices(false)
+    if (fail === 0) toast.success(`All ${ok} prices saved`)
+    else toast.error(`${ok} saved, ${fail} failed`)
+  }
+
   return (
     <div className="p-4 sm:p-6 flex flex-col h-full">
 
@@ -440,8 +488,8 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
         <button
           onClick={() => setActiveTab('manage')}
           className={`pb-3 px-1 text-sm font-bold transition-colors border-b-2 ${
-            activeTab === 'manage' 
-              ? 'border-violet-600 text-violet-600 dark:text-violet-400 dark:border-violet-400' 
+            activeTab === 'manage'
+              ? 'border-violet-600 text-violet-600 dark:text-violet-400 dark:border-violet-400'
               : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-neutral-400 dark:hover:text-white'
           }`}
         >
@@ -450,26 +498,160 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
         <button
           onClick={() => setActiveTab('pending')}
           className={`pb-3 px-1 text-sm font-bold transition-colors border-b-2 flex items-center gap-1.5 ${
-            activeTab === 'pending' 
-              ? 'border-violet-600 text-violet-600 dark:text-violet-400 dark:border-violet-400' 
+            activeTab === 'pending'
+              ? 'border-violet-600 text-violet-600 dark:text-violet-400 dark:border-violet-400'
               : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-neutral-400 dark:hover:text-white'
           }`}
         >
           Pending Approvals
           {pendingCount > 0 && (
             <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-black ${
-              activeTab === 'pending' 
-                ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300' 
+              activeTab === 'pending'
+                ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300'
                 : 'bg-slate-100 text-slate-500 dark:bg-neutral-800 dark:text-neutral-300'
             }`}>
               {pendingCount}
             </span>
           )}
         </button>
+        {isAdmin && (
+          <button
+            onClick={() => setActiveTab('pricing')}
+            className={`pb-3 px-1 text-sm font-bold transition-colors border-b-2 flex items-center gap-1.5 ${
+              activeTab === 'pricing'
+                ? 'border-violet-600 text-violet-600 dark:text-violet-400 dark:border-violet-400'
+                : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-neutral-400 dark:hover:text-white'
+            }`}
+          >
+            <CurrencyCircleDollar size={14} weight="bold" />
+            Pricing
+            {Object.keys(pricingEdits).length > 0 && (
+              <span className="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
+                {Object.keys(pricingEdits).length}
+              </span>
+            )}
+          </button>
+        )}
       </div>
 
+      {/* ─── Pricing Tab ──────────────────────────────────────────────────────── */}
+      {activeTab === 'pricing' && (
+        <div className="flex-1 overflow-y-auto pb-10">
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-xs text-slate-500 dark:text-neutral-400">
+              Set PKR and USD prices for each course. Changes are saved individually or all at once.
+            </p>
+            <button
+              onClick={saveAllPrices}
+              disabled={savingAllPrices || Object.keys(pricingEdits).length === 0}
+              className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white text-xs font-bold rounded-xl transition-colors shadow-[0_4px_12px_rgba(124,58,237,0.25)]"
+            >
+              <Check size={13} weight="bold" />
+              {savingAllPrices ? 'Saving…' : `Save All${Object.keys(pricingEdits).length > 0 ? ` (${Object.keys(pricingEdits).length})` : ''}`}
+            </button>
+          </div>
+          <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200 dark:border-neutral-800 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left min-w-[700px]">
+                <thead>
+                  <tr className="bg-slate-50 dark:bg-neutral-800/50 border-b border-slate-200 dark:border-neutral-800">
+                    <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-neutral-500">Course</th>
+                    <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-neutral-500">Instructor</th>
+                    <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-neutral-500 w-36">PKR Price</th>
+                    <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-neutral-500 w-36">USD Price</th>
+                    <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-neutral-500 w-44">Pricing Type</th>
+                    <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-neutral-500 w-20 text-right">Save</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-neutral-800">
+                  {loading ? (
+                    [...Array(5)].map((_, i) => (
+                      <tr key={i}>
+                        {[...Array(6)].map((__, j) => (
+                          <td key={j} className="px-4 py-3">
+                            <div className="h-4 rounded-lg bg-slate-100 dark:bg-neutral-800 animate-pulse" />
+                          </td>
+                        ))}
+                      </tr>
+                    ))
+                  ) : displayCourses.filter(c => c.status !== 'pending').length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="px-4 py-10 text-center text-sm text-slate-400 dark:text-neutral-500">
+                        No courses found.
+                      </td>
+                    </tr>
+                  ) : displayCourses.filter(c => c.status !== 'pending').map(c => {
+                    const row = getPricingRow(c)
+                    const isDirty = !!pricingEdits[c.id]
+                    const isSaving = savingPriceId === c.id
+                    return (
+                      <tr key={c.id} className={isDirty ? 'bg-violet-50/50 dark:bg-violet-950/10' : ''}>
+                        <td className="px-4 py-3">
+                          <div>
+                            <p className="text-sm font-bold text-slate-900 dark:text-white leading-tight truncate max-w-[200px]">{c.title}</p>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full ${LEVEL_COLORS[c.level] ?? ''}`}>{c.level}</span>
+                              <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full ${STATUS_COLORS[c.status] ?? ''}`}>{c.status}</span>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-slate-600 dark:text-neutral-400 truncate max-w-[140px]">{c.instructorName || '—'}</td>
+                        <td className="px-4 py-3">
+                          <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 dark:text-neutral-500 pointer-events-none">₨</span>
+                            <input
+                              type="number"
+                              min={0}
+                              value={row.price}
+                              onChange={e => setPricingRow(c.id, { price: Number(e.target.value) })}
+                              className="w-full pl-7 pr-2 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors"
+                            />
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 dark:text-neutral-500 pointer-events-none">$</span>
+                            <input
+                              type="number"
+                              min={0}
+                              value={row.priceUSD}
+                              onChange={e => setPricingRow(c.id, { priceUSD: Number(e.target.value) })}
+                              className="w-full pl-7 pr-2 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-violet-500 transition-colors"
+                            />
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <select
+                            value={row.pricingType}
+                            onChange={e => setPricingRow(c.id, { pricingType: e.target.value })}
+                            className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-sm text-slate-700 dark:text-neutral-300 outline-none focus:border-violet-500 transition-colors"
+                          >
+                            <option value="full_course">Full Course</option>
+                            <option value="monthly">Monthly</option>
+                            <option value="per_session">Per Session</option>
+                          </select>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <button
+                            onClick={() => saveCoursePrice(c.id)}
+                            disabled={!isDirty || isSaving}
+                            className="px-3 py-2 rounded-xl bg-violet-600 hover:bg-violet-700 disabled:opacity-30 text-white text-xs font-bold transition-colors"
+                          >
+                            {isSaving ? '…' : <Check size={13} weight="bold" />}
+                          </button>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Filters */}
-      <div className="flex gap-3 mb-5 flex-shrink-0">
+      {activeTab !== 'pricing' && <div className="flex gap-3 mb-5 flex-shrink-0">
         <div className="relative flex-1">
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search courses…"
             className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-sm text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-neutral-600 outline-none focus:border-violet-500 transition-colors"
@@ -494,10 +676,10 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
             )}
           </>
         )}
-      </div>
+      </div>}
 
       {/* Course cards */}
-      <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4 pb-10">
+      {activeTab !== 'pricing' && <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4 pb-10">
         {loading ? (
           [...Array(6)].map((_, i) => (
             <div key={i} className="bg-white dark:bg-neutral-900 rounded-[20px] border border-slate-100 dark:border-neutral-800 overflow-hidden flex flex-col">
@@ -666,7 +848,7 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
             <p className="text-sm font-semibold">Add Course</p>
           </motion.button>
         )}
-      </div>
+      </div>}
 
       {/* BULK ACTION BAR */}
       <AnimatePresence>
