@@ -1,3 +1,4 @@
+import { motion } from 'framer-motion'
 import Hero from '@/components/Hero'
 import Stats from '@/components/Stats'
 import Features from '@/components/Features'
@@ -12,22 +13,27 @@ import HomeInstructors from '@/components/HomeInstructors'
 import NewsletterSection from '@/components/NewsletterSection'
 import SEOMeta from '@/components/SEOMeta'
 
+// Below-fold sections fade in on scroll — keeps them opacity:0 while async
+// API content loads, preventing layout shifts from being counted as CLS.
+// Hero is rendered immediately (outside this wrapper) to keep LCP fast.
+const fadeIn = { initial: { opacity: 0 }, whileInView: { opacity: 1 } as const, viewport: { once: true }, transition: { duration: 0.4 } }
+
 export default function Home() {
   return (
     <>
       <SEOMeta slug="home" fallbackTitle="TrySpeekly — Learn English Online" fallbackDescription="Master English with expert instructors. IELTS prep, Business English, and General English courses with certificates." />
       <Hero />
-      <Stats />
-      <HomeCourses />
-      <Features />
-      <HowItWorks />
-      <Testimonials />
-      <Reviews />
-      <Process />
-      <Blog />
-      <HomeInstructors />
-      <NewsletterSection />
-      <FinancialAidSection />
+      <motion.div {...fadeIn}><Stats /></motion.div>
+      <motion.div {...fadeIn}><HomeCourses /></motion.div>
+      <motion.div {...fadeIn}><Features /></motion.div>
+      <motion.div {...fadeIn}><HowItWorks /></motion.div>
+      <motion.div {...fadeIn}><Testimonials /></motion.div>
+      <motion.div {...fadeIn}><Reviews /></motion.div>
+      <motion.div {...fadeIn}><Process /></motion.div>
+      <motion.div {...fadeIn}><Blog /></motion.div>
+      <motion.div {...fadeIn}><HomeInstructors /></motion.div>
+      <motion.div {...fadeIn}><NewsletterSection /></motion.div>
+      <motion.div {...fadeIn}><FinancialAidSection /></motion.div>
     </>
   )
 }
