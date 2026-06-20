@@ -55,6 +55,17 @@ const FOCUS_TO_CATEGORY: Record<string, string> = {
   general: 'General English',
 }
 
+// Default images per category — shown when a course has no uploaded thumbnail
+const CATEGORY_DEFAULT_IMAGE: Record<string, string> = {
+  'General English':   'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?q=80&w=800&auto=format&fit=crop',
+  'Speaking':          'https://images.unsplash.com/photo-1475721027187-402ad2989a3b?q=80&w=800&auto=format&fit=crop',
+  'Grammar':           'https://images.unsplash.com/photo-1455390582262-044cdead277a?q=80&w=800&auto=format&fit=crop',
+  'IELTS Prep':        'https://images.unsplash.com/photo-1544650030-3c51ad04fe0b?q=80&w=800&auto=format&fit=crop',
+  'Business English':  'https://images.unsplash.com/photo-1552664730-d307ca884978?q=80&w=800&auto=format&fit=crop',
+  'Kids & Teens':      'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?q=80&w=800&auto=format&fit=crop',
+}
+const DEFAULT_COURSE_IMAGE = CATEGORY_DEFAULT_IMAGE['General English']
+
 export interface CourseCard {
   id: string
   title: string
@@ -302,7 +313,7 @@ export default function Courses() {
           duration: `${course.totalSessions} sessions`,
           rating: 4.8,
           students: course.enrolledStudents?.length || 0,
-          image: course.thumbnail,
+          image: course.thumbnail || undefined,
           price: '',
           pricePKR: course.price,
           priceUSD: course.priceUSD,
@@ -599,9 +610,10 @@ export default function Courses() {
                   {/* Image */}
                   <div className="relative h-52 overflow-hidden">
                     <img
-                      src={course.image}
+                      src={course.image || CATEGORY_DEFAULT_IMAGE[course.category] || DEFAULT_COURSE_IMAGE}
                       alt={course.title}
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                      onError={e => { (e.target as HTMLImageElement).src = CATEGORY_DEFAULT_IMAGE[course.category] || DEFAULT_COURSE_IMAGE }}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-900/70 via-slate-900/20 to-transparent" />
 

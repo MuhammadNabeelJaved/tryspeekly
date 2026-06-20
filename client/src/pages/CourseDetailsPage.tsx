@@ -23,6 +23,15 @@ import type { Offer } from '../services/offers.service'
 import { getDiscountedPrice } from '../utils/offerUtils'
 import { Spinner, WarningCircle } from '@phosphor-icons/react'
 
+const FOCUS_FALLBACK: Record<string, string> = {
+  general:  'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?q=80&w=1200&auto=format&fit=crop',
+  speaking: 'https://images.unsplash.com/photo-1475721027187-402ad2989a3b?q=80&w=1200&auto=format&fit=crop',
+  grammar:  'https://images.unsplash.com/photo-1455390582262-044cdead277a?q=80&w=1200&auto=format&fit=crop',
+  ielts:    'https://images.unsplash.com/photo-1544650030-3c51ad04fe0b?q=80&w=1200&auto=format&fit=crop',
+  business: 'https://images.unsplash.com/photo-1552664730-d307ca884978?q=80&w=1200&auto=format&fit=crop',
+  kids:     'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?q=80&w=1200&auto=format&fit=crop',
+}
+
 // Dummy Data for the specific course
 const COURSE = {
   id: 1,
@@ -231,8 +240,8 @@ export default function CourseDetailsPage() {
           ? apiCourse.level.charAt(0).toUpperCase() + apiCourse.level.slice(1)
           : COURSE.level,
         duration: `${apiCourse.totalSessions ?? 0} Sessions (${apiCourse.sessionDuration ?? 60} min each)`,
-        image: apiCourse.thumbnail || COURSE.image,
-        videoPreview: apiCourse.thumbnail || COURSE.videoPreview,
+        image: apiCourse.thumbnail || FOCUS_FALLBACK[apiCourse.focus ?? ''] || COURSE.image,
+        videoPreview: apiCourse.thumbnail || FOCUS_FALLBACK[apiCourse.focus ?? ''] || COURSE.videoPreview,
         students: apiCourse.enrolledStudents?.length ?? 0,
         maxStudents: apiCourse.maxStudents ?? COURSE.maxStudents,
         rating: 0,
@@ -428,7 +437,7 @@ export default function CourseDetailsPage() {
                 animate={{ opacity: 1, y: 0 }}
                 className="lg:hidden relative rounded-3xl overflow-hidden aspect-video shadow-2xl border border-slate-200 dark:border-neutral-800 bg-slate-900 group"
               >
-                <img src={activeCourse.videoPreview} alt="Course preview" className="w-full h-full object-cover opacity-80 group-hover:opacity-60 transition-opacity duration-500" />
+                <img src={activeCourse.videoPreview} alt="Course preview" className="w-full h-full object-cover opacity-80 group-hover:opacity-60 transition-opacity duration-500" onError={e => { (e.target as HTMLImageElement).src = FOCUS_FALLBACK.general }} />
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="relative">
                     <div className="absolute inset-0 bg-violet-600 rounded-full animate-ping opacity-40"></div>
@@ -811,7 +820,7 @@ export default function CourseDetailsPage() {
               >
                 {/* Video Preview */}
                 <div className="relative aspect-video bg-slate-100 dark:bg-neutral-800 group cursor-pointer overflow-hidden m-2 rounded-2xl">
-                  <img src={activeCourse.videoPreview} alt="Course preview" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 opacity-90 group-hover:opacity-70" />
+                  <img src={activeCourse.videoPreview} alt="Course preview" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 opacity-90 group-hover:opacity-70" onError={e => { (e.target as HTMLImageElement).src = FOCUS_FALLBACK.general }} />
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/20 to-transparent flex items-center justify-center">
                     <div className="relative">
                       <div className="absolute inset-0 bg-white rounded-full animate-ping opacity-20"></div>

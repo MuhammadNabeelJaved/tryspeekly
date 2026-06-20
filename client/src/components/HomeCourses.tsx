@@ -17,14 +17,15 @@ const FOCUS_LABEL: Record<string, string> = {
   general: 'General English',
 }
 
-const PLACEHOLDER_IMAGES = [
-  'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=600&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=600&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=600&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1513258496099-48168024aec0?w=600&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=600&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=600&auto=format&fit=crop',
-]
+const FOCUS_DEFAULT_IMAGE: Record<string, string> = {
+  general:  'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?q=80&w=800&auto=format&fit=crop',
+  speaking: 'https://images.unsplash.com/photo-1475721027187-402ad2989a3b?q=80&w=800&auto=format&fit=crop',
+  grammar:  'https://images.unsplash.com/photo-1455390582262-044cdead277a?q=80&w=800&auto=format&fit=crop',
+  ielts:    'https://images.unsplash.com/photo-1544650030-3c51ad04fe0b?q=80&w=800&auto=format&fit=crop',
+  business: 'https://images.unsplash.com/photo-1552664730-d307ca884978?q=80&w=800&auto=format&fit=crop',
+  kids:     'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?q=80&w=800&auto=format&fit=crop',
+}
+const DEFAULT_COURSE_IMAGE = FOCUS_DEFAULT_IMAGE.general
 
 function formatPrice(course: Course): string {
   if (!course.price || course.price === 0) return 'Free'
@@ -151,7 +152,7 @@ export default function HomeCourses() {
               </div>
             )
             : courses.map((course, idx) => {
-              const image = course.thumbnail ?? PLACEHOLDER_IMAGES[idx % PLACEHOLDER_IMAGES.length]
+              const image = course.thumbnail || FOCUS_DEFAULT_IMAGE[course.focus] || DEFAULT_COURSE_IMAGE
               const label = FOCUS_LABEL[course.focus] ?? course.focus
               const studentCount = Array.isArray(course.enrolledStudents)
                 ? course.enrolledStudents.length
@@ -172,6 +173,7 @@ export default function HomeCourses() {
                       src={image}
                       alt={course.title}
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                      onError={e => { (e.target as HTMLImageElement).src = FOCUS_DEFAULT_IMAGE[course.focus] || DEFAULT_COURSE_IMAGE }}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-900/70 via-slate-900/20 to-transparent" />
 
