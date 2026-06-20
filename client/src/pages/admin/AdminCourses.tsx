@@ -387,8 +387,8 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
     setSavingPriceId(courseId)
     try {
       await coursesService.updateCourse(courseId, { price: row.price, priceUSD: row.priceUSD, pricingType: row.pricingType as 'monthly' | 'full_course' | 'per_session' })
-      setCourses(prev => prev.map(c => c.id === courseId ? { ...c, price: row.price, priceUSD: row.priceUSD, pricingType: row.pricingType as Course['pricingType'] } : c))
-      if (apiCourses) setApiCourses(prev => prev ? prev.map(c => c.id === courseId ? { ...c, price: row.price, priceUSD: row.priceUSD, pricingType: row.pricingType as Course['pricingType'] } : c) : prev)
+      setCourses(courses.map(c => c.id === courseId ? { ...c, price: row.price, priceUSD: row.priceUSD, pricingType: row.pricingType as Course['pricingType'] } : c))
+      if (apiCourses) setApiCourses(apiCourses.map(c => c.id === courseId ? { ...c, price: row.price, priceUSD: row.priceUSD, pricingType: row.pricingType as Course['pricingType'] } : c))
       setPricingEdits(prev => { const n = { ...prev }; delete n[courseId]; return n })
       toast.success('Price updated')
     } catch {
@@ -407,8 +407,8 @@ export default function AdminCourses({ store }: { store: AdminStore }) {
       const row = pricingEdits[id]
       try {
         await coursesService.updateCourse(id, { price: row.price, priceUSD: row.priceUSD, pricingType: row.pricingType as 'monthly' | 'full_course' | 'per_session' })
-        setCourses(prev => prev.map(c => c.id === id ? { ...c, price: row.price, priceUSD: row.priceUSD, pricingType: row.pricingType as Course['pricingType'] } : c))
-        if (apiCourses) setApiCourses(prev => prev ? prev.map(c => c.id === id ? { ...c, price: row.price, priceUSD: row.priceUSD, pricingType: row.pricingType as Course['pricingType'] } : c) : prev)
+        setCourses(courses.map(c => c.id === id ? { ...c, price: row.price, priceUSD: row.priceUSD, pricingType: row.pricingType as Course['pricingType'] } : c))
+        if (apiCourses) setApiCourses(apiCourses.map(c => c.id === id ? { ...c, price: row.price, priceUSD: row.priceUSD, pricingType: row.pricingType as Course['pricingType'] } : c))
         ok++
       } catch { fail++ }
     }))
