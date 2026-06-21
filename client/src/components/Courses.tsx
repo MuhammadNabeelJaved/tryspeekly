@@ -165,9 +165,8 @@ export const FALLBACK_COURSES: CourseCard[] = [
   }
 ]
 
-const STATS = [
+const BASE_STATS = [
   { value: 6000, suffix: '+', isFloat: false, label: 'Active Students', icon: Users },
-  { value: 20, suffix: '+', isFloat: false, label: 'Expert Courses', icon: BookOpen },
   { value: 4.9, suffix: '', isFloat: true, label: 'Avg. Rating', icon: Star },
   { value: 95, suffix: '%', isFloat: false, label: 'Success Rate', icon: Trophy },
 ]
@@ -346,6 +345,14 @@ export default function Courses() {
   }, [])
 
   const courses = apiCourses || FALLBACK_COURSES
+  const courseCount = apiCourses?.length ?? 20
+
+  const stats = [
+    BASE_STATS[0],
+    { value: courseCount, suffix: '+', isFloat: false, label: 'Expert Courses', icon: BookOpen },
+    BASE_STATS[1],
+    BASE_STATS[2],
+  ]
 
   const filteredCourses = courses.filter(course => {
     const matchesCategory = activeCategory === 'All' || course.category === activeCategory
@@ -380,7 +387,7 @@ export default function Courses() {
                 className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-violet-200 bg-violet-50 text-violet-700 text-sm font-semibold mb-6"
               >
                 <GraduationCap size={16} weight="fill" />
-                20+ Expert Courses
+                {courseCount}+ Expert Courses
               </motion.div>
 
               {/* Heading */}
@@ -441,7 +448,7 @@ export default function Courses() {
                 transition={{ duration: 0.6, delay: 0.4 }}
                 className="flex flex-wrap items-center gap-x-8 gap-y-3"
               >
-                {STATS.map(({ value, suffix, isFloat, label, icon: Icon }) => (
+                {stats.map(({ value, suffix, isFloat, label, icon: Icon }) => (
                   <div key={label} className="flex items-center gap-2">
                     <Icon size={15} weight="fill" className="text-violet-500" />
                     <span className="text-slate-900 dark:text-white font-black text-sm">

@@ -1,7 +1,8 @@
-import { useRef, useEffect } from 'react'
+import { useRef, useEffect, useState } from 'react'
 import { motion, useMotionValue, useAnimationFrame, type Variants } from 'framer-motion'
 import { ArrowRight, Play, Star } from '@phosphor-icons/react'
 import { useNavigate } from 'react-router-dom'
+import { coursesService } from '../services/courses.service'
 
 // ─── Variants ──────────────────────────────────────────────────────────────────
 
@@ -39,7 +40,7 @@ const ROW_A: Card[] = [
   { type: 'image', src: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=320&q=80', label: 'Speaking Practice', tag: 'Live Sessions' },
   { type: 'stat',  icon: '🏆', value: '95%', label: 'Success Rate' },
   { type: 'image', src: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=320&q=80', label: 'Expert Teachers', tag: 'Certified' },
-  { type: 'stat',  icon: '📚', value: '50+', label: 'Courses Available' },
+  { type: 'stat',  icon: '📚', value: '___courses___', label: 'Courses Available' },
 ]
 
 const ROW_B: Card[] = [
@@ -147,6 +148,19 @@ function ScrollRow({ cards, direction }: { cards: Card[]; direction: 'left' | 'r
 
 export default function Hero() {
   const navigate = useNavigate()
+  const [courseCountLabel, setCourseCountLabel] = useState('20+')
+
+  useEffect(() => {
+    coursesService.getAllCourses({ status: 'published', limit: 1 })
+      .then(r => { if (r.pagination?.total) setCourseCountLabel(`${r.pagination.total}+`) })
+      .catch(() => {})
+  }, [])
+
+  const rowA = ROW_A.map(card =>
+    card.type === 'stat' && card.label === 'Courses Available'
+      ? { ...card, value: courseCountLabel }
+      : card
+  )
 
   return (
     <section className="relative bg-white dark:bg-neutral-950 min-h-[100dvh] overflow-x-hidden transition-colors duration-300">
@@ -273,7 +287,7 @@ export default function Hero() {
           transition={{ delay: 1.0, duration: 0.7 }}
           className="pb-8 pt-2 space-y-2 overflow-visible"
         >
-          <ScrollRow cards={ROW_A} direction="left" />
+          <ScrollRow cards={rowA} direction="left" />
           <ScrollRow cards={ROW_B} direction="right" />
         </motion.div>
 
