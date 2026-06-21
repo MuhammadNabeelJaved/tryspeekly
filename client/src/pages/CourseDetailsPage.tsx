@@ -239,7 +239,7 @@ export default function CourseDetailsPage() {
         level: apiCourse.level
           ? apiCourse.level.charAt(0).toUpperCase() + apiCourse.level.slice(1)
           : COURSE.level,
-        duration: `${apiCourse.totalSessions ?? 0} Sessions (${apiCourse.sessionDuration ?? 60} min each)`,
+        duration: `${apiCourse.totalSessions ?? 0} Sessions`,
         image: apiCourse.thumbnail || FOCUS_FALLBACK[apiCourse.focus ?? ''] || COURSE.image,
         videoPreview: apiCourse.thumbnail || FOCUS_FALLBACK[apiCourse.focus ?? ''] || COURSE.videoPreview,
         students: apiCourse.enrolledStudents?.length ?? 0,
@@ -522,11 +522,6 @@ export default function CourseDetailsPage() {
                           </div>
                           <div>
                             <h3 className="font-bold text-slate-900 dark:text-white text-base lg:text-lg mb-1 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">{module.title}</h3>
-                            <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-neutral-400 font-medium">
-                              <span className="flex items-center gap-1"><VideoCamera size={14} /> {module.lessons} sessions</span>
-                              <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-neutral-700" />
-                              <span className="flex items-center gap-1"><Clock size={14} /> {module.duration}</span>
-                            </div>
                           </div>
                         </div>
                         <motion.div
