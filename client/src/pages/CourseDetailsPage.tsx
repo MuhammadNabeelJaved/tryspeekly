@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import {
-  Star, Users, Clock, GraduationCap, CheckCircle,
+  Star, Users, GraduationCap, CheckCircle,
   PlayCircle, Certificate, FileText, CaretDown,
   ArrowLeft, Sparkle,
   ChartBar, Tag, Chats, PencilSimple,
