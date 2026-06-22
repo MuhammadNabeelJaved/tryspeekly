@@ -85,7 +85,7 @@ export default function BlogPage() {
 
   return (
     <div className="bg-slate-50 dark:bg-neutral-950 min-h-screen pt-[72px] lg:pt-[80px] selection:bg-violet-200 dark:selection:bg-violet-900/50">
-      <SEOMeta slug="blog" fallbackTitle="Blog — TrySpeekly" fallbackDescription="Study tips, grammar guides, IELTS prep, and course announcements from TrySpeekly." />
+      <SEOMeta slug="blog" fallbackTitle="English Learning Blog — IELTS Tips and Study Guides | TrySpeekly" fallbackDescription="Practical IELTS tips, grammar guides, PTE strategies, SOP writing advice, and expert study techniques from TrySpeekly's certified trainers. Boost your band score with proven methods." />
 
       {/* ─── HERO SECTION ───────────────────────────────────────── */}
       <section className="relative overflow-hidden bg-white dark:bg-neutral-900 py-16 lg:py-24 border-b border-slate-100 dark:border-neutral-800">

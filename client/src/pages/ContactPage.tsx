@@ -60,7 +60,7 @@ export default function ContactPage() {
 
   return (
     <div className="relative min-h-[100dvh] pt-[120px] lg:pt-[140px] pb-16 lg:pb-24 bg-white dark:bg-neutral-950 overflow-hidden transition-colors duration-300">
-      <SEOMeta slug="contact" fallbackTitle="Contact Us — TrySpeekly" fallbackDescription="Get in touch with TrySpeekly. Questions about courses, enrollment, or support." />
+      <SEOMeta slug="contact" fallbackTitle="Contact TrySpeekly — Free Consultation and WhatsApp Support" fallbackDescription="Have questions about IELTS, PTE, or English test prep? Book a free consultation or chat with TrySpeekly on WhatsApp. You are just one call away from your dream destination." />
 
       {/* Ambient background glows */}
       <div className="absolute inset-0 pointer-events-none">

@@ -26,7 +26,7 @@ export default function AboutPage() {
       animate="animate"
       className="bg-slate-50 dark:bg-neutral-950 min-h-screen pt-[72px] lg:pt-[80px]"
     >
-      <SEOMeta slug="about" fallbackTitle="About Us — TrySpeekly" fallbackDescription="Learn about TrySpeekly, our mission, and our team of expert English instructors." />
+      <SEOMeta slug="about" fallbackTitle="About TrySpeekly — Expert English Test Coaching" fallbackDescription="TrySpeekly is a result-oriented English coaching platform built around you. Our experienced trainers provide personalized IELTS, PTE, and English test preparation that turns your exam worries into guaranteed success." />
       {/* ─── HERO SECTION ───────────────────────────────────────── */}
       <section className="relative overflow-hidden bg-white dark:bg-neutral-900 py-16 lg:py-24">
         {/* Dot grid */}

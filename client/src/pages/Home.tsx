@@ -21,7 +21,7 @@ const fadeIn = { initial: { opacity: 0 }, whileInView: { opacity: 1 } as const, 
 export default function Home() {
   return (
     <>
-      <SEOMeta slug="home" fallbackTitle="TrySpeekly — Learn English Online" fallbackDescription="Master English with expert instructors. IELTS prep, Business English, and General English courses with certificates." />
+      <SEOMeta slug="home" fallbackTitle="TrySpeekly — IELTS, PTE and English Test Prep Online" fallbackDescription="Ace your IELTS, PTE, TOEFL, Cambridge, Duolingo, or OET with TrySpeekly's personalized 1-on-1 coaching. Flexible timings, session-based packages, and expert trainers who stay until you get it." />
       <Hero />
       <motion.div {...fadeIn}><Stats /></motion.div>
       <motion.div {...fadeIn}><HomeCourses /></motion.div>

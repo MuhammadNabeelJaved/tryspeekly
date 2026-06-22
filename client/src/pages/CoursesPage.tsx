@@ -4,7 +4,7 @@ import SEOMeta from '@/components/SEOMeta'
 export default function CoursesPage() {
   return (
     <div className="pt-[72px] lg:pt-[80px]">
-      <SEOMeta slug="courses" fallbackTitle="Courses — TrySpeekly" fallbackDescription="Browse our IELTS, Business English, and General English courses taught by certified instructors." />
+      <SEOMeta slug="courses" fallbackTitle="English Test Prep Courses — IELTS, PTE, TOEFL and More | TrySpeekly" fallbackDescription="Browse TrySpeekly's complete English test preparation courses including IELTS, PTE, TOEFL, Cambridge English, Duolingo, OET, and LangCert. Premium non-AI study materials and live private sessions included." />
       <Courses />
     </div>
   )
