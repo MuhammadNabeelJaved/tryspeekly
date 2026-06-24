@@ -64,7 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Safety net: never leave the app stuck in a loading state
     const safetyTimer = setTimeout(() => {
       setIsLoading(false);
-    }, 8000);
+    }, 4000);
 
     usersService
       .getProfile()

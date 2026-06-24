@@ -37,6 +37,9 @@
       #goog-gt-tt, .goog-te-balloon-frame { display: none !important; }
       .goog-text-highlight { background: none !important; box-shadow: none !important; }
     </style>
+    <!-- Wake up the Render backend immediately on HTML parse — eliminates cold-start
+         delay by the time React mounts and makes its first real API call. -->
+    <script>fetch('https://tryspeekly-api.onrender.com/api/health',{method:'GET',mode:'no-cors'}).catch(function(){})</script>
   </head>
   <body>
     <div id="root"></div>

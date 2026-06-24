@@ -1,5 +1,3 @@
-import { motion } from 'framer-motion'
-
 interface LoaderProps {
   fullScreen?: boolean
   page?: boolean
@@ -15,25 +13,17 @@ export default function Loader({ fullScreen = false, page = false, text }: Loade
 
   return (
     <div className={containerClasses}>
-      {/* Spinner */}
       <div className="relative flex items-center justify-center">
         <div className="h-12 w-12 rounded-full border-2 border-violet-100 dark:border-neutral-800" />
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ repeat: Infinity, duration: 0.9, ease: 'linear' }}
-          className="absolute h-12 w-12 rounded-full border-2 border-transparent border-r-violet-600 border-t-violet-600"
+        <div
+          className="absolute h-12 w-12 animate-spin rounded-full border-2 border-transparent border-r-violet-600 border-t-violet-600"
+          style={{ animationDuration: '0.9s' }}
         />
       </div>
-
       {text && (
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.25 }}
-          className="mt-4 text-sm font-medium text-slate-500 dark:text-neutral-400"
-        >
+        <p className="mt-4 text-sm font-medium text-slate-500 dark:text-neutral-400">
           {text}
-        </motion.p>
+        </p>
       )}
     </div>
   )

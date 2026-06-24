@@ -11,7 +11,7 @@ import Footer from '@/components/Footer'
 import ScrollToTop from '@/components/ScrollToTop'
 import Loader from '@/components/Loader'
 import { loadGoogleTranslate, applyInitialDir } from '@/lib/googleTranslate'
-import AIChatWidget from '@/components/AIChatWidget'
+const AIChatWidget = lazy(() => import('@/components/AIChatWidget'))
 import { offersService, type Offer } from '@/services/offers.service'
 
 const Home = lazy(() => import('@/pages/Home'))
@@ -130,8 +130,9 @@ function PublicLayout() {
 
 function GeoWall({ children }: { children: React.ReactNode }) {
   const { isBlocked, loading } = useGeo()
-  if (loading) return <Loader fullScreen />
-  if (isBlocked) {
+  // Render children immediately — geo check runs in background.
+  // Only show the blocked screen once the check definitively confirms blocking.
+  if (!loading && isBlocked) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white dark:bg-neutral-950 px-4">
         <div className="text-center max-w-md">
@@ -246,7 +247,7 @@ function App() {
           />
           <ScrollHandler />
           <RoleChangeHandler />
-          <AIChatWidget />
+          <Suspense fallback={null}><AIChatWidget /></Suspense>
           <Suspense fallback={<Loader fullScreen />}>
             <Routes>
               <Route
