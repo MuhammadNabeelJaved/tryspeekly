@@ -1,5 +1,7 @@
 import { useSEO } from '../hooks/useSEO'
 
+const SITE = 'https://tryspeekly.com'
+
 interface Props {
   slug: string
   fallbackTitle?: string
@@ -18,8 +20,14 @@ export default function SEOMeta({ slug, fallbackTitle = 'TrySpeekly', fallbackDe
   const title       = (seo.metaTitle || fallbackTitle) + (seo.global?.titleSuffix ?? '')
   const description = seo.metaDescription || fallbackDescription
   const keywords    = seo.metaKeywords?.join(', ') ?? ''
-  const canonical   = seo.canonicalUrl ?? ''
   const ogImage     = seo.og?.image || seo.global?.defaultOgImage || ''
+
+  // Auto-generate canonical from current URL when admin hasn't configured one.
+  // Strips www and enforces https so Google always sees a single preferred URL.
+  const autoCanonical = typeof window !== 'undefined'
+    ? `${SITE}${window.location.pathname === '/' ? '/' : window.location.pathname.replace(/\/$/, '')}`
+    : ''
+  const canonical = seo.canonicalUrl || autoCanonical
 
   const robotsContent = [
     seo.robots?.index  === false ? 'noindex'   : 'index',

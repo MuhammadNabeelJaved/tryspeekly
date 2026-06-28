@@ -43,6 +43,17 @@ const setMeta = (html, attr, key, value) => {
 const setTitle = (html, value) =>
   html.replace(/<title>[^<]*<\/title>/i, `<title>${escapeHtml(value)}</title>`)
 
+// Replace an existing <link rel="..."> or insert before </head>.
+const setLink = (html, rel, href) => {
+  const safe = escapeHtml(href)
+  const re = new RegExp(`(<link\\s+rel=["']${rel}["'][^>]*href=["'])[^"']*(["'][^>]*>)`, 'i')
+  if (re.test(html)) return html.replace(re, `$1${safe}$2`)
+  const re2 = new RegExp(`(<link\\s+href=["'])[^"']*(["'][^>]*rel=["']${rel}["'][^>]*>)`, 'i')
+  if (re2.test(html)) return html.replace(re2, `$1${safe}$2`)
+  const tag = `<link rel="${rel}" href="${safe}" />`
+  return html.includes('</head>') ? html.replace('</head>', `    ${tag}\n  </head>`) : html
+}
+
 // ─── Handler ────────────────────────────────────────────────────────────────
 export default async function handler(req, res) {
   const slug = (req.query.slug || '').toString().trim()
@@ -85,6 +96,7 @@ export default async function handler(req, res) {
     const url = `${SITE_URL}/blog/slug/${slug}`
 
     html = setTitle(html, title)
+    html = setLink(html, 'canonical', url)
     html = setMeta(html, 'name', 'description', desc)
     html = setMeta(html, 'property', 'og:type', 'article')
     html = setMeta(html, 'property', 'og:title', title)
