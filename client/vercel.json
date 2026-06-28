@@ -1,5 +1,7 @@
 {
   "rewrites": [
+    { "source": "/sitemap.xml", "destination": "/api/sitemap" },
+    { "source": "/courses/:id", "destination": "/api/og-course?id=:id" },
     { "source": "/blog/slug/:slug", "destination": "/api/og-blog?slug=:slug" },
     { "source": "/certificate/:id", "destination": "/api/og-certificate?id=:id" },
     { "source": "/(.*)", "destination": "/index.html" }

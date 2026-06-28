@@ -11,6 +11,8 @@ const DEFAULT_PAGES = [
   { pageSlug: 'instructors',   pageName: 'Instructors',    pageUrl: '/instructors',    isPublic: true  },
   { pageSlug: 'contact',       pageName: 'Contact',        pageUrl: '/contact',        isPublic: true  },
   { pageSlug: 'blog',          pageName: 'Blog',           pageUrl: '/blog',           isPublic: true  },
+  { pageSlug: 'course-detail', pageName: 'Course Detail Page', pageUrl: '/courses/:id',     isPublic: true  },
+  { pageSlug: 'blog-post',     pageName: 'Blog Post Page',     pageUrl: '/blog/slug/:slug', isPublic: true  },
   { pageSlug: 'login',         pageName: 'Login',          pageUrl: '/login',          isPublic: false },
   { pageSlug: 'register',      pageName: 'Register',       pageUrl: '/signup',         isPublic: false },
   { pageSlug: 'financial-aid', pageName: 'Financial Aid',  pageUrl: '/financial-aid',  isPublic: true  },

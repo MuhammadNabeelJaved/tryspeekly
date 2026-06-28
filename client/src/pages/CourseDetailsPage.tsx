@@ -347,6 +347,31 @@ export default function CourseDetailsPage() {
   return (
     <div className="bg-slate-50 dark:bg-neutral-950 min-h-screen pt-[72px] lg:pt-[80px] pb-24 lg:pb-0 selection:bg-violet-200 dark:selection:bg-violet-900/50">
       <SEOMeta slug="course-detail" fallbackTitle="Course Details — TrySpeekly" fallbackDescription="Explore the full course syllabus, instructor profile, curriculum breakdown, and student reviews. Book your personalized English test prep session with TrySpeekly today." />
+      {apiCourse && (
+        <>
+          <title>{apiCourse.title} — TrySpeekly</title>
+          <meta name="description" content={apiCourse.description?.slice(0, 200) ?? ''} />
+          <meta property="og:title" content={`${apiCourse.title} — TrySpeekly`} />
+          <meta property="og:description" content={apiCourse.description?.slice(0, 200) ?? ''} />
+          <meta property="og:type" content="website" />
+          <meta property="og:url" content={`https://tryspeekly.com/courses/${id}`} />
+          {apiCourse.thumbnail && <meta property="og:image" content={apiCourse.thumbnail} />}
+          <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'Course',
+            name: apiCourse.title,
+            description: apiCourse.description ?? '',
+            provider: {
+              '@type': 'Organization',
+              name: 'TrySpeekly',
+              url: 'https://tryspeekly.com',
+            },
+            url: `https://tryspeekly.com/courses/${id}`,
+            ...(apiCourse.teacher?.name ? { instructor: { '@type': 'Person', name: apiCourse.teacher.name } } : {}),
+            ...(apiCourse.thumbnail ? { image: apiCourse.thumbnail } : {}),
+          }) }} />
+        </>
+      )}
 
       {/* ─── CREATIVE HERO HEADER ──────────────────────────────── */}
       <div className="relative bg-slate-900 dark:bg-black text-white pt-12 pb-24 lg:pt-16 lg:pb-32 overflow-hidden border-b border-white/5">

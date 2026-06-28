@@ -40,6 +40,37 @@
     <!-- Wake up the Render backend immediately on HTML parse — eliminates cold-start
          delay by the time React mounts and makes its first real API call. -->
     <script>fetch('https://tryspeekly-api.onrender.com/api/health',{method:'GET',mode:'no-cors'}).catch(function(){})</script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "TrySpeekly",
+      "url": "https://tryspeekly.com",
+      "logo": "https://tryspeekly.com/logo.png",
+      "sameAs": [],
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "contactType": "customer support",
+        "url": "https://tryspeekly.com/contact"
+      }
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "TrySpeekly",
+      "url": "https://tryspeekly.com",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "https://tryspeekly.com/courses?search={search_term_string}"
+        },
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>

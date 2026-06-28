@@ -99,6 +99,25 @@ export default function BlogPostPage() {
   return (
     <div className="bg-white dark:bg-neutral-950 min-h-screen pt-[72px] lg:pt-[80px] selection:bg-violet-200 dark:selection:bg-violet-900/50">
       <SEOMeta slug="blog-post" fallbackTitle={blog?.title ? `${blog.title} — TrySpeekly` : 'Blog — TrySpeekly'} fallbackDescription={blog?.excerpt ?? ''} />
+      {blog && (
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'BlogPosting',
+          headline: blog.title,
+          description: blog.excerpt ?? '',
+          url: `https://tryspeekly.com/blog/slug/${blog.slug}`,
+          datePublished: blog.createdAt,
+          dateModified: blog.updatedAt ?? blog.createdAt,
+          ...(blog.coverImage ? { image: blog.coverImage } : {}),
+          publisher: {
+            '@type': 'Organization',
+            name: 'TrySpeekly',
+            url: 'https://tryspeekly.com',
+            logo: { '@type': 'ImageObject', url: 'https://tryspeekly.com/logo.png' },
+          },
+          ...(blog.author ? { author: { '@type': 'Person', name: blog.author.name } } : {}),
+        }) }} />
+      )}
 
       {/* ─── HERO HEADER ──────────────────────────────────────── */}
       <section className="relative pt-12 pb-16 lg:pt-20 lg:pb-24 border-b border-slate-100 dark:border-neutral-800 bg-slate-50 dark:bg-neutral-900 overflow-hidden">
