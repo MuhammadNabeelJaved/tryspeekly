@@ -68,9 +68,9 @@ const teacherContext = async (id) => {
 }
 
 const platformCounts = async () => {
-  const [students, instructors, totalCourses, publishedCourses, pendingPayments, pendingCourseReviews, pendingAid, revenueAgg] =
+  const [enrolledStudents, instructors, totalCourses, publishedCourses, pendingPayments, pendingCourseReviews, pendingAid, revenueAgg] =
     await Promise.all([
-      User.countDocuments({ role: 'student', isDeleted: { $ne: true } }),
+      Enrollment.countDocuments({ isActive: true }),
       User.countDocuments({ role: 'teacher', isDeleted: { $ne: true } }),
       Course.countDocuments({ isDeleted: { $ne: true } }),
       Course.countDocuments({ status: 'published', isDeleted: { $ne: true } }),
@@ -80,14 +80,14 @@ const platformCounts = async () => {
       Payment.aggregate([{ $match: { status: 'approved' } }, { $group: { _id: '$currency', total: { $sum: '$amount' } } }]),
     ])
   const revenue = revenueAgg.length ? revenueAgg.map((r) => `${r._id} ${r.total}`).join(', ') : 'none yet'
-  return { students, instructors, totalCourses, publishedCourses, pendingPayments, pendingCourseReviews, pendingAid, revenue }
+  return { enrolledStudents, instructors, totalCourses, publishedCourses, pendingPayments, pendingCourseReviews, pendingAid, revenue }
 }
 
 const adminContext = async () => {
   const s = await platformCounts()
   return [
     'Role: admin (full platform overview).',
-    `Students: ${s.students}. Instructors: ${s.instructors}.`,
+    `Enrolled students: ${s.enrolledStudents}. Instructors: ${s.instructors}.`,
     `Courses: ${s.totalCourses} total, ${s.publishedCourses} published.`,
     `Pending: ${s.pendingPayments} payment(s), ${s.pendingCourseReviews} course approval(s), ${s.pendingAid} financial-aid request(s).`,
     `Revenue (approved): ${s.revenue}.`,
@@ -100,7 +100,7 @@ const teamContext = async (permissions = []) => {
   return [
     'Role: team member (staff).',
     `Your permitted sections: ${perms}.`,
-    `Platform: ${s.students} students, ${s.instructors} instructors, ${s.totalCourses} courses.`,
+    `Platform: ${s.enrolledStudents} enrolled students, ${s.instructors} instructors, ${s.totalCourses} courses.`,
     `Pending: ${s.pendingPayments} payment(s), ${s.pendingCourseReviews} course approval(s), ${s.pendingAid} financial-aid request(s).`,
   ].join('\n')
 }
