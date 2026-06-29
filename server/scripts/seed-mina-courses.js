@@ -12,29 +12,7 @@ const TEACHER_EMAIL = 'manokhannn39@gmail.com'
 const COURSES = [
   {
     title: 'IELTS Preparation Mastery',
-    description: `Achieve your target IELTS score with our comprehensive, instructor-led preparation program. Whether you are applying for university admission, immigration, professional registration, or career advancement, this course equips you with the skills, strategies, and confidence needed to succeed in all four IELTS modules.
-
-What You'll Get:
-• Complete instructor-created study material (No AI-generated content)
-• Original essay templates and writing frameworks
-• High-scoring Writing Task 1 & Task 2 strategies
-• Speaking cue cards with model answers
-• Predicted and frequently repeated topics
-• Advanced vocabulary, collocations, idioms, and phrases
-• Reading and Listening shortcuts and techniques
-• Mock tests with detailed feedback
-• Personalized corrections and performance tracking
-• Exam-day strategies and time-management techniques
-
-Learning Outcomes:
-• Achieve your target IELTS band score
-• Write well-structured, high-scoring essays
-• Speak fluently and confidently
-• Improve Reading speed and comprehension
-• Enhance Listening accuracy
-• Use advanced vocabulary naturally
-• Manage exam time effectively
-• Prepare successfully for university admission and immigration applications`,
+    description: 'IELTS Mastery is a 1-solution course that not only prepares you for IELTS but also guarantees high bands without typical hard work.',
     type: 'hybrid',
     level: 'intermediate',
     focus: 'ielts',
@@ -108,27 +86,7 @@ Learning Outcomes:
   },
   {
     title: 'PTE Academic Accelerator',
-    description: `Master the AI-scored PTE Academic exam through targeted preparation, proven strategies, and intensive practice. Ideal for university admissions, work visas, and migration pathways.
-
-What You'll Get:
-• Complete PTE Preparation Material
-• Templates for All Writing Tasks
-• Repeat Sentence Strategies
-• Retell Lecture Frameworks
-• Reading & Listening Techniques
-• Frequently Repeated Question Types
-• Mock Exams & Score Analysis
-• Personalized Feedback
-
-Learning Outcomes:
-• Improve overall PTE score
-• Master all question types
-• Increase speaking fluency
-• Improve pronunciation
-• Enhance writing accuracy
-• Develop rapid reading skills
-• Improve listening performance
-• Achieve study, work, and migration goals`,
+    description: 'Ace the AI-scored PTE exam with this course that enables you to learn easy, quick and practical strategies.',
     type: 'hybrid',
     level: 'intermediate',
     focus: 'general',
@@ -156,26 +114,7 @@ Learning Outcomes:
   },
   {
     title: 'TOEFL Excellence Program',
-    description: `Build the academic English skills required for international university admissions. Learn proven TOEFL strategies and gain confidence in every section of the test.
-
-What You'll Get:
-• Complete TOEFL Study Resources
-• Academic Writing Templates
-• Integrated Task Strategies
-• Academic Vocabulary Lists
-• Note-Taking Techniques
-• Mock Tests
-• Personalized Evaluation
-
-Learning Outcomes:
-• Improve TOEFL performance
-• Strengthen academic reading skills
-• Develop note-taking abilities
-• Master integrated writing tasks
-• Improve lecture comprehension
-• Expand academic vocabulary
-• Increase speaking confidence
-• Prepare for international university admissions`,
+    description: 'TOEFL Mastery is a perfect course plan that covers all TOEFL sections with easy and effective strategies for guaranteed success in the exam.',
     type: 'hybrid',
     level: 'intermediate',
     focus: 'general',
@@ -203,27 +142,7 @@ Learning Outcomes:
   },
   {
     title: 'OET Healthcare English Pro',
-    description: `Designed specifically for healthcare professionals seeking international registration and employment opportunities. Master the language skills required to succeed in the Occupational English Test (OET).
-
-What You'll Get:
-• Profession-Specific OET Preparation
-• Medical English Resources
-• OET Writing Templates
-• Role-Play Speaking Practice
-• Healthcare Case Studies
-• Medical Vocabulary Training
-• Mock Examinations
-• Detailed Feedback
-
-Learning Outcomes:
-• Communicate effectively in healthcare environments
-• Write professional healthcare correspondence
-• Improve patient communication
-• Master OET exam requirements
-• Enhance profession-specific vocabulary
-• Achieve required OET scores
-• Prepare for international registration
-• Build confidence in professional settings`,
+    description: 'The course is specially designed for an international medical English test, such as the Occupational English Test (OET) for doctors. It covers all the practical strategies that claim guaranteed results.',
     type: 'hybrid',
     level: 'advanced',
     focus: 'general',
@@ -251,26 +170,7 @@ Learning Outcomes:
   },
   {
     title: 'LangCert English Achievement Program',
-    description: `Prepare effectively for LangCert examinations with structured lessons, targeted practice, and expert guidance designed to improve overall English proficiency and exam performance.
-
-What You'll Get:
-• Complete LangCert Preparation Resources
-• Speaking Practice Sessions
-• Writing Templates
-• Grammar Enhancement Lessons
-• Vocabulary Development Exercises
-• Mock Assessments
-• Personalized Feedback
-
-Learning Outcomes:
-• Improve overall English proficiency
-• Master the LangCert exam format
-• Strengthen speaking skills
-• Improve writing accuracy
-• Expand vocabulary range
-• Enhance grammar usage
-• Increase reading comprehension
-• Achieve certification goals confidently`,
+    description: 'LangCert Mastery is a comprehensive course that uses clever and useful techniques to help you perform well in the LangCert exam.',
     type: 'hybrid',
     level: 'intermediate',
     focus: 'general',
@@ -298,26 +198,7 @@ Learning Outcomes:
   },
   {
     title: 'GCSE English Masterclass',
-    description: `Build the reading, writing, analytical, and critical-thinking skills needed to excel in GCSE English examinations and academic studies.
-
-What You'll Get:
-• Exam-Focused Notes
-• Essay Writing Frameworks
-• Literature Analysis Techniques
-• Grammar & Punctuation Workshops
-• Past Paper Practice
-• Exam Strategies
-• Personalized Feedback
-
-Learning Outcomes:
-• Improve examination performance
-• Develop advanced essay-writing skills
-• Analyze texts effectively
-• Strengthen reading comprehension
-• Improve grammar and punctuation
-• Build critical-thinking abilities
-• Expand vocabulary
-• Gain confidence in assessments`,
+    description: 'GCSE English Mastery is a proactive and result-oriented course that helps you gain thorough understanding of exam patterns and improve English skills with simple and pragmatic methods.',
     type: 'hybrid',
     level: 'beginner',
     focus: 'grammar',
@@ -345,26 +226,7 @@ Learning Outcomes:
   },
   {
     title: 'IGCSE English Excellence',
-    description: `A comprehensive course designed to help students excel in IGCSE English Language and Literature through structured learning, intensive practice, and expert guidance.
-
-What You'll Get:
-• Comprehensive IGCSE Resources
-• Language & Literature Support
-• Writing Templates
-• Text Analysis Strategies
-• Vocabulary Development
-• Mock Assessments
-• Personalized Corrections
-
-Learning Outcomes:
-• Master IGCSE requirements
-• Improve academic writing
-• Analyze literary texts confidently
-• Strengthen comprehension skills
-• Enhance grammar accuracy
-• Build advanced vocabulary
-• Improve presentation of ideas
-• Achieve higher examination grades`,
+    description: 'IGCSE English Mastery is a well-structured course that uses simple techniques, lucid explanations, and goal-oriented practice to help you master IGCSE English.',
     type: 'hybrid',
     level: 'intermediate',
     focus: 'grammar',
