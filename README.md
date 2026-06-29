@@ -26,12 +26,13 @@ A modern, full-stack **Learning Management System (LMS)** for English-language e
 ### For Administrators (`/admin/*`)
 - 👤 User management (students, instructors, team members)
 - 📚 Course approval workflow and oversight
-- 💰 Payments, financial aid, salaries & payouts
+- 💰 Payments, financial aid, salaries & payouts — dual-currency **PKR / USD**
 - 🎁 Referrals, coupons & promotional offers
 - 📣 Newsletter campaigns and contact/support inboxes
 - 📄 CMS, SEO, FAQs, announcements & site settings
 - 📊 Platform-wide analytics and activity logs
 - 🌍 Geo-access controls (country blocking)
+- 🔍 Per-page SEO editor with activity log (last-edited-by tracking)
 
 ### Team Members (`/team/*`)
 - 🔐 Permission-scoped staff access to specific admin sections
@@ -278,11 +279,42 @@ Conventions are documented in `.claude/rules/api-conventions.md`.
 
 ---
 
+## 🔍 SEO Infrastructure
+
+| Feature | Detail |
+|---|---|
+| **Canonical tags** | Auto-generated on every page — eliminates duplicate-canonical issues |
+| **Open Graph** | Static homepage OG (`og-image.png` 1200×630); per-course OG meta; per-blog dynamic OG via Vercel serverless function so social crawlers (FB/WhatsApp/Twitter) get correct previews without JS |
+| **JSON-LD schemas** | Structured data injected on course + blog pages |
+| **Dynamic sitemap** | Vercel proxy forwards `/sitemap.xml` → Render backend so the sitemap stays server-rendered and always fresh |
+| **IndexNow** | Blog publish/update auto-pings Bing & Yandex for instant indexing (`server/src/utils/indexnow.js`) |
+| **Meta titles & descriptions** | Per-page fallback meta rewritten; admin SEO editor (slug-keyed) stored in DB, injectable by team members |
+| **Google Translate** | Script deferred off the critical path to avoid render-blocking |
+
+---
+
 ## ⚡ Performance Notes
+- **GeoWall removed from first paint** — geo-check runs in the background; users see content immediately (significant FCP improvement)
+- **LCP optimised** — render-blocking scripts deferred; `preconnect` hints updated
+- **CLS prevention** — below-fold elements use `whileInView` opacity animation (no layout shift on load)
 - Routes are lazy-loaded (`React.lazy` + `Suspense`)
 - Vite `manualChunks` split React, Framer Motion, and the Markdown renderer into separate, long-cacheable chunks
 - Heavy libraries (PDF/canvas export, rich-text editor) load on demand only
 - The AI chatbot's Markdown renderer is lazy-loaded so it stays off first paint
+
+---
+
+## 🚢 Deployment
+
+| Layer | Platform | Notes |
+|---|---|---|
+| Frontend | **Vercel** | Auto-deploys from `main`; hosts OG-blog serverless fn + sitemap proxy |
+| Backend | **Render** | Auto-deploys from `main`; set `NODE_ENV=production` |
+| Database | **MongoDB Atlas** | Set `MONGO_URI` to Atlas connection string |
+| Media | **Cloudinary** | Images & documents |
+| Email | **Resend** | Verify `tryspeekly.com` domain before sending |
+
+> After deploying, set `CLIENT_URL` (backend) and `VITE_API_URL` (frontend) to the live URLs.
 
 ---
 
