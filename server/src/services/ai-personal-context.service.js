@@ -70,7 +70,7 @@ const teacherContext = async (id) => {
 const platformCounts = async () => {
   const [enrolledStudents, instructors, totalCourses, publishedCourses, pendingPayments, pendingCourseReviews, pendingAid, revenueAgg] =
     await Promise.all([
-      Enrollment.countDocuments({ isActive: true }),
+      Payment.distinct('student').then(r => r.length),
       User.countDocuments({ role: 'teacher', isDeleted: { $ne: true } }),
       Course.countDocuments({ isDeleted: { $ne: true } }),
       Course.countDocuments({ status: 'published', isDeleted: { $ne: true } }),
