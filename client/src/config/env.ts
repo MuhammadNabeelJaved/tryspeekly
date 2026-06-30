@@ -11,8 +11,8 @@ export const config = {
   supportEmail: import.meta.env.VITE_SUPPORT_EMAIL || 'support@tryspeekly.com',
   privacyEmail: import.meta.env.VITE_PRIVACY_EMAIL || 'privacy@tryspeekly.com',
   paymentsEmail: import.meta.env.VITE_PAYMENTS_EMAIL || 'payments@tryspeekly.com',
-  contactPhone: import.meta.env.VITE_CONTACT_PHONE || '+92 308 692 5545',
-  contactWhatsapp: import.meta.env.VITE_CONTACT_WHATSAPP || '923086925545',
+  contactPhone: import.meta.env.VITE_CONTACT_PHONE || '+92 325 432 0179',
+  contactWhatsapp: import.meta.env.VITE_CONTACT_WHATSAPP || '923254320179',
   // Physical address — empty by default so it stays hidden until a real one is set.
   contactAddress: import.meta.env.VITE_CONTACT_ADDRESS || '',
 
