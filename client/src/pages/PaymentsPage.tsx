@@ -642,7 +642,7 @@ export default function PaymentsPage() {
                       {/* Action buttons */}
                       <div className="flex flex-col gap-2.5">
                         <a
-                          href={selectedAdmin?.whatsappLink || 'https://wa.me/923086925545'}
+                          href={selectedAdmin?.whatsappLink || 'https://wa.me/923254320179'}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 rounded-2xl text-sm transition-colors"
@@ -921,7 +921,7 @@ export default function PaymentsPage() {
               <ArrowRight size={16} weight="bold" />
             </a>
             <a
-              href="https://wa.me/923086925545"
+              href="https://wa.me/923254320179"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-8 py-3.5 rounded-2xl transition-colors text-sm"

@@ -1275,7 +1275,7 @@ const SCHEMA_TEMPLATES = {
     "name": "EnglishPro Academy",
     "url": "https://yoursite.com",
     "logo": "https://yoursite.com/logo.png",
-    "contactPoint": { "@type": "ContactPoint", "telephone": "+923086925545", "contactType": "customer service" }
+    "contactPoint": { "@type": "ContactPoint", "telephone": "+923254320179", "contactType": "customer service" }
   }, null, 2),
 }
 ```
