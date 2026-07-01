@@ -5,7 +5,7 @@ import { LinkedinLogo, TwitterLogo, FacebookLogo, InstagramLogo, YoutubeLogo, Ph
 import { Link } from 'react-router-dom'
 import { newsletterService } from '@/services/newsletter.service'
 import { siteSettingsService } from '@/services/site-settings.service'
-import { config } from '@/config/env'
+import { config, normalizeContactPhone } from '@/config/env'
 
 const FOOTER_LINK_CATEGORIES = [
   {
@@ -68,7 +68,7 @@ export default function Footer() {
       .then(settings => {
         setInfo({
           description: settings.site?.footerDescription || DEFAULTS.description,
-          phone: settings.contact?.phone || DEFAULTS.phone,
+          phone: normalizeContactPhone(settings.contact?.phone || DEFAULTS.phone),
           email: settings.contact?.email || DEFAULTS.email,
           address: settings.contact?.address || DEFAULTS.address,
           social: {
