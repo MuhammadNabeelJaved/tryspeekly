@@ -4,7 +4,7 @@ import toast from 'react-hot-toast'
 import {
   Clock, Star, Users, GraduationCap, ArrowRight, MagnifyingGlass,
   BookOpen, Trophy, Lightning, ChatCircle, Globe, Medal,
-  CaretDown, CheckCircle, Funnel, Play, UserCircle,
+  CaretDown, CheckCircle, Funnel, UserCircle,
   LinkedinLogo, TwitterLogo, InstagramLogo, YoutubeLogo, FacebookLogo
 } from '@phosphor-icons/react'
 import { useState, useEffect, useRef } from 'react'
@@ -429,15 +429,6 @@ export default function Courses() {
                   className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-violet-600 to-purple-600 text-white font-bold px-8 py-4 rounded-2xl shadow-[0_8px_28px_rgba(124,58,237,0.35)] transition-all"
                 >
                   Browse Courses <ArrowRight size={20} weight="bold" />
-                </motion.button>
-                <motion.button
-                  type="button"
-                  onClick={() => navigate('/contact')}
-                  whileHover={{ scale: 1.04 }}
-                  whileTap={{ scale: 0.97 }}
-                  className="flex items-center justify-center gap-2 border border-slate-200 dark:border-neutral-700 hover:border-violet-300 dark:hover:border-violet-500 text-slate-700 dark:text-neutral-300 hover:text-violet-600 dark:hover:text-violet-400 font-semibold px-8 py-4 rounded-2xl transition-colors"
-                >
-                  <Play size={18} weight="fill" /> Free Trial Class
                 </motion.button>
               </motion.div>
 
